@@ -42,7 +42,7 @@ static void button_handler(carmen_walkerserial_button_msg *msg) {
 
   static int clutch = 0;
 
-  if (msg->button == 1) {
+  if (msg->button == 6) {
     if (clutch)
       carmen_walkerserial_disengage_clutch();
     else
