@@ -1,4 +1,8 @@
-include ../Makefile.conf
+ifndef CARMEN_HOME
+$(error CARMEN_HOME must be set in order to compile carmen-addons)
+endif
+
+include $(CARMEN_HOME)/src/Makefile.conf
 
 MODULE_NAME = ERRORGRAPH
 MODULE_COMMENT = Error Graphing
@@ -26,4 +30,5 @@ errorgraph:	errorgraph.o
 
 # rules
 
-include ../Makefile.rules
+include $(CARMEN_HOME)/src/Makefile.rules
+
