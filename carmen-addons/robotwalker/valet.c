@@ -2,6 +2,7 @@
 #include <carmen/carmen.h>
 #include <carmen/map_io.h>
 #include <carmen/navigator_interface.h>
+#include <carmen/robot_interface.h>
 
 #include "valet_interface.h"
 
@@ -16,11 +17,14 @@ static carmen_valet_status_t valet_status = CARMEN_VALET_RETURNED;
 static carmen_map_placelist_t parking_places;
 static carmen_localize_globalpos_message globalpos;
 static carmen_point_t return_pos;
+static int turning = 0;
 
 static inline double dist(double x, double y) {
 
   return sqrt(x*x + y*y);
 }
+
+#define abs(x) (x < 0 ? -x : x)
 
 static void valet_park() {
 
@@ -29,11 +33,14 @@ static void valet_park() {
   printf("valet_park\n");
 
   if (valet_status == CARMEN_VALET_RETURNED) {
-    printf("globalpos = (%f, %f), return_pos = (%f, %f)\n",
+    printf("globalpos = (%f, %f), return_pos = (%f, %f, %f)\n",
 	   globalpos.globalpos.x, globalpos.globalpos.y,
-	   return_pos.x, return_pos.y);
+	   return_pos.x, return_pos.y, return_pos.theta);
     return_pos.x = globalpos.globalpos.x;
     return_pos.y = globalpos.globalpos.y;
+    return_pos.theta = globalpos.globalpos.theta;
+    printf("new return_pos = (%.2f, %.2f, %.2f)\n",
+	   return_pos.x, return_pos.y, return_pos.theta);
   }
 
   valet_status = CARMEN_VALET_PARKING;
@@ -95,7 +102,21 @@ void stopped_handler(carmen_navigator_autonomous_stopped_message *msg) {
   }
   else if (valet_status == CARMEN_VALET_RETURNING) {
     valet_status = CARMEN_VALET_RETURNED;
-    printf("returned\n");
+    turning = 1;
+    printf("turning to angle %.2f\n", return_pos.theta);
+  }
+}
+
+void localize_handler() {
+
+  if (turning) {
+    if (abs(globalpos.globalpos.theta - return_pos.theta) < 0.1) {
+      turning = 0;
+      printf("returned\n");
+    }
+    else
+      carmen_robot_move_along_vector(0, return_pos.theta -
+				     globalpos.globalpos.theta);
   }
 }
 
@@ -122,7 +143,7 @@ static void ipc_init() {
   IPC_setMsgQueueLength(CARMEN_VALET_RETURN_MSG_NAME, 1);
 
   carmen_localize_subscribe_globalpos_message
-    (&globalpos, NULL, CARMEN_SUBSCRIBE_LATEST);
+    (&globalpos, localize_handler, CARMEN_SUBSCRIBE_LATEST);
 
   carmen_navigator_subscribe_autonomous_stopped_message
     (NULL, (carmen_handler_t) stopped_handler,

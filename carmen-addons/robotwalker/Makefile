@@ -5,37 +5,34 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = walker_motors.c gnav.c gnav_interface.c valet.c valet_interface.c \
-		valet_run.c walkerserial.c walkerserial_interface.c walker.c \
+SOURCES = walker_motors.c valet.c valet_interface.c valet_run.c \
+		walkerserial.c walkerserial_interface.c walker.c \
 		walker_interface.c
-
-ifndef NO_GRAPHICS
-
-SOURCES += gnav_gui.c
-
-CFLAGS +=
-IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
-LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lgdk_imlib \
-		-lglobal \
-		-lglobal_graphics -lipc `$(GTK_CONFIG) --libs gthread` \
-		-llocalize_interface -llaser_interface -lnavigator_interface \
-		-lserial
-else
 
 CFLAGS +=
 IFLAGS 	+=
 LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
-		-lglobal_graphics -lipc \
-		-llocalize_interface -llaser_interface -lserial
+		-lipc -lroomnav_interface -lnavigator_interface \
+		-llocalize_interface -llaser_interface -lserial \
+		-lrobot_interface
+
+ifndef NO_GRAPHICS
+
+SOURCES += walker_gui.c
+
+CFLAGS +=
+IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
+LFLAGS 	+= 	-lgdk_imlib -lglobal_graphics `$(GTK_CONFIG) --libs gthread`
+
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = walker_motors gnav valet valet_run walkerserial libgnav_interface.a \
+TARGETS = walker_motors valet valet_run walkerserial \
 		libvalet_interface.a libwalkerserial_interface.a walker \
 		libwalker_interface.a
 
 ifndef NO_GRAPHICS
-TARGETS += gnav_gui
+TARGETS += walker_gui
 endif
 
 ifdef NO_ZLIB
@@ -47,18 +44,13 @@ endif
 
 all:
 
-walker:	walker.o gnav_interface.o walkerserial_interface.o
+walker:	walker.o walkerserial_interface.o
 
 libwalker_interface.a:	walker_interface.o
 
 walker_motors:	walker_motors.o
 
-gnav:	gnav.o walker_interface.o
-
-gnav_gui:	gnav_gui.o gnav_interface.o walkerserial_interface.o \
-		walker_interface.o
-
-libgnav_interface.a:	gnav_interface.o
+walker_gui:	walker_gui.o walkerserial_interface.o walker_interface.o
 
 valet:	valet.o
 
