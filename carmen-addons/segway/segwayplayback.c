@@ -36,7 +36,9 @@ carmen_logger_file_p infile = NULL;
 double playback_starttime = 0.0;
 
 carmen_base_odometry_message odometry;
-carmen_robot_laser_message frontlaser, rearlaser;
+//carmen_robot_laser_message frontlaser, rearlaser;
+carmen_robot_laser_message rearlaser;
+carmen_laser_laser_message frontlaser;
 carmen_segway_pose_message segway;
 
 long *message_list = NULL;
@@ -116,9 +118,15 @@ void register_ipc_messages(void)
                       CARMEN_BASE_ODOMETRY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_ODOMETRY_NAME);
   
+  /*
   err = IPC_defineMsg(CARMEN_ROBOT_FRONTLASER_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_ROBOT_FRONTLASER_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_FRONTLASER_NAME);
+  */
+
+  err = IPC_defineMsg(CARMEN_LASER_FRONTLASER_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_FRONTLASER_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_FRONTLASER_NAME);
   
   err = IPC_defineMsg(CARMEN_ROBOT_REARLASER_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_ROBOT_REARLASER_FMT);
@@ -225,24 +233,31 @@ int read_message(int message_num, int publish)
     frontlaser.range = (float *)calloc(frontlaser.num_readings,
 					sizeof(float));
     carmen_test_alloc(frontlaser.range);
+    /*
     frontlaser.tooclose = (char *)calloc(frontlaser.num_readings, 1);
     carmen_test_alloc(frontlaser.tooclose);
+    */
     for(i = 0; i < frontlaser.num_readings; i++) {
       sscanf(line_ptr, "%f", &frontlaser.range[i]);
       line_ptr += strspn(line_ptr, " \t");
       while (*line_ptr != ' ')
 	line_ptr++;
     }
+    /*
     sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", &frontlaser.x,
 	   &frontlaser.y, &frontlaser.theta, &frontlaser.odom_x,
 	   &frontlaser.odom_y, &frontlaser.odom_theta, &frontlaser.timestamp,
 	   frontlaser.host, &playback_timestamp);
+     */
+    sscanf(line_ptr, "%lf %s %lf\n", &frontlaser.timestamp,
+           frontlaser.host, &playback_timestamp);
     if(publish) {
       wait_for_timestamp(playback_timestamp);
-      err = IPC_publishData(CARMEN_ROBOT_FRONTLASER_NAME, &frontlaser);
+      //err = IPC_publishData(CARMEN_ROBOT_FRONTLASER_NAME, &frontlaser);
+      err = IPC_publishData(CARMEN_LASER_FRONTLASER_NAME, &frontlaser);
     }
     free(frontlaser.range);
-    free(frontlaser.tooclose);
+    /* free(frontlaser.tooclose);*/
     return 1;
   }
   if(strcmp(message_name, "RLASER") == 0) {
