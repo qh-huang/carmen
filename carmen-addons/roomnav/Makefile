@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-#NO_GRAPHICS = 1  #dbug
+NO_GRAPHICS = 1  #dbug
 
 MODULE_NAME = ROOMNAV
 MODULE_COMMENT = Room-Based Navigator
@@ -18,7 +18,7 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lgdk_imlib \
 		-lrobot_interface
 else
 
-CFLAGS +=
+CFLAGS +=	-DNO_GRAPHICS
 IFLAGS 	+=
 LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 		-lglobal_graphics -lipc -llocalize_interface
