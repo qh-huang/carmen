@@ -67,7 +67,8 @@ void read_parameters(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  double command_tv = 0.0, command_rv = 0.0,tilt=0.0;
+  double command_tv = 0.0, command_rv = 0.0;
+  int tilt=0;
   char c;
   int quit = 0,fire=0;
   double f_timestamp;
