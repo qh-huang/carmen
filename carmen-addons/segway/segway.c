@@ -33,6 +33,7 @@ int quit_signal = 0;
 segway_t segway;
 double accel_factor, torque_factor;
 int gain_schedule;
+double command_tv = 0, command_rv = 0;
 
 void shutdown_handler(int sig)
 {
@@ -83,6 +84,7 @@ int main(int argc, char **argv)
 
   do {
     if(segway.status_ready) {
+      segway_set_velocity(&segway, command_tv, command_rv);
       current_time = carmen_get_time_ms();
       carmen_segway_publish_odometry(&segway, current_time);
       carmen_segway_publish_pose(&segway, current_time);

@@ -195,7 +195,13 @@ void segway_command(segway_p segway, double tv, double rv,
 
 void segway_set_velocity(segway_p segway, double tv, double rv)
 {
-  segway_command(segway, tv, rv, 0, 0);
+  static double last_tv = 0.0, last_rv = 0.0;
+
+  if(tv != last_tv || rv != last_rv) {
+    segway_command(segway, tv, rv, 0, 0);
+    last_tv = tv;
+    last_rv = rv;
+  }
 }
 
 void segway_stop(segway_p segway)
