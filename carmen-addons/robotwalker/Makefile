@@ -66,7 +66,7 @@ libvalet_interface.a:	valet_interface.o
 
 valet_run:	valet_run.o valet_interface.o
 
-walkerserial:	walkerserial.o
+walkerserial:	walkerserial.o walkerserial_interface.o
 
 libwalkerserial_interface.a:	walkerserial_interface.o
 

@@ -40,7 +40,14 @@ static void set_goal_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
 static void button_handler(carmen_walkerserial_button_msg *msg) {
 
-  msg = msg;
+  static int clutch = 0;
+
+  if (msg->button == 1) {
+    if (clutch)
+      carmen_walkerserial_disengage_clutch();
+    else
+      carmen_walkerserial_engage_clutch();
+  }
 }
 
 static void ipc_init() {

@@ -61,6 +61,66 @@ void carmen_gnav_subscribe_room_message(carmen_gnav_room_msg *room_msg,
   carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_ROOM_MSG_NAME);
 }
 
+int carmen_gnav_get_room() {
+
+  IPC_RETURN_TYPE err;
+  carmen_gnav_query query;
+  carmen_gnav_room_msg *response;
+
+  query.timestamp = carmen_get_time_ms();
+  strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_queryResponseData(CARMEN_GNAV_ROOM_QUERY_NAME, &query, 
+			      (void **) &response, 5000);
+  carmen_test_ipc_return_int(err, "Could not query room",
+			     CARMEN_GNAV_ROOM_QUERY_NAME);
+
+  return response->room;
+}
+
+int carmen_gnav_get_goal() {
+
+  IPC_RETURN_TYPE err;
+  carmen_gnav_query query;
+  carmen_gnav_goal_msg *response;
+
+  query.timestamp = carmen_get_time_ms();
+  strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_queryResponseData(CARMEN_GNAV_GOAL_QUERY_NAME, &query, 
+			      (void **) &response, 5000);
+  carmen_test_ipc_return_int(err, "Could not query goal",
+			     CARMEN_GNAV_GOAL_QUERY_NAME);
+
+  return response->goal;
+}
+
+int carmen_gnav_get_path(int **path) {
+
+  IPC_RETURN_TYPE err;
+  carmen_gnav_query query;
+  carmen_gnav_path_msg *response;
+
+  query.timestamp = carmen_get_time_ms();
+  strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_queryResponseData(CARMEN_GNAV_PATH_QUERY_NAME, &query, 
+			      (void **) &response, 5000);
+  carmen_test_ipc_return_int(err, "Could not query path",
+			     CARMEN_GNAV_PATH_QUERY_NAME);
+
+  if (path) {
+    if (response->path) {
+      *path = (int *) realloc(*path, response->pathlen * sizeof(int));
+      memcpy(*path, response->path, response->pathlen * sizeof(int));
+    }
+    else
+      *path = NULL;
+  }
+
+  return response->pathlen;
+}
+
 carmen_rooms_topology_p carmen_gnav_get_rooms_topology() {
 
   IPC_RETURN_TYPE err;
@@ -75,7 +135,7 @@ carmen_rooms_topology_p carmen_gnav_get_rooms_topology() {
   carmen_test_ipc_return_null(err, "Could not query rooms topology",
 			      CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
 
-  return (carmen_rooms_topology_p) response;
+  return &response->topology;
 }
 
 static void path_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,

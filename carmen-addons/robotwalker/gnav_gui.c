@@ -18,6 +18,8 @@ static void vector2d_scale(GdkPoint *dst, GdkPoint *src, int n, int x, int y,
 			   int width_percent, int height_percent);
 static void vector2d_shift(GdkPoint *dst, GdkPoint *src, int n, int x, int y);
 
+#define dist(x,y) sqrt((x)*(x)+(y)*(y))
+
 /**********************************
  * Drawing functions
  */
@@ -30,34 +32,34 @@ static void grid_to_image(GdkPixmap *pixmap, int width, int height, int radius);
  * Drawing canvases
  */
 static void draw_dest_canvas();
-static void draw_traveledLabel_canvas();
+static void draw_dist_canvas();
 static void draw_left_canvas();
 static void draw_right_canvas(int do_draw_arrow);
-
-static gint canvas_configure(GtkWidget *widget,
-			     gpointer p __attribute__ ((unused)));
 
 /**********************************
  * Message handling functions
  */
 
 static GdkGC *drawing_gc = NULL;
-static GdkPixmap *leftPixmap = NULL, 
-  *rightPixmap = NULL, 
-  *destPixmap=NULL,
-  *traveledLabelPixmap=NULL;
+static GdkPixmap *topPixmap = NULL;
+static GdkPixmap *leftPixmap = NULL; 
+static GdkPixmap *rightPixmap = NULL; 
+static GdkPixmap *destPixmap=NULL;
+static GdkPixmap *distPixmap=NULL;
 static GtkWidget *window;
-static GtkWidget *leftCanvas,
-  *rightCanvas,
-  *destCanvas,
-  *traveledLabelCanvas;
-static int left_canvas_width = 500, left_canvas_height = 500,
-  right_canvas_width = 500, right_canvas_height = 500,
-  dest_label_canvas_width = 500, dest_label_canvas_height = 50,
-  traveled_label_canvas_width = 500, traveled_label_canvas_height = 50;
+static GtkWidget *topCanvas;
+static GtkWidget *leftCanvas;
+static GtkWidget *rightCanvas;
+static GtkWidget *destCanvas;
+static GtkWidget *distCanvas;
+static int top_canvas_width = 1000, top_canvas_height = 100;
+static int left_canvas_width = 500, left_canvas_height = 500;
+static int right_canvas_width = 500, right_canvas_height = 500;
+static int dest_label_canvas_width = 500, dest_label_canvas_height = 50;
+static int traveled_label_canvas_width = 500, traveled_label_canvas_height = 50;
+
 static int label_height=50;
-static double arrowAngle = 1.0;
-static GtkWidget *distanceLabel;
+static double arrowAngle;
 static GtkWidget *directionsLabel;
 static char dest_name[128], room_name[128];
 
@@ -71,18 +73,15 @@ static int grid_width, grid_height;
 static double grid_resolution;
 
 static int room = -1;
+static int *path = NULL;
 static int pathlen = -1;
 static int goal = -1;
+static int dest_display_index = 0;
 carmen_point_t globalpos, globalpos_prev;
-carmen_gnav_room_msg room_msg;
-carmen_gnav_path_msg path_msg;
-carmen_rooms_topology_p rooms_topology = NULL;
+carmen_rooms_topology_p topology = NULL;
 
 static double distanceTraveled = 0.0;
 
-
-
-#define dist(x,y) sqrt((x)*(x)+(y)*(y))
 
 
 /**********************************
@@ -173,7 +172,7 @@ static void draw_arrow(GdkPixmap *pixmap, int x, int y, double theta, int width,
   GdkPoint arrow[7];
   //  int dim_x1, dim_y1, dim_x2, dim_y2, i;
 
-  //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
+  printf("draw_arrow()\n");
   
   vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
@@ -266,33 +265,80 @@ static void draw_dest_canvas() {
 		  dest_label_canvas_height);
 }
 
-static void draw_traveledLabel_canvas() {
+static void draw_dist_canvas() {
 
   int fontHeight;
   char setString[100];
 
   sprintf(setString, "%dm", (int)distanceTraveled);
 
-  draw_rect(traveledLabelPixmap, 0, 0, traveled_label_canvas_width,
+  draw_rect(distPixmap, 0, 0, traveled_label_canvas_width,
 	    traveled_label_canvas_height, backgroundColor);
 
   gdk_gc_set_foreground(drawing_gc, &fontColor);
   fontHeight=gdk_text_height(font, setString, 21);
   label_height=fontHeight;
-  gdk_draw_string(traveledLabelPixmap,
+  gdk_draw_string(distPixmap,
 		font,
 		drawing_gc,
 		10, fontHeight, setString);
 
-  gdk_draw_pixmap(traveledLabelCanvas->window,
-		  traveledLabelCanvas->style->fg_gc[GTK_WIDGET_STATE(traveledLabelCanvas)],
-		  traveledLabelPixmap, 0, 0, 0, 0, traveled_label_canvas_width,
+  gdk_draw_pixmap(distCanvas->window,
+		  distCanvas->style->fg_gc[GTK_WIDGET_STATE(distCanvas)],
+		  distPixmap, 0, 0, 0, 0, traveled_label_canvas_width,
 		  traveled_label_canvas_height);
+}
+
+static void draw_top_canvas() {
+
+  int width, height;
+
+  draw_rect(topPixmap, 0, 0, top_canvas_width, top_canvas_height, backgroundColor);
+
+  draw_arrow(topPixmap, 150, 20, M_PI/2.0, 40, 20, carmen_black);
+  draw_arrow(topPixmap, 350, 20, M_PI/2.0, 40, 20, carmen_black);
+  draw_arrow(topPixmap, 550, 20, M_PI/2.0, 40, 20, carmen_black);
+  draw_arrow(topPixmap, 750, 20, M_PI/2.0, 40, 20, carmen_black);
+
+  gdk_gc_set_foreground(drawing_gc, &fontColor);
+  width = gdk_string_width(font, topology->rooms[dest_display_index].name);
+  height = gdk_string_height(font, topology->rooms[dest_display_index].name);
+  gdk_draw_string(topPixmap, font, drawing_gc, 150 - width/2, 45+height,
+		  topology->rooms[dest_display_index].name);
+  
+  if (dest_display_index + 1 < topology->num_rooms) {
+    gdk_gc_set_foreground(drawing_gc, &fontColor);
+    width = gdk_string_width(font, topology->rooms[dest_display_index+1].name);
+    height = gdk_string_height(font, topology->rooms[dest_display_index+1].name);
+    gdk_draw_string(topPixmap, font, drawing_gc, 350 - width/2, 45+height,
+		    topology->rooms[dest_display_index+1].name);
+  }
+  
+  if (dest_display_index + 2 < topology->num_rooms) {
+    gdk_gc_set_foreground(drawing_gc, &fontColor);
+    width = gdk_string_width(font, topology->rooms[dest_display_index+2].name);
+    height = gdk_string_height(font, topology->rooms[dest_display_index+2].name);
+    gdk_draw_string(topPixmap, font, drawing_gc, 550 - width/2, 45+height,
+		    topology->rooms[dest_display_index+2].name);
+  }    
+  
+  if (dest_display_index + 3 < topology->num_rooms) {
+    gdk_gc_set_foreground(drawing_gc, &fontColor);
+    width = gdk_string_width(font, topology->rooms[dest_display_index+3].name);
+    height = gdk_string_height(font, topology->rooms[dest_display_index+3].name);
+    gdk_draw_string(topPixmap, font, drawing_gc, 750 - width/2, 45+height,
+		    topology->rooms[dest_display_index+3].name);
+  }
+  
+  gdk_draw_pixmap(topCanvas->window,
+		  topCanvas->style->fg_gc[GTK_WIDGET_STATE(topCanvas)],
+		  topPixmap, 0, 0, 0, 0, top_canvas_width, top_canvas_height);
 }
 
 static void draw_right_canvas(int do_draw_arrow) {
 
   draw_rect(rightPixmap, 0, 0, right_canvas_width, right_canvas_height, backgroundColor);
+
   if (do_draw_arrow)
     draw_arrow(rightPixmap, right_canvas_width/2, right_canvas_height/2,
 	       arrowAngle, 400, 200, carmen_red);
@@ -320,20 +366,16 @@ static gint canvas_configure(GtkWidget *widget,
 
   int display = (drawing_gc != NULL);
 
-  /*  if (widget==leftCanvas) {
-    printf("leftCanvas configure\n");
-  } else if (widget==rightCanvas) {
-    printf("rightCanvas configure\n");
-  } else if (widget==destCanvas) {
-    printf("dest configure\n");
-  } else {
-    printf("other Canvas configure\n");
-    }*/
-
   if (display) {
-    // Decide which draw to do:
-    if (widget==rightCanvas) {
-    // right
+    if (widget==topCanvas) {
+      if (topPixmap)
+	gdk_pixmap_unref(topPixmap);
+      top_canvas_width = widget->allocation.width;
+      top_canvas_height = widget->allocation.height;
+      topPixmap = gdk_pixmap_new(widget->window, top_canvas_width,
+				 top_canvas_height, -1);
+      draw_top_canvas();
+    } else if (widget==rightCanvas) {
       if (rightPixmap)
 	gdk_pixmap_unref(rightPixmap);
       right_canvas_width = widget->allocation.width;
@@ -342,7 +384,6 @@ static gint canvas_configure(GtkWidget *widget,
 			      right_canvas_height, -1);
       draw_right_canvas(0);
     } else if (widget==leftCanvas) {
-    // left
       if (leftPixmap)
 	gdk_pixmap_unref(leftPixmap);
       left_canvas_width = widget->allocation.width;
@@ -351,7 +392,6 @@ static gint canvas_configure(GtkWidget *widget,
 				  left_canvas_height, -1);
       draw_left_canvas();
     } else if (widget==destCanvas) {
-    // dest
       if (destPixmap)
 	gdk_pixmap_unref(destPixmap);
       dest_label_canvas_width = widget->allocation.width;
@@ -359,57 +399,59 @@ static gint canvas_configure(GtkWidget *widget,
       destPixmap = gdk_pixmap_new(widget->window, dest_label_canvas_width,
 					   dest_label_canvas_height, -1);
       draw_dest_canvas();
-    } else if (widget==traveledLabelCanvas) {
-    // traveledLabel
-      if (traveledLabelPixmap)
-	gdk_pixmap_unref(traveledLabelPixmap);
+    } else if (widget==distCanvas) {
+      if (distPixmap)
+	gdk_pixmap_unref(distPixmap);
       traveled_label_canvas_width = widget->allocation.width;
       traveled_label_canvas_height = widget->allocation.height;
-      traveledLabelPixmap = gdk_pixmap_new(widget->window, traveled_label_canvas_width,
+      distPixmap = gdk_pixmap_new(widget->window, traveled_label_canvas_width,
 			      traveled_label_canvas_height, -1);
-      draw_traveledLabel_canvas();
+      draw_dist_canvas();
     }
-    while(gtk_events_pending())
-      gtk_main_iteration_do(TRUE);
   }
 
-  //  printf("end Canvas configure\n");
   return TRUE;
 }
 
 /**********************************
  */
-static gint canvas_expose(GtkWidget *widget __attribute__ ((unused)),
-			  GdkEventExpose *event) {
+static gint canvas_expose(GtkWidget *widget, GdkEventExpose *event) {
 
   int display = (drawing_gc != NULL);
   
   if (display) {
-
-    gdk_draw_pixmap(rightCanvas->window,
-		    rightCanvas->style->fg_gc[GTK_WIDGET_STATE(rightCanvas)],
-		    rightPixmap, event->area.x, event->area.y,
-		    event->area.x, event->area.y,
-		    event->area.width, event->area.height);
-
-    gdk_draw_pixmap(leftCanvas->window,
-		    leftCanvas->style->fg_gc[GTK_WIDGET_STATE(leftCanvas)],
-		    leftPixmap, event->area.x, event->area.y,
-		    event->area.x, event->area.y,
-		    event->area.width, event->area.height);
-
-    gdk_draw_pixmap(destCanvas->window,
-		    destCanvas->style->fg_gc[GTK_WIDGET_STATE(destCanvas)],
-		    destPixmap, event->area.x, event->area.y,
-		    event->area.x, event->area.y,
-		    event->area.width, event->area.height);
-
-    gdk_draw_pixmap(traveledLabelCanvas->window,
-		    traveledLabelCanvas->style->fg_gc[GTK_WIDGET_STATE(traveledLabelCanvas)],
-		    traveledLabelPixmap, event->area.x, event->area.y,
-		    event->area.x, event->area.y,
-		    event->area.width, event->area.height);
+    if (widget == topCanvas)
+      gdk_draw_pixmap(topCanvas->window,
+		      topCanvas->style->fg_gc[GTK_WIDGET_STATE(topCanvas)],
+		      topPixmap, event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
+    else if (widget == rightCanvas)
+      gdk_draw_pixmap(rightCanvas->window,
+		      rightCanvas->style->fg_gc[GTK_WIDGET_STATE(rightCanvas)],
+		      rightPixmap, event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
+    else if (widget == leftCanvas)
+      gdk_draw_pixmap(leftCanvas->window,
+		      leftCanvas->style->fg_gc[GTK_WIDGET_STATE(leftCanvas)],
+		      leftPixmap, event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
+    else if (widget == destCanvas)
+      gdk_draw_pixmap(destCanvas->window,
+		      destCanvas->style->fg_gc[GTK_WIDGET_STATE(destCanvas)],
+		      destPixmap, event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
+    else if (widget == distCanvas)
+      gdk_draw_pixmap(distCanvas->window,
+		      distCanvas->style->fg_gc[GTK_WIDGET_STATE(distCanvas)],
+		      distPixmap, event->area.x, event->area.y,
+		      event->area.x, event->area.y,
+		      event->area.width, event->area.height);
   }
+
   return TRUE;
 }
 
@@ -438,27 +480,29 @@ static void gui_init() {
   canvasHbox = gtk_hbox_new(TRUE, 0);
   hboxTop = gtk_hbox_new(FALSE, 0);
 
-  distanceLabel = gtk_label_new("567ft");
   dest_name[0] = '\0';
   directionsLabel = gtk_label_new("Turn Right");
 
-
+  topCanvas = gtk_drawing_area_new();
   leftCanvas = gtk_drawing_area_new();
   rightCanvas = gtk_drawing_area_new();
   destCanvas = gtk_drawing_area_new();
-  traveledLabelCanvas = gtk_drawing_area_new();
+  distCanvas = gtk_drawing_area_new();
 
+  gtk_drawing_area_size(GTK_DRAWING_AREA(topCanvas),
+			top_canvas_width, top_canvas_height);
   gtk_drawing_area_size(GTK_DRAWING_AREA(leftCanvas),
 			left_canvas_width, left_canvas_height);
   gtk_drawing_area_size(GTK_DRAWING_AREA(rightCanvas),
 			right_canvas_width, right_canvas_height);
-  gtk_drawing_area_size(GTK_DRAWING_AREA(traveledLabelCanvas),
+  gtk_drawing_area_size(GTK_DRAWING_AREA(distCanvas),
 			traveled_label_canvas_width, traveled_label_canvas_height);
   gtk_drawing_area_size(GTK_DRAWING_AREA(destCanvas),
 			dest_label_canvas_width, dest_label_canvas_height);
 
+  gtk_box_pack_start(GTK_BOX(vbox), topCanvas, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hboxTop, TRUE, TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(hboxTop), traveledLabelCanvas, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(hboxTop), distCanvas, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(hboxTop), destCanvas, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), canvasHbox, TRUE, TRUE, 0);
@@ -468,28 +512,29 @@ static void gui_init() {
   gtk_box_pack_start(GTK_BOX(vbox), directionsLabel, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
+  gtk_signal_connect(GTK_OBJECT(topCanvas), "expose_event",
+		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
+  gtk_signal_connect(GTK_OBJECT(topCanvas), "configure_event",
+		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
+
   gtk_signal_connect(GTK_OBJECT(leftCanvas), "expose_event",
 		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
-
   gtk_signal_connect(GTK_OBJECT(leftCanvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
 
   gtk_signal_connect(GTK_OBJECT(rightCanvas), "expose_event",
 		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
-
   gtk_signal_connect(GTK_OBJECT(rightCanvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
 
   gtk_signal_connect(GTK_OBJECT(destCanvas), "expose_event",
 		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
-
   gtk_signal_connect(GTK_OBJECT(destCanvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
 
-  gtk_signal_connect(GTK_OBJECT(traveledLabelCanvas), "expose_event",
+  gtk_signal_connect(GTK_OBJECT(distCanvas), "expose_event",
 		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
-
-  gtk_signal_connect(GTK_OBJECT(traveledLabelCanvas), "configure_event",
+  gtk_signal_connect(GTK_OBJECT(distCanvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -505,11 +550,15 @@ static void gui_init() {
   carmen_graphics_setup_colors();
   backgroundColor=carmen_white;
   fontColor=carmen_black;
-  
+
+  while(gtk_events_pending())
+    gtk_main_iteration_do(TRUE);
+
+  canvas_configure(topCanvas, NULL);
   canvas_configure(leftCanvas, NULL);
   canvas_configure(rightCanvas, NULL);
   canvas_configure(destCanvas, NULL);
-  canvas_configure(traveledLabelCanvas, NULL);
+  canvas_configure(distCanvas, NULL);
 }
 
 void arrow_update() {
@@ -517,13 +566,10 @@ void arrow_update() {
   carmen_door_p next_door;
   double x, y, theta;
 
-  //printf("arrow_update:  room = %d, pathlen = %d\n", room, pathlen);
+  printf("arrow_update:  room = %d, pathlen = %d\n", room, pathlen);
 
   if (room == -1)
     return;
-
-  if (rooms_topology == NULL)
-    rooms_topology = carmen_gnav_get_rooms_topology();
 
   if (pathlen < 0)  // no goal
     return;
@@ -533,7 +579,7 @@ void arrow_update() {
     return;
   }
 
-  next_door = &rooms_topology->doors[path_msg.path[0]];
+  next_door = &topology->doors[path[0]];
   x = globalpos.x;
   y = globalpos.y;
   theta = globalpos.theta;
@@ -544,7 +590,7 @@ void arrow_update() {
       draw_right_canvas(0);
       return;
     }
-    next_door = &rooms_topology->doors[path_msg.path[1]];
+    next_door = &topology->doors[path[1]];
   }
 
   setArrowAngle(M_PI/2.0 - theta +
@@ -553,32 +599,41 @@ void arrow_update() {
   draw_right_canvas(1);
 }
 
-void room_handler() {
+void room_handler(carmen_gnav_room_msg *room_msg) {
 
-  room = room_msg.room;
+  room = room_msg->room;
   arrow_update();
 }
 
-void path_handler() {
+void path_handler(carmen_gnav_path_msg *path_msg) {
 
-  pathlen = path_msg.pathlen;
+  pathlen = path_msg->pathlen;
+  if (path_msg->path) {
+    path = (int *) realloc(path, pathlen * sizeof(int));
+    memcpy(path, path_msg->path, pathlen * sizeof(int));
+  }
+  else
+    path = NULL;
   arrow_update();
 }
 
 void button_handler(carmen_walkerserial_button_msg *button_msg) {
 
-  static int buttons[6] = {0, 1, 2, 3, 4, 5};
-  int goal;
-
-  goal = buttons[button_msg->button];
-  carmen_walker_set_goal(goal);
+  if (button_msg->button == 6) {
+    dest_display_index = dest_display_index + 4;
+    if (dest_display_index >= topology->num_rooms)
+      dest_display_index = 0;
+    draw_top_canvas();
+  }
+  else if (button_msg->button > 1)
+    carmen_walker_set_goal(dest_display_index + button_msg->button - 2);
 }
 
 void goal_changed_handler(carmen_walker_goal_changed_msg *goal_changed_msg) {
 
   goal = goal_changed_msg->goal;
   sprintf(dest_name, "To %s",
-	  rooms_topology->rooms[goal].name);
+	  topology->rooms[goal].name);
   draw_dest_canvas();
 }
 
@@ -597,7 +652,7 @@ void localize_handler(carmen_localize_globalpos_message *global_pos) {
   if (distance >= 0.5) {
     distanceTraveled += distance;
     memcpy(&globalpos_prev, &globalpos, sizeof(globalpos));
-    draw_traveledLabel_canvas();
+    draw_dist_canvas();
   }
 
   memcpy(&globalpos, &global_pos->globalpos, sizeof(globalpos));
@@ -607,7 +662,7 @@ void localize_handler(carmen_localize_globalpos_message *global_pos) {
     last_update = cur_time;
     memcpy(&globalpos_prev, &globalpos, sizeof(globalpos));
     distanceTraveled = 0.0;
-    draw_traveledLabel_canvas();
+    draw_dist_canvas();
   }
   else if (cur_time - last_update > 500) {
     last_update = cur_time;
@@ -618,7 +673,7 @@ void localize_handler(carmen_localize_globalpos_message *global_pos) {
     else if (goal == room)
       sprintf(dest_name, "Arrived");
     else
-      sprintf(dest_name, "To %s", rooms_topology->rooms[goal].name);
+      sprintf(dest_name, "To %s", topology->rooms[goal].name);
     draw_dest_canvas();
   }
 }
@@ -652,11 +707,6 @@ void grid_init() {
 	grid[i][j] = GRID_WALL;
     }
   }
-
-  /*
-  while(gtk_events_pending())
-    gtk_main_iteration_do(TRUE);
-  */
 }
 
 void ipc_init() {
@@ -664,11 +714,11 @@ void ipc_init() {
   carmen_localize_subscribe_globalpos_message(NULL, (carmen_handler_t)localize_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
 
-  carmen_gnav_subscribe_room_message(&room_msg, room_handler,
-				      CARMEN_SUBSCRIBE_LATEST);
+  carmen_gnav_subscribe_room_message(NULL, (carmen_handler_t)room_handler,
+				     CARMEN_SUBSCRIBE_LATEST);
 
-  carmen_gnav_subscribe_path_message(&path_msg, path_handler,
-				      CARMEN_SUBSCRIBE_LATEST);
+  carmen_gnav_subscribe_path_message(NULL, (carmen_handler_t)path_handler,
+				     CARMEN_SUBSCRIBE_LATEST);
 
   carmen_walkerserial_subscribe_button_message(NULL,
 					       (carmen_handler_t)
@@ -679,6 +729,16 @@ void ipc_init() {
 					       (carmen_handler_t)
 					       goal_changed_handler,
 					       CARMEN_SUBSCRIBE_LATEST);
+}
+
+static void gnav_init() {
+
+  while (topology == NULL)
+    topology = carmen_gnav_get_rooms_topology();
+  room = carmen_gnav_get_room();
+  goal = carmen_gnav_get_goal();
+  if (goal >= 0)
+    pathlen = carmen_gnav_get_path(&path);
 }
 
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {
@@ -696,6 +756,7 @@ int main(int argc, char **argv) {
 
   gtk_init(&argc, &argv);
 
+  gnav_init();
   grid_init();
   gui_init();
   ipc_init();
