@@ -29,7 +29,7 @@ endif
 include $(CARMEN_HOME)/src/Makefile.conf
 
 CFLAGS +=
-LFLAGS += -lglobal -lipc -lparam_interface
+LFLAGS += -lglobal -lipc -lparam_interface -lserial
 #LFLAGS += -lgps_interface -lparam_interface -lglobal -lipc -lbase_interface \
 #	  -lcompass_interface
 
