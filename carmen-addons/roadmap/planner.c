@@ -29,7 +29,7 @@
 #include <assert.h>
 #include "roadmap.h"
 #include "dynamics.h"
-#include "pomdp_roadmap.h"
+#include "mdp_roadmap.h"
 #include "planner_interface.h"
 #include "navigator.h"
 
@@ -42,8 +42,7 @@ static carmen_traj_point_t robot;
 static double max_t_vel;
 static double approach_dist;
 
-static carmen_roadmap_t *roadmap = NULL;
-static carmen_roadmap_t *roadmap_without_people = NULL;
+static carmen_roadmap_mdp_t *roadmap = NULL;
 static carmen_list_t *path = NULL;
 
 int carmen_planner_update_goal(carmen_world_point_p new_goal, 
@@ -54,10 +53,8 @@ int carmen_planner_update_goal(carmen_world_point_p new_goal,
   goal = *new_goal;
 
   if (map) {
-    carmen_dynamics_clear_all_blocked(roadmap);
-    carmen_dynamics_clear_all_blocked(roadmap_without_people);
-    carmen_roadmap_plan(roadmap, new_goal);
-    carmen_roadmap_plan(roadmap_without_people, new_goal);
+    carmen_mdp_dynamics_clear_all_blocked(roadmap);
+    carmen_roadmap_mdp_plan(roadmap, new_goal);
   }
 
   carmen_verbose("Set goal to %.1f %.1f, done planning\n",
@@ -71,8 +68,7 @@ int carmen_planner_update_robot(carmen_traj_point_p new_position)
   robot = *new_position;
   have_robot = 1;
 
-  path = carmen_roadmap_pomdp_generate_path(&robot, roadmap, 
-					    roadmap_without_people);
+  path = carmen_roadmap_mdp_generate_path(&robot, roadmap);
 
   return 0;
 }
@@ -83,9 +79,8 @@ void carmen_planner_set_map(carmen_map_p new_map)
 
   carmen_verbose("Initialized with map\n");
 
-  roadmap = carmen_roadmap_initialize(new_map);
-  roadmap_without_people = carmen_roadmap_copy(roadmap);
-  roadmap_without_people->avoid_people = 0;
+  roadmap = carmen_roadmap_mdp_initialize(new_map);
+
   carmen_param_set_module("robot");
   carmen_param_get_double("max_t_vel", &max_t_vel);
   carmen_param_get_double("min_approach_dist", &approach_dist);
@@ -157,8 +152,7 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
   if (!have_robot || !have_goal || !map || !path)
     return -1;
 
-  path = carmen_roadmap_pomdp_generate_path(&robot, roadmap, 
-					    roadmap_without_people);
+  path = carmen_roadmap_mdp_generate_path(&robot, roadmap);
 
   if (path == NULL)
     return -1;

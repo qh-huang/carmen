@@ -7,10 +7,9 @@
 
 #include "roadmap.h"
 #include "dynamics.h"
-#include "pomdp_roadmap.h"
+#include "mdp_roadmap.h"
 
-static carmen_roadmap_t *roadmap;
-static carmen_roadmap_t *roadmap_without_people;
+static carmen_roadmap_mdp_t *roadmap;
 static carmen_world_point_t start;
 static carmen_world_point_t person;
 static carmen_world_point_t goal;
@@ -43,22 +42,24 @@ static void draw_graph(GtkMapViewer *the_map_view)
   carmen_roadmap_vertex_t *n1;
   carmen_roadmap_vertex_t *n2;
   carmen_roadmap_edge_t edge;
-  int num_vertices;
   carmen_map_point_t map_pt;
   carmen_world_point_t world_pt, next;
   GdkColor color;
   GdkGCValues gcvalues;
   carmen_roadmap_vertex_t *node_list;
+  int num_nodes;
   double max_util, min_util, scale;
   carmen_list_t *path;
   carmen_traj_point_t traj_point;
 
   //  carmen_warn("%f %f\n", start.pose.x, start.pose.y);
 
-  node_list = (carmen_roadmap_vertex_t *)roadmap->nodes->list;
+  node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
+  num_nodes = roadmap->nodes->length;
   max_util = -MAXFLOAT;
   min_util = MAXFLOAT;
-  for (i = 0; i < roadmap->nodes->length; i++) {
+
+  for (i = 0; i < num_nodes; i++) {
     if (node_list[i].utility >= 0) {
       if (node_list[i].utility < min_util)
 	min_util = node_list[i].utility;
@@ -67,8 +68,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
     } 
   }
 
-  num_vertices = roadmap->nodes->length;
-  for (i = 0; i < num_vertices; i++) {
+  for (i = 0; i < num_nodes; i++) {
     n1 = node_list+i;
     m1.x = n1->x;
     m1.y = n1->y;
@@ -115,7 +115,8 @@ static void draw_graph(GtkMapViewer *the_map_view)
   if (start.map == NULL) 
     return;
 
-  n1 = carmen_roadmap_nearest_node(&start, roadmap);
+
+  n1 = carmen_roadmap_mdp_nearest_node(&start, roadmap);
   if (n1 == NULL)
     return;
 
@@ -132,8 +133,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
   traj_point.x = start.pose.x;
   traj_point.y = start.pose.y;
 
-  path = carmen_roadmap_pomdp_generate_path(&traj_point, roadmap,
-					    roadmap_without_people);
+  path = carmen_roadmap_mdp_generate_path(&traj_point, roadmap);
 
   if (!path)
     return;
@@ -147,13 +147,13 @@ static void draw_graph(GtkMapViewer *the_map_view)
   traj_point = *(carmen_traj_point_t *)carmen_list_get(path, 0);
   world_pt.pose.x = traj_point.x;
   world_pt.pose.y = traj_point.y;
-  world_pt.map = roadmap->c_space;
+  world_pt.map = roadmap->roadmap->c_space;
 
+  next.map = roadmap->roadmap->c_space;
   for (i = 1; i < path->length; i++) {
     traj_point = *(carmen_traj_point_t *)carmen_list_get(path, i);
     next.pose.x = traj_point.x;
     next.pose.y = traj_point.y;
-    next.map = roadmap->c_space;
     carmen_map_graphics_draw_line(the_map_view, &carmen_green, &world_pt,
 				  &next);	
     world_pt = next;
@@ -197,7 +197,7 @@ static int release_handler(GtkMapViewer *the_map_view,
     carmen_dynamics_update_person(&dot_person);
   } else {
     goal = *world_point;    
-    carmen_roadmap_plan(roadmap, &goal);
+    carmen_roadmap_mdp_plan(roadmap, &goal);
   }
 
   carmen_map_graphics_redraw(the_map_view);
@@ -269,9 +269,8 @@ int main(int argc, char *argv[])
   carmen_test_alloc(map);
   carmen_map_get_gridmap(map);
 
-  roadmap = carmen_roadmap_initialize(map);
-  roadmap_without_people = carmen_roadmap_copy(roadmap);
-  roadmap_without_people->avoid_people = 0;
+  roadmap = carmen_roadmap_mdp_initialize(map);
+
   carmen_dynamics_initialize_no_ipc(map);
 
   if (1) {
@@ -297,8 +296,7 @@ int main(int argc, char *argv[])
     person.map = map;
     carmen_dynamics_update_person(&dot_person);
 
-    carmen_roadmap_plan(roadmap, &goal);
-    carmen_roadmap_plan(roadmap_without_people, &goal);
+    carmen_roadmap_mdp_plan(roadmap, &goal);
     
     memset(&start, 0, sizeof(carmen_world_point_t));
     
@@ -312,9 +310,9 @@ int main(int argc, char *argv[])
       //      start.pose.y = 14.67;;
       
       start.map = map;
-      n1 = carmen_roadmap_nearest_node(&start, roadmap);
+      n1 = carmen_roadmap_mdp_nearest_node(&start, roadmap);
       do {
-	n2 = carmen_roadmap_next_node(n1, roadmap);
+	n2 = carmen_roadmap_mdp_next_node(n1, roadmap);
 	n1 = n2;
       } while (n2 && n2->utility > 0);
     }  

@@ -2,6 +2,7 @@
 #include <values.h>
 #include <assert.h>
 #include "roadmap.h"
+#include "mdp_roadmap.h"
 #include "dynamics.h"
 
 static double compute_path_time(carmen_roadmap_t *roadmap)
@@ -17,8 +18,9 @@ static double compute_path_time(carmen_roadmap_t *roadmap)
   for (i = 1; i < roadmap->path->length; i++) {
     dest = (carmen_traj_point_t *)carmen_list_get(roadmap->path, i);
     total += carmen_distance_traj(start, dest)/roadmap->robot_speed;
-    carmen_warn("%f : %f %f -> %f %f\n", total, start->x, start->y,
-		dest->x, dest->y);
+    if (0)
+      carmen_warn("%f : %f %f -> %f %f\n", total, start->x, start->y,
+		  dest->x, dest->y);
     if (!roadmap->avoid_people) {
       num_blocking_people = carmen_dynamics_num_blocking_people(start, dest);
       total += 30*num_blocking_people;
@@ -45,51 +47,111 @@ static void synchronize_node_lists(carmen_roadmap_t *roadmap,
   }
 }
 
-carmen_list_t *carmen_roadmap_pomdp_generate_path(carmen_traj_point_t *robot,
-						  carmen_roadmap_t *roadmap,
-						  carmen_roadmap_t *
-						  roadmap_without_people)
+carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
+						carmen_roadmap_mdp_t *roadmap)
 {
   int path_ok, path_without_people_ok;
   double time, time_without_people;
 
-  carmen_warn("Synchronizing lists\n");
+  //  carmen_warn("Synchronizing lists\n");
 
-  synchronize_node_lists(roadmap, roadmap_without_people);
+  synchronize_node_lists(roadmap->roadmap, roadmap->roadmap_without_people);
 
-  carmen_warn("Synchronizing lists done\n");
+  //  carmen_warn("Synchronizing lists done\n");
 
-  carmen_warn("About to generate path with people\n");
+  //  carmen_warn("About to generate path with people\n");
 
-  path_ok = carmen_roadmap_generate_path(robot, roadmap);
+  path_ok = carmen_roadmap_generate_path(robot, roadmap->roadmap);
 
-  carmen_warn("Generated path with people: %d\n", path_ok);
+  //  carmen_warn("Generated path with people: %d\n", path_ok);
 
   if (path_ok > 0) {
-    time = compute_path_time(roadmap);
-    carmen_warn("Computed path with people: %f\n", time);
+    time = compute_path_time(roadmap->roadmap);
+    //    carmen_warn("Computed path with people: %f\n", time);
   } else 
     time = MAXFLOAT;
   
-  carmen_warn("About to generate path without people\n");
+  //  carmen_warn("About to generate path without people\n");
 
   path_without_people_ok = carmen_roadmap_generate_path
-    (robot, roadmap_without_people);
+    (robot, roadmap->roadmap_without_people);
 
-  carmen_warn("Generated path without people: %d\n", path_without_people_ok);
+  //  carmen_warn("Generated path without people: %d\n", path_without_people_ok);
 
   if (path_without_people_ok > 0) {
     time_without_people = 
-      compute_path_time(roadmap_without_people);
-    carmen_warn("Computed path without people: %f\n", time_without_people);
+      compute_path_time(roadmap->roadmap_without_people);
+    //    carmen_warn("Computed path without people: %f\n", time_without_people);
   } else 
     time_without_people = MAXFLOAT;
 
   if (time > MAXFLOAT/2 && time_without_people > MAXFLOAT/2)
     return NULL;
   
-  if (time > time_without_people)
-    return roadmap_without_people->path;
+  if (time > time_without_people) {
+    roadmap->nodes = roadmap->roadmap_without_people->nodes;
+    roadmap->path = roadmap->roadmap_without_people->path;
+    return roadmap->roadmap_without_people->path;
+  }
 
-  return roadmap->path;
+  roadmap->nodes = roadmap->roadmap->nodes;
+  roadmap->path = roadmap->roadmap->path;
+
+  return roadmap->roadmap->path;
+}
+
+carmen_roadmap_mdp_t *carmen_roadmap_mdp_initialize(carmen_map_t *map)
+{
+  carmen_roadmap_mdp_t *roadmap;
+
+  roadmap = (carmen_roadmap_mdp_t *)calloc(1, sizeof(carmen_roadmap_mdp_t));
+  carmen_test_alloc(roadmap);
+
+  roadmap->roadmap = carmen_roadmap_initialize(map);
+  roadmap->roadmap_without_people = carmen_roadmap_copy(roadmap->roadmap);
+  roadmap->roadmap_without_people->avoid_people = 0;
+
+  roadmap->c_space = roadmap->roadmap->c_space;
+  roadmap->robot_speed = roadmap->roadmap->robot_speed;
+  roadmap->nodes = roadmap->roadmap->nodes;
+
+  roadmap->path = NULL;
+
+  return roadmap;
+}
+
+void carmen_roadmap_mdp_plan(carmen_roadmap_mdp_t *roadmap, 
+			     carmen_world_point_t *goal)
+{
+  carmen_roadmap_plan(roadmap->roadmap, goal);
+  carmen_roadmap_plan(roadmap->roadmap_without_people, goal);
+
+  assert(roadmap->roadmap->goal_id == 
+	 roadmap->roadmap_without_people->goal_id);
+
+  roadmap->goal_id = roadmap->roadmap->goal_id;
+}
+
+carmen_roadmap_vertex_t *carmen_roadmap_mdp_nearest_node
+(carmen_world_point_t *robot, carmen_roadmap_mdp_t *roadmap)
+{
+  if (roadmap->nodes == roadmap->roadmap_without_people->nodes)
+    return carmen_roadmap_nearest_node(robot, roadmap->roadmap_without_people);
+
+  return carmen_roadmap_nearest_node(robot, roadmap->roadmap);
+}
+
+carmen_roadmap_vertex_t *carmen_roadmap_mdp_next_node
+(carmen_roadmap_vertex_t *node, carmen_roadmap_mdp_t *roadmap)
+{
+  if (roadmap->nodes == roadmap->roadmap_without_people->nodes)
+    return carmen_roadmap_next_node(node, roadmap->roadmap_without_people);
+
+  return carmen_roadmap_next_node(node, roadmap->roadmap);
+}
+
+void carmen_mdp_dynamics_clear_all_blocked(carmen_roadmap_mdp_t *roadmap)
+{
+  carmen_dynamics_clear_all_blocked(roadmap->roadmap);
+  carmen_dynamics_clear_all_blocked(roadmap->roadmap_without_people);
 }
