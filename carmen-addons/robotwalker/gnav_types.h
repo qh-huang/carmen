@@ -11,8 +11,8 @@ extern "C" {
 
 /*
  * (pos.x, pos.y) is the center of the door.
- * pos.theta is between 0 and pi and indicates the 
- * angle of the positive (upward-pointing) vector
+ * pos.theta is between 0 and 2*pi and indicates the 
+ * angle of the vector from room 1 to room 2
  * normal to the door at the center point.
 */
 struct carmen_door {

@@ -163,9 +163,6 @@ static void get_doors(carmen_map_placelist_p placelist) {
     e2y = doors[j].points.places[e2].y;
     doors[j].pose.x = (e1x + e2x) / 2.0;
     doors[j].pose.y = (e1y + e2y) / 2.0;
-    doors[j].pose.theta = atan2(e2y - e1y, e2x - e1x) - M_PI/2.0;
-    while (doors[j].pose.theta < 0)
-      doors[j].pose.theta += M_PI;
     doors[j].width = dist(e2x - e1x, e2y - e1y);
   }
 
@@ -437,6 +434,8 @@ static void get_rooms() {
     p2x = mx - dy / d;
     p2y = my + dx / d;
 
+    doors[i].pose.theta = atan2(p2y - p1y, p2x - p1x);
+
     world_point.pose.x = p1x;
     world_point.pose.y = p1y;
     carmen_world_to_map(&world_point, &map_point);
@@ -691,6 +690,162 @@ static void draw_grid(int x, int y, int width, int height) {
 
   while(gtk_events_pending())
     gtk_main_iteration_do(TRUE);
+}
+
+static void vector2d_shift(GdkPoint *dst, GdkPoint *src, int n, int x, int y) {
+
+  int i;
+
+  for (i = 0; i < n; i++) {
+    dst[i].x = src[i].x + x;
+    dst[i].y = src[i].y + y;
+  }
+}
+
+/*
+ * rotate n points of src theta radians about (x,y) and put result in dst.
+ */
+static void vector2d_rotate(GdkPoint *dst, GdkPoint *src, int n,
+			    int x, int y, double theta) {
+
+  int i, x2, y2;
+  double cos_theta, sin_theta;
+
+  cos_theta = cos(theta);
+  sin_theta = sin(theta);
+
+  for (i = 0; i < n; i++) {
+    x2 = src[i].x - x;
+    y2 = src[i].y - y;
+    dst[i].x = x + cos_theta*x2 - sin_theta*y2;
+    dst[i].y = y + sin_theta*x2 + cos_theta*y2;
+  }
+}
+
+static void vector2d_scale(GdkPoint *dst, GdkPoint *src, int n, int x, int y,
+			   int width_percent, int height_percent) {
+
+  int i, x2, y2;
+
+  for (i = 0; i < n; i++) {
+    x2 = src[i].x - x;
+    y2 = src[i].y - y;
+    dst[i].x = x + x2*width_percent/100.0;
+    dst[i].y = y + y2*height_percent/100.0;
+  }
+}
+
+static void draw_arrow(int x, int y, double theta, int width, int height,
+		       GdkColor color) {
+
+  // default arrow shape with x = y = theta = 0, width = 100, & height = 100
+  static const GdkPoint arrow_shape[7] = {{0,0}, {-40, -50}, {-30, -10}, {-100, -10},
+					  {-100, 10}, {-30, 10}, {-40, 50}};
+  static const GdkPoint dim_shape[2] = {{-100, -50}, {0, 50}};
+  GdkPoint arrow[7];
+  GdkPoint dim[2];
+  int dim_x, dim_y, dim_width, dim_height;
+
+  printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
+  
+  vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
+  vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
+  vector2d_shift(arrow, arrow, 7, x, grid_height - y);
+
+  vector2d_scale(dim, (GdkPoint *) dim_shape, 2, 0, 0, width, height);
+  vector2d_rotate(dim, dim, 2, 0, 0, theta);
+  vector2d_shift(dim, dim, 2, x, y);
+
+  gdk_gc_set_foreground(drawing_gc, &color);
+  gdk_draw_polygon(pixmap, drawing_gc, 1, arrow, 7);
+
+  dim_x = (dim[0].x < dim[1].x ? dim[0].x : dim[1].x);
+  dim_y = (dim[0].y < dim[1].y ? dim[0].y : dim[1].y);
+  dim_width = (dim[0].x < dim[1].x ? dim[1].x - dim[0].x : dim[0].x - dim[1].x);
+  dim_height = (dim[0].y < dim[1].y ? dim[1].y - dim[0].y : dim[0].y - dim[1].y);
+
+  printf("dim = [(%d, %d), (%d, %d)]\n", dim[0].x, dim[0].y, dim[1].x, dim[1].y);
+  printf("dim_x = %d, dim_y = %d, dim_width = %d, dim_height = %d\n",
+	 dim_x, dim_y, dim_width, dim_height);
+
+  draw_grid(dim_x, dim_y, dim_width, dim_height);
+}
+
+static void erase_arrow(int x, int y, double theta, int width, int height) {
+
+  static const GdkPoint dim_shape[2] = {{-100, -50}, {0, 50}};
+  GdkPoint dim[2];
+  int dim_x, dim_y, dim_width, dim_height;
+  
+  vector2d_scale(dim, (GdkPoint *) dim_shape, 2, 0, 0, width, height);
+  vector2d_rotate(dim, dim, 2, 0, 0, theta);
+  vector2d_shift(dim, dim, 2, x, y);
+
+  dim_x = (dim[0].x < dim[1].x ? dim[0].x : dim[1].x);
+  dim_y = (dim[0].y < dim[1].y ? dim[0].y : dim[1].y);
+  dim_width = (dim[0].x < dim[1].x ? dim[1].x - dim[0].x : dim[0].x - dim[1].x);
+  dim_height = (dim[0].y < dim[1].y ? dim[1].y - dim[0].y : dim[0].y - dim[1].y);
+
+  grid_to_image(dim_x, dim_y, dim_width, dim_height);
+  draw_grid(dim_x, dim_y, dim_width, dim_height);
+}
+
+static void draw_path() {
+
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+  int i, r1, r2;
+  double theta;
+
+  world_point.map = map_point.map = &map;
+
+  r1 = r2 = room;
+  theta = 0.0;
+
+  for (i = 0; i < pathlen; i++) {
+    r1 = r2;
+    if (doors[path[i]].room1 == r1) {
+      r2 = doors[path[i]].room2;
+      theta = doors[path[i]].pose.theta;
+    }
+    else {
+      r2 = doors[path[i]].room1;
+      theta = carmen_normalize_theta(doors[path[i]].pose.theta + M_PI);
+    }
+    world_point.pose.x = doors[path[i]].pose.x;
+    world_point.pose.y = doors[path[i]].pose.y;
+    carmen_world_to_map(&world_point, &map_point);
+    draw_arrow(map_point.x, map_point.y, theta, 20, 10, carmen_red);
+  }
+}
+
+static void erase_path() {
+
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+  int i, r1, r2;
+  double theta;
+
+  world_point.map = map_point.map = &map;
+
+  r1 = r2 = room;
+  theta = 0.0;
+
+  for (i = 0; i < pathlen; i++) {
+    r1 = r2;
+    if (doors[path[i]].room1 == r1) {
+      r2 = doors[path[i]].room2;
+      theta = doors[path[i]].pose.theta;
+    }
+    else {
+      r2 = doors[path[i]].room1;
+      theta = carmen_normalize_theta(doors[path[i]].pose.theta + M_PI);
+    }
+    world_point.pose.x = doors[path[i]].pose.x;
+    world_point.pose.y = doors[path[i]].pose.y;
+    carmen_world_to_map(&world_point, &map_point);
+    erase_arrow(map_point.x, map_point.y, theta, 20, 10);
+  }
 }
 
 static gint button_press_event(GtkWidget *widget __attribute__ ((unused)),
@@ -953,6 +1108,10 @@ static int get_path() {
 
   if (goal == room) {
     changed = !path_eq(path, pathlen, NULL, 0);
+#ifndef NO_GRAPHICS
+    if (changed)
+      erase_path();
+#endif
     pathlen = 0;
     if (path)
       free(path);
@@ -964,20 +1123,35 @@ static int get_path() {
   for (pq = pq_init(); pq != NULL; pq = pq_expand(pq)) {
     if (is_goal(pq)) {
       changed = !path_eq(path, pathlen, pq->path, pq->pathlen);
+#ifndef NO_GRAPHICS
+      if (changed)
+	erase_path();
+#endif
       pathlen = pq->pathlen;
       path = realloc(path, pathlen * sizeof(int));
       memcpy(path, pq->path, pathlen * sizeof(int));
       pq_free(pq);
+#ifndef NO_GRAPHICS
+      if (changed)
+	draw_path();
+#endif
       return changed;
     }
   }
 
   changed = !path_eq(path, pathlen, NULL, -1);
+#ifndef NO_GRAPHICS
+  if (changed)
+    erase_path();
+#endif
   pathlen = -1;
   if (path)
     free(path);
   path = NULL;
-
+#ifndef NO_GRAPHICS
+  if (changed)
+    draw_path();
+#endif
   return changed;
 }
 
@@ -1025,7 +1199,7 @@ static void update_path() {
     return;
 
   if (get_path())
-    publish_path_msg();  
+    publish_path_msg();
 }
 
 static void publish_room_msg() {
@@ -1044,6 +1218,51 @@ static void publish_room_msg() {
 
   err = IPC_publishData(CARMEN_GNAV_ROOM_MSG_NAME, &room_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_GNAV_ROOM_MSG_NAME);  
+}
+
+static void gnav_rooms_topology_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+					      void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_gnav_rooms_topology_msg response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  response.topology.rooms = (carmen_room_p) calloc(num_rooms, sizeof(carmen_room_t));
+  carmen_test_alloc(response.topology.rooms);
+  memcpy(response.topology.rooms, rooms, num_rooms * sizeof(carmen_room_t));
+  response.topology.num_rooms = num_rooms;
+
+  response.topology.doors = (carmen_door_p) calloc(num_doors, sizeof(carmen_room_t));
+  carmen_test_alloc(response.topology.doors);
+  memcpy(response.topology.doors, doors, num_doors * sizeof(carmen_door_t));
+  response.topology.num_doors = num_doors;
+
+  err = IPC_respondData(msgRef, CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME);
+}
+
+static void gnav_set_goal_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+				  void *clientData __attribute__ ((unused))) {
+
+  carmen_gnav_set_goal_msg goal_msg;
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &goal_msg,
+			   sizeof(carmen_gnav_set_goal_msg));
+  IPC_freeByteArray(callData);
+  carmen_test_ipc_return(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
+
+  carmen_verbose("goal = %d\n", goal_msg.goal);
+
+  goal = goal_msg.goal;
 }
 
 void localize_handler() {
@@ -1076,12 +1295,36 @@ static void messages_init() {
 		      CARMEN_GNAV_ROOM_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_ROOM_MSG_NAME);
 
+  err = IPC_defineMsg(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+		       CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_SET_GOAL_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_SET_GOAL_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_SET_GOAL_MSG_NAME);
+
   err = IPC_defineMsg(CARMEN_GNAV_PATH_MSG_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_GNAV_PATH_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_PATH_MSG_NAME);
 
   carmen_localize_subscribe_globalpos_message(&global_pos, localize_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
+
+  err = IPC_subscribe(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, 
+		      gnav_rooms_topology_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe message", 
+		       CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_GNAV_SET_GOAL_MSG_NAME, gnav_set_goal_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe message", CARMEN_GNAV_SET_GOAL_MSG_NAME);
+  IPC_setMsgQueueLength(CARMEN_GNAV_SET_GOAL_MSG_NAME, 100);
 }
 
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {

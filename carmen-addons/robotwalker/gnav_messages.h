@@ -19,6 +19,14 @@ typedef struct {
 #define CARMEN_GNAV_ROOM_MSG_FMT  "{int, double, [char:10]}"
 
 typedef struct {
+  double timestamp;
+  char host[10];
+} carmen_gnav_query;
+
+#define CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME "carmen_gnav_rooms_topology_query"
+#define CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_FMT "{double, [char:10]}"
+
+typedef struct {
   carmen_rooms_topology_t topology;
   double timestamp;
   char host[10];
@@ -26,6 +34,15 @@ typedef struct {
 
 #define CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME "carmen_gnav_rooms_topology_msg"
 #define CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_FMT "{{<{int, string, <int:4>, int}:2>, int, <{int, int, {<{int,int,[char:22],double,double,double,double,double,double}:2>,int},{double,double,double},double,int}:4>, int}, double, [char:10]}"
+
+typedef struct {
+  int goal;
+  double timestamp;
+  char host[10];
+} carmen_gnav_set_goal_msg;
+
+#define CARMEN_GNAV_SET_GOAL_MSG_NAME "carmen_gnav_set_goal_msg"
+#define CARMEN_GNAV_SET_GOAL_MSG_FMT "{int, double, [char:10]}"
 
 typedef struct {
   int *path;  // array of door #'s

@@ -19,7 +19,7 @@ void carmen_gnav_subscribe_path_message(carmen_gnav_path_msg *path_msg,
 					carmen_handler_t handler,
 					carmen_subscribe_t subscribe_how);
 
-void carmen_gnav_set_goal(int room);
+void carmen_gnav_set_goal(int goal);
 
 
 #ifdef __cplusplus
