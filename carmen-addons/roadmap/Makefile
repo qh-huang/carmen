@@ -5,7 +5,7 @@ IFLAGS += `$(CARMEN_HOME)/bin/carmen-config --cflags --graphics navigation`
 LFLAGS += `$(CARMEN_HOME)/bin/carmen-config --libs --graphics navigation` 
 # CFLAGS += -pg
 
-LFLAGS += -ldot_interface -lsimulator_interface 
+LFLAGS += -ldot_interface -lsimulator_interface -lefence
 
 # CARMEN_DEBUG = 1
 

@@ -249,8 +249,9 @@ static int is_blocked(int n1x, int n1y, int n2x, int n2y, double x, double y,
   wp.pose.x = e1;
   wp.pose.y = e2;
   wp.map = map;
-  carmen_world_to_map(&wp, &mp);
 
+  #error these are wrong
+  carmen_world_to_map(&wp, &mp);
   radius = (mp.x + mp.y) / 2;
 
   numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
@@ -427,6 +428,8 @@ void carmen_dynamics_mark_blocked(int node1_id, int edge1_id,
   marked_edge.n2 = node2_id;
   marked_edge.e2 = edge2_id;
 
+  //  carmen_warn("Adding %d %d %d %d\n", node1_id, edge1_id, node2_id, edge2_id);
+
   carmen_list_add(marked_edges, &marked_edge);
 }
 
@@ -447,6 +450,7 @@ void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap)
     e1 = edge_list[i].e1;
     n2 = edge_list[i].n2;
     e2 = edge_list[i].e2;
+    //    carmen_warn("Erasing %d %d %d %d\n", n1, e1, n2, e2);
     ((carmen_roadmap_edge_t *)(node_list[n1].edges->list))[e1].blocked = 0;
     ((carmen_roadmap_edge_t *)(node_list[n2].edges->list))[e2].blocked = 0;
   }
