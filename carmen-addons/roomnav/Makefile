@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-NO_GRAPHICS = 1  #dbug
+#NO_GRAPHICS = 1  #dbug
 
 MODULE_NAME = ROOMNAV
 MODULE_COMMENT = Room-Based Navigator
