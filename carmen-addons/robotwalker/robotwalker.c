@@ -1,11 +1,13 @@
 #include <carmen/carmen.h>
 #include <carmen/serial.h>
 
-#define    METRES_PER_INCH            0.0254 
-#define    METRES_PER_WALKER          (METRES_PER_INCH/10.0) 
-#define    WHEELBASE                  (13.4 * METRES_PER_INCH)
-#define    ROT_VEL_FACT_RAD           (WHEELBASE/METRES_PER_WALKER)
-#define    MAX_VELOCITY               (1.0 / METRES_PER_WALKER)
+
+#define    MOTOR_WHEEL_RADIUS         0.035
+#define    WHEELBASE                  0.555
+#define    MOTOR_WHEEL_CIRC           (2.0 * M_PI * MOTOR_WHEEL_RADIUS)
+#define    VEL_PER_RPM                (MOTOR_WHEEL_CIRC / 60.0)
+#define    MAX_RPM                    120.0
+#define    MAX_VELOCITY               (MAX_RPM * VEL_PER_RPM)
 
 #define    DEFAULT_TIMEOUT            30000
 
@@ -20,7 +22,7 @@
 #define    COMMAND_LOOKUP_READ        0xd7
 #define    COMMAND_LOOKUP_RESTORE     0xd8
 
-//#define    VERBOSE
+#define    VERBOSE
 
 
 int fd1;
@@ -163,8 +165,8 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   left_vel = right_vel = v.tv;
   //assuming v.rv is in radians per second
-  left_vel -= 0.5 * v.rv * ROT_VEL_FACT_RAD;
-  right_vel += 0.5 * v.rv * ROT_VEL_FACT_RAD;
+  left_vel -= 0.5 * v.rv * WHEELBASE;
+  right_vel += 0.5 * v.rv * WHEELBASE;
 
   left_vel = carmen_clamp(-MAX_VELOCITY, left_vel, MAX_VELOCITY);
   right_vel = carmen_clamp(-MAX_VELOCITY, right_vel, MAX_VELOCITY);
@@ -191,15 +193,15 @@ static void init_odom() {
   strcpy(odometry.host, carmen_get_tenchar_host_name());
 }
 
-static void init_motors() {
+static void init_motors(char **argv) {
 
- if(carmen_serial_connect(&fd1, "/dev/ttyS0") < 0)
-    carmen_die("Error: could not open serial port /dev/ttyS0.\n");
+ if(carmen_serial_connect(&fd1, argv[1]) < 0)
+    carmen_die("Error: could not open serial port %s.\n", argv[1]);
   carmen_serial_configure(fd1, 38400, "N");
   fprintf(stderr, "Connected to motor 1.\n");
 
-  if(carmen_serial_connect(&fd2, "/dev/ttyS1") < 0)
-    carmen_die("Error: could not open serial port /dev/ttyS1.\n");
+  if(carmen_serial_connect(&fd2, argv[2]) < 0)
+    carmen_die("Error: could not open serial port %s.\n", argv[2]);
   carmen_serial_configure(fd2, 38400, "N");
   fprintf(stderr, "Connected to motor 2.\n");
 
@@ -242,16 +244,22 @@ static void test_motors() {
   sleep(4);  
 }
     
-int main(int argc __attribute__ ((unused)), char **argv)
+int main(int argc, char **argv)
 {
   IPC_RETURN_TYPE err;
   double last_published_update = 0.0;
   double update_delay = .03;
 
+  if (argc < 3) {
+    fprintf(stderr, "usage: robotwalker <left motor device> <right motor device>\n");
+    exit(1);
+  }
+    
+  
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
-  init_motors();
+  init_motors(argv);
   init_ipc();
   init_odom();
 
@@ -266,7 +274,7 @@ int main(int argc __attribute__ ((unused)), char **argv)
       last_published_update = odometry.timestamp;
     }
 
-    //test_motors();
+    test_motors();
   }
 
   return 0;

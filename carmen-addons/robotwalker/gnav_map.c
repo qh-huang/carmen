@@ -27,7 +27,7 @@ struct door {
 };
 
 struct room {
-  struct door *doors;
+  struct door **doors;
   char *name;
   int num_doors;
   int num;
@@ -81,7 +81,7 @@ void print_doors() {
 
   for (i = 0; i < num_doors; i++) {
     printf("door %d:  ", i);
-    printf("rooms(%d, %d), ", doors[i].room1->num, doors[i].room2->num);
+    //printf("rooms(%d, %d), ", doors[i].room1->num, doors[i].room2->num);
     printf("pos(%.2f, %.2f, %.0f), ", doors[i].pos.x, doors[i].pos.y,
 	   carmen_radians_to_degrees(doors[i].pos.theta));
     printf("width(%.2f)", doors[i].width);
@@ -126,6 +126,8 @@ void get_doors(carmen_map_placelist_p placelist) {
   doors = (door_p) calloc(num_doors, sizeof(door_t));
   carmen_test_alloc(doors);
 
+  printf("get_doors break 1\n");
+
   // get door places
   for (j = 0; j < num_doors; j++) {
     doors[j].num = j;
@@ -142,15 +144,18 @@ void get_doors(carmen_map_placelist_p placelist) {
     free(doornames[j]);
   }
 
+  printf("get_doors break 2\n");
+
   free(doornames);
   free(num_doorplaces);
 }
 
-void probe(int px, int py) {
+/* returns room number */
+int probe(int px, int py) {
 
   blob_p blob;
   point_node_p tmp;
-  int x, y, i, j, step, cell;
+  int x, y, i, j, step, cell, num;
   //int bbx0, bby0, bbx1, bby1;
 
   blob = (blob_p) calloc(1, sizeof(blob_t));
@@ -272,12 +277,21 @@ void probe(int px, int py) {
     draw_grid(x-2, y-2, step+4, step+4);
   }
 
+  if (blob->num == -1)
+    blob->num = num_rooms;
+
+  num = blob->num;
+
   while(blob->room_stack != NULL) {
     tmp = blob->room_stack;
     grid[tmp->x][tmp->y] = blob->num;
     blob->room_stack = blob->room_stack->next;
     free(tmp);
   }
+
+  free(blob);
+
+  return num;
 }
 
 int get_farthest(int door, int place) {
@@ -309,7 +323,7 @@ int get_farthest(int door, int place) {
 
 void get_rooms() {
 
-  int i, e1, e2;
+  int i, j, n, e1, e2;
   double x, y;
   double dx, dy, d;
   double e1x, e1y;  // endpoint 1
@@ -386,12 +400,56 @@ void get_rooms() {
     world_point.pose.x = p1x;
     world_point.pose.y = p1y;
     carmen_world_to_map(&world_point, &map_point);
-    probe(map_point.x, map_point.y);
+    n = probe(map_point.x, map_point.y);
+
+    printf("get_rooms break 1\n");
+
+    if (n == num_rooms) {
+      rooms[n].num = n;
+      rooms[n].doors = (door_p *) calloc(num_doors, sizeof(door_p));
+      carmen_test_alloc(rooms[n].doors);
+      rooms[n].num_doors = 0;
+      rooms[n].name = (char *) calloc(10, sizeof(char));
+      carmen_test_alloc(rooms[n].name);
+      sprintf(rooms[n].name, "room %d", n);
+      num_rooms++;
+    }
+
+    printf("get_rooms break 2\n");
+
+    for (j = 0; j < rooms[n].num_doors; j++)
+      if (rooms[n].doors[j]->num == i)
+	break;
+
+    printf("get_rooms break 3\n");
+
+    if (j == rooms[n].num_doors)
+      rooms[n].doors[num_doors++] = &doors[i];
+
+    printf("get_rooms break 4\n");
 
     world_point.pose.x = p2x;
     world_point.pose.y = p2y;
     carmen_world_to_map(&world_point, &map_point);
-    probe(map_point.x, map_point.y);
+    n = probe(map_point.x, map_point.y);
+
+    if (n == num_rooms) {
+      rooms[n].num = n;
+      rooms[n].doors = (door_p *) calloc(num_doors, sizeof(door_p));
+      carmen_test_alloc(rooms[n].doors);
+      rooms[n].num_doors = 0;
+      rooms[n].name = (char *) calloc(10, sizeof(char));
+      carmen_test_alloc(rooms[n].name);
+      sprintf(rooms[n].name, "room %d", n);
+      num_rooms++;
+    }
+
+    for (j = 0; j < rooms[n].num_doors; j++)
+      if (rooms[n].doors[j]->num == i)
+	break;
+
+    if (j == rooms[n].num_doors)
+      rooms[n].doors[num_doors++] = &doors[i];
   }
 
   //dbug: fill in gaps in grid
@@ -449,11 +507,14 @@ void get_map() {
   }
 
   grid_init();
-
+  printf("get_map break 1\n");
   get_doors(&placelist);
+  printf("get_map break 2\n");
   print_doors();
+  printf("get_map break 3\n");
   printf("\n");
   get_rooms();
+  printf("get_map break 4\n");
 }
 
 static GdkColor grid_color(int cell) {
@@ -610,18 +671,32 @@ static gint updateIPC(gpointer *data __attribute__ ((unused))) {
 
 int main(int argc, char *argv[]) {
 
+  printf("break 1\n");
+
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
+  printf("break 2\n");
+
   gtk_init(&argc, &argv);
 
+  printf("break 3\n");
+
   params_init(argc, argv);
+  printf("break 4\n");
   gui_init();
+  printf("break 5\n");
   get_map();
+
+  printf("break 6\n");
 
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
 
+  printf("break 7\n");
+
   gtk_main();
+
+  printf("break 8\n");
 
   return 0;
 }
