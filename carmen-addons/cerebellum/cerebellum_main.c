@@ -31,13 +31,6 @@
 #include <values.h>
 #include "cerebellum_com.h"
 
-#undef _REENTRANT
-
-#ifdef _REENTRANT
-#include <pthread.h>
-static pthread_t main_thread;
-static int thread_is_running = 0;
-#endif
 
 #define SLIVER 'y'
 
@@ -82,6 +75,7 @@ static double current_acceleration;
 static double stopping_acceleration;
 static carmen_robot_config_t robot_config;
 static carmen_base_odometry_message odometry;
+static carmen_base_binary_data_message binary_data;
 static int use_sonar = 0;
 
 static double x, y, theta;
@@ -123,6 +117,7 @@ reset_status(void)
 
   host = carmen_get_tenchar_host_name();
   strcpy(odometry.host, host);   
+  strcpy(binary_data.host, host);
 }
 
 static int
@@ -223,6 +218,20 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   odometry.x = x;
   odometry.y = y;
   odometry.theta = theta;
+
+  binary_data.timestamp = odometry.timestamp;
+  if (binary_data.data == NULL) 
+    {
+      binary_data.size = 
+	strlen("Nick likes Bass Ale. You should buy him a case.\n");
+      binary_data.data = (char *)calloc(binary_data.size+1, 1);
+      carmen_test_alloc(binary_data.data);
+      strcpy(binary_data.data, 
+	     "Nick likes Bass Ale. You should buy him a case.\n");
+    }
+
+  carmen_warn("This would be a good place to assemble the binary data\n"
+	      "packet, if you intend to publish one");
 
   return 1;
 }
@@ -406,6 +415,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   set_velocity = 1;
 }
 
+/*
 static void 
 gun_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 		 void *clientData __attribute__ ((unused)))
@@ -427,6 +437,28 @@ gun_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   fire_gun = 1;
 }
+*/
+
+static void
+binary_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		       void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_base_binary_data_message msg;
+  FORMATTER_PTR formatter;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &msg,
+			   sizeof(carmen_base_binary_data_message));
+  IPC_freeByteArray(callData);
+
+  carmen_test_ipc_return(err, "Could not unmarshall", 
+			 IPC_msgInstanceName(msgRef));
+
+  carmen_warn("Received binary data of length %d\n"
+	      "Someone needs to figure out what to do with this data", 
+	      msg.size);
+}
 
 int 
 carmen_cerebellum_initialize_ipc(void)
@@ -442,38 +474,39 @@ carmen_cerebellum_initialize_ipc(void)
                       CARMEN_BASE_VELOCITY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
+  err = IPC_defineMsg(CARMEN_BASE_BINARY_COMMAND_NAME, 
+		      IPC_VARIABLE_LENGTH,
+                      CARMEN_BASE_BINARY_COMMAND_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_BASE_BINARY_COMMAND_NAME);
+
+  err = IPC_defineMsg(CARMEN_BASE_BINARY_DATA_NAME, 
+		      IPC_VARIABLE_LENGTH,
+                      CARMEN_BASE_BINARY_DATA_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_BASE_BINARY_DATA_NAME);
+
   /* setup incoming message handlers */
 
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
 
+  err = IPC_subscribe(CARMEN_BASE_BINARY_COMMAND_NAME, 
+		      binary_command_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", 
+		       CARMEN_BASE_BINARY_COMMAND_NAME);
+  IPC_setMsgQueueLength(CARMEN_BASE_BINARY_COMMAND_NAME, 1);
+
+  /*
   err = IPC_subscribe(CARMEN_ROBOT_CEREB_FIRE_NAME, gun_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_CEREB_FIRE_NAME);
+  carmen_test_ipc_exit(err, "Could not subscribe", 
+		       CARMEN_ROBOT_CEREB_FIRE_NAME);
   IPC_setMsgQueueLength(CARMEN_ROBOT_CEREB_FIRE_NAME, 1);
+  */
 
   return IPC_No_Error;
 }
-
-#ifdef _REENTRANT
-static void *
-start_thread(void *data __attribute__ ((unused))) 
-{
-  sigset_t set;
-
-  sigemptyset(&set);
-  sigaddset(&set, SIGINT);
-  sigaddset(&set, SIGPIPE);
-  sigprocmask(SIG_BLOCK, &set, NULL);
-
-  while (1) {    
-    command_robot();
-    usleep(30000);
-  }
-  return(NULL);
-}  
-#endif
-
 
 int 
 carmen_cerebellum_start(int argc, char **argv)
@@ -498,10 +531,6 @@ carmen_cerebellum_start(int argc, char **argv)
 
   strcpy(odometry.host, carmen_get_tenchar_host_name());
 
-#ifdef _REENTRANT
-  pthread_create(&main_thread, NULL, start_thread, NULL);
-  thread_is_running = 1;
-#endif
   return 0;
 }
 
@@ -515,10 +544,11 @@ carmen_cerebellum_run(void)
       err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
       carmen_test_ipc_exit(err, "Could not publish", 
 			   CARMEN_BASE_ODOMETRY_NAME);
-    }
-#ifndef _REENTRANT
+      err = IPC_publishData(CARMEN_BASE_BINARY_DATA_NAME, &binary_data);
+      carmen_test_ipc_exit(err, "Could not publish", 
+			   CARMEN_BASE_BINARY_DATA_NAME);
+    }  
   command_robot();
-#endif
   
   return 1;
 }
