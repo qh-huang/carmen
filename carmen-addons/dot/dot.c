@@ -228,15 +228,11 @@ static int laser_point_belongs_to_dot(carmen_dot_filter_p f, int laser_index) {
 
   int i, s;
 
-  printf("break 1\n");
-
   for (i = 0; i < f->person_filter.sensor_update_list->length; i++) {
     s = *(int*)carmen_list_get(f->person_filter.sensor_update_list, i);
     if (s == laser_index)
       return 1;
   }
-
-  printf("break 2\n");
 
   return 0;
 }
@@ -260,14 +256,12 @@ static void draw_laser() {
       carmen_world_to_map(&wp, &mp);
       xpos = 4*mp.x - pixmap_xpos;
       ypos = 4*(static_map.config.y_size - mp.y - 1) - pixmap_ypos;
-      printf("break 0\n");
       if (num_filters > 0 && filter_highlight >= 0 && laser_point_belongs_to_dot(&filters[filter_highlight], i))
 	gdk_gc_set_foreground(drawing_gc, &carmen_blue);
       else if (laser_mask[i])
 	gdk_gc_set_foreground(drawing_gc, &carmen_red);
       else
 	gdk_gc_set_foreground(drawing_gc, &carmen_yellow);
-      printf("break 1\n");
       gdk_draw_arc(pixmap, drawing_gc, TRUE, xpos-2, ypos-2,
 		   4, 4, 0, 360 * 64);      
     }
@@ -418,8 +412,6 @@ static void redraw() {
 
 static void canvas_button_press(GtkWidget *w __attribute__ ((unused)),
 				GdkEventButton *event) {
-
-  event = NULL;  //dbug
 
   if (event->button == 1)
     filter_highlight = (num_filters > 0 ? (filter_highlight+1) % num_filters : -1);
