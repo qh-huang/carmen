@@ -31,8 +31,6 @@ void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   IPC_freeByteArray(callData);
   carmen_test_ipc(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));  
 
-  fprintf(stderr, "Received query thumbnail_over_ipc %d image_over_ipc %d image_to_drive %d\n", query.thumbnail_over_ipc, query.image_over_ipc, query.image_to_drive);
-
   transfer_mode = 0;
   if(query.thumbnail_over_ipc)
     transfer_mode |= THUMB_TO_PC;
@@ -43,22 +41,25 @@ void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   if(canon_rcc_set_transfer_mode(camera_handle, transfer_mode) < 0)
     carmen_warn("Warning: Could not set transfer mode.\n");
-
+  
+  carmen_time_code(
+  fprintf(stderr, "Starting capture... ");
   if(canon_capture_image(camera_handle,
 			 (unsigned char **)&response.thumbnail, 
 			 &response.thumbnail_length,
 			 (unsigned char **)&response.image, 
 			 &response.image_length) < 0)
-    carmen_warn("Warning: Could not capture image.\n");
-
-  fprintf(stderr, "DONE CAPTURING IMAGE.\n");
-  
+    fprintf(stderr, "error.\n");
+  else
+    fprintf(stderr, "done.\n");
+  , "CAPTURE");
   response.timestamp = carmen_get_time_ms();
   strcpy(response.host, carmen_get_tenchar_host_name());
   
+  carmen_time_code(
   err = IPC_respondData(msgRef, CARMEN_CANON_IMAGE_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_CANON_IMAGE_NAME);
-  
+  ,"TRANSMIT");
   if(response.image != NULL)
     free(response.image);
   if(response.thumbnail != NULL)
@@ -118,8 +119,8 @@ int main(int argc, char **argv)
   if(canon_initialize_capture(camera_handle, FULL_TO_DRIVE | THUMB_TO_PC,
 			      use_flash) < 0)
     carmen_die("Error: could not start image capture.\n");
+  fprintf(stderr, "Camera is ready to capture.\n");
 
-  fprintf(stderr, "READY TO CAPTURE\n");
   /* run the main loop */
   IPC_dispatch();
   return 0;

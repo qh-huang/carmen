@@ -279,10 +279,9 @@ int canon_get_power_status(usb_dev_handle *camera_handle)
     fprintf(stderr, "Error: get power status command failed.\n");
     return -1;
   }
-  fprintf(stderr, "Power status is %s\n", 
-	  (response[0x54] == 0x06) ? "GOOD" : "BAD");
-  fprintf(stderr, "Power is coming from %s\n", 
-	  ((response[0x57] & 0x20) == 0) ? "AC-ADAPTER" : "a BATTERY");
+  fprintf(stderr, "Power status is %s  Source = %s\n", 
+	  (response[0x54] == 0x06) ? "GOOD" : "BAD",
+	  ((response[0x57] & 0x20) == 0) ? "AC-ADAPTER" : "BATTERY");
   return 0;
 }
 
@@ -425,17 +424,12 @@ int canon_rcc_release_shutter(usb_dev_handle *camera_handle)
   }
   free(payload);
 
-  fprintf(stderr, "got here 1\n");
   l = camera_int_read(camera_handle, response, 0x10);
-  fprintf(stderr, "got here 2\n");
   if(global_transfer_mode & THUMB_TO_PC)
     l = camera_int_read(camera_handle, response, 0x17);
-  fprintf(stderr, "got here 3\n");
   if(global_transfer_mode & FULL_TO_PC)
     l = camera_int_read(camera_handle, response, 0x17);
-  fprintf(stderr, "got here 4\n");
   l = camera_int_read(camera_handle, response, 0x10);
-  fprintf(stderr, "got here 5\n");
   return 0;
 }
 
@@ -457,13 +451,9 @@ int canon_rcc_download_thumbnail(usb_dev_handle *camera_handle,
 
   *thumbnail_length = (response[6] | (response[7] << 8) |
 		       (response[8] << 16) | (response[9] << 24));
-  fprintf(stderr, "thumbnail size %d/0x%x\n", *thumbnail_length,
-	  *thumbnail_length);
-
   *thumbnail = (unsigned char *)calloc(*thumbnail_length, 1);
   l = camera_bulk_read(camera_handle, *thumbnail, *thumbnail_length);
   if(l != *thumbnail_length) {
-    fprintf(stderr, "l = %d / 0x%x\n", l, l);
     free(*thumbnail);
     return -1;
   }
@@ -488,10 +478,7 @@ int canon_rcc_download_full_image(usb_dev_handle *camera_handle,
 
   *image_length = (response[6] | (response[7] << 8) |
 		   (response[8] << 16) | (response[9] << 24));
-  fprintf(stderr, "image size %d/0x%x\n", *image_length, *image_length);
-  
   *image = (unsigned char *)calloc(*image_length, 1);
-
   l = camera_bulk_read(camera_handle, *image, *image_length);
   if(l != *image_length) {
     free(*image);
@@ -602,7 +589,6 @@ int canon_capture_image(usb_dev_handle *camera_handle,
     *image_length = 0;
   }
   global_image_count++;
-  fprintf(stderr, "INCREMENTED COUNT TO %d\n", global_image_count);
   return 0;
 }
 

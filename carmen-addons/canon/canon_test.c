@@ -40,5 +40,7 @@ int main(int argc __attribute__ ((unused)), char **argv)
     fclose(fp);
   }
 
+  carmen_canon_free_image(&image);
+
   return 0;
 }
