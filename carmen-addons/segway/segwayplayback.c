@@ -27,6 +27,7 @@
 
 #include <carmen/carmen.h>
 #include <carmen/amtec_messages.h>
+#include <carmen/imu_messages.h>
 #include "segway_messages.h"
 #include "segwaycore.h"
 
@@ -42,6 +43,7 @@ carmen_robot_laser_message rearlaser;
 carmen_laser_laser_message frontlaser;
 carmen_segway_pose_message segway;
 carmen_amtec_status_message amtec;
+carmen_imu_pose_message imu;
 
 long *message_list = NULL;
 int message_list_length = 0;
@@ -141,6 +143,10 @@ void register_ipc_messages(void)
   err = IPC_defineMsg(CARMEN_AMTEC_STATUS_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_AMTEC_STATUS_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_AMTEC_STATUS_NAME);
+  
+  err = IPC_defineMsg(CARMEN_IMU_POSE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_IMU_POSE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_IMU_POSE_NAME);
   
   err = IPC_subscribe(CARMEN_PLAYBACK_COMMAND_NAME, command_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_PLAYBACK_COMMAND_NAME);
@@ -311,6 +317,16 @@ int read_message(int message_num, int publish)
     if (publish) {
       wait_for_timestamp(playback_timestamp);
       err = IPC_publishData(CARMEN_AMTEC_STATUS_NAME, &amtec);
+    }
+  }
+  if (strcmp(message_name, "IMU") == 0) {
+    fprintf(stderr, "I");
+    sscanf(line_ptr, "%f %f %f %f %f %f %lf %s %lf\n",
+	   &imu.x, &imu.y, &imu.z, &imu.roll, &imu.pitch, &imu.yaw,	   
+	   &imu.timestamp, imu.host, &playback_timestamp);
+    if (publish) {
+      wait_for_timestamp(playback_timestamp);
+      err = IPC_publishData(CARMEN_IMU_POSE_NAME, &imu);
     }
   }
   return 0;
