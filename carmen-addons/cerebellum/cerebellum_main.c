@@ -28,6 +28,7 @@
 #include <carmen/carmen.h>
 
 #include <sys/ioctl.h>
+#include <values.h>
 #include "cerebellum_com.h"
 
 #ifdef _REENTRANT
@@ -39,13 +40,14 @@ static int thread_is_running = 0;
 #define        CEREBELLUM_TIMEOUT          2.0
 
 #define        METRES_PER_INCH        0.0254
-#define        METRES_PER_CEREBELLUM        (METRES_PER_INCH/10.0)
-#define        DEGREES_PER_CEREBELLUM       0.1
+#define        METRES_PER_CEREBELLUM_VELOCITY (METRES_PER_INCH/10.0)
 
-#define        WHEELBASE              (13.4 * METRES_PER_INCH)
-#define        ROT_VEL_FACT_RAD       (WHEELBASE/METRES_PER_CEREBELLUM)
+#define        METRES_PER_CEREBELLUM (METRES_PER_INCH/10.0)
 
-#define        MAXV                   (1.0/METRES_PER_CEREBELLUM)
+#define        WHEELBASE        (13.4 * METRES_PER_INCH)
+#define        ROT_VEL_FACT_RAD (WHEELBASE/METRES_PER_CEREBELLUM_VELOCITY)
+
+#define        MAXV                   (1.0/METRES_PER_CEREBELLUM_VELOCITY)
 
 static char *dev_name;
 static int State[4];
@@ -61,6 +63,8 @@ static carmen_robot_config_t robot_config;
 static carmen_base_odometry_message odometry;
 static int use_sonar = 0;
 
+static double x, y, theta;
+
 static int 
 initialize_robot(char *dev)
 {
@@ -71,7 +75,7 @@ initialize_robot(char *dev)
   if(result == FALSE)
     return -1;
 
-  acc = robot_config.acceleration/METRES_PER_CEREBELLUM;
+  acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
   result = carmen_cerebellum_ac(acc);
   current_acceleration = robot_config.acceleration;
 
@@ -103,19 +107,83 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 {
   double vl, vr;
   static double last_published_update;
+  static int initialized = 0;
+  static short last_left_tick = 0, last_right_tick = 0;
+  
+  short left_delta_tick, right_delta_tick;
+  double left_delta, right_delta;
+
+  double inner_radius;
+  double delta_angle;
+  double delta_distance;
+  double centre_x, centre_y;
 
   if (last_published_update >= odometry.timestamp)
     return 0; 
 
-  /* update odometry message */
-  
-  vl = ((double)State[2]) * METRES_PER_CEREBELLUM;
-  vr = ((double)State[3]) * METRES_PER_CEREBELLUM;
+  vl = ((double)State[2]) * METRES_PER_CEREBELLUM_VELOCITY;
+  vr = ((double)State[3]) * METRES_PER_CEREBELLUM_VELOCITY;
 
   odometry.tv = 0.5 * (vl + vr);
   odometry.rv = (vl - vr) / ROT_VEL_FACT_RAD;
   
+  if (!initialized)
+    {
+      last_left_tick = State[0];
+      last_right_tick = State[1];
+      initialized = 1;
+      
+      x = y = theta = 0;
+
+      return 0;
+    }
+
+  /* update odometry message */
+
+  left_delta_tick = State[0] - last_left_tick;
+  if (left_delta_tick > SHRT_MAX/2)
+    left_delta_tick += SHRT_MIN;
+  if (left_delta_tick < -SHRT_MAX/2)
+    left_delta_tick -= SHRT_MIN;
+  left_delta = left_delta_tick*METRES_PER_CEREBELLUM;
+
+  right_delta_tick = State[1] - last_right_tick;
+  if (right_delta_tick > SHRT_MAX/2)
+    right_delta_tick += SHRT_MIN;
+  if (right_delta_tick < -SHRT_MAX/2)
+    right_delta_tick -= SHRT_MIN;
+  right_delta = right_delta_tick*METRES_PER_CEREBELLUM;
+
+  inner_radius = (left_delta*WHEELBASE)/
+    (right_delta-left_delta);
+
+  delta_angle = left_delta/inner_radius;  
+  delta_distance = (left_delta + right_delta) / 2.0;
+
+  if (0) 
+    {
+      centre_x = x + inner_radius*cos(theta+M_PI/2.0);
+      centre_y = y + inner_radius*sin(theta+M_PI/2.0);
+      
+      x = centre_x + inner_radius*cos(theta-M_PI/2.0+delta_angle);
+      y = centre_x + inner_radius*sin(theta-M_PI/2.0+delta_angle);
+      theta += delta_angle;
+    }
+  else 
+    {
+      x += delta_distance * cos(theta);
+      y += delta_distance * sin(theta);
+      theta += delta_angle;
+    }
+
+  last_left_tick = State[0];
+  last_right_tick = State[1];
+  
   last_published_update = odometry.timestamp;
+
+  odometry.x = x;
+  odometry.y = y;
+  odometry.theta = theta;
 
   return 1;
 }
@@ -126,6 +194,7 @@ command_robot(void)
   double time_elapsed = carmen_get_time_ms() - last_command;
   double current_time; 
   int acc;
+  int error = 0;
 
   if (set_velocity)
     {
@@ -138,8 +207,14 @@ command_robot(void)
 	{
 	  if (!moving)
 	    {
-	      acc = robot_config.acceleration/METRES_PER_CEREBELLUM;
-	      carmen_cerebellum_ac(acc);
+	      acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
+	      do 
+		{
+		  error = carmen_cerebellum_ac(acc);
+		  if (error < 0)
+		    carmen_cerebellum_connect_robot(dev_name);
+		} 
+	      while (error < 0);
 	      current_acceleration = robot_config.acceleration;
 	    }
 	  carmen_warn("V");
@@ -148,8 +223,14 @@ command_robot(void)
 
       set_velocity = 0;
       timeout = 0;
+      do 
+	{
+	  error = carmen_cerebellum_set_velocity(command_vl, command_vr);
+	  if (error < 0)
+	    carmen_cerebellum_connect_robot(dev_name);
+	} 
+      while (error < 0);
 
-      carmen_cerebellum_set_velocity(command_vl, command_vr);
       last_command = carmen_get_time_ms();
     }
   else if(time_elapsed > CEREBELLUM_TIMEOUT && !timeout) 
@@ -159,16 +240,34 @@ command_robot(void)
       command_vr = 0;
       timeout = 1;
       moving = 0;
-      carmen_cerebellum_set_velocity(0, 0);
+      do
+	{
+	  carmen_cerebellum_set_velocity(0, 0);      
+	  if (error < 0)
+	    carmen_cerebellum_connect_robot(dev_name);
+	} 
+      while (error < 0);
     }  
   else if (moving && current_acceleration == robot_config.acceleration)
     {
-      acc = stopping_acceleration/METRES_PER_CEREBELLUM;
-      carmen_cerebellum_ac(acc);
+      acc = stopping_acceleration/METRES_PER_CEREBELLUM_VELOCITY;
+      do 
+	{
+	  carmen_cerebellum_ac(acc);
+	  if (error < 0)
+	    carmen_cerebellum_connect_robot(dev_name);
+	} 
+      while (error < 0);
       current_acceleration = stopping_acceleration;
     }
 
-  carmen_cerebellum_get_state(State+0, State+1, State+2, State+3);
+  do
+    {
+      carmen_cerebellum_get_state(State+0, State+1, State+2, State+3);
+      if (error < 0)
+	carmen_cerebellum_connect_robot(dev_name);
+    } 
+  while (error < 0);
   
   current_time = carmen_get_time_ms();
   last_update = current_time;
@@ -234,8 +333,8 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  vl = vel.tv / METRES_PER_CEREBELLUM;
-  vr = vel.tv / METRES_PER_CEREBELLUM;  
+  vl = vel.tv / METRES_PER_CEREBELLUM_VELOCITY;
+  vr = vel.tv / METRES_PER_CEREBELLUM_VELOCITY;  
 
   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
