@@ -124,7 +124,7 @@ static void simulator_objects_handler(carmen_simulator_objects_message
       if (entry >= 0) {
 	prev_position = 
 	  (carmen_dot_person_t *)carmen_list_get(visible_list, entry);
-	carmen_list_add(publish_list, prev_position);
+	//	carmen_list_add(publish_list, prev_position);
       }
     } else {
       carmen_list_add(publish_list, &person);

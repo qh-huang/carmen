@@ -4,6 +4,7 @@
 typedef struct {
   carmen_roadmap_t *roadmap;
   carmen_roadmap_t *roadmap_without_people;  
+  carmen_roadmap_t *current_roadmap;
   carmen_map_t *c_space;
   carmen_list_t *path;
   carmen_list_t *nodes;

@@ -922,7 +922,8 @@ static int compute_path_segments(carmen_world_point_t *world_robot,
   return length;
 }
 
-static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
+int carmen_roadmap_check_path(carmen_traj_point_t *robot, 
+			      carmen_roadmap_t *road, int allow_replan)
 {
   carmen_roadmap_vertex_t *goal_node;
   int length;
@@ -946,12 +947,12 @@ static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
 
   length = compute_path_segments(&world_robot, road);
 
-  if (length < 0) {
+  if (allow_replan && length < 0) {
     carmen_roadmap_refine_graph(&world_robot, road);
     length = compute_path_segments(&world_robot, road);
   }
 
-  if (length < 0) {
+  if (allow_replan && length < 0) {
     carmen_dynamics_clear_all_blocked(road);
     carmen_warn("Goal: %f %f\n", goal.pose.x, goal.pose.y);
     carmen_roadmap_plan(road, &goal);
@@ -963,7 +964,7 @@ static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
   return length;
 }
 
-int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
+void carmen_roadmap_generate_path(carmen_traj_point_t *robot,
 				 carmen_roadmap_t *roadmap)
 {
   carmen_map_point_t map_node;
@@ -971,18 +972,12 @@ int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
   carmen_world_point_t world_robot;
   carmen_roadmap_vertex_t *node;
 
-  int path_length;
-
   if (roadmap->path == NULL)
     roadmap->path = carmen_list_create(sizeof(carmen_traj_point_t), 10);  
 
   world_robot.pose.x = robot->x;
   world_robot.pose.y = robot->y;
   world_robot.map = roadmap->c_space;
-
-  path_length = check_path(robot, roadmap);
-  if (path_length == 0)
-    return 0;
 
   roadmap->path->length = 0;
 
@@ -1003,10 +998,7 @@ int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
     carmen_list_add(roadmap->path, &traj_point);
   } while (node != NULL && node->utility > 0);
 
-  if (!node)
-    return 0;
+  assert(node);
 
   //  carmen_warn("Path length: %d\n", roadmap->path->length);
-
-  return 1;
 }
