@@ -59,10 +59,13 @@ typedef struct dot_filter {
   carmen_dot_person_filter_t person_filter;
   carmen_dot_trash_filter_t trash_filter;
   carmen_dot_door_filter_t door_filter;
+  int id;
   int type;
   int allow_change;
   int sensor_update_cnt;
   int do_motion_update;
+  int updated;
+  int last_type;
 } carmen_dot_filter_t, *carmen_dot_filter_p;
 
 
@@ -118,30 +121,14 @@ static int num_filters = 0;
 static double laser_max_range;
 
 
-static void person_filter_velocity_window_handler() {
+static void publish_dot_msg(carmen_dot_filter_p f, int delete);
 
-  if (person_filter_velocity_window > MAX_PERSON_FILTER_VELOCITY_WINDOW)
-    person_filter_velocity_window = MAX_PERSON_FILTER_VELOCITY_WINDOW;
+static void reset() {
+
+  free(filters);
+  filters = NULL;
+  num_filters = 0;
 }
-
-/***************************
-static void publish_pos_msg() {
-
-  static carmen_dot_pos_msg msg;
-  static int first = 1;
-  IPC_RETURN_TYPE err;
-  
-  if (first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    first = 0;
-  }
-
-  msg.timestamp = carmen_get_time_ms();
-
-  err = IPC_publishData(CARMEN_DOT_POS_MSG_NAME, &msg);
-  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_POS_MSG_NAME);
-}
-************************/
 
 static inline double dist(double dx, double dy) {
 
@@ -457,15 +444,25 @@ static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, doub
 
 static void add_new_dot_filter(int *cluster_map, int c, int n,
 			       double *x, double *y) {
-  int i;
+  int i, id;
+
+  for (id = 0; id < num_filters; id++) {
+    for (i = 0; i < num_filters; i++)
+      if (filters[i].id == id)
+	break;
+    if (i == num_filters)
+      break;
+  }
+
+  for (i = 0; i < n && cluster_map[i] != c; i++);
+  if (i == n)
+    carmen_die("Error: invalid cluster! (cluster %d not found)\n", c);
 
   num_filters++;
   filters = (carmen_dot_filter_p) realloc(filters, num_filters*sizeof(carmen_dot_filter_t));
   carmen_test_alloc(filters);
 
-  for (i = 0; i < n && cluster_map[i] != c; i++);
-  if (i == n)
-    carmen_die("Error: invalid cluster! (cluster %d not found)\n", c);
+  filters[num_filters-1].id = id;
 
   filters[num_filters-1].person_filter.x = x[i];
   filters[num_filters-1].person_filter.y = y[i];
@@ -530,6 +527,9 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].type = dot_classify(&filters[num_filters-1]);
   filters[num_filters-1].allow_change = 1;
   filters[num_filters-1].sensor_update_cnt = 0;
+  filters[num_filters-1].do_motion_update = 0;
+  filters[num_filters-1].updated = 1;
+  filters[num_filters-1].last_type = filters[num_filters-1].type;
 }
 
 static int dot_filter(double x, double y) {
@@ -620,14 +620,19 @@ static int dot_filter(double x, double y) {
       filters[imin].do_motion_update = 0;
       trash_filter_motion_update(&filters[imin].trash_filter);
       door_filter_motion_update(&filters[imin].door_filter);
+      filters[imin].updated = 1;
     }
     if (do_sensor_update || filters[imin].sensor_update_cnt < sensor_update_cnt) {
       filters[imin].sensor_update_cnt++;
       trash_filter_sensor_update(&filters[imin].trash_filter, x, y);
       door_filter_sensor_update(&filters[imin].door_filter, x, y);
+      filters[imin].updated = 1;
     }
     filters[imin].type = dot_classify(&filters[imin]);
 
+    if (filters[imin].type == CARMEN_DOT_PERSON)
+      filters[imin].updated = 1;
+    
     return 1;
   }
 
@@ -710,6 +715,8 @@ static int cluster(int *cluster_map, int cluster_cnt, int current_reading,
 
 static void delete_filter(int i) {
 
+  publish_dot_msg(&filters[i], 1);
+
   if (i < num_filters-1)
     memmove(&filters[i], &filters[i+1], (num_filters-i-1)*sizeof(carmen_dot_filter_t));
   num_filters--;
@@ -736,6 +743,8 @@ static void filter_motion() {
       filters[i].allow_change = 0;
     }
     person_filter_motion_update(&filters[i].person_filter);
+    if (filters[i].type == CARMEN_DOT_PERSON)
+      filters[i].updated = 1;
   }
 }
 
@@ -750,6 +759,11 @@ static void laser_handler(carmen_robot_laser_message *laser) {
     return;
 
   carmen_localize_correct_laser(laser, &odom);
+
+  for (i = 0; i < num_filters; i++) {
+    filters[i].updated = 0;
+    filters[i].last_type = filters[i].type;
+  }
 
   kill_people();
   filter_motion();
@@ -793,6 +807,17 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   }
 
   for (i = 0; i < num_filters; i++) {
+    if (filters[i].type != filters[i].last_type) {
+      n = filters[i].type;
+      filters[i].type = filters[i].last_type;
+      publish_dot_msg(&filters[i], 1);
+      filters[i].type = n;
+    }
+    if (filters[i].updated)
+      publish_dot_msg(&filters[i], 1);
+  }
+
+  for (i = 0; i < num_filters; i++) {
     printf("vel = %.4f, ", person_filter_velocity(&filters[i].person_filter));
     if (filters[i].type == CARMEN_DOT_PERSON) {
       printf("PERSON (x=%.2f, y=%.2f) (vx=%.4f, vy=%.4f, vxy=%.4f)\n",
@@ -815,26 +840,300 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   printf("\n");
 }
 
+static void publish_person_msg(carmen_dot_filter_p f, int delete) {
+
+  static carmen_dot_person_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    first = 0;
+  }
+
+  msg.person.id = f->id;
+  msg.person.x = f->person_filter.x;
+  msg.person.y = f->person_filter.y;
+  msg.person.vx = f->person_filter.px;
+  msg.person.vy = f->person_filter.py;
+  msg.person.vxy = f->person_filter.pxy;
+  msg.delete = delete;
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_PERSON_MSG_NAME, &msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_PERSON_MSG_NAME);
+}
+
+static void publish_trash_msg(carmen_dot_filter_p f, int delete) {
+
+  static carmen_dot_trash_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    first = 0;
+  }
+
+  msg.trash.id = f->id;
+  msg.trash.x = f->trash_filter.x;
+  msg.trash.y = f->trash_filter.y;
+  msg.trash.vx = f->trash_filter.px;
+  msg.trash.vy = f->trash_filter.py;
+  msg.trash.vxy = f->trash_filter.pxy;
+  msg.delete = delete;
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_TRASH_MSG_NAME, &msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_TRASH_MSG_NAME);
+}
+
+static void publish_door_msg(carmen_dot_filter_p f, int delete) {
+
+  static carmen_dot_door_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    first = 0;
+  }
+
+  msg.door.id = f->id;
+  msg.door.x = f->door_filter.x;
+  msg.door.y = f->door_filter.y;
+  msg.door.theta = f->door_filter.t;
+  msg.door.vx = f->door_filter.px;
+  msg.door.vy = f->door_filter.py;
+  msg.door.vxy = f->door_filter.pxy;
+  msg.door.vtheta = f->door_filter.pt;
+  msg.delete = delete;
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_DOOR_MSG_NAME, &msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_DOOR_MSG_NAME);
+}
+
+static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
+
+  switch (f->type) {
+  case CARMEN_DOT_PERSON:
+    publish_person_msg(f, delete);
+    break;
+  case CARMEN_DOT_TRASH:
+    publish_trash_msg(f, delete);
+    break;
+  case CARMEN_DOT_DOOR:
+    publish_door_msg(f, delete);
+    break;
+  }
+}
+
+static void respond_all_people_msg(MSG_INSTANCE msgRef) {
+
+  static carmen_dot_all_people_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  int i, n;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    msg.people = NULL;
+    first = 0;
+  }
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_PERSON)
+      n++;
+
+  msg.num_people = n;
+  msg.people = (carmen_dot_person_p)realloc(msg.people, n*sizeof(carmen_dot_person_t));
+  carmen_test_alloc(msg.people);
+
+  for (n = i = 0; i < num_filters; i++) {
+    if (filters[i].type == CARMEN_DOT_PERSON) {
+      msg.people[n].id = filters[i].id;
+      msg.people[n].x = filters[i].person_filter.x;
+      msg.people[n].y = filters[i].person_filter.y;
+      msg.people[n].vx = filters[i].person_filter.px;
+      msg.people[n].vy = filters[i].person_filter.py;
+      msg.people[n].vxy = filters[i].person_filter.pxy;
+      n++;
+    }
+  }
+
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &msg);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
+}
+
+static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
+
+  static carmen_dot_all_trash_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  int i, n;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    msg.trash = NULL;
+    first = 0;
+  }
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_TRASH)
+      n++;
+
+  msg.num_trash = n;
+  msg.trash = (carmen_dot_trash_p)realloc(msg.trash, n*sizeof(carmen_dot_trash_t));
+  carmen_test_alloc(msg.trash);
+
+  for (n = i = 0; i < num_filters; i++) {
+    if (filters[i].type == CARMEN_DOT_TRASH) {
+      msg.trash[n].id = filters[i].id;
+      msg.trash[n].x = filters[i].trash_filter.x;
+      msg.trash[n].y = filters[i].trash_filter.y;
+      msg.trash[n].vx = filters[i].trash_filter.px;
+      msg.trash[n].vy = filters[i].trash_filter.py;
+      msg.trash[n].vxy = filters[i].trash_filter.pxy;
+      n++;
+    }
+  }
+
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, &msg);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_DOT_ALL_TRASH_MSG_NAME);
+}
+
+static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
+
+  static carmen_dot_all_doors_msg msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  int i, n;
+  
+  if (first) {
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+    msg.doors = NULL;
+    first = 0;
+  }
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_DOOR)
+      n++;
+
+  msg.num_doors = n;
+  msg.doors = (carmen_dot_door_p)realloc(msg.doors, n*sizeof(carmen_dot_door_t));
+  carmen_test_alloc(msg.doors);
+
+  for (n = i = 0; i < num_filters; i++) {
+    if (filters[i].type == CARMEN_DOT_DOOR) {
+      msg.doors[n].id = filters[i].id;
+      msg.doors[n].x = filters[i].door_filter.x;
+      msg.doors[n].y = filters[i].door_filter.y;
+      msg.doors[n].theta = filters[i].door_filter.t;
+      msg.doors[n].vx = filters[i].door_filter.px;
+      msg.doors[n].vy = filters[i].door_filter.py;
+      msg.doors[n].vxy = filters[i].door_filter.pxy;
+      msg.doors[n].vtheta = filters[i].door_filter.pt;
+      n++;
+    }
+  }
+
+  msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, &msg);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_DOT_ALL_DOORS_MSG_NAME);
+}
+
+static void dot_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_dot_query query;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query, sizeof(carmen_dot_query));
+  IPC_freeByteArray(callData);
+  carmen_test_ipc_return(err, "Could not unmarshall",
+			 IPC_msgInstanceName(msgRef));
+
+  switch(query.type) {
+  case CARMEN_DOT_PERSON:
+    respond_all_people_msg(msgRef);
+    break;
+  case CARMEN_DOT_TRASH:
+    respond_all_trash_msg(msgRef);
+    break;
+  case CARMEN_DOT_DOOR:
+    respond_all_doors_msg(msgRef);
+    break;
+  }
+}
+
+static void reset_handler
+(MSG_INSTANCE msgRef __attribute__ ((unused)), BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  IPC_freeByteArray(callData);
+
+  reset();
+}
+
 static void ipc_init() {
 
-  /*
   IPC_RETURN_TYPE err;
 
-  err = IPC_defineMsg(CARMEN_DOT_POS_MSG_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_DOT_POS_MSG_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_POS_MSG_NAME);
-  */
+  err = IPC_defineMsg(CARMEN_DOT_PERSON_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_PERSON_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_PERSON_MSG_NAME);
 
-  odom.timestamp = 0.0;
-  static_map.map = NULL;
+  err = IPC_defineMsg(CARMEN_DOT_TRASH_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_TRASH_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_TRASH_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_DOT_DOOR_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_DOOR_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_DOOR_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_DOT_ALL_PEOPLE_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_ALL_PEOPLE_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_DOT_ALL_TRASH_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_ALL_TRASH_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_ALL_TRASH_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_DOT_ALL_DOORS_MSG_NAME, IPC_VARIABLE_LENGTH, 
+	 	      CARMEN_DOT_ALL_DOORS_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_ALL_DOORS_MSG_NAME);
+
+  err = IPC_subscribe(CARMEN_DOT_QUERY_NAME, dot_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_DOT_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_DOT_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_DOT_RESET_MSG_NAME, reset_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_DOT_RESET_MSG_NAME);
+  IPC_setMsgQueueLength(CARMEN_DOT_RESET_MSG_NAME, 100);
 
   carmen_robot_subscribe_frontlaser_message(NULL,
 					    (carmen_handler_t)laser_handler,
 					    CARMEN_SUBSCRIBE_LATEST);
   carmen_localize_subscribe_globalpos_message(&odom, NULL,
 					      CARMEN_SUBSCRIBE_LATEST);
+}
 
-  carmen_map_get_gridmap(&static_map);
+static void person_filter_velocity_window_handler() {
+
+  if (person_filter_velocity_window > MAX_PERSON_FILTER_VELOCITY_WINDOW)
+    person_filter_velocity_window = MAX_PERSON_FILTER_VELOCITY_WINDOW;
 }
 
 static void params_init(int argc, char *argv[]) {
@@ -904,6 +1203,14 @@ int main(int argc, char *argv[]) {
   carmen_randomize(&argc, &argv);
 
   signal(SIGINT, shutdown_module);
+
+  odom.timestamp = 0.0;
+  static_map.map = NULL;
+
+  printf("getting gridmap...");
+  fflush(0);
+  carmen_map_get_gridmap(&static_map);
+  printf("done\n");
 
   params_init(argc, argv);
   ipc_init();
