@@ -10,7 +10,7 @@ MODULE_COMMENT = Interface for viewing and controlling multiple robots
 SOURCES = 
 PUBLIC_INCLUDES = 
 PUBLIC_LIBRARIES = 
-PUBLIC_BINARIES = 
+PUBLIC_BINARIES = multirobot_viewer
 MAN_PAGES =
 
 TARGETS = 
