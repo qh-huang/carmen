@@ -56,7 +56,7 @@ typedef struct {
 } carmen_dot_trash_msg;
 
 #define CARMEN_DOT_TRASH_MSG_NAME "carmen_dot_trash_msg"
-#define CARMEN_DOT_TRASH_MSG_FMT  "{{int, double, double, double, double, double}, int, double, [char:10]}"
+#define CARMEN_DOT_TRASH_MSG_FMT  "{{int, double, double, double, double, double, double, double, double}, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_trash_p trash;
@@ -66,7 +66,7 @@ typedef struct {
 } carmen_dot_all_trash_msg;
 
 #define CARMEN_DOT_ALL_TRASH_MSG_NAME "carmen_dot_all_trash_msg"
-#define CARMEN_DOT_ALL_TRASH_MSG_FMT  "{<{int, double, double, double, double, double}:2>, int, double, [char:10]}"
+#define CARMEN_DOT_ALL_TRASH_MSG_FMT  "{<{int, double, double, double, double, double, double, double, double}:2>, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_door_t door;
