@@ -76,7 +76,6 @@ void carmen_planner_set_map(carmen_map_p new_map)
   carmen_verbose("Initialized with map\n");
 
   roadmap = carmen_roadmap_initialize(new_map);
-
   carmen_param_set_module("robot");
   carmen_param_get_double("max_t_vel", &max_t_vel);
   carmen_param_get_double("min_approach_dist", &approach_dist);
