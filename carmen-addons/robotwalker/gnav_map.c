@@ -28,7 +28,7 @@ struct door {
   struct room *room1;
   struct room *room2;
   carmen_map_placelist_t points;
-  carmen_point_t pos;  // in world coordinates
+  carmen_point_t pose;  // in world coordinates
   double width;  // in meters
   int num;
 };
@@ -50,6 +50,13 @@ typedef struct point_node {
   int y;
   struct point_node *next;
 } point_node_t, *point_node_p;
+
+typedef struct fill_node {
+  int x;
+  int y;
+  int fill;
+  struct fill_node *next;
+} fill_node_t, *fill_node_p;
 
 typedef struct {
   point_node_p probe_stack;
@@ -74,8 +81,8 @@ static GtkWidget *window, *canvas;
 static int canvas_width = 300, canvas_height = 300;
 
 static int fast = 0;
-static int fill = 1;
 
+int get_farthest(int door, int place);
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
 
@@ -95,8 +102,8 @@ void print_doors() {
     printf("door %d:  ", i);
     printf("rooms(%d, %d), ", doors[i].room1 != NULL ? doors[i].room1->num : -1,
 	   doors[i].room2 != NULL ? doors[i].room2->num : -1);
-    printf("pos(%.2f, %.2f, %.0f), ", doors[i].pos.x, doors[i].pos.y,
-	   carmen_radians_to_degrees(doors[i].pos.theta));
+    printf("pose(%.2f, %.2f, %.0f), ", doors[i].pose.x, doors[i].pose.y,
+	   carmen_radians_to_degrees(doors[i].pose.theta));
     printf("width(%.2f)", doors[i].width);
     printf("\n");
   }
@@ -105,7 +112,9 @@ void print_doors() {
 // fmt of place names: "<door>.<place>" 
 void get_doors(carmen_map_placelist_p placelist) {
 
-  int i, j, k, n, num_doornames, num_places, *num_doorplaces;
+  int num_doornames, num_places, *num_doorplaces;
+  int i, j, k, n, e1, e2;
+  double e1x, e1y, e2x, e2y;
   char **doornames, *placename;
 
   num_doornames = 0;
@@ -121,7 +130,8 @@ void get_doors(carmen_map_placelist_p placelist) {
     placename = placelist->places[i].name;
     n = strcspn(placename, ".");
     for (j = 0; j < num_doornames; j++)
-      if ((n == (int)strlen(doornames[j])) && !strncmp(doornames[j], placename, n))
+      if ((n == (int)strlen(doornames[j])) &&
+	  !strncmp(doornames[j], placename, n))
 	break;
     if (j < num_doornames)
       num_doorplaces[j]++;
@@ -143,16 +153,32 @@ void get_doors(carmen_map_placelist_p placelist) {
   for (j = 0; j < num_doors; j++) {
     doors[j].num = j;
     doors[j].points.num_places = num_doorplaces[j];
-    doors[j].points.places = (carmen_place_p) calloc(num_doorplaces[j], sizeof(carmen_place_t));
+    doors[j].points.places =
+      (carmen_place_p) calloc(num_doorplaces[j], sizeof(carmen_place_t));
     carmen_test_alloc(doors[j].points.places);
     k = 0;
     for (i = 0; i < num_places; i++) {
       placename = placelist->places[i].name;
       n = strcspn(placename, ".");
-      if ((n == (int)strlen(doornames[j])) && !strncmp(doornames[j], placename, n))
-	memcpy(&doors[j].points.places[k++], &placelist->places[i], sizeof(carmen_place_t));
+      if ((n == (int)strlen(doornames[j])) &&
+	  !strncmp(doornames[j], placename, n))
+	memcpy(&doors[j].points.places[k++],
+	       &placelist->places[i], sizeof(carmen_place_t));
     }
     free(doornames[j]);
+
+    e1 = get_farthest(j, 0);
+    e2 = get_farthest(j, e1);
+    e1x = doors[j].points.places[e1].x;
+    e1y = doors[j].points.places[e1].y;
+    e2x = doors[j].points.places[e2].x;
+    e2y = doors[j].points.places[e2].y;
+    doors[j].pose.x = (e1x + e2x) / 2.0;
+    doors[j].pose.y = (e1y + e2y) / 2.0;
+    doors[j].pose.theta = atan2(e2y - e1y, e2x - e1x) - M_PI/2.0;
+    while (doors[j].pose.theta < 0)
+      doors[j].pose.theta += M_PI;
+    doors[j].width = dist(e2x - e1x, e2y - e1y);
   }
 
   free(doornames);
@@ -349,7 +375,7 @@ int get_farthest(int door, int place) {
 
 void get_rooms() {
 
-  int i, j, n, e1, e2, add;
+  int i, j, n, e1, e2;
   double x, y;
   double dx, dy, d;
   double e1x, e1y;  // endpoint 1
@@ -359,7 +385,6 @@ void get_rooms() {
   double p2x, p2y;  // probe 2
   carmen_world_point_t world_point;
   carmen_map_point_t map_point;
-  point_node_p frontier_head, frontier_tail, tmp;
 
   rooms = (room_p) calloc(num_doors + 1, sizeof(room_t));
   carmen_test_alloc(rooms);
@@ -475,110 +500,6 @@ void get_rooms() {
       rooms[n].doors[rooms[n].num_doors++] = &doors[i];
   }
 
-  if (fill) {
-    //fill in gaps in grid
-    frontier_head = frontier_tail = NULL;
-    for (i = 0; i < grid_width; i++) {
-      for (j = 0; j < grid_height; j++) {
-	if (grid[i][j] == GRID_NONE) {
-	  add = 0;
-	  if (i+1 < grid_width && grid[i+1][j] >= 0) {  //right
-	    grid[i][j] = grid[i+1][j];
-	    add = 1;
-	  }
-	  else if (i > 0 && grid[i-1][j] >= 0) {  //left
-	    grid[i][j] = grid[i-1][j];
-	    add = 1;
-	  }
-	  else if (j+1 < grid_height && grid[i][j+1] >= 0) {  //up
-	    grid[i][j] = grid[i][j+1];
-	    add = 1;
-	  }
-	  else if (j > 0 && grid[i][j-1] >= 0) {  //down
-	    grid[i][j] = grid[i][j-1];
-	    add = 1;
-	  }
-	  if (add) {
-	    tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-	    carmen_test_alloc(tmp);
-	    tmp->x = i;
-	    tmp->y = j;
-	    tmp->next = NULL;
-	    if (frontier_head == NULL)
-	      frontier_head = tmp;
-	    else
-	      frontier_tail->next = tmp;
-	    frontier_tail = tmp;
-#ifndef NO_GRAPHICS
-	    grid_to_image(i-2, j-2, 4, 4);
-	    draw_grid(i-2, j-2, 4, 4);
-#endif
-	  }
-	}
-      }
-    }
-    
-    while (frontier_head != NULL) {
-      i = frontier_head->x;
-      j = frontier_head->y;
-      tmp = frontier_head;
-      frontier_head = frontier_head->next;
-      free(tmp);
-      if (i+1 < grid_width && grid[i+1][j] == GRID_NONE) {  //right
-	grid[i+1][j] = grid[i][j];
-	tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-	carmen_test_alloc(tmp);
-	tmp->x = i+1;
-	tmp->y = j;
-	if (frontier_head == NULL)
-	  frontier_head = tmp;
-	else
-	  frontier_tail->next = tmp;
-	frontier_tail = tmp;
-      }
-      if (i > 0 && grid[i-1][j] == GRID_NONE) {  //left
-	grid[i-1][j] = grid[i][j];
-	tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-	carmen_test_alloc(tmp);
-	tmp->x = i-1;
-	tmp->y = j;
-	if (frontier_head == NULL)
-	  frontier_head = tmp;
-	else
-	  frontier_tail->next = tmp;
-	frontier_tail = tmp;
-      }
-      if (j+1 < grid_height && grid[i][j+1] == GRID_NONE) {  //up
-	grid[i][j+1] = grid[i][j];
-	tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-	carmen_test_alloc(tmp);
-	tmp->x = i;
-	tmp->y = j+1;
-	if (frontier_head == NULL)
-	  frontier_head = tmp;
-	else
-	  frontier_tail->next = tmp;
-	frontier_tail = tmp;
-      }
-      if (j > 0 && grid[i][j-1] == GRID_NONE) {  //down
-	grid[i][j-1] = grid[i][j];
-	tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-	carmen_test_alloc(tmp);
-	tmp->x = i;
-	tmp->y = j-1;
-	if (frontier_head == NULL)
-	  frontier_head = tmp;
-	else
-	  frontier_tail->next = tmp;
-	frontier_tail = tmp;
-      }
-#ifndef NO_GRAPHICS
-      grid_to_image(i-2, j-2, 4, 4);
-      draw_grid(i-2, j-2, 4, 4);
-#endif
-    }
-  }
-
   //dbug: find door width and pose
 }
 
@@ -623,6 +544,84 @@ void grid_init() {
 #endif
 }
 
+static int closest_room(int x, int y, int max_shell) {
+
+  int i, j, x2, y2, shell;
+
+  if (x < 0 || x >= grid_width || y < 0 || y >= grid_height)
+    return -1;
+
+  if (grid[x][y] >= 0)
+    return grid[x][y];
+
+  for (i = 0; i < 4*max_shell; i++) {
+    shell = i/4+1;
+    for (j = 0; j < 2*shell; j++) {
+      switch (i % 4) {
+      case 0:
+	x2 = carmen_clamp(0, x-shell+j, grid_width-1);
+	y2 = carmen_clamp(0, y+shell, grid_height-1);
+	if (grid[x2][y2] >= 0)
+	  return grid[x2][y2];
+	break;
+      case 1:
+	x2 = carmen_clamp(0, x+shell, grid_width-1);
+	y2 = carmen_clamp(0, y+shell-j, grid_height-1);
+	if (grid[x2][y2] >= 0)
+	  return grid[x2][y2];
+	break;
+      case 2:
+	x2 = carmen_clamp(0, x+shell-j, grid_width-1);
+	y2 = carmen_clamp(0, y-shell, grid_height-1);
+	if (grid[x2][y2] >= 0)
+	  return grid[x2][y2];
+	break;
+      case 3:
+	x2 = carmen_clamp(0, x-shell, grid_width-1);
+	y2 = carmen_clamp(0, y-shell+j, grid_height-1);
+	if (grid[x2][y2] >= 0)
+	  return grid[x2][y2];
+      }
+    }
+  }
+
+  return -1;
+}
+
+static void cleanup_map() {
+
+  int i, j;
+  fill_node_p tmp, fill_stack;
+
+  for (i = 0; i < grid_width; i++)
+    for (j = 0; j < grid_height; j++)
+      if (closest_room(i,j,7) == -1)
+	grid[i][j] = GRID_UNKNOWN;
+
+  fill_stack = NULL;
+  
+  for (i = 0; i < grid_width; i++) {
+    for (j = 0; j < grid_height; j++) {
+      if (grid[i][j] == GRID_NONE) {
+	tmp = (fill_node_p) calloc(1, sizeof(fill_node_t));
+	carmen_test_alloc(tmp);
+	tmp->x = i;
+	tmp->y = j;
+	tmp->fill = closest_room(i,j,7);
+	tmp->next = fill_stack;
+	fill_stack = tmp;
+      }
+    }
+  }
+
+  while (fill_stack != NULL) {
+    grid[fill_stack->x][fill_stack->y] = fill_stack->fill;
+    tmp = fill_stack;
+    fill_stack = fill_stack->next;
+    free(tmp);
+  }
+}
+
 void get_map() {
 
   carmen_map_placelist_t placelist;
@@ -639,6 +638,14 @@ void get_map() {
   get_doors(&placelist);
   get_rooms();
   print_doors();
+
+  cleanup_map();
+
+#ifndef NO_GRAPHICS
+  grid_to_image(0, 0, grid_width, grid_height);
+  draw_grid(0, 0, grid_width, grid_height);
+#endif
+
 }
 
 #ifndef NO_GRAPHICS
@@ -700,44 +707,6 @@ static void draw_grid(int x, int y, int width, int height) {
     gtk_main_iteration_do(TRUE);
 }
 
-static int closest_room(int x, int y) {
-
-  int i, j, x2, y2, shell, max_shell = 10;
-
-  for (i = 0; i < 4*max_shell; i++) {
-    shell = i/4+1;
-    for (j = 0; j < 2*shell; j++) {
-      switch (i % 4) {
-      case 0:
-	x2 = carmen_clamp(0, x-shell+j, grid_width-1);
-	y2 = carmen_clamp(0, y+shell, grid_height-1);
-	if (grid[x2][y2] >= 0)
-	  return grid[x2][y2];
-	break;
-      case 1:
-	x2 = carmen_clamp(0, x+shell, grid_width-1);
-	y2 = carmen_clamp(0, y+shell+j, grid_height-1);
-	if (grid[x2][y2] >= 0)
-	  return grid[x2][y2];
-	break;
-      case 2:
-	x2 = carmen_clamp(0, x+shell-j, grid_width-1);
-	y2 = carmen_clamp(0, y-shell, grid_height-1);
-	if (grid[x2][y2] >= 0)
-	  return grid[x2][y2];
-	break;
-      case 3:
-	x2 = carmen_clamp(0, x-shell, grid_width-1);
-	y2 = carmen_clamp(0, y-shell+j, grid_height-1);
-	if (grid[x2][y2] >= 0)
-	  return grid[x2][y2];
-      }
-    }
-  }
-
-  return -1;
-}
-
 static gint motion_notify_event(GtkWidget *widget __attribute__ ((unused)),
 				GdkEventMotion *event) {
 
@@ -755,7 +724,7 @@ static gint motion_notify_event(GtkWidget *widget __attribute__ ((unused)),
   x2 = (int) ((x / (double) canvas_width) * grid_width);
   y2 = (int) ((1.0 - ((y+1) / (double) canvas_height)) * grid_height);
 
-  printf("room %d\n", closest_room(x2, y2));
+  printf("room %d\n", closest_room(x2,y2,10));
 
   return TRUE;
 }
@@ -865,8 +834,6 @@ int main(int argc, char *argv[]) {
   for (i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "-fast"))
       fast = 1;
-    else if (!strcmp(argv[i], "-nofill"))
-      fill = 0;
   }
 
   carmen_initialize_ipc(argv[0]);
