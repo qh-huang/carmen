@@ -8,11 +8,19 @@
 extern "C" {
 #endif
 
-void carmen_dot_start();
-void carmen_dot_subscribe_pos_message(carmen_dot_pos_msg *msg,
-					   carmen_handler_t handler,
-					   carmen_subscribe_t subscribe_how);
-
+void carmen_dot_reset();
+int carmen_dot_get_people(carmen_dot_person_p people);
+int carmen_dot_get_trash(carmen_dot_trash_p trash);
+int carmen_dot_get_doors(carmen_dot_door_p doors);
+void carmen_dot_subscribe_person_message(carmen_dot_person_msg *msg,
+					 carmen_handler_t handler,
+					 carmen_subscribe_t subscribe_how);
+void carmen_dot_subscribe_trash_message(carmen_dot_trash_msg *msg,
+					carmen_handler_t handler,
+					carmen_subscribe_t subscribe_how);
+void carmen_dot_subscribe_door_message(carmen_dot_door_msg *msg,
+				       carmen_handler_t handler,
+				       carmen_subscribe_t subscribe_how);
 
 #ifdef __cplusplus
 }
