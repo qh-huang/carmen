@@ -124,7 +124,8 @@ initialize_robot(char *dev)
   result = carmen_cerebellum_ac(25);
   current_acceleration = robot_config.acceleration;
 
-
+  printf("TROGDOR_M_PER_TICK: %lf\n", TROGDOR_M_PER_TICK);
+  printf("METERS_PER_OBOT_TICK: %lf\n", METERS_PER_OBOT_TICK);
   printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
   printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
 
@@ -165,6 +166,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 
   double delta_angle;
   double delta_distance;
+  double max_ticks;
 
   //make sure that this measurement doesn't come from some time in the future
   if (last_published_update >= odometry.timestamp)
@@ -221,21 +223,22 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     right_delta_tick -= SHRT_MIN;
   right_delta = right_delta_tick*METERS_PER_OBOT_TICK;
 
+  //no wheel should go faster than 3.0 m/s
+  max_ticks = 3.0 /( METERS_PER_OBOT_TICK / (odometry.timestamp-last_published_update)) ;
 
-  if(abs(left_delta_tick) > 8000 || abs(right_delta_tick) > 8000)
+  //  printf("maxticks: %lf, time elapsed: %lf\n", max_ticks, (odometry.timestamp-last_published_update));
+
+  if(abs(left_delta_tick) > max_ticks || abs(right_delta_tick) > max_ticks)
     {
       if( ! transient_dropped)
 	{
-	  printf("ldt: %d rdt: %d\n",left_delta_tick,right_delta_tick); 
+	  printf("CBldt: %d rdt: %d\n",left_delta_tick,right_delta_tick); 
 	  printf("delta tick unreal trying a drop\n");
 	  transient_dropped = 1;
 	  return(1);
 	}
     }
 
-  //the transient dropped flag lets us drop one and only one anomalous reading
-  if( transient_dropped ==1)
-    transient_dropped = 0;
 
   if (fabs(right_delta - left_delta) < .001) 
     delta_angle = 0;
@@ -246,28 +249,45 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 
   if(delta_angle > 0.5)
     {
-      printf("delta_angle: %lf, lt: %d rt: %d, olt: %d ort: %d",
-      	     delta_angle,State[0],State[1],last_left_tick,last_right_tick);
+      if( transient_dropped==0)
+	{
+	  printf("CB:delta_angle: %lf, lt: %d rt: %d, olt: %d ort: %d",
+		 delta_angle,State[0],State[1],last_left_tick,last_right_tick);
+	  printf("dropping one reading\n");
+	  transient_dropped = 1;
+	  return(1);
+	}
 
     }
 
-  delta_distance = (right_delta + left_delta) / 2.0;
+
+  if( transient_dropped == 0)
+    {
+
+      delta_distance = (right_delta + left_delta) / 2.0;
   
 
-  x += delta_distance * cos(theta);
-  y += delta_distance * sin(theta);
-  theta += delta_angle;
+      x += delta_distance * cos(theta);
+      y += delta_distance * sin(theta);
+      theta += delta_angle;
+      
+      theta = NORMALIZE(theta);
+      
+      last_left_tick = State[0];
+      last_right_tick = State[1];
+      
+      last_published_update = odometry.timestamp;
+      
+      odometry.x = x;
+      odometry.y = y;
+      odometry.theta = theta;
 
-  theta = NORMALIZE(theta);
+    }
 
-  last_left_tick = State[0];
-  last_right_tick = State[1];
-  
-  last_published_update = odometry.timestamp;
+  //the transient dropped flag lets us drop one and only one anomalous reading
+  if( transient_dropped ==1)
+    transient_dropped = 0;
 
-  odometry.x = x;
-  odometry.y = y;
-  odometry.theta = theta;
 
   //  printf("x: %lf, y: %lf, theta: %lf \n", x,y,theta);
 
