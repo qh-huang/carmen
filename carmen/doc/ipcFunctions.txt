@@ -1,0 +1,307 @@
+These are the functions left to comment.  They are listed by directory and then by file name.
+The @ means that the function/data is only in the .c file and not the .h
+The # means that the function/data is only in the .h file and not the .c
+N/A means that there is nothing in the code file that would need commenting
+
+DIRECTORY: ipc
+  FILE(S): basics.h
+     REMOVE MACROS
+  FILE(S): behaviors.c behaviors.h
+    Uncommented:
+	x_ipcQueryFd
+	x_ipcQueryCentral
+	x_ipc_msgFind2
+	x_ipc_queryNotifySend
+	endExecHandler
+	#ipcFormatClassType
+	@x_ipc_relinkMessagesAndHandlers
+	@x_ipcPreloadMessage
+	@setExecHndState
+    Commented:
+	@x_ipc_msgHndFind
+	x_ipc_msgFind
+	x_ipc_fmtFind
+	x_ipc_messageClassName
+	x_ipc_checkMessageClass
+	ipcData
+	x_ipc_execHnd
+	x_ipc_execFdHnd
+	@x_ipcReply
+	@x_ipcNullReply
+	@x_ipcSuccess
+	@x_ipcFailure
+	@x_ipcQuerySend
+	@x_ipcQueryReceive
+	x_ipcQueryNotify  (NOTE: there is a "_x_ipcQueryNotify" in the .h)
+	@x_ipcQuery
+	testInconsistent
+	@x_ipcExpandGoalWithConstraints
+	@x_ipcExpandGoal
+	@x_ipcInform
+	@x_ipcAddConstraint
+	@x_ipcExecuteCommand
+	@x_ipcExecuteCommandWithConstraints
+	@x_ipcWaitForCommand
+	@x_ipcWaitForCommandWithConstraints
+	@x_ipcBroadcast
+	@x_ipcMultiQuery
+	@x_ipcMultiReceive
+	@x_ipcEnableDistributedResponses
+	@x_ipcDisableDistributedResponses
+	@x_ipcWillListen
+	@x_ipcExecute
+	@x_ipcExecuteWithConstraints
+	@x_ipcWaitForGoalWithConstraints
+	@x_ipcWaitForExecutionWithConstraints
+	@x_ipcWaitForExecution
+  FILE(S): central.c
+    Uncommented:
+	doSiouxStuff
+	killCentral
+	central
+	centralMain
+    Commented:
+	parseExpectedMods
+	abortCentral
+	pipeClosedHnd
+	centralFreeMemory (TYPO - "centralFreeMalloc")
+	main
+  FILE(S): centralIO.c central IO.h
+    Uncommented:
+	checkOccurrence
+	parseOpsFromStr
+	printPrompt
+	printOps
+	parseOption
+	@printTorF
+	@processMessageIgnoreFile
+	@displayOptions1
+    Commented:
+	setOptions
+	parseCommandLineOptions
+	displayOptions
+	displayHelp
+	displayVersion
+  FILE(S): centralMsg.h
+	N/A
+  FILE(S): com.c com.h
+	THIS FILE IS MESSED UP!!
+	REMOVE MACROS
+    Uncommented:
+	initGUSI
+    Commented:
+	x_ipc_connectAtPort
+	x_ipc_connectAtSocket
+	x_ipc_connectAt
+	x_ipc_listenAtPort
+	x_ipc_listenAtSocket
+	x_ipc_closeSocket
+	x_ipc_connectSocket
+	gettimeofday
+	x_ipc_timeInMsecs
+  FILE(S): comModule.c comModule.h
+	REMOVE MACROS
+    Uncommented:
+	initMsgQueue
+	enqueueMsg
+	dequeueMsg
+	x_ipc_waitForReplyFrom
+	#freeDirectList
+	#x_ipc_establishDirect
+	x_ipcHandleClosedConnection
+	#getResponseMsg
+	insertConnect
+	removeConnect
+	insertChange
+	removeChange
+	@invokeChangeHandlers
+	@sampleModulePrintData
+	@sampleModuleMapPrintData
+	@abortModule
+	@pipeClosedHnd
+	@x_ipc_resetDirect
+	@x_ipcSetContext
+	@x_ipcGetContext
+	@x_ipcResetContext
+	@x_ipcModuleProvides
+	@x_ipcModuleProvidesArgv
+	@x_ipcModuleRequires
+	@x_ipcModuleRequiresArgv
+	@x_ipcQueryAvailable
+	@x_ipcConnectModule
+	@x_ipcWaitUntilReady
+	@x_ipc_testNotificationRef
+	@x_ipc_handleQueryNotification
+	@iterateModuleConnection
+	@handleModuleInput
+	@x_ipc_acceptConnections
+	@x_ipcSingleMsgHnd
+	@x_ipcHandleFdInput
+	@x_ipc_testMsgRef
+	@chars_available
+	@x_ipc_handleModuleReply
+	@x_ipcHandleMessage
+	@x_ipcModuleListen
+	@x_ipcRegisterExitHandler
+	@x_ipcDirectResource
+	@freeDirectList
+	@setDirectInfo
+	@directMsgWatchHnd
+	@x_ipc_establishDirect
+	@x_ipcGetVersionMajor
+	@x_ipcGetVersionMinor
+	@x_ipcAddEventHandler (TYPO)
+	@msgFromDataMsg
+	@numPending
+	@removeOldest
+	@resizeMsgQueue
+	@printMsgQueue
+	@invokeChangeHandlers
+	@numChangeHandlers
+    Commented:
+	@x_ipc_printDataModuleInitialize
+	@killModule
+	x_ipcModuleInitialize
+	@x_ipcServerMachine
+	@x_ipcIgnoreLogging
+	@x_ipcResumeLogging
+	@x_ipcClose
+	@x_ipc_handleQueryNotification
+	x_ipc_decodeDataInLanguage
+	@x_ipc_processQueryReply
+	x_ipc_waitForReply
+	@x_ipc_waitForReplyFromTime
+	@x_ipcRemoveEventHandler
+  FILE(S): comServer.c comServer.h
+    Uncommented:
+	parseMsgFormats
+	moduleFree
+	pendingReplyAdd
+	pendingReplyRemove
+	parseMsg
+	centralRegisterMessage
+	centralRegisterNamedFormatter
+	_centralRegisterHandler
+	centralRegisterLengthFormatter
+	x_ipcCloseMod
+	@recordBroadcast
+	@cleanBroadcast
+	@updateDirectHandlers
+	@directHandlersList
+	@removeDispatchFromWait
+	@waitDeleteFunc
+	@providesHnd
+	@requiresHnd
+	@availableHnd
+	@NewModuleConnectHnd
+	@registerMessageHnd
+	@addHndItem
+	@addPendItem
+	@regiserHandlerHnd
+	@deregisterHandlerHnd
+	@registerNamedFormHnd
+	@getNamedFormHnd
+	@msgInfoHnd
+	@getMsg
+	@getMsgsHnd
+	@getMsgInfoHnd
+	@hndInfoHnd
+	@waitModuleReady
+	@waitReleaseFunc
+	@waitHnd
+	@x_ipcCloseHnd
+	@modNameEq
+	@classInfoHnd
+	@setMsgPriorityHnd
+	@directResHnd
+	@directInfoHnd
+	@directMsgHnd
+	@moduleConnectedHnd
+	@notifyHandlerChangeHnd
+	@displayMessages
+	@stdinHnd
+	@modSdEq
+	@recordBroadcast
+	@cleanBroadcast
+	@directHandlersList
+    Commented:
+	@modHashFunc
+	@modKeyEqFunc
+	@x_ipcModuleCreate
+	removeConnection  (move comment)
+	moduleClean
+	@addConnection
+	@serverModCreate
+	@serverModListen
+	@selfRegisterMsg
+	@serverMessagesIntialize
+	@printDataServerInitialize
+	serverInitialize
+	serverShutdown
+	@handleDataMsgRecv
+	@acceptConnection
+	@accessibleConnection
+	listenLoop
+	@updateDirectHandlers
+  FILE(S): datamsg.c datamsg.h
+    Uncommented:
+	x_ipc_dataMsgInitialize
+	x_ipc_dataMsgCreate
+	x_ipc_encodeMsgData
+	x_ipc_decodeMsgData
+	@my_readv
+	@my_writev
+	@x_ipc_dataMsgAlloc
+	@countDataMessages
+    Commented:
+	x_ipc_readNBytes
+	@x_ipc_read2Buffers
+	x_ipc_writeNBytes
+	@x_ipc_writeNBuffers
+	x_ipc_dataMsgFree
+	x_ipc_dataMsgRecv
+	x_ipc_dataMsgSend
+	x_ipc_dataMsgDecodeMsg
+	x_ipc_dataMsgDecodeClass
+	x_ipc_dataMsgTestMsgData
+	x_ipc_dataMsgReplaceClassData
+	x_ipc_dataMsgDisplayStats
+	@x_ipcAllocateDataBuffer
+  FILE(S): dispatch.c dispatch.h
+  FILE(S): formatters.c formatters.h
+  FILE(S): globalM.c globalM.h
+  FILE(S): globalMutil.c
+  FILE(S): globalS.c globalS.h
+  FILE(S): globalVar.c globalVar.h
+  FILE(S): hash.c hash.h
+  FILE(S): idtable.c idtable.h
+  FILE(S): ipc.c ipc.h
+  FILE(S): ipcLisp.c
+  FILE(S): ipcPriv.h
+  FILE(S): key.c key.h
+  FILE(S): lex.c lex.h
+  FILE(S): libc.h
+  FILE(S): list.c list.h
+  FILE(S): logging.c logging.h
+  FILE(S): marshall.c
+  FILE(S): modLogging.c modLogging.h
+  FILE(S): modVar.c modVar.h
+  FILE(S): msgTap.c msgTap.h
+  FILE(S): parseFmttrs.c parseFmttrs.h
+  FILE(S): printData.c printDData.h
+  FILE(S): queryResponse.c
+  FILE(S): recvMsg.c recvMsg.h
+  FILE(S): reg.c reg.h
+  FILE(S): res.c res.h
+  FILE(S): resMod.c resMod.h
+  FILE(S): sendMsg.c sendMsg.h
+  FILE(S): strList.c strList.h
+  FILE(S): tca.h
+  FILE(S): tcaInternal.h
+  FILE(S): tcaMem.c tcaMem.h
+  FILE(S): tcaRef.c tcaRef.h
+  FILE(S): tcerror.c tcerror.h
+  FILE(S): tcModError.c
+  FILE(S): timer.c
+  FILE(S): wsocksrt.c
+

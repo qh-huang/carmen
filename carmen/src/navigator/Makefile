@@ -1,0 +1,78 @@
+include ../Makefile.conf
+
+ifdef FOR_XAVIER
+INTERFACE_LIBS = -lxavier_interface
+else
+INTERFACE_LIBS = -lrobot_interface
+endif
+
+DOT_FILES := $(wildcard $(INC_DIR)/carmen/dot*.h)
+
+IFLAGS +=
+LFLAGS += $(INTERFACE_LIBS) -lglobal -lipc -lbase_interface \
+	-llocalize_interface -lant_lite -lgeometry -lmap_interface \
+	-lparam_interface -lsimulator_interface
+
+ifdef DOT_FILES
+IFLAGS += -DUSE_DOT
+LFLAGS += -ldot_interface
+endif
+
+MODULE_NAME = NAVIGATOR
+MODULE_COMMENT = The motion planner!
+
+SOURCES = navigator.c conventional.c planner.c navigator_ipc.c \
+	navigator_interface.c trajectory.c map_modify.c \
+	navigator_test.c 
+
+PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h
+PUBLIC_LIBRARIES = libnavigator_interface.a libconventional.a
+
+PUBLIC_BINARIES = navigator
+
+TARGETS = libnavigator_interface.a navigator navigator_test 
+
+ifndef NO_TCPD
+LFLAGS += -lwrap -lnsl
+endif
+
+ifndef NO_ZLIB
+LFLAGS += -lz
+else
+CFLAGS += -DNO_ZLIB
+endif
+
+ifndef NO_GRAPHICS
+IFLAGS += `$(GTK_CONFIG) --cflags` 
+LFLAGS += -lmap_graphics -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
+
+ifndef NO_LIBART
+LFLAGS += -lart_lgpl -lartwrap
+endif
+
+SOURCES += navigator_graphics.c navigator_panel.c test_map_modify.c \
+	test_panel_config.c 
+PUBLIC_BINARIES += navigator_panel test_panel_config
+TARGETS += navigator_panel test_map_modify test_panel_config
+endif
+
+
+all:
+
+navigator: navigator.o navigator_ipc.o conventional.o planner.o \
+	trajectory.o map_modify.o
+
+libnavigator_interface.a: navigator_interface.o
+
+navigator_panel: navigator_panel.o navigator_graphics.o \
+	libnavigator_interface.a 
+
+libconventional.a: 	conventional.o planner.o trajectory.o map_modify.o
+
+test_map_modify: test_map_modify.o map_modify.o
+
+test_panel_config: test_panel_config.o
+
+navigator_test: navigator_test.o navigator_interface.o
+
+include ../Makefile.rules

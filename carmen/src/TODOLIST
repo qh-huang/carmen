@@ -1,0 +1,219 @@
+BUGS reported by Greg 
+========================================
+
+- robotgraph -- when turning to face a point, and the network goes out, robot
+keeps turning for 1-3 secs. Why?
+
+TODO
+======================================== 
+
+backwards_flag -- i don't understand how the backwards_flag can possibly
+work. in scout, if backwards_flag is on, the robot will go backwards when the
+backwards_flag is on with positive velocity, but the x term of the odometry
+will go down. 
+
+acceleration/deceleration -- i don't believe that the pioneer actually has
+separate fields for these two things. it has pioneer_seta and pioneer_setra
+fields, but these things aren't being treated correctly by the pioneer
+module. who knows what they mean?
+
+all -- add handlers so that query/response is possible
+
+all base modules -- none of them set the acceleration field of the odometry
+message correctly. This needs to be fixed.
+
+param_edit -- can't create parameters
+	      need to be able to create new carmen.ini from scratch.
+
+add reading functions to logger_io.
+
+sonar/ir/bumper: should be a method to request current configurations. 
+
+No way to zero odometry right now, should be a way.
+
+logger  ---  add param change recording to logger, and param change playback
+	        to playback
+
+navigator -- check cost function building.  
+	     check loop speed on amelia.
+	     check vector control loop -- distance calculation seems 
+             screwed up. 
+
+map_editor -- no support for pixel offlimits.
+	no support for deleting offlimits.
+	no support for undo while creating offlimits.
+
+maps -- offlimits not handled properly by minimize/rotate -- possibly other
+programs?
+
+map_read -- fix buffer size problem with username/origin/description
+            fields in cmrt_map_read_creator_chunk, and null problem
+	          with creation_time field
+	    
+navigator -- occupied cell problem
+
+logger -- version stamping
+          logger usage statement
+	  logger core dumps on control C on reid\'s computer
+
+robot -- backwards control loop
+         XR4000 control loop
+
+robotgraph -- robotgraph segfaults on joystick stuff on reids computer.  
+
+localize -- testing
+	    people adding & removing
+
+mapeditor --- better usage statements
+
+----------------------------------------
+
+DONE base holonomic message 
+	
+DONE cleanup localize output
+
+DONE fix param processing of robot name 
+
+DONE fix navigator_graphics
+
+DONE fix navigator conventional priority queue
+
+DONE integrate xavier code
+
+DONE combine robot and control loop
+
+DONE remove base_velocity usage
+
+DONE add error checks to navigator param handling. 
+
+DONE printing out a warning if the param serving fails?
+
+DONE Turns out that everywhere you call Generate_next_motion_command, it is 
+followed immediately by a "send_base_velocity" command.  You might want to 
+just combine the two, for simplicity's sake.
+
+DONE change subscribe messages to set queue to be 1, or 0.
+
+DONE remove robot_odometry_{front/rear}_laser messages
+
+DONE base -- remove drive-to-point 
+	     remove acceleration commands
+
+DONE robot --  stop hitting stuff
+
+DONE navigator -- plan implementation on real robot
+
+DONE paramServer -- subscribe to changes
+		    add warning if there's an unused/unrecognised command line argument
+		    uniform usage messages
+
+DONE logger -- param recording
+	       get logger parameters from paramServer
+
+DONE Fix in all programs -- could not connect to central message.
+
+DONE pioneer -- timestamps
+
+DONE navigator -- arrived at goal message
+	          other stop message
+		  allow moving goals
+DONE pioneer -- interpolation problem
+                threaded
+	        acceleration setup
+	        integrate with paramServer
+
+DONE makefiles -- make debug
+
+DONE ant -- fix bugs (changed to ant_lite)
+            remove ant interfaces from low-level programs
+
+DONE joystick -- use paramServer
+	         better usage
+		 integrate with robotgraph
+
+DONE robot -- add collision avoidance on backwards motion
+
+DONE simulator -- integrate robot and simulator
+                  fix with graphics
+
+DONE simulator -- rear laser simulation has a weird offset problem
+
+DONE simulator -- person simulation has a weird offset problem 
+                  when robot is very close to person, and robot rotates,
+                  person rotates to stay in field-of-view.
+
+DONE navigator -- wrong map sent at startup
+	          tracking problem
+
+DONE all -- convert all floats to doubles
+
+DONE <ctrl-c> in robotgraph window causes robot to start moving.  
+
+DONE cursor position for moving robot vs. turning robot isn\'t quite
+right. robot will move with cursor close to robot, but not in it. maybe robot
+should light up when ready to move.
+
+DONE convert all units to MKS (ie. cm -> m)
+
+DONE modify aaai interface to be three argumented (void *)handler(ptr *),
+ptr *, subscribe flags (ALL|LATEST|ETC)
+
+DONE modify carmen include files so that C++ is handled properly
+
+DONE version numbering -- check for inconsistency among modules
+
+DONE paramServer -- barfs when reid supplies a param file and not a map file
+
+DONE graphics -- make all non-graphics programs compile without gtk/gnome	
+
+DONE navigator --  timing redraws  
+
+DONE navigator_panel -- add localize displays
+
+DONE ipc messages -- should have cmrt/carmen prepended.
+
+DONE Needs a joystick off argument
+
+DONE makefiles -- make install
+
+DONE remove the pioneer_messages.h and scout_messages.h files.
+
+DONE logger -- write a program to read params from logfile and install them.
+
+DONE localize -- patched localization bug in perception update
+
+DONE map_graphics.c -- patched memory leak.
+
+DONE Makefiles -- An old version of Debian didn't have tcpd.h, and thus didn't
+support tcp wrappers at all.  It also didn't have libjpeg.a.  I had to comment
+out the tcp wrapper access control in Ant.  Maybe the Makefile should try to
+detect this.  Maybe not.
+
+DONE localize -- why is there no x/theta covariance, y/theta covariance?
+	         Mike says because no one needs it. 
+
+DONE *interface.c -- patched msg queue length to be max 100, so that
+		     central can never choke.
+
+Also patched localize_ipc to subscribe to latest localize_initialize message.
+Patched logger to subscribe to latest sync message, and latest param change
+message.
+Patched playback to subscribe to latest playback command.
+mapserver subscribes to last 100 map requests
+paramserver subscribes to last 100 param requests
+robot/pioneer/scout/rflex/xr4000 respond to last velocity command, vector move
+command 
+
+DONE make base_services and laser more robust to hardware stopping and
+restarting.
+
+DONE laser -- startup problem RS422 interface
+
+DONE -- multiline string literals paramserver and map_editor.
+
+DONE -- base_messages: fix bumper message field num_sonars to num_bumpers.
+
+DONE -- hard to tell when parameter has been set.
+
+DONE -- simulator -- fix motion error model in simulator.
+

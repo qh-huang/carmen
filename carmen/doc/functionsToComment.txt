@@ -1,0 +1,1633 @@
+These are the functions left to comment.  They are listed by directory and then by file name.
+The @ means that the function/data is only in the .c file and not the .h
+The # means that the function/data is only in the .h file and not the .c
+N/A means that there is nothing in the code file that would need commenting
+
+DIRECTORY: ant
+  FILE(S): ant.c ant.h
+    Uncommented:
+	ant_set_default_prompt
+	ant_writen
+	ant_readn
+	ant_write_string
+	ant_printf
+	ant_set_identity
+	ant_get_identity
+	ant_open_server
+	ant_register_callback
+	ant_register_default_callback
+	ant_register_null_callback
+	#ant_add_connection
+	ant_shutdown
+	#ant_handle_connect
+	ant_print_command
+	#ant_listen
+	ant_connect_to_server
+	ant_close_connection
+	ant_send_client_command
+	#ant_send_client_command_with_response
+	ant_readline
+	ant_register_unlocked_callback
+	ant_register_timer
+	ant_server_main_loop
+	ant_server_main_loop_threaded
+	ant_running
+	@ant_get_time_ms
+	@ant_written
+	@ant_bytes_to_read
+	@ant_printf
+	@ant_get_prompt
+	@ant_read_prompt
+	@listen_for_connection
+	@prompt_handler
+	@add_to_history
+	@get_command
+	@send_telnet_commands
+	@command_loop
+	@main_loop_helper
+    Commented:
+	NONE
+  FILE(S): ant_lite.c
+    Uncommented:
+	ant_callback_handle_data
+	ant_get_time_ms
+	lookup_connection
+	ant_writen
+	ant_readn
+	ant_bytes_to_read
+	ant_write_string
+	ant_printf
+	ant_open_server
+	ant_shutdown
+	ant_add_connection
+	ant_handle_connect
+	ant_close_connection
+	ant_set_default_prompt
+	prompt_handler
+	help_handler
+	identity_handler
+	check_capacity
+	extract_complete_line
+	skip_non_blanks
+	skip_blanks
+	skip_to_char
+	count_tokens_in_line
+	free_arg_list
+	handle_complete_line
+	check_for_complete_line
+	ant_callback_handle_data
+	ant_register_callback
+	ant_register_unlocked_callback
+	ant_register_null_callback
+	ant_register_default_callback
+	ant_listen
+	ant_set_identity
+	get_prompt_from_server
+	ant_readline
+	ant_read_prompt
+	ant_send_client_command_with_response
+	ant_send_client_command
+	ant_connect_to_server
+	ant_print_command
+    Commented:
+	NONE
+  FILE(S): sockutils.c sockutils.h
+    Uncommented:
+	sock_writen
+	sock_readn
+	sock_write_string
+	sock_printf
+	sock_bytes_to_read
+	sock_connect_to_server
+	sock_close_connection
+	@hosts_ctl
+	@isblank
+    Commented:
+	NONE
+  FILE(S): testClient.c
+    Uncommented:
+	get_from_bin_host
+	main
+    Commented:
+	NONE
+  FILE(S): testServer.c
+    Uncommented:
+	test1_handler
+	test2_handler
+	default_handler
+	null_handler
+	main
+    Commented:
+	NONE
+
+DIRECTORY: base
+  FILE(S): base_interface.c base_interface.h
+    Uncommented:
+	cmrt_base_subscribe_odometry_message
+	cmrt_base_subscribe_sonar_message
+	@odometry_interface_handler
+	@sonar_interface_handler
+    Commented:
+	NONE
+  FILE(S): base_services.c
+    Uncommented:
+	load_shared_object_library
+	init_shared_object_library
+	close_shared_object_library
+	read_base_services_parameters
+	shutdown_base
+	main
+    Commented:
+	NONE
+  FILE(S): base_test.c
+    Uncommented:
+	base_odometry_handler
+	base_sonar_handler
+	shutdown_module
+	main
+    Commented:
+	NONE
+
+DIRECTORY: global
+  FILE(S): cmrtart.c cmrtart.h
+    Uncommented:
+	art_new_buffer
+	art_new_context
+	art_set_color_rgba
+	art_set_color
+	art_set_linewidth
+	art_set_miterlimit
+	art_set_jointype
+	art_set_captype
+	art_set_dash
+	art_clear
+	art_draw_line
+	art_draw_x
+	art_draw_poly
+	art_draw_circle
+	art_draw_ellipse
+	art_draw_gaussian
+	#art_draw_gaussian_pca
+	art_draw_rectangle
+	art_draw_arc
+	art_draw_rgb_image
+	art_draw_rgba_image
+	art_write_buffer_ppm
+	art_write_buffer_png
+	@art_draw_wedge
+    Commented:
+	NONE
+  FILE(S): cmrt_graphics.h
+     N/A
+  FILE(S): cmrt.h
+     N/A
+  FILE(S): geometry.c geometry.h
+    Uncommented:
+	cmrt_geometry_compute_centre_and_curvature
+	cmrt_geometry_compute_radius_and_centre
+	cmrt_geometry_move_pt_to_rotating_ref_frame
+	cmrt_geometry_generate_laser_data
+	cmrt_geometry_fast_generate_laser_data
+	cmrt_geometry_compute_expected_distance
+	cmrt_geometry_cahce_stats
+	@compute_velocity_at_side
+	@cmrt_geometry_compute_radius_and_centre_old
+    Commented:
+	cmrt_geometry_project_point
+	cmrt_geometry_compute_velocity
+  FILE(S): global.c global.h
+    Uncommented:
+	#REMOVE all the macros
+	cmrt_find_param
+	cmrt_find_param_pair
+	cmrt_find_robot_name
+	cmrt_param_pair
+	cmrt_param_pair_and_remove
+	cmrt_read_params
+	cmrt_num_params
+	cmrt_get_param_by_num
+	cmrt_read_commandline_parameters
+	cmrt_process_param_int
+	cmrt_process_param_double
+	cmrt_process_param_onoff
+	cmrt_process_param_string
+	cmrt_process_param_file
+	cmrt_process_param_directory
+	cmrt_extract_filename
+	cmrt_perror
+	cmrt_verbose
+	cmrt_warn
+	cmrt_die
+	cmrt_die_syserror
+	cmrt_carp_set_verbose
+	cmrt_carp_set_output
+	cmrt_get_time_ms
+	cmrt_get_tenchar_host_name
+	cmrt_initialize_ipc
+	sleep_ipc
+	close_ipc
+	cmrt_running_average_clear
+	cmrt_running_average_add
+	cmrt_running_average_report
+	cmrt_round
+	cmrt_clamp
+	cmrt_trunc
+	cmrt_normalize_theta
+	cmrt_radians_to_degrees
+	cmrt_degrees_to_radians
+	cmrt_fmin
+	cmrt_fmax
+	cmrt_distance_traj
+	cmrt_angle_between
+	cmrt_distance
+	cmrt_get_bresenham_parameters
+	cmrt_get_current_point
+	cmrt_get_next_point
+	cmrt_sign
+	cmrt_rect_to_polar
+	cmrt_init_trig_tables
+	cmrt_randomize
+	cmrt_set_random_seed
+	cmrt_uniform_random
+	cmrt_gaussian_random
+	#cmrt_sin_table
+	cmrt_file_exists
+	cmrt_file_extention
+	cmrt_global_start_progess_bar  (SPELLING?)
+	cmrt_global_end_progess_bar
+	cmrt_global_update_progess_bar
+	strcasecmp
+	strncasecmp
+	cmrt_print_version
+	@read_ini_file
+	@get_From_Bin_Host
+	@cmrt_test_ipc
+    Commented:
+	NONE
+  FILE(S): global_graphics.c global_graphics.h
+    Uncommented:
+	cmrt_graphics_trajectory_to_screen
+	cmrt_graphics_screen_to_trajectory
+	cmrt_graphics_map_to_screen
+	cmrt_graphics_screen_to_map
+	#cmrt_graphics_screen_to_map_new
+	cmrt_graphics_world_to_screen
+	cmrt_graphics_screen_to_world
+	cmrt_graphics_verify_list_length
+	cmrt_graphics_update_ipc_callbacks
+	cmrt_graphics_convert_to_image
+	cmrt_graphics_generate_pixmap
+	cmrt_graphics_initialize_screenshot
+	cmrt_graphics_save_pixmap_screenshot
+	cmrt_graphics_add_color
+	cmrt_graphics_setup_colors
+	cmrt_graphics_add_color_rgb
+	cmrt_graphics_write_map_as_jpeg
+	cmrt_graphics_write_pixmap_as_png
+	cmrt_graphics_write_data_as_png
+	cmrt_graphics_draw_ellipse
+	@_add_color
+    Commented:
+	NONE
+  FILE(S): globaltest.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): psdraw.c psdraw.h
+    Uncommented:
+	open_ps
+	close_ps
+	comment_ps
+	rectangle_ps
+	filled_rectangle_ps
+	line_ps
+	circle_ps
+	arc_ps
+	filled_circle_ps
+	oval_ps
+	filled_oval_ps
+	x_ps
+	poly_ps
+	filled_poly_ps
+	gaussian_ps
+	gaussian_twisted_ps
+	setgray_ps
+	setcolor_ps
+	linedash_ps
+	linewidth_ps
+	linecap_ps
+	linejoin_ps
+	setfont_ps
+	text_ps
+	image_ps
+	read_image
+	init_image
+	free_image
+    Commented:
+	NONE
+  FILE(S): pstest.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): serial.c serial.h
+    Uncommented:
+	cmrt_serial_connect			
+	cmrt_serial_configure
+	cmrt_serial_numChars
+	cmrt_serial_ClearInputBuffer
+	cmrt_serial_writen
+	cmrt_serial_readn
+	@cmrt_serial_setrts
+	@cmrt_serial_setparms (SP??)
+    Commented:
+	NONE
+  FILE(S): testart.c
+    Uncommented:
+	expose_cb
+	build_widget
+	rgb_gradient
+	rgba_gradient
+	main
+    Commented:
+	NONE
+
+DIRECTORY: joystick
+  FILE(S): ctrl.h
+	N/A
+  FILE(S): joyctrl.c joyctrl.h
+    Uncommented:
+	cmrt_set_deadspot
+	cmrt_initialize_joystick
+	cmrt_get_joystick_state
+	cmrt_close_joystick
+	cmrt_joystick_control
+    Commented:
+	NONE
+  FILE(S): joyrobot.c
+    Uncommented:
+	sig_handler
+	read_parameters
+	main
+    Commented:
+	NONE
+  FILE(S): joystick.c joystick.h
+    Uncommented:
+	set_deadspot
+	init_joystick
+	get_joystick
+	close_joystick
+    Commented:
+	NONE
+  FILE(S): keyctrl.c keyctrl.h
+    Uncommented:
+	cmrt_initialize_keyboard
+	cmrt_read_char
+	cmrt_keyboard_control
+    Commented:
+	NONE
+DIRECTORY: laser
+  FILE(S): laser.c
+    Uncommented:
+	shutdown_laser
+	main
+    Commented:
+	NONE
+  FILE(S): laser_interface.c laser_interface.h
+    Uncommented:
+	cmrt_laser_subscribe_frontlaser_message
+	cmrt_laser_subscribe_rearlaser_message
+	@frontlaser_interface_handler
+	@rearlaser_interface_handler
+    Commented:
+	NONE
+  FILE(S): laser_main.c laser_main.h
+    Uncommented:
+	cmrt_laser_shutdown
+	#cmrt_laser_usage
+	#cmrt_laser_add_ant_callbacks
+	cmrt_laser_start
+	cmrt_laser_run
+	@publish_frontlaser_message
+	@publish_rearlaser_message
+	@initialize_laser_ipc
+	@read_laser_parameters
+    Commented:
+	NONE
+  FILE(S): laser_messages.h
+	N/A
+  FILE(S): laser_reset.c
+    Uncommented:
+	read_parameters
+	main
+    Commented:
+	NONE
+  FILE(S): laser_test.c
+    Uncommented:
+	laser_frontlaser_handler
+	laser_rearlaser_handler
+	shutdown_module
+	main
+    Commented:
+	NONE
+  FILE(S): sick.c sick.h
+    Uncommented:
+	cmrt_sick_initialize_laser
+	cmrt_sick_close_laser
+	cmrt_sick_reset_laser
+	@sick_compute_checksum
+	@sick_write_command
+	@sick_valid_packet
+	@sick_print_packet	(commented out)
+	@sick_process_packet
+	@sick_wait_for_packet
+	@sick_test_baudrate
+	@sick_adapt_baudrate
+	@sick_set_baudrate
+	@sick_configure_lms
+	@sick_recognize_laser_model
+	@sick_initialize_continuous
+	@sick_turnoff_continuous
+	@sick_start_laser
+    Commented:
+	cmrt_sick_handle_laser	(maybe good enough?)
+
+DIRECTORY: localize
+  FILE(S): likelihood_map.c likelihood_map.h
+    Uncommented:
+	create_distance_map
+	create_likelihood_map
+	write_map_to_ppm
+    Commented:
+	NONE
+  FILE(S): localize.c localize.h
+    Uncommented:
+	@allocate_robot_particle_filter
+	@resize_global_laser_memory
+	@resize_front_laser_memory
+	@resize_rear_laser_memory
+	@distribute_robot_particles_gaussian
+	@distribute_robot_particles_uniform
+	@allocate_person_particle_filter
+	@free_person_particle_filter
+	@free_person_particle_filters
+	@distribute_person_particles_gaussian
+	@add_person_particle_filter
+	@compute_person_filter_stats
+	@resample_person_particle_filters
+	@person_filters_motion_update
+	@compute_laser_assignments
+	@add_remove_person_filters
+	@person_filters_perception_update
+	@resample_robot_particle_filter
+	@range_to_xy
+	@transform_laser_points
+	@calculate_particle_probability
+	@robot_particle_mean
+	@robot_particle_std
+	@compute_robot_filter_stats
+	@test_global_mode
+	@robot_filter_perception_update
+	@robot_filter_motion_update
+	@compute_mean_scan
+	@process_initialization
+	@update_odometry
+	@robot_frontlaser_handler
+	@robot_rearlaser_handler
+	@read_parameters
+	@shutdown_localize
+	@main
+    Commented:
+	NONE
+  FILE(S): localize_global.c localize_global.h
+    Uncommented:
+	global_localization_initialize
+	@new_list
+	@destroy_list
+	@insert_sorted
+    Commented:
+	NONE
+  FILE(S): localizegraph.c
+    Uncommented:
+	updateIPC
+	quit_menu
+	localize_particle_handler
+	display_menu
+	map_menu
+	zoom_menu
+	filter_menu
+	get_orientation
+	get_orientation_std
+	draw_angle_distribution
+	draw_ellipse
+	redraw
+	expose_event
+	configure_event
+	localize_globalpos_handler
+	localize_people_handler
+	localize_sensor_handler
+	button_press_event
+	get_main_menu
+	create_map_window
+	init_graphics
+	shutdown_module
+	read_parameters
+	main
+    Commented:
+	NONE
+  FILE(S): localize_interface.c localize_interface.h
+    Uncommented:
+	cmrt_localize_subscribe_globalpos_message
+	cmrt_localize_subscribe_people_message
+	cmrt_localize_subscribe_particle_message
+	cmrt_localize_unsubscribe_particle_message
+	cmrt_localize_subscribe_sensor_message
+	cmrt_localize_subscribe_initialize_message
+	cmrt_localize_initialize_gaussian_command
+	cmrt_localize_initialize_uniform_command
+	cmrt_localize_correct_odometry
+	@global_interface_handler
+	@people_interface_handler
+	@particle_interface_handler
+	@sensor_interface_handler
+	@localize_initialize_interface_handler
+    Commented:
+	NONE
+  FILE(S): localize_ipc.c localize_ipc.h
+    Uncommented:
+	initialize_ipc
+	localize_publish_globalpos_message
+	localize_publish_sensor_message
+	localize_publish_particle_message
+	localize_publish_people_message
+	@localize_initialize_handler
+    Commented:
+	NONE
+  FILE(S): localize_messages.h
+	N/A
+
+DIRECTORY: logger
+  FILE(S): laserint_to_carmenlog.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): logger.c logger.h
+    Uncommented:
+	@print_message_descriptions
+	@get_all_params
+	@param_change_handler
+	@base_odometry_handler
+	@robot_frontlaser_handler
+	@robot_rearlaser_handler
+	@snyc_handler
+	@register_ipc_messages
+	@shutdown_module
+	@main
+    Commented:
+	NONE
+  FILE(S): logger_messages.h
+	N/A
+  FILE(S): playback.c
+    Uncommented:
+	command_handler
+	register_ipc_messages
+	index_messages
+	wait_for_timestamp
+	read_message
+	main_playback_loop
+	usage
+	read_parameters
+	shutdown_module
+	main
+    Commented:
+	NONE
+  FILE(S): playback_control.c
+    Uncommented:
+	Redraw
+	Send_Command
+	delete_event
+	main
+    Commented:
+	NONE
+  FILE(S): playback_interface.c playback_interface.h
+    Uncommented:
+	cmrt_playback_command
+    Commented:
+	NONE
+  FILE(S): playback_messages.h
+	N/A
+
+DIRECTORY: mapper
+  FILE(S): corr.c corr.h
+	DIDN'T DO
+  FILE(S): editor.c editor.h
+	DIDN'T DO
+  FILE(S): editor_cache.c editor_cache.h
+	DIDN'T DO
+  FILE(S): editor_graphics.c editor_graphics.h
+	DIDN'T DO
+  FILE(S): editor_ipc.c editor_ipc.h
+	DIDN'T DO
+  FILE(S): editor_menus.c editor_menus.h
+	DIDN'T DO
+  FILE(S): editor_modify.c editory_modify.h
+	DIDN'T DO
+  FILE(S): editor_structs.c editor_structs.h
+	DIDN'T DO
+  FILE(S): egrid.c egrid.h
+    Uncommented:
+	cmrt_mapper_initialize_evidence_grid
+	cmrt_mapper_free_evidence_grid
+	cmrt_mapper_update_evidence_grid
+	cmrt_mapper_clear_evidence_grid
+	cmrt_mapper_finish_evidence_grid
+    Commented:
+	NONE
+  FILE(S): gridmap.c gridmap.h
+	DIDN'T DO
+  FILE(S): log_to_map.c
+    Uncommented:
+	read_next_laser_message
+	read_frontlaser_messages
+	write_grid_to_map
+	Redraw
+	egrid_to_image
+	idle_function
+	Expose_Event
+	graphical_scanmatching
+	usage
+	read_parameters
+	main
+    Commented:
+	NONE
+  FILE(S): mapper.c mapper.h
+	DIDN'T DO
+  FILE(S): mapper_interface.c mapper_interface.h
+	DIDN'T DO
+  FILE(S): mapper_ipc.h
+	DIDN'T DO
+  FILE(S): mapper_messages.h
+	DIDN'T DO
+  FILE(S): mapper_support.c mapper_support.h
+	DIDN'T DO
+  FILE(S): map_save.c
+	DIDN'T DO
+  FILE(S): map_view.c
+	DIDN'T DO
+  FILE(S): match.c match.h
+	DIDN'T DO
+  FILE(S): match_params.h
+	DIDN'T DO
+  FILE(S): old_log_files.h
+	DIDN'T DO
+  FILE(S): pos.c pos.h
+	DIDN'T DO
+  FILE(S): rtmapper.c
+	DIDN'T DO
+  FILE(S): scanmatch.c scanmatch.h
+    Uncommented:
+	cmrt_mapper_align_scan
+	cmrt_mapper_reset
+	@recenter_angle
+	@recenter_degrees
+	@compute_forward_correction	(existing comment unclear)
+	@compute_correction_parameters	(existing comment unclear)
+	@allocate_scaninfo
+	@free_scaninfo_item
+	@free_scaninfo
+	@determine_hinge_point
+	@compute_scaninfo
+	@hinge_dist
+	@check_hinge_dist
+	@match_items
+	@update_position
+	@correct_position
+    Commented:
+	@find_matching_scan		(maybe needs more?)
+	@terminate_position_control	(maybe needs more?)
+  FILE(S): test_match.c
+	DIDN'T DO
+  FILE(S): view.c
+	DIDN'T DO
+
+DIRECTORY: mapserver
+  FILE(S): bee2carmen.c
+    Uncommented:
+	read_beesoft_map
+	main
+    Commented:
+	NONE
+  FILE(S): generate_blank.c
+    Uncommented:
+	usage
+	main
+    Commented:
+	NONE
+  FILE(S): map_add_place.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): map.c map.h
+    Uncommented:
+	@shutdown_mapServer
+	@read_parameters
+	@main
+    Commented:
+	NONE
+  FILE(S): map_editor.c map_editor.h
+    Uncommented:
+	@shutdown_module
+	@create_cursors
+	@main
+    Commented:
+	NONE
+  FILE(S): map_editor_drawing.c map_editor_drawing.h
+    Uncommented:
+	set_fuzzyness
+	set_fill
+	set_fuzzy_fill
+	set_zoom
+	sample
+	zoom_in
+	zoom_out
+	@push
+	@pop
+	@fill
+	@fuzzy_fill
+    Commented:
+	@calc_theta
+	set_point
+	set_cross
+	set_pour
+	set_dropper
+	set_ink
+	set_unknown
+	set_brush
+	set_rectangle
+	set_line
+	set_sample
+	set_filled
+	set_not_filled
+	line_incr
+	line_decr
+	brush_decr
+	brush_incr
+	draw_brush
+	creating_rectangle
+	creating_line
+	create_fill
+	create_fuzzy_fill
+	@draw_rectangle
+	@draw_line
+  FILE(S): map_editor_graphics.c map_editor_graphics.c
+    Uncommented:
+	@expose_event
+	@horizontal
+	@vertical
+	@off_pixmap
+	@get_main_menu
+	pix_x_to_map
+	pix_y_to_map
+	map_x_to_pix
+	map_y_to_pix
+	map_x_to_map_pix
+	map_y_to_map_pix
+	map_to_tmp
+	redraw
+	start_drawing_window
+	init_graphics
+	@setup_colors
+	@button_press_event
+	@button_release_event
+	@motion_notify_event
+    Commented:
+	NONE		
+  FILE(S): map_editor_menus.c map_editor_menus.h
+    Uncommented:
+	open_map_menu
+	save_map_menu
+	save_map_as_menu
+	quit_menu
+	undo_menu		(spelling)
+	help_menu
+	@map_save
+	@map_open
+	@map_open_ok_button
+	@create_open_map_selector
+	@save_map_ok_button
+	@create_save_map_selector
+	@dont_save_question
+	@quit_question
+    Commented:
+	NONE
+  FILE(S): map_graphics.c map_graphics.h
+    Uncommented:
+	cmrt_map_graphics_new_viewer
+	cmrt_map_graphics_add_drawing_func
+	cmrt_map_graphics_add_map
+	cmrt_map_graphics_modify_map
+	cmrt_map_graphics_adjust_scrollbars
+	cmrt_map_graphics_redraw
+	cmrt_map_graphics_draw_arc
+	cmrt_map_graphics_draw_line
+	cmrt_map_graphics_add_motion_event
+	cmrt_map_graphics_add_button_release_event
+	@redraw
+	@move_event
+	@recover_centre
+	@recover_top_left
+	@rescale_event
+	@regenerate_screen_defn
+	@set_image
+	@expose_event
+	@motion_event
+	@button_release_event
+	@button_press_event
+	@construct_image
+    Commented:
+	NONE
+  FILE(S): map_info.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): map_interface.c map_interface.h
+    Uncommented:
+	cmrt_map_subscribe_gridmap_message
+	cmrt_map_get_gridmap
+	#cmrt_map_subscribe_placename_message	(placelist??)
+	cmrt_map_get_placelist
+	cmrt_map_to_world
+	cmrt_world_to_map
+	cmrt_point_to_map
+	cmrt_distance_map
+	cmrt_distance_world
+	cmrt_map_cmp
+	cmrt_world_cmp
+	cmrt_map_to_trajectory
+	cmrt_trajectory_to_map
+	cmrt_map_copy
+	cmrt_map_destroy
+	cmrt_point_is_in_map
+	@cmrt_placelist_interface_handler
+	@cmrt_map_subscribe_placelist_message
+    Commented:
+	NONE
+  FILE(S): map_io.h
+    Uncommented:
+	cmrt_map_write_comment_chunk
+	cmrt_map_write_id
+	cmrt_map_copy_comments
+	cmrt_map_strip
+	cmrt_map_write_creator_chunk
+	cmrt_map_write_gridmap_chunk
+	cmrt_map_write_places_chunk
+	cmrt_map_write_laserscans_chunk
+	cmrt_map_chunk_exists
+	cmrt_map_read_creator_chunk
+	cmrt_map_read_gridmap_config
+	cmrt_map_read_gridmap_chunk
+	cmrt_map_read_offlimits_chunk
+	cmrt_map_read_places_chunk
+	cmrt_map_read_laserscans_chunk
+	cmrt_map_file
+	cmrt_map_set_filename
+	cmrt_map_initialize_ipc
+    Commented:
+	NONE
+  FILE(S): map_ipc.c
+    Uncommented:
+	gridmap_request_handler
+	placelist_request_handler
+	cmrt_map_set_filename
+    Commented:
+	cmrt_map_initialize_ipc
+  FILE(S): map_messages.h
+	N/A
+  FILE(S): map_read.c
+    Uncommented:
+	cmrt_map_read_comment_chunk
+	cmrt_map_file
+	cmrt_map_copy_comments
+	cmrt_map_strip
+	strip_trailing_spaces
+	cmrt_map_advance_to_chunk
+	cmrt_map_chunk_exists
+	cmrt_map_read_creator_chunk
+	cmrt_map_read_gridmap_config
+	cmrt_map_read_gridmap_chunk
+	cmrt_map_read_offlimits_chunk
+	cmrt_map_read_places_chunk
+	cmrt_map_read_laserscans_chunk
+    Commented:
+	NONE
+  FILE(S): map_test2.c
+    Uncommented:
+	shutdown_module
+	post_func
+    Commented:
+	main
+  FILE(S): map_test.c
+    Uncommented:
+	post_func
+    Commented:
+	shutdown_module
+	main
+  FILE(S): map_to_ppm.c
+    Uncommented:
+	write_map_to_ppm
+	main
+    Commented:
+	NONE
+  FILE(S): map_write.c
+    Uncommented:
+	write_fixed_string
+	cmrt_map_write_comment_chunk
+	cmrt_map_write_id
+	cmrt_map_write_creator_chunk
+	cmrt_map_write_gridmap_chunk
+	cmrt_map_write_places_chunk
+	cmrt_map_write_offlimits_chunk
+	cmrt_map_write_laserscans_chunk
+    Commented:
+	NONE
+  FILE(S): minimize.c
+    Uncommented:
+	cmrt_map_advance_to_chunk
+	cmrt_map_write_offlimits_chunk
+	move_offlimits_chunk
+	minimize_gridmap
+	main
+    Commented:
+	NONE
+  FILE(S): rotate.c
+    Uncommented:
+	rotate_places_chunk
+	rotate_gridmap
+	main
+    Commented:
+	NONE
+  FILE(S): strip_map.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+
+DIRECTORY: navigator
+  FILE(S): conventional.c conventional.h
+    Uncommented:
+	conventional_dynamic_program
+	conventional_find_best_action
+	conventional_end_planner
+	conventional_get_utility_ptr
+	conventional_get_costs_ptr
+	conventional_get_utility
+	#conventional_set_utility
+	conventional_get_cost
+	conventional_build_costs
+	@is_out_of_map
+	@utility_value
+	@get_parent_value
+	@make_queue
+	@swap_entries
+	@fix_priority_queue
+	@pop_queue
+	@delete_queue
+	@insert_into_queue
+	@conventional_create_state
+	@push_state
+	@add_neighbours_to_queue
+    Commented:
+	NONE
+  FILE(S): map_modify.c map_modify.h
+    Uncommented:
+	map_modify_update
+	map_modify_clear
+	@is_empty
+	@is_filled
+	@is_unknown
+	@is_in_map
+	@point_exists
+	@Add_Filled_Point
+	@Add_Clear_Point
+	@Update_Existing_Data
+	@Trace_Laser
+    Commented:
+	NONE
+  FILE(S): navigator.c navigator.h
+    Uncommented:
+	cmrt_navigator_set_robot
+	cmrt_navigator_set_robot_map
+	cmrt_navigator_set_goal_map
+	cmrt_navigator_set_goal
+	cmrt_navigator_set_max_velocity
+	cmrt_navigator_autonomous_status
+	cmrt_navigator_start_autonomous
+	cmrt_navigator_stop_autonomous
+	@base_odometry_handler
+	@robot_globalpos_handler
+	@sonar_message_handler
+	@robot_frontlaser_handler
+	@robot_rearlaser_handler
+	@angle_between_waypoint_and_robot		(commented out?)
+	@old_generate_Next_Motion_Command		(commented out)
+	@generate_Next_Motion_command
+	@navigator_shutdown
+	@target_message_handler
+	@read_parameters
+	@initialize_default_robot_values
+	@main
+    Commented:
+	NONE
+  FILE(S): navigator_graphics.c navigator_graphics.h
+    Uncommented:
+	navigator_graphics_init
+	navigator_graphics_update_display
+	navigator_graphics_update_plan
+	navigator_graphics_update_people
+	navigator_graphics_start
+	navigator_graphics_add_ipc_handler
+	navigator_graphics_get_current_path
+	navigator_graphics_change_map
+	navigator_graphics_display_map
+	navigator_graphics_add_placelist
+	navigator_graphics_add_planner_list
+	navigator_graphics_update_planner_type
+	@switch_display
+	@switch_people_display
+	@switch_track_display
+	@delete_event
+	@go_autonomous
+	@get_main_menu
+	@new_label
+	@construct_status_frame
+	@draw_robot_objects
+	@motion_handler
+	@resend_coords
+	@button_release_handler
+	@initialize_position
+	@set_goal
+	@set_location
+	@save_image
+	@update_planner
+    Commented:
+	NONE
+  FILE(S): navigator_interface.c navigator_interface.h
+    Uncommented:
+	cmrt_navigator_subscribe_status_message
+	cmrt_navigator_subscribe_plan_message
+	cmrt_navigator_subscribe_autonomous_stopped_message
+	cmrt_navigator_query_status
+	cmrt_navigator_query_plan
+	cmrt_navigator_set_goal
+	cmrt_navigator_set_robot
+	cmrt_navigator_set_goal_map
+	cmrt_navigator_set_robot_map
+	cmrt_navigator_switch_planner
+	cmrt_navigator_stop
+	cmrt_navigator_go
+	cmrt_navigator_get_map
+	cmrt_navigator_get_planner_list
+	cmrt_navigator_free_planner_list
+	@status_interface_handler
+	@plan_interface_handler
+	@anutonomous_stopped_interface_handler
+    Commented:
+	NONE
+  FILE(S): navigator_ipc.c navigator_ipc.h
+    Uncommented:
+	cmrt_navigator_initialize_ipc
+	cmrt_navigator_publish_status
+	cmrt_navigator_publish_plan
+	cmrt_navigator_publish_autonomous_stopped
+	cmrt_navigator_initialize_ant
+	@handle_planner_query
+	@navigator_status_query_handler
+	@paths_Are_Same
+	@navigator_plan_query_handler
+	@navigator_set_goal_map_handler
+	@navigator_set_goal_handler
+	@navigator_set_robot_handler
+	@navigator_set_map_handler
+	@navigagtor_set_localize_initialize_handler
+	@navigator_stop_handler
+	@navigator_switch_planner_handler
+	@navigator_go_handler
+	@navigator_map_request_handler
+	@ant_goal_callback
+	@ant_status_callback
+	@ant_slow_callback
+	@ant_fast_callback
+    Commented:
+	NONE
+  FILE(S): navigator_messages.h
+	N/A
+  FILE(S): navigator_panel.c navigator_panel.h
+    Uncommented:
+	navigator_update_robot
+	navigator_set_place
+	navigator_set_goal
+	navigator_stop_moving
+	navigator_start_moving
+	navigator_get_map
+	navigator_switch_planner
+	@navigator_status_handler
+	@navigator_plan_handler
+	@navigator_placelist_handler
+	@nav_shutdown
+	@handle_ipc
+	@people_handler
+	@main
+    Commented:
+	NONE
+  FILE(S): planner.c planner.h
+    Uncommented:
+	@error_dp
+	@error_fba
+	@error_val
+	@err_dbl		(should be error_dbl?)
+	@error_setval
+	@error_build_cost_func
+	@error_end
+	@cmrt_planner_get_num_planners
+	@cmrt_planner_get_planner_name
+	@cmrt_planner_get_planner_type
+	@cmrt_planner_get_current_planner
+	@cmrt_planner_switch_planners
+	@Get_Cost_Value
+	@Get_Utility_Value
+	@tracker_Compute_Path
+	@robust_extract_path
+	@extract_path_from_value_function
+	@cmrt_planner_test_linearity
+	@cmrt_planner_test_line_is_clear
+	@smooth_path_line
+	@compute_cost
+	@cost_of_path
+	@smooth_path
+	@compute_total_path_cost
+	@plan
+	@regenerate_trajectory
+	@save_path
+	@cmrt_planner_update_robot
+	@cmrt_planner_update_goal
+	@cmrt_planner_reset_map
+	@cmrt_planner_update_map
+	@cmrt_planner_get_robot
+	@cmrt_planner_is_goal_set
+	@cmrt_planner_find_next_waypoint
+	@cmrt_planner_get_map_message
+    Commented:
+	NONE
+  FILE(S): planner_interface.h
+    Uncommented:
+	cmrt_planner_switch_planners
+	cmrt_planner_update_robot
+	cmrt_planner_update_goal
+	cmrt_planner_is_goal_set
+	cmrt_planner_get_goal
+	cmrt_planner_get_robot
+	cmrt_planner_find_next_waypoint
+	cmrt_planner_reset_map
+	cmrt_planner_update_map
+	cmrt_planner_get_map_message
+	cmrt_planner_smooth_path
+	cmrt_planner_get_planner_name
+	cmrt_planner_get_planner_type
+	cmrt_planner_get_num_planners
+	cmrt_planner_get_current_planner
+    Commented:
+	NONE
+  FILE(S): trajectory.c trajectory.h
+    Uncommented:
+	cmrt_planner_add_path_point
+	cmrt_planner_get_path_point
+	cmrt_planner_set_path_point
+	cmrt_planner_insert_blank
+	cmrt_planner_insert_path_point
+	cmrt_planner_set_path_velocities
+	cmrt_planner_clear_path
+	cmrt_planner_get_length_path
+	cmrt_planner_clip_path
+	cmrt_planner_delete_path_point
+	cmrt_planner_test_trajectory
+	@check_max_path_length
+	@update_orientation
+    Commented:
+	NONE
+
+DIRECTORY: paramServer
+  FILE(S): param_interface.c param_interface.h
+    Uncommented:
+	cmrt_param_get_all
+	cmrt_param_get_int
+	cmrt_param_get_double
+	cmrt_param_get_onoff
+	cmrt_param_get_string
+	cmrt_param_get_filename
+	cmrt_param_set_module
+	cmrt_param_get_module
+	cmrt_param_set_variable
+	cmrt_param_get_error
+	cmrt_param_allow_unfound_variables
+	cmrt_param_are_unfound_variables_allowed
+	cmrt_param_set_usage_line
+	cmrt_param_usage
+	cmrt_param_install_params
+	cmrt_param_check_unhandled_commandline_args
+	cmrt_param_subscribe_int
+	cmrt_param_subscribe_double
+	cmrt_param_subscribe_onoff
+	cmrt_param_subscribe_string
+	cmrt_param_subscribe_file
+	cmrt_param_subscribe_dir
+	cmrt_param_check_version
+	@intall_parameter
+	@change_handler
+	@param_check_commandline_int
+	@param_check_commandline_double
+	@param_check_commandline_onoff
+	@param_check_commandline_string
+	@param_check_commandline_file_filename
+	@param_check_commandline_directory
+	@cmrt_param_get_directory
+	@get_table_entry
+	@check_table_capacity
+	@start_change_subscription
+	@
+    Commented:
+	NONE
+  FILE(S): param_message.h
+	N/A
+  FILE(S): paramServer.c
+    Uncommented:
+	shutdown_paramServer
+	lookup_name
+	lookup_parameter
+	query_num_params
+	check_param_space
+	set_param
+	reread_ant_callback
+	print_modules
+	get_ant_callback
+	set_ant_callback
+	start_ant_server
+	read_parameters
+	usage
+	read_parameters
+	lookup_ipc_query
+	get_param_all
+	get_param_int
+	get_param_double
+	get_param_onoff
+	get_param_string
+	get_param_filename
+	set_param_ipc
+	publish_new_param
+	get_version
+	initialize_param_ipc
+	main
+    Commented:
+	NONE
+  FILE(S): param_set.c
+    Uncommented:
+	usage
+	main
+    Commented:
+	NONE
+  FILE(S): param_test.c
+    Uncommented:
+	shutdown_module
+	handler
+	main
+    Commented:
+	NONE
+
+DIRECTORY: pioneer
+  FILE(S): pioneer.c
+    Uncommented:
+	shutdown_pioneer
+	main
+    Commented:
+	NONE
+  FILE(S): pioneer_main.c pioneer_main.h
+    Uncommented:
+	cmrt_pioneer_start
+	cmrt_pioneer_run
+	cmrt_pioneer_shutdown
+	cmrt_pioneer_emergency_crash
+	cmrt_pioneer_usage
+	@command_robot
+	@initialize_robot
+	@read_pioneer_parameters
+	@reset_status
+	@stop_robot
+	@update_status
+	@pioneer_buf_to_checksum
+	@pioneer_buf_to_int
+	@pioneer_buf_to_unsigned_int
+	@pioneer_calculate_checksum
+	@pioneer_close
+	@pioneer_convert_information_packet
+	@pioneer_int_to_buf
+	@pioneer_enable
+	@pioneer_open
+	@pioneer_pulse
+	@pioneer_read_string
+	@pioneer_send_command0
+	@pioneer_send_command1
+	@pioneer_send_string
+	@pioneer_seta
+	@pioneer_setra
+	@pioneer_sonar
+	@pioneer_stop
+	@pioneer_sync0
+	@pioneer_sync1
+	@pioneer_sync2
+	@pioneer_vel2
+	@set_wheel_velocities
+	@publsih_odometry_message
+	@publish_sonar_message
+	@velocity_handler
+	@cmrt_pioneer_initialize_ipc
+    Commented:
+	NONE
+  FILE(S): pioneer_messages.h
+        N/A
+  FILE(S): pioneer_test.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+
+DIRECTORY: robot
+  FILE(S): robot.c robot.h
+    Uncommented:
+	#cmrt_robot_get_odometry_skew
+	shutdown_robot
+	main
+    Commented:
+	NONE
+  FILE(S): robot_interface.c robot_interface.h
+    Uncommented:
+	cmrt_robot_subscribe_frontlaser_message
+	cmrt_robot_subscribe_rearlaser_message
+	cmrt_robot_velocity_command
+	cmrt_robot_move_along_vector
+	@robot_frontlaser_interface_handler
+	@robot_rearlaser_interface_handler
+    Commented:
+	NONE
+  FILE(S): robot_laser.c robot_laser.h
+    Uncommented:
+	cmrt_robot_correct_laser_and_publish
+	cmrt_robot_add_laser_handlers
+	cmrt_robot_add_laser_parameters
+	cmrt_robot_laser_max_front_velocity
+	cmrt_robot_laser_min_rear_velocity
+	@cmrt_robot_interpolate_heading
+	@publish_frontlaser_message
+	@publish_rearlaser_message
+	@get_front_laser_skew		(no _?)
+	@get_rear_laser_skew		(no _?)
+	@construct_laser_message
+	@check_message_data_chunk_sizes
+	@laser_frontlaser_handler
+	@laser_rearlaser_handler
+    Commented:
+	NONE
+  FILE(S): robot_main.c robot_main.h
+    Uncommented:
+	cmrt_robot_start
+	cmrt_robot_run
+	cmrt_robot_stop_robot
+	cmrt_robot_shutdown
+	cmrt_robot_usage
+	@cmrt_robot_get_odometry_skew
+	@cmrt_robot_interpolate_heading
+	@send_base_velocity_command
+	@base_odometry_handler
+	@velocity_handler
+	@vector_move_handler
+	@initialize_robot_ipc
+	@read_robot_parameters
+    Commented:
+	NONE
+  FILE(S): robot_messages.h
+        N/A
+  FILE(S): robot_sonar.c robot_sonar.h
+    Uncommented:
+	#get_front_sonar_skew
+	correct_sonar_and_publish
+	#sonar_frontsonar_handler
+	#sonar_rearsonar_handler
+	add_sonar_handlers
+	add_sonar_parameters
+	cmrt_robot_sonar_max_front_velocity
+	cmrt_robot_sonar_min_rear_velocity
+	@get_sonar_skew
+	@publish_sonar_message
+	@sonar_handler
+    Commented:
+	NONE
+  FILE(S): robot_test.c
+    Uncommented:
+	robot_frontlaser_handler
+	robot_corrected_frontlaser_handler
+	robot_rearlaser_handler
+	shutdown_module
+	main
+    Commented:
+	NONE
+
+DIRECTORY: robotgraph
+  FILE(S): robotgraph.c
+    Uncommented:
+	robot_frontlaser_handler
+	robot_rearlaser_handler
+	odometry_handler
+	initialize_robotgraph_ipc
+	shutdown_robotgraph
+	updateIPC
+	save_postscript_screenshot
+	set_rotating
+	set_moving
+	Button_Press_Event
+	Button_Release_Event
+	Key_Press_Event
+	Key_Release_Event
+	Motion_Event
+	Expose_Event
+	setup_color
+	range_to_xy
+	offset_polygon
+	check_capacity
+	update_polygons
+	update_history
+	draw_laser_data
+	draw_laser_endpoints
+	draw_robot
+	Redraw
+	Joystick_Event
+	start_graphics
+	read_robotgraph_parameters
+	main
+    Commented:
+	NONE
+
+DIRECTORY: scout
+  FILE(S): Nclient.h
+	DIDN'T DO
+  FILE(S): Ndirect.h
+        DIDN'T DO
+  FILE(S): scout.c
+    Uncommented:
+	shutdown_scout
+	main
+    Commented:
+	NONE
+  FILE(S): scout_main.c scout_main.h
+    Uncommented:
+	cmrt_scout_start
+	#cmrt_scout_usage
+	#cmrt_scout_add_ant_callbacks
+	cmrt_scout_run
+	cmrt_scout_shutdown
+	cmrt_scout_emergency_crash
+	@turn_sonar_on
+	@turn_sonar_off
+	@initialize_robot
+	@reset_status
+	@update_status
+	@command_robot
+	@read_scout_parameters
+	@velocity_handler
+	@cmrt_scout_initialize_ipc
+	@start_thread
+    Commented:
+	NONE
+  FILE(S): scout_messages.h
+	N/A
+  FILE(S): scout_test.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+  FILE(S): vel_test.c
+    Uncommented:
+	main
+    Commented:
+	NONE
+
+DIRECTORY: simulator
+  FILE(S): person.c person.h
+    Uncommented:
+	cmrt_simulator_new_person
+	cmrt_simulator_update_people
+	cmrt_simulator_person_in_laser
+	cmrt_simulator_free_person
+	cmrt_simulator_free_people
+	cmrt_simulator_get_poses
+	@update_person
+	@add_person_to_laser
+    Commented:
+	NONE
+  FILE(S): simulator.c simulator.h
+    Uncommented:
+	@click_handler
+	@init_handler
+	@velocity_handler
+	@shutdown_module
+	@initialize_ipc
+	@publish_readings
+	@read_parameters
+	@main
+    Commented:
+	@calc_theta
+  FILE(S): simulator_graphics.c simulator_graphics.h
+    Uncommented:
+	#displayMap
+	#subscribe_clicks
+	#init_graphics
+	#redraw
+	@add_color
+	@setup_colors
+	@subscribe_clicks
+	@Regenerage_Pixmap
+	@redraw
+	@expose_event
+	@button_press_event
+	@displayMap
+	@init_graphics
+    Commented:
+	NONE
+  FILE(S): simulator_messages.h
+        N/A
+  FILE(S): simulator_simulation.c simulator_simulation.h
+    Uncommented:
+	#cmrt_simulator_calc_theta
+	cmrt_simulator_recalc_pos
+	cmrt_simulator_calc_mesg	(spelling?)
+	@sample
+	@updatex
+	@updatey
+	@updatetheta
+	@add_laser_error
+    Commented:
+	NONE
+
+DIRECTORY: xavier
+  FILE(S): xavier_interface.c
+    Uncommented:
+	set_timestamp_host
+	limitMsgQueue
+	convert_laser_readings
+	robot_frontlaser_interface_handler
+	cmrt_robot_subscribe_frontlaser_message
+	cmrt_robot_velocity_command
+	frontlaser_interface_handler
+	cmrt_laser_subscribe_frontlaser_message
+	odometry_interface_handler
+	cmrt_base_subscribe_odometry_message
+	cmrt_base_velocity_command
+	cmrt_robot_move_along_vector
+    Commented:
+	cmrt_robot_subscribe_rearlaser_message
+	cmrt_laser_subscribe_all_rearlaser_message	(must be fixed)
+
+DIRECTORY: xr4000
+  FILE(S): arcnet.c arcnet.h
+        DIDN'T DO
+  FILE(S): arcnet_sensors.c arcnet_sensors.h
+        DIDN'T DO
+  FILE(S): buffer.c buffer.h
+        DIDN'T DO
+  FILE(S): default_setup.c default_setup.h
+        DIDN'T DO
+  FILE(S): hash.c hash.h
+        DIDN'T DO
+  FILE(S): i200m.c i200m.h
+        DIDN'T DO
+  FILE(S): joy_xr4000.c
+        DIDN'T DO
+  FILE(S): llc1.c llc1.h
+        DIDN'T DO
+  FILE(S): mac.c mac.h
+        DIDN'T DO
+  FILE(S): pc_d51.c pc_d51.h
+        DIDN'T DO
+  FILE(S): robot_client.c robot_client.h
+        DIDN'T DO
+  FILE(S): rpc.c rpc.h
+        DIDN'T DO
+  FILE(S): setup.c setup.h
+        DIDN'T DO
+  FILE(S): xr4000.c xr4000.h
+        DIDN'T DO
+  FILE(S): xr4000_control.c xr4000_control.h
+        DIDN'T DO
+  FILE(S): xr4000_ipc.c xr4000_ipc.h
+        DIDN'T DO
