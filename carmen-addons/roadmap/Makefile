@@ -5,9 +5,9 @@ include $(CARMEN_HOME)/src/Makefile.conf
 
 IFLAGS += `$(CARMEN_HOME)/bin/carmen-config --cflags --graphics navigation`
 LFLAGS += `$(CARMEN_HOME)/bin/carmen-config --libs --graphics navigation` 
-# CFLAGS += -pg
+CFLAGS += -pg
 
-LFLAGS += -ldot_interface -lsimulator_interface -lefence
+LFLAGS += -ldot_interface -lsimulator_interface #-lefence
 
 MODULE_NAME = Roadmap Navigator
 MODULE_COMMENT = Another motion planner!
