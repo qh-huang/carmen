@@ -28,6 +28,15 @@ typedef struct {
 #define CARMEN_ROOMNAV_ROOM_QUERY_NAME "carmen_roomnav_room_query"
 #define CARMEN_ROOMNAV_ROOM_QUERY_FMT CARMEN_ROOMNAV_QUERY_FMT
 
+typedef struct {
+  carmen_map_point_t point;  /* WARNING: point.map will be junk! */
+  double timestamp;
+  char host[10];
+} carmen_roomnav_room_from_point_query;
+
+#define CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME "carmen_roomnav_room_from_point_query"
+#define CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_FMT "{{int, int, int}, double, [char:10]}"
+
 #define CARMEN_ROOMNAV_GOAL_QUERY_NAME "carmen_roomnav_goal_query"
 #define CARMEN_ROOMNAV_GOAL_QUERY_FMT CARMEN_ROOMNAV_QUERY_FMT
 

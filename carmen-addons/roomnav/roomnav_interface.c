@@ -80,6 +80,24 @@ int carmen_roomnav_get_room() {
   return response->room;
 }
 
+int carmen_roomnav_get_room_from_point(carmen_map_point_t point) {
+
+  IPC_RETURN_TYPE err;
+  carmen_roomnav_room_from_point_query query;
+  carmen_roomnav_room_msg *response;
+
+  memcpy(&query.point, &point, sizeof(carmen_map_point_t));
+  query.timestamp = carmen_get_time_ms();
+  strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_queryResponseData(CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME, &query, 
+			      (void **) &response, 5000);
+  carmen_test_ipc_return_int(err, "Could not query room",
+			     CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME);
+
+  return response->room;
+}
+
 int carmen_roomnav_get_goal() {
 
   IPC_RETURN_TYPE err;
