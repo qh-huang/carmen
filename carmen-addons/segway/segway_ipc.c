@@ -31,6 +31,7 @@
 
 extern segway_t segway;
 extern double command_tv, command_rv;
+extern double last_command;
 
 static void segway_velocity_handler(MSG_INSTANCE msgRef, 
 				    BYTE_ARRAY callData,
@@ -47,6 +48,7 @@ static void segway_velocity_handler(MSG_INSTANCE msgRef,
 
   command_tv = vel.tv;
   command_rv = vel.rv;
+  last_command = carmen_get_time_ms();
 }
 
 void carmen_segway_register_messages(void)
