@@ -13,7 +13,7 @@ MODULE_NAME = Roadmap Navigator
 MODULE_COMMENT = Another motion planner!
 
 SOURCES = roadmap_test.c navigator.c navigator_ipc.c planner.c dynamics.c \
-	fwd_lazy_dynamic_roadmap.c dynamic_roadmap.c
+	fwd_lazy_dynamic_roadmap.c dynamic_roadmap.c refine_roadmap.c
 
 PUBLIC_INCLUDES = 
 PUBLIC_LIBRARIES = 
@@ -24,7 +24,7 @@ TARGETS = roadmap_test navigator libdynamic_roadmap.a
 
 all:
 
-libdynamic_roadmap.a: dynamic_roadmap.o dynamics.o
+libdynamic_roadmap.a: dynamic_roadmap.o dynamics.o refine_roadmap.o
 
 libfwd_lazy_dynamic_roadmap.a: fwd_lazy_dynamic_roadmap.o dynamics.o
 

@@ -159,6 +159,7 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
   i = 1;
   node_is_too_close = 1;
   way_pt = *((carmen_traj_point_t *)carmen_list_get(roadmap->path, i));
+  dist_to_waypoint = carmen_distance_traj(&start, &way_pt);
   while (i < roadmap->path->length && node_is_too_close) {
     dist_to_waypoint = carmen_distance_traj(&start, &way_pt);
     if (dist_to_waypoint < approach_dist && i < roadmap->path->length-1) {

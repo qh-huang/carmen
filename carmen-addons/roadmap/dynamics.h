@@ -60,6 +60,10 @@ extern "C" {
   int carmen_dynamics_find_edge_and_block(carmen_roadmap_vertex_t *parent_node,
 					  int child_id);
   void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap);
+  int carmen_dynamics_get_block(carmen_roadmap_vertex_t *n1, 
+				carmen_roadmap_vertex_t *n2,
+				carmen_dot_t *blocking_object,
+				int avoid_people);
 #ifdef __cplusplus
 }
 #endif

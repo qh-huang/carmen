@@ -31,6 +31,8 @@ static int key_event(GtkWidget *widget __attribute__ ((unused)),
   return 1;
 }
 
+void get_radius(double vx, double vy, double vxy, double *radius);
+
 static void draw_graph(GtkMapViewer *the_map_view) 
 {
   int i, j;
@@ -56,7 +58,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
     if (node_list[i].utility >= 0) {
       if (node_list[i].utility < min_util)
 	min_util = node_list[i].utility;
-      if (node_list[i].utility > max_util)
+      if (node_list[i].utility > max_util && node_list[i].utility < 1e5)
 	max_util = node_list[i].utility;
     } 
   }
@@ -97,8 +99,13 @@ static void draw_graph(GtkMapViewer *the_map_view)
   }
 
   if (person.map != NULL) {
-    carmen_map_graphics_draw_ellipse(the_map_view, &carmen_black, &person,
-				     .375, .125, .375, 1);
+    double radius;
+
+    get_radius(.375, .375, .125, &radius);
+    carmen_map_graphics_draw_circle(the_map_view, &carmen_black, 0, &person, radius);
+
+    //    carmen_map_graphics_draw_ellipse(the_map_view, &carmen_black, &person,
+    //				     .375, .125, .375, 1);
   }
 
   if (start.map == NULL) 
@@ -184,10 +191,9 @@ static int release_handler(GtkMapViewer *the_map_view,
     dot_person.vxy = 0.125;
     carmen_dynamics_update_person(&dot_person);
   } else {
-    goal = *world_point;
+    goal = *world_point;    
+    carmen_roadmap_plan(roadmap, &goal);
   }
-
-  carmen_roadmap_plan(roadmap, &goal);
 
   carmen_map_graphics_redraw(the_map_view);
   

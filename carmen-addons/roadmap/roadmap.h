@@ -75,6 +75,11 @@ double carmen_roadmap_get_cost(carmen_world_point_t *point,
 			       carmen_roadmap_t *roadmap);
 int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
 				 carmen_roadmap_t *roadmap);
+void carmen_roadmap_refine_graph(carmen_world_point_t *robot, 
+				 carmen_roadmap_t *road);
+void carmen_roadmap_add_node(carmen_roadmap_t *roadmap, int x, int y);
+void carmen_roadmap_repair(carmen_list_t *new_nodes, carmen_roadmap_t *roadmap);
+
 #ifdef __cplusplus
 }
 #endif

@@ -172,16 +172,6 @@ static inline void insert_into_queue(state_ptr new_state, queue the_queue)
     }
 }
 
-static void empty_queue(queue the_state_queue) 
-{
-  state_ptr state;
-
-  while ((state = pop_queue(the_state_queue)) != NULL) { 
-    free(state);
-  }
-}
-
-
 static void add_node(carmen_list_t *node_list, int x, int y)
 {
   carmen_roadmap_vertex_t vertex;
@@ -363,6 +353,11 @@ static int construct_edges(carmen_roadmap_t *roadmap, int id)
   return (node_list[id].edges->length);
 }
 
+void carmen_roadmap_add_node(carmen_roadmap_t *roadmap, int x, int y)
+{
+  add_node(roadmap->nodes, x, y);
+  construct_edges(roadmap, roadmap->nodes->length-1);
+}
 
 carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p new_map)
 {
@@ -597,9 +592,6 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
   int i, neighbour_edge;
   int length;
   double cost = 0;
-  carmen_map_p c_space;
-
-  c_space = roadmap->c_space;
 
   edges = (carmen_roadmap_edge_t *)(node->edges->list);
   length = node->edges->length;
@@ -634,87 +626,9 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
   return edges[i].cost;
 }
 
-static void add_neighbours_to_queue(carmen_roadmap_t *roadmap, int id, 
-				    int goal_id, double *fwd_utilities,
-				    double *open_list, queue state_queue)
-{
-  int i;
-  double new_util;
-  double parent_utility;
-  double cost, heuristic;
-  carmen_roadmap_vertex_t *node_list;
-  carmen_roadmap_edge_t *edges;
-  int neighbour_id;
-  double best_known_answer;
-  int best_known_edge;
-
-  node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
-  parent_utility = fwd_utilities[id];
-  assert (parent_utility < 9e5);
-  assert (node_list[id].edges->length > 0);
-
-  edges = (carmen_roadmap_edge_t *)node_list[id].edges->list;
-  assert(node_list[id].edges->length > 0);
-
-  best_known_answer = MAXFLOAT;
-  best_known_edge = -1;
-  for (i = 0; i < node_list[id].edges->length; i++) {   
-    neighbour_id = edges[i].id;
-    if (node_list[neighbour_id].utility > MAXFLOAT/2)
-      continue;
-    cost = get_cost(node_list+neighbour_id, node_list+id, roadmap);
-    new_util = parent_utility+cost+node_list[neighbour_id].utility;
-    if (best_known_answer > new_util) {
-      best_known_answer = new_util;
-      best_known_edge = i;
-    }
-  }
-
-  for (i = 0; i < node_list[id].edges->length; i++) {   
-    neighbour_id = edges[i].id;
-    if (open_list[neighbour_id] == -2)
-      continue;
-    cost = get_cost(node_list+neighbour_id, node_list+id, roadmap);
-    if (node_list[neighbour_id].utility < MAXFLOAT/2) {
-      if (i != best_known_edge)
-	continue;
-      new_util = parent_utility+cost+node_list[neighbour_id].utility;
-    } else {
-      heuristic = hypot(node_list[goal_id].x - node_list[neighbour_id].x,
-			node_list[goal_id].y - node_list[neighbour_id].y);
-      new_util = parent_utility + cost + heuristic;
-    }
-
-    if (0 && id == 576)
-      carmen_warn("considering %d : %f : %f %f %f : %f \n", neighbour_id,
-		  cost, fwd_utilities[neighbour_id], parent_utility, cost,
-		  node_list[id].utility);
-
-    if (cost > 9e5)
-      continue;
-    assert(new_util < 9e5);
-
-    if (open_list[neighbour_id] >= 0) {
-      //      assert (open_list[neighbour_id] <= new_util);
-      if (open_list[neighbour_id] > new_util) {
-	//	carmen_warn("Lowering cost\n");
-	lower_cost(neighbour_id, id, cost, new_util, state_queue);
-	open_list[neighbour_id] = new_util;
-      }
-      continue;
-    }
-
-    open_list[neighbour_id] = new_util;
-    if (0)
-      carmen_warn("pushed %d parent %d : %f %f %f\n", neighbour_id, id,
-		  cost, fwd_utilities[id], parent_utility+cost);
-    push_state(neighbour_id, id, cost, new_util, state_queue);
-  } /* End of for (i = 0...) */
-}
-
 static inline void 
-dp_add_neighbours_to_queue(int id, carmen_roadmap_t *roadmap, double *utility, 
-			   queue state_queue)
+add_neighbours_to_queue(int id, carmen_roadmap_t *roadmap, double *utility, 
+			queue state_queue)
 {
   int i, cur_neighbour_id;
   double cur_util, new_util;
@@ -770,7 +684,7 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
     if (current_state->utility < utility[current_state->id])
       continue;
     num_expanded++;
-    dp_add_neighbours_to_queue(current_state->id, roadmap, utility,
+    add_neighbours_to_queue(current_state->id, roadmap, utility,
 			       state_queue);
     free(current_state);
   }
@@ -803,7 +717,7 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
 
   if (map_goal.x < 0 || map_goal.x >= goal->map->config.x_size ||
       map_goal.y < 0 || map_goal.y >= goal->map->config.y_size ||
-      goal->map->map[map_goal.x][map_goal.y] > .001)
+      roadmap->c_space->map[map_goal.x][map_goal.y] > 1)
     return;
   
   node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
@@ -820,207 +734,6 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
     roadmap->goal_id = closest_node->id;
 
   dynamic_program(roadmap);
-}
-
-void blah_search(carmen_roadmap_vertex_t *start_node, 
-		   carmen_roadmap_t *roadmap)
-{
-  int num_expanded;
-  state_ptr current_state;
-  int i, j;
-  double *fwd_utilities, *open_list;
-  int *parent_ptrs;
-  carmen_roadmap_vertex_t *node_list;
-  carmen_roadmap_edge_t *edges;
-  double min_neighbour_utility;
-  int min_neighbour, neighbour_id;
-  int min_edge;
-  double best_utility, utility;
-  int best_neighbour;
-  queue the_state_queue = NULL;
-
-  the_state_queue = make_queue();
-
-  node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
-
-  fwd_utilities = (double *)calloc(roadmap->nodes->length, sizeof(double));
-  carmen_test_alloc(fwd_utilities);
-  for (i = 0; i < roadmap->nodes->length; i++)
-    fwd_utilities[i] = MAXFLOAT;
-
-  open_list = (double *)calloc(roadmap->nodes->length, sizeof(double));
-  carmen_test_alloc(open_list);
-  for (i = 0; i < roadmap->nodes->length; i++)
-    open_list[i] = -1;
-
-  parent_ptrs = (int *)calloc(roadmap->nodes->length, sizeof(int));
-  carmen_test_alloc(parent_ptrs);
-  for (i = 0; i < roadmap->nodes->length; i++)
-    parent_ptrs[i] = -1;
-
-  push_state(start_node->id, start_node->id, 0, 0, the_state_queue);
-  fwd_utilities[start_node->id] = 0;
-
-  node_list[roadmap->goal_id].utility = 0;
-  num_expanded = 0;
-
-  while ((current_state = pop_queue(the_state_queue)) != NULL) {
-    num_expanded++;
-    if (0)
-    carmen_warn("Popped %d\n", current_state->id);
-    fwd_utilities[current_state->id] = 
-      fwd_utilities[current_state->parent_id] + current_state->cost;
-    parent_ptrs[current_state->id] = current_state->parent_id;
-    open_list[current_state->id] = -2;
-    assert (fwd_utilities[current_state->id] < 9e5);
-    if (current_state->id == roadmap->goal_id) {
-      empty_queue(the_state_queue);
-    } else {
-      add_neighbours_to_queue(roadmap, current_state->id,
-			      roadmap->goal_id, fwd_utilities, open_list,
-			      the_state_queue);
-    }
-
-    free(current_state);
-  }
-
-  carmen_warn("Num Expanded %d\n", num_expanded);
-
-  if (fwd_utilities[roadmap->goal_id] > MAXFLOAT/2)
-    carmen_warn("PROBLEM\n");
-  else if (0) {
-    node_list[roadmap->goal_id].utility = 0;
-    i = roadmap->goal_id;
-    while (i != start_node->id) {
-      edges = (carmen_roadmap_edge_t *)(node_list[i].edges->list);
-      assert (node_list[i].edges->length > 0);
-      min_neighbour_utility = MAXFLOAT;      
-      min_neighbour = -1;
-      min_edge = -1;
-      for (j = 0; j < node_list[i].edges->length; j++) {
-	if (edges[j].cost > 9e5 || edges[j].blocked)
-	  continue;
-	neighbour_id = edges[j].id;
-	assert (fwd_utilities[neighbour_id] >= 0);
-	if (fwd_utilities[neighbour_id] < min_neighbour_utility) {
-	  min_neighbour_utility = fwd_utilities[neighbour_id];
-	  min_neighbour = neighbour_id;
-	  min_edge = j;
-	}
-      }
-      assert (min_neighbour >= 0);
-      assert (min_neighbour_utility < fwd_utilities[i]);
-      assert(node_list[min_neighbour].utility > MAXFLOAT/2 ||
-	     node_list[min_neighbour].utility ==
-	     node_list[i].utility + edges[min_edge].cost);      
-
-      if (node_list[min_neighbour].utility > MAXFLOAT/2) {
-	node_list[min_neighbour].utility = node_list[i].utility + 
-	  edges[min_edge].cost;
-
-	assert(node_list[i].utility < MAXFLOAT/2);
-	assert(fwd_utilities[i] < MAXFLOAT/2);
-	assert(fwd_utilities[min_neighbour] < MAXFLOAT/2);
-	assert(node_list[min_neighbour].utility < 9e5);
-      }
-      assert (node_list[i].utility < node_list[min_neighbour].utility);
-      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, MAXFLOAT/2);
-
-      i = min_neighbour;
-      assert(node_list[i].utility < MAXFLOAT/2);
-    }
-  } else {
-    node_list[roadmap->goal_id].utility = 0;
-    i = roadmap->goal_id;
-    while (i != start_node->id) {
-      min_neighbour = parent_ptrs[i];
-      assert (min_neighbour >= 0);
-
-      min_neighbour_utility = fwd_utilities[min_neighbour];
-      assert (min_neighbour_utility < fwd_utilities[i]);
-
-      edges = (carmen_roadmap_edge_t *)(node_list[i].edges->list);
-      assert (node_list[i].edges->length > 0);
-      for (min_edge = 0; min_edge < node_list[i].edges->length; min_edge++) {
-	if (edges[min_edge].id == min_neighbour)
-	  break;
-      }
-      assert (min_edge < node_list[i].edges->length);
-      assert(node_list[min_neighbour].utility > MAXFLOAT/2 ||
-	     fabs(node_list[min_neighbour].utility  - 
-		  (node_list[i].utility + edges[min_edge].cost)) < 1e6);      
-
-      if (node_list[min_neighbour].utility > MAXFLOAT/2) {
-	carmen_roadmap_edge_t *edges2;
-	edges2 = (carmen_roadmap_edge_t *)node_list[min_neighbour].edges->list;
-	node_list[min_neighbour].utility = node_list[i].utility + 
-	  edges[min_edge].cost;
-	best_neighbour = -1;
-	best_utility = MAXFLOAT;
-	for (j = 0; j < node_list[min_neighbour].edges->length; j++) {
-	  if (edges2[j].cost > 9e5 || edges2[j].blocked)
-	    continue;      
-	  if (node_list[edges2[j].id].utility > MAXFLOAT/2)
-	    continue;
-	  utility = node_list[edges2[j].id].utility;
-	  if (utility < best_utility) {
-	    best_utility = utility;
-	    best_neighbour = edges2[j].id;
-	  }
-	}
-	
-	if (best_neighbour < 0)
-	  continue;
-	assert (best_utility < MAXFLOAT/2);
-	assert (node_list[best_neighbour].utility < 
-		node_list[min_neighbour].utility);
-
-	assert(node_list[i].utility < MAXFLOAT/2);
-	assert(fwd_utilities[i] < MAXFLOAT/2);
-	assert(fwd_utilities[min_neighbour] < MAXFLOAT/2);
-	assert(node_list[min_neighbour].utility < 9e5);
-      }
-      assert (node_list[i].utility < node_list[min_neighbour].utility);
-      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, MAXFLOAT/2);
-
-      i = min_neighbour;
-      assert(node_list[i].utility < MAXFLOAT/2);
-    }
-  }
-
-  /* Check to make sure that no node is a local minimum. The only node that's
-     allowed to be a local minimum is the goal.
-   */
-  for (i = 0; i < roadmap->nodes->length; i++) {
-    if (i == roadmap->goal_id)
-      continue;
-    edges = (carmen_roadmap_edge_t *)(node_list[i].edges->list);
-
-    if (node_list[i].utility > MAXFLOAT/2)
-      continue;
-
-    best_neighbour = -1;
-    best_utility = MAXFLOAT;
-    for (j = 0; j < node_list[i].edges->length; j++) {
-      if (edges[j].cost > 9e5 || edges[j].blocked)
-	continue;      
-      if (node_list[edges[j].id].utility > MAXFLOAT/2)
-	continue;
-      utility = node_list[edges[j].id].utility;
-      if (utility < best_utility) {
-	best_utility = utility;
-	best_neighbour = edges[j].id;
-      }
-    }
-
-    if (best_neighbour < 0)
-      continue;
-    assert (best_utility < MAXFLOAT/2);
-    assert (node_list[best_neighbour].utility < node_list[i].utility);
-  }
-
-  free(fwd_utilities);
-  delete_queue(&the_state_queue);
 }
 
 carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
@@ -1201,6 +914,11 @@ static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
   carmen_map_to_world(&map_pt, &goal);
 
   length = compute_path_segments(&world_robot, road);
+
+  if (length < 0) {
+    carmen_roadmap_refine_graph(&world_robot, road);
+    length = compute_path_segments(&world_robot, road);
+  }
 
   if (length < 0) {
     carmen_dynamics_clear_all_blocked(road);
