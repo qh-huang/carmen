@@ -8,6 +8,7 @@
 #define    VEL_PER_RPM                (MOTOR_WHEEL_CIRC / 60.0)
 #define    MAX_RPM                    120.0
 #define    MAX_VELOCITY               (MAX_RPM * VEL_PER_RPM)
+#define    MAX_SPEED_PERC             75
 
 #define    DEFAULT_TIMEOUT            30000
 
@@ -27,6 +28,7 @@
 
 int fd1;
 int fd2;
+int test_speed = 50;
 
 static carmen_base_odometry_message odometry;
 
@@ -172,10 +174,10 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   right_vel = carmen_clamp(-MAX_VELOCITY, right_vel, MAX_VELOCITY);
 
   // make sure fd1 is left wheel motor and fd2 is right wheel motor !!!
-  if(icon_command_setdc(fd1, 1, 100.0 * left_vel / MAX_VELOCITY) < 0)
-    carmen_die("Error: could not set velocity on motor 1.\n");
-  if(icon_command_setdc(fd2, 1, 100.0 * right_vel / MAX_VELOCITY) < 0)
-    carmen_die("Error: could not set velocity on motor 2.\n");
+  if(icon_command_setdc(fd1, 1, -75.0 * left_vel / MAX_VELOCITY) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 1.\n");
+  if(icon_command_setdc(fd2, 1, -75.0 * right_vel / MAX_VELOCITY) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 2.\n");
 
   update_odom();
   odometry.tv = v.tv;
@@ -195,22 +197,22 @@ static void init_odom() {
 
 static void init_motors(char **argv) {
 
- if(carmen_serial_connect(&fd1, argv[1]) < 0)
-    carmen_die("Error: could not open serial port %s.\n", argv[1]);
+  while(carmen_serial_connect(&fd1, argv[1]) < 0)
+    fprintf(stderr, "Error: could not open serial port %s.\n", argv[1]);
   carmen_serial_configure(fd1, 38400, "N");
   fprintf(stderr, "Connected to motor 1.\n");
 
-  if(carmen_serial_connect(&fd2, argv[2]) < 0)
-    carmen_die("Error: could not open serial port %s.\n", argv[2]);
+  while(carmen_serial_connect(&fd2, argv[2]) < 0)
+    fprintf(stderr, "Error: could not open serial port %s.\n", argv[2]);
   carmen_serial_configure(fd2, 38400, "N");
   fprintf(stderr, "Connected to motor 2.\n");
 
   signal(SIGINT, shutdown_module);
 
-  if(icon_command_energize(fd1, 1) < 0)
-    carmen_die("Error: could not energize motor 1.\n");
-  if(icon_command_energize(fd2, 1) < 0)
-    carmen_die("Error: could not energize motor 2.\n");
+  while(icon_command_energize(fd1, 1) < 0)
+    fprintf(stderr, "Error: could not energize motor 1.\n");
+  while(icon_command_energize(fd2, 1) < 0)
+    fprintf(stderr, "Error: could not energize motor 2.\n");
 }
 
 static void init_ipc() {
@@ -232,12 +234,10 @@ static void init_ipc() {
 
 static void test_motors() {
 
-  int speed = 50;  //percent
-
-  if(icon_command_setdc(fd1, 1, speed) < 0)
-    carmen_die("Error: could not set velocity on motor 1.\n");
-  if(icon_command_setdc(fd2, 1, speed) < 0)
-    carmen_die("Error: could not set velocity on motor 2.\n");
+  if(icon_command_setdc(fd1, 1, test_speed) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 1.\n");
+  if(icon_command_setdc(fd2, 1, test_speed) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 2.\n");
   sleep(4);
   icon_command_stop(fd1, 1);
   icon_command_stop(fd2, 1);
@@ -251,10 +251,12 @@ int main(int argc, char **argv)
   double update_delay = .03;
 
   if (argc < 3) {
-    fprintf(stderr, "usage: robotwalker <left motor device> <right motor device>\n");
+    fprintf(stderr, "usage: robotwalker <left motor device> <right motor device> [test_speed]\n");
     exit(1);
   }
-    
+  
+  if (argc >= 4)
+    test_speed = atoi(argv[3]);
   
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
