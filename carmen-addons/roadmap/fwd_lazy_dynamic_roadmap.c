@@ -536,11 +536,6 @@ add_neighbours_to_queue(carmen_roadmap_t *roadmap, int id, int goal_id,
       new_util = parent_utility + cost + heuristic;
     }
 
-    if (0) 
-    carmen_warn("\ttried %d %d to %d %d: %f\n", node_list[id].x,
-		node_list[id].y, node_list[neighbour_id].x,
-		node_list[neighbour_id].y, new_util);
-
     if (cost > 1e5)
       continue;
     assert(new_util < 1e5);
@@ -549,12 +544,6 @@ add_neighbours_to_queue(carmen_roadmap_t *roadmap, int id, int goal_id,
       continue;
 
     fwd_utilities[neighbour_id] = parent_utility+cost;
-    if (0)
-    carmen_warn("\tpushed %d %d to %d %d: (%s) %f %f\n", node_list[id].x,
-		node_list[id].y, node_list[neighbour_id].x,
-		node_list[neighbour_id].y, (node_list[neighbour_id].utility < MAXFLOAT/2 ?
-					    "known" : "unknown"),
-		parent_utility+cost, new_util);
     push_state(neighbour_id, id, cost, new_util, state_queue);
   } /* End of for (i = 0...) */
 }
@@ -636,11 +625,6 @@ static void search(carmen_roadmap_vertex_t *start_node,
 
   while ((current_state = pop_queue(the_state_queue)) != NULL) {
     num_expanded++;
-    if (0)
-    carmen_warn("Expanded %d %d : %f (%d) (%d)\n", 
-		node_list[current_state->id].x,
-		node_list[current_state->id].y, current_state->utility, 
-		num_expanded, current_state->id);
     if (current_state->id == roadmap->goal_id) {
       empty_queue(the_state_queue);
     } else {
@@ -648,7 +632,6 @@ static void search(carmen_roadmap_vertex_t *start_node,
 			      roadmap->goal_id, fwd_utilities, 
 			      the_state_queue);
     }
-    //    assert (num_expanded < roadmap->nodes->length);
     free(current_state);
   }
 
@@ -773,12 +756,6 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
   }
 
   assert (node_list[edges[best_neighbour].id].utility < node->utility);
-
-  if (0)
-  carmen_warn("%d : %d %d %f\n", edges[best_neighbour].id,
-	      node_list[edges[best_neighbour].id].x,
-	      node_list[edges[best_neighbour].id].y,
-	      node_list[edges[best_neighbour].id].utility);
 
   return node_list+edges[best_neighbour].id;
 }

@@ -32,10 +32,7 @@
 #include "planner_interface.h"
 #include "navigator.h"
 
-#define NUM_ACTIONS 8
-
 static carmen_map_t *map = NULL;
-static carmen_map_t *true_map = NULL;
 
 static int have_goal = 0, have_robot = 0;
 static int allow_any_orientation = 0;
@@ -45,7 +42,6 @@ static double max_t_vel;
 static double approach_dist;
 
 static carmen_roadmap_t *roadmap = NULL;
-//static carmen_roadmap_t *roadmap_without_people = NULL;
 
 int carmen_planner_update_goal(carmen_world_point_p new_goal, 
 			       int any_orientation)
@@ -57,7 +53,6 @@ int carmen_planner_update_goal(carmen_world_point_p new_goal,
   if (map) {
     carmen_dynamics_update();
     carmen_roadmap_plan(roadmap, new_goal);
-    //    carmen_roadmap_plan(roadmap_without_people, new_goal);
   }
 
   carmen_verbose("Set goal to %.1f %.1f, done planning\n",
@@ -81,16 +76,6 @@ void carmen_planner_set_map(carmen_map_p new_map)
   carmen_verbose("Initialized with map\n");
 
   roadmap = carmen_roadmap_initialize(new_map);
-
-#if 0  
-  roadmap_without_people = (carmen_roadmap_t *)
-    calloc(1, sizeof(carmen_roadmap_t));
-  carmen_test_alloc(roadmap_without_people);
-  *roadmap_without_people = *roadmap;
-
-  roadmap_without_people->nodes = carmen_list_duplicate(roadmap->nodes);
-  roadmap_without_people->avoid_people = 0;
-#endif
 
   carmen_param_set_module("robot");
   carmen_param_get_double("max_t_vel", &max_t_vel);
@@ -175,17 +160,8 @@ void carmen_planner_get_status(carmen_planner_status_p status)
   world_robot.pose.y = robot.y;
   world_robot.map = map;
 
-  //  short_length = check_path(roadmap_without_people, &world_robot, 
-  //			    &num_segments);
   long_length =  check_path(roadmap, &world_robot, &num_segments);
 
-  /*
-  if (short_length < long_length) {
-    short_length = 60 + short_length*max_t_vel;
-    long_length = short_length*max_t_vel;
-  }
-
-  */
   if (long_length < 0) {
     status->path.length = 0;
     carmen_dynamics_update();
@@ -313,10 +289,7 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
 
   switch (map_type) {
   case CARMEN_NAVIGATOR_MAP_v:
-    if (true_map) 
-      map_ptr = true_map->complete_map; 
-    else 
-      map_ptr = map->complete_map;
+    map_ptr = map->complete_map;
     break;
   default:
     carmen_warn("Request for unsupported data type : %d.\n", map_type);
