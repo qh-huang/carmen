@@ -293,7 +293,8 @@ void process_urbs(void)
   int i;
   unsigned int hand;
 
-  for(i = 1; i < MAX_URBS; i++) {
+  for(i = 1; i < highest_urb; i++) {
+    fprintf(stderr, "%d ", i);
     if(urb[i].out.num_lines > 0 && urb[i].in.num_lines > 0) {
       urb[i].active = 1;
       
