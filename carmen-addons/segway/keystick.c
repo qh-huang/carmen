@@ -27,8 +27,9 @@
 
 #include <carmen/carmen.h>
 
-#define     TV      0.4
-#define     RV      0.6
+float tv_list[] = {0.2, 0.4, 0.6, 0.8, 1.0};
+float rv_list[] = {0.4, 0.6, 0.6, 0.6, 0.6};
+int speed = 0;
 
 void carmen_initialize_keyboard(void)
 {
@@ -76,7 +77,6 @@ void send_base_velocity_command(double tv, double rv)
   v.tv = tv;
   v.rv = rv;
   v.timestamp = carmen_get_time_ms();
-
   err = IPC_publishData(CARMEN_BASE_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  
 }
@@ -88,36 +88,61 @@ int carmen_keyboard_control(char c, double *tv, double *rv)
     c += 32;
   switch(c) {
   case 'i':
-    *tv = TV;
+    *tv = tv_list[speed];
     *rv = 0;
     break;
   case 'u':
-    *tv = TV;
-    *rv = RV;
+    *tv = tv_list[speed];
+    *rv = rv_list[speed];
     break;
   case 'o':
-    *tv = TV;
-    *rv = -RV;
+    *tv = tv_list[speed];
+    *rv = -rv_list[speed];
     break;
   case 'j':
     *tv = 0;
-    *rv = RV;
+    *rv = rv_list[speed];
     break;
   case 'l':
     *tv = 0;
-    *rv = -RV;
+    *rv = -rv_list[speed];
     break;
   case ',':
-    *tv = -TV;
+    *tv = -tv_list[speed];
     *rv = 0;
     break;
   case 'm':
-    *tv = -TV;
-    *rv = -RV;
+    *tv = -tv_list[speed];
+    *rv = -rv_list[speed];
     break;
   case '.':
-    *tv = -TV;
-    *rv = RV;
+    *tv = -tv_list[speed];
+    *rv = rv_list[speed];
+    break;
+  case '1':
+    speed = 0;
+    fprintf(stderr, "TV = %.1f    RV = %.1f\n", 
+	    tv_list[speed], rv_list[speed]);
+    break;
+  case '2':
+    speed = 1;
+    fprintf(stderr, "TV = %.1f    RV = %.1f\n", 
+	    tv_list[speed], rv_list[speed]);
+    break;
+  case '3':
+    speed = 2;
+    fprintf(stderr, "TV = %.1f    RV = %.1f\n", 
+	    tv_list[speed], rv_list[speed]);
+    break;
+  case '4':
+    speed = 3;
+    fprintf(stderr, "TV = %.1f    RV = %.1f\n", 
+	    tv_list[speed], rv_list[speed]);
+    break;
+  case '5':
+    speed = 4;
+    fprintf(stderr, "TV = %.1f    RV = %.1f\n", 
+	    tv_list[speed], rv_list[speed]);
     break;
   case 'q':
     quit = -1;
