@@ -24,6 +24,8 @@
 #define STOP                      115 // 's'()  [shortcut for set_velocities(0,0)]
 #define KILL                      107 // 'k'()  [shortcut for disable_velocity_control]
 
+#define FIRE                      102 // 'f'()  [shoots gun]
+
 /***********ACK VALUES***************/
 
 #define ACKNOWLEDGE                 6 // if command acknowledged
