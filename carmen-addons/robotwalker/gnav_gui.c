@@ -6,8 +6,6 @@
 /*********************************
 Setting functions for controlling the GUI
 */
-static void increaseDistanceTraveled(int distanceIncrease);
-static void setDistanceTraveled(int distance);
 static void setRoomName(char* roomName);
 static void setArrowAngle(double theta);
 
@@ -74,37 +72,22 @@ static double grid_resolution;
 
 static int room = -1;
 static int pathlen = -1;
-carmen_localize_globalpos_message global_pos;
+static int goal = -1;
+carmen_point_t globalpos, globalpos_prev;
 carmen_gnav_room_msg room_msg;
 carmen_gnav_path_msg path_msg;
 carmen_rooms_topology_p rooms_topology = NULL;
 
-static int distanceTraveled=567;
+static double distanceTraveled = 0.0;
 
+
+
+#define dist(x,y) sqrt((x)*(x)+(y)*(y))
 
 
 /**********************************
 Setting functions for controlling the GUI
 */
-
-
-static void increaseDistanceTraveled(int distanceIncrease) {
-  char setString[100];
-
-  distanceTraveled+=distanceIncrease;
-  sprintf(setString, "%dft", distanceTraveled);
-  gtk_label_set_text(GTK_LABEL(distanceLabel), setString);
-  canvas_configure(traveledLabelCanvas, NULL);  
-}
-
-static void setDistanceTraveled(int distance) {
-  char setString[100];
-
-  distanceTraveled=distance;
-  sprintf(setString, "%dft", distanceTraveled);
-  gtk_label_set_text(GTK_LABEL(distanceLabel), setString);
-  canvas_configure(traveledLabelCanvas, NULL);
-}
 
 static void setRoomName(char *newName) {
 
@@ -190,7 +173,7 @@ static void draw_arrow(GdkPixmap *pixmap, int x, int y, double theta, int width,
   GdkPoint arrow[7];
   //  int dim_x1, dim_y1, dim_x2, dim_y2, i;
 
-  printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
+  //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
   
   vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
@@ -224,13 +207,13 @@ void grid_to_image(GdkPixmap *pixmap, int width, int height, int radius) {
   GdkPoint p;
 
   world_point.map = map_point.map = &map;
-  world_point.pose.x = global_pos.globalpos.x;
-  world_point.pose.y = global_pos.globalpos.y;
+  world_point.pose.x = globalpos.x;
+  world_point.pose.y = globalpos.y;
   carmen_world_to_map(&world_point, &map_point);
   
   x = map_point.x;
   y = map_point.y;
-  theta = global_pos.globalpos.theta;
+  theta = globalpos.theta;
 
   gr = 2.0 * r / grid_resolution;  //dbug?
 
@@ -288,7 +271,7 @@ static void draw_traveledLabel_canvas() {
   int fontHeight;
   char setString[100];
 
-  sprintf(setString, "%dft", distanceTraveled);
+  sprintf(setString, "%dm", (int)distanceTraveled);
 
   draw_rect(traveledLabelPixmap, 0, 0, traveled_label_canvas_width,
 	    traveled_label_canvas_height, backgroundColor);
@@ -534,7 +517,7 @@ void arrow_update() {
   carmen_door_p next_door;
   double x, y, theta;
 
-  printf("arrow_update:  room = %d, pathlen = %d\n", room, pathlen);
+  //printf("arrow_update:  room = %d, pathlen = %d\n", room, pathlen);
 
   if (room == -1)
     return;
@@ -551,12 +534,12 @@ void arrow_update() {
   }
 
   next_door = &rooms_topology->doors[path_msg.path[0]];
-  x = global_pos.globalpos.x;
-  y = global_pos.globalpos.y;
-  theta = global_pos.globalpos.theta;
+  x = globalpos.x;
+  y = globalpos.y;
+  theta = globalpos.theta;
 
   if (sqrt((next_door->pose.x-x)*(next_door->pose.x-x) +
-	   (next_door->pose.y-y)*(next_door->pose.y-y)) < 0.5) {
+	   (next_door->pose.y-y)*(next_door->pose.y-y)) < 1.0) {
     if (pathlen == 1) {
       draw_right_canvas(0);
       return;
@@ -571,8 +554,6 @@ void arrow_update() {
 }
 
 void room_handler() {
-
-  printf("in room_handler room: %d\n", room_msg.room);
 
   room = room_msg.room;
   arrow_update();
@@ -595,31 +576,51 @@ void button_handler(carmen_walkerserial_button_msg *button_msg) {
 
 void goal_changed_handler(carmen_walker_goal_changed_msg *goal_changed_msg) {
 
+  goal = goal_changed_msg->goal;
   sprintf(dest_name, "To %s",
-	  rooms_topology->rooms[goal_changed_msg->goal].name);
+	  rooms_topology->rooms[goal].name);
   draw_dest_canvas();
 }
 
-void localize_handler() {
+void localize_handler(carmen_localize_globalpos_message *global_pos) {
 
   static int first = 1;
   static long last_update;
   struct timeval time;
   long cur_time;
+  double distance;
 
   gettimeofday(&time, NULL);
   cur_time = 1000*time.tv_sec + time.tv_usec/1000;
 
+  distance = dist(globalpos.x - globalpos_prev.x, globalpos.y - globalpos_prev.y);
+  if (distance >= 0.5) {
+    distanceTraveled += distance;
+    memcpy(&globalpos_prev, &globalpos, sizeof(globalpos));
+    draw_traveledLabel_canvas();
+  }
+
+  memcpy(&globalpos, &global_pos->globalpos, sizeof(globalpos));
+
   if (first) {
     first = 0;
     last_update = cur_time;
+    memcpy(&globalpos_prev, &globalpos, sizeof(globalpos));
+    distanceTraveled = 0.0;
+    draw_traveledLabel_canvas();
   }
   else if (cur_time - last_update > 500) {
     last_update = cur_time;
     draw_left_canvas();
+    arrow_update();
+    if (pathlen < 0 || goal < 0)
+      *dest_name = '\0';
+    else if (goal == room)
+      sprintf(dest_name, "Arrived");
+    else
+      sprintf(dest_name, "To %s", rooms_topology->rooms[goal].name);
+    draw_dest_canvas();
   }
-
-  arrow_update();
 }
 
 void grid_init() {
@@ -660,7 +661,7 @@ void grid_init() {
 
 void ipc_init() {
 
-  carmen_localize_subscribe_globalpos_message(&global_pos, localize_handler,
+  carmen_localize_subscribe_globalpos_message(NULL, (carmen_handler_t)localize_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
 
   carmen_gnav_subscribe_room_message(&room_msg, room_handler,
