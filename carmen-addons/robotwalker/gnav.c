@@ -1420,6 +1420,8 @@ int main(int argc, char *argv[]) {
 #ifndef NO_GRAPHICS
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
   gtk_main();
+#else
+  IPC_dispatch();
 #endif
 
   return 0;
