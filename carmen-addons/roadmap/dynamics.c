@@ -220,8 +220,8 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 
 #endif
 
-static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
-		      double x, double y, double vx, double vxy, double vy)
+static int is_blocked(int n1x, int n1y, int n2x, int n2y, double x, double y, 
+		      double vx, double vxy, double vy)
 {
   double numerator;
   double denominator;
@@ -251,33 +251,31 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 
   radius = (mp.x + mp.y) / 2;
 
-  numerator = (n2->x - n1->x)*(n1->y - y) - (n1->x - x)*(n2->y - n1->y);
-  denominator = hypot(n2->x-n1->x, n2->y-n1->y);
+  numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
+  denominator = hypot(n2x-n1x, n2y-n1y);
   
   if (fabs(denominator) < 1e-9 || fabs(numerator)/denominator > radius) 
     return 0;
 
-  theta = fabs(atan2(n2->y-n1->y, n2->x - n1->x));
+  theta = fabs(atan2(n2y-n1y, n2x - n1x));
   if (theta > M_PI/4 && theta < 3*M_PI/4) {
-    i_y = numerator/denominator * (n2->x - n1->x)/denominator + y;
-    dist_along_line = (i_y - n1->y) / (n2->y - n1->y);
+    i_y = numerator/denominator * (n2x - n1x)/denominator + y;
+    dist_along_line = (i_y - n1y) / (n2y - n1y);
   } else {
-    i_x = numerator/denominator * (n2->y - n1->y)/denominator + x;
-    dist_along_line = (i_x - n1->x) / (n2->x - n1->x);
+    i_x = numerator/denominator * (n2y - n1y)/denominator + x;
+    dist_along_line = (i_x - n1x) / (n2x - n1x);
   }
 
   if (dist_along_line > 1 || dist_along_line < 0) {
-    if (hypot(n2->x - x, n2->y - y) > radius && 
-	hypot(n1->x - x, n1->y - y) > radius)
+    if (hypot(n2x - x, n2y - y) > radius && 
+	hypot(n1x - x, n1y - y) > radius)
       return 0;
   }
 
   return 1;
 }
 
-int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1, 
-				   carmen_roadmap_vertex_t *n2,
-				   int avoid_people)
+static int do_blocking(int n1x, int n1y, int n2x, int n2y, int avoid_people)
 {
   carmen_dot_person_t *person;
   carmen_dot_trash_t *trash_bin;
@@ -288,27 +286,44 @@ int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1,
   if (avoid_people) {
     for (i = 0; i < people->length; i++) {
       person = (carmen_dot_person_t *)carmen_list_get(people, i);
-      if (is_blocked(n1, n2, person->x, person->y, person->vx,
-		     person->vxy, person->vy))
+      if (is_blocked(n1x, n1y, n2x, n2y, person->x, person->y, 
+		     person->vx, person->vxy, person->vy))
 	return 1;
     }
   }
 
   for (i = 0; i < trash->length; i++) {
     trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
-    if (is_blocked(n1, n2, trash_bin->x, trash_bin->y, trash_bin->vx,
-		   trash_bin->vxy, trash_bin->vy))
+    if (is_blocked(n1x, n1y, n2x, n2y, trash_bin->x, trash_bin->y, 
+		   trash_bin->vx, trash_bin->vxy, trash_bin->vy))
       return 1;
   }
 
   for (i = 0; i < doors->length; i++) {
     door = (carmen_dot_door_t *)carmen_list_get(doors, i);
-    if (is_blocked(n1, n2, door->x, door->y, door->vx, door->vxy,
-		   door->vy))
+    if (is_blocked(n1x, n1y, n2x, n2y, door->x, door->y, door->vx, 
+		   door->vxy, door->vy))
       return 1;
   }
 
   return 0;
+}
+
+int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1, 
+				   carmen_roadmap_vertex_t *n2,
+				   int avoid_people)
+{
+  return do_blocking(n1->x, n1->y, n2->x, n2->y, avoid_people);
+}
+
+int carmen_dynamics_test_point_for_block(carmen_roadmap_vertex_t *n, 
+					 carmen_world_point_t *point,
+					 int avoid_people)
+{
+  carmen_map_point_t map_pt;
+  carmen_world_to_map(point, &map_pt);
+
+  return do_blocking(n->x, n->y, map_pt.x, map_pt.y, avoid_people);  
 }
 
 static int is_too_close(carmen_roadmap_vertex_t *n1, double x, double y, 
