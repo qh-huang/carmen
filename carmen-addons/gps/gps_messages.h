@@ -36,18 +36,15 @@ extern "C" {
 typedef struct {
   double gpscoordX;
   double gpscoordY;
-  double gpscoordTheta;
-  double Xvar;
-  double Yvar;
-  double Thetavar;
+  int satnum;
+  double precdil;
   double timestamp;
   char host[10];
 } carmen_gps_position_message;
 
 
 #define      CARMEN_GPS_POSITION_NAME       "carmen_gps_position"
-#define      CARMEN_GPS_POSITION_FMT        "{double,double,double,double,double,double,double,[char:10]}"
-
+#define      CARMEN_GPS_POSITION_FMT        "{double,double,int,double,double,[char:10]}"
 
 #ifdef __cplusplus
 }

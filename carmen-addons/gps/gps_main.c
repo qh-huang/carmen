@@ -31,31 +31,28 @@ high level functions
 **********************************************************/
 
 #include <carmen/carmen.h>
+
 #include "gps_garmin.h"
 #include "gps_estimate.h"
-#include "gps_messages.h"
+#include "ringo_gps_messages.h"
+
 
 //parameters
 static char *parmstrGPSDev;
 static double parmgpscoord_originlat = -1;
 static double parmgpscoord_originlon = -1;
-static int parmintegrate_odometry = 0;
-static double parminitialtheta = -1;
-static double parminitialthetastd = -1; 
-static double parmodomdiststdper1m = -1;
-static double parmodomthetastdper1m = -1;
-static double parmodomthetastdper1rad = -1;
-static double parmgpsXYstdper1precdil = -1;
 
-//messages
-static carmen_base_odometry_message odometry;
-
-#define DEBUGFILE 0
+#define DEBUGFILE 1
+#define LOGFILE   1
 
 #if DEBUGFILE
 static FILE *fDeb = NULL;
-static FILE *fDebFinal = NULL;
 #endif
+#if LOGFILE
+static FILE *fLog = NULL;
+#endif
+
+
 
 /*
 static void debug_run(double *lat, double *lon, int *satnum, double *precdil)
@@ -89,12 +86,11 @@ static void debug_run(double *lat, double *lon, int *satnum, double *precdil)
 	  carmen_gps_estimate_kalman_getstate(&X, &Y, &Theta, 
 					  &Xvar, &Yvar, &Thetavar, &bValid);
 
-#if DEBUGFILE	  
-	  fprintf(fDebFinal, "%.2f %.2f %.2f %.2f %.2f %.2f %d\n", X, Y, 
+#if LOGFILE 
+	  fprintf(fLog, "%.2f %.2f %.2f %.2f %.2f %.2f %d\n", X, Y, 
 		  Theta, 
 		  Xvar, Yvar, Thetavar, bValid);
 #endif
-
 	}
       else
 	{
@@ -108,8 +104,8 @@ static void debug_run(double *lat, double *lon, int *satnum, double *precdil)
 */
 
 
-static void publish_gps_position(double Xcoord, double Ycoord, double Theta, 
-				 double Xvar, double Yvar, double Thetavar)
+static void publish_gps_position(double Xcoord, double Ycoord, int satnum,
+				 double precdil)  
 {
   IPC_RETURN_TYPE err;
   char *host;
@@ -125,62 +121,12 @@ static void publish_gps_position(double Xcoord, double Ycoord, double Theta,
   //copy the contents of the message
   msg.gpscoordX = Xcoord;
   msg.gpscoordY = Ycoord;
-  msg.gpscoordTheta = Theta;
-  msg.Xvar = Xvar;
-  msg.Yvar = Yvar;
-  msg.Thetavar = Thetavar;
+  msg.precdil = precdil;
+  msg.satnum = satnum;
   msg.timestamp = carmen_get_time_ms();
 
   err = IPC_publishData(CARMEN_GPS_POSITION_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_GPS_POSITION_NAME);
-}
-
-
-static void base_odometry_handler(void) 
-{
-  double X,Y,Theta;
-  static int bFirst = 1;
-  static struct timeval last_time;
-  struct timeval current_time;
-  int sec, msec;
-
-  
-  //get data
-  X = odometry.x;
-  Y = odometry.y;
-  Theta = odometry.theta;
-
-  if(!bFirst)
-    {
-      gettimeofday(&current_time, NULL);
-      msec = current_time.tv_usec - last_time.tv_usec;
-      sec = current_time.tv_sec - last_time.tv_sec;
-      if (msec < 0) 
-	{
-	  msec += 1e6;
-	  sec--;
-	}
-      last_time = current_time;
-    }
-  else
-    {
-      bFirst = 0;
-      gettimeofday(&last_time, NULL);
-      sec = 0;
-      msec = 0;
-    }
-
-  //update the kalman filter 
-  if(carmen_gps_estimate_kalman_baseodom_update(X, Y, Theta) < 0)
-    {
-      carmen_perror("\nerror incorporating odometry readings");
-      return;
-    }
-#if DEBUGFILE
-  fprintf(fDeb, "baseodom time passed: %d s %d ms, ", sec, msec);
-  fprintf(fDeb, "x=%.2f y=%.2f theta=%f\n", X, Y, Theta);
-#endif
-
 }
 
 
@@ -197,12 +143,6 @@ static int initialize_gps_ipc(void)
 
   /* subscribe to other messages */
 
-  if(parmintegrate_odometry)
-    {
-      carmen_base_subscribe_odometry_message(&odometry,
-		 (carmen_handler_t)base_odometry_handler,
-					 CARMEN_SUBSCRIBE_LATEST);
-    }
 
   return 0;
 
@@ -218,20 +158,6 @@ static int read_gps_parameters(int argc, char **argv)
      &parmgpscoord_originlat, 0, NULL},
     {"gps", "originlon", CARMEN_PARAM_DOUBLE, 
      &parmgpscoord_originlon, 0, NULL},
-    {"gps", "integrate_with_odometry", CARMEN_PARAM_ONOFF, 
-     &parmintegrate_odometry, 0, NULL},
-    {"gps", "initialtheta", CARMEN_PARAM_DOUBLE, 
-     &parminitialtheta, 0, NULL},
-    {"gps", "initialthetastd", CARMEN_PARAM_DOUBLE, 
-     &parminitialthetastd, 0, NULL},
-    {"gps", "odomdiststdper1m", CARMEN_PARAM_DOUBLE, 
-     &parmodomdiststdper1m, 0, NULL},
-    {"gps", "odomthetastdper1m", CARMEN_PARAM_DOUBLE, 
-     &parmodomthetastdper1m, 0, NULL},
-    {"gps", "odomthetastdper1rad", CARMEN_PARAM_DOUBLE, 
-     &parmodomthetastdper1rad, 0, NULL},
-    {"gps", "gpsxystdper1precdil", CARMEN_PARAM_DOUBLE, 
-     &parmgpsXYstdper1precdil, 0, NULL}
   };
     
   num_items = sizeof(param_list)/sizeof(param_list[0]);
@@ -242,6 +168,7 @@ static int read_gps_parameters(int argc, char **argv)
 
   return 0;
 }
+
 
 int start_gps(int argc, char **argv)
 {
@@ -255,7 +182,7 @@ int start_gps(int argc, char **argv)
       return -1;
     }
 
-  
+  //initialize gps
   if(carmen_gps_initialize_garmingps(parmstrGPSDev) < 0) 
     {
       carmen_perror("Could not initialize gps");
@@ -265,26 +192,11 @@ int start_gps(int argc, char **argv)
 
   //send down the origin of the gps coordinate system as latitude and longitude
   if(carmen_gps_estimate_init(parmgpscoord_originlat, parmgpscoord_originlon) < 0)
-      {
-	carmen_perror("Could not initialize gps state variables");
-	return -1;
-      }
- 
-
-
-  //initialize Kalman filter if we integrate with odometry
-  if(parmintegrate_odometry)
     {
-      if(carmen_gps_estimate_kalman_init(parminitialtheta, 
-	    parminitialthetastd, parmodomdiststdper1m, 
-	    parmodomthetastdper1m, parmodomthetastdper1rad,
-					 parmgpsXYstdper1precdil) < 0)
-	{
-	 carmen_perror("Could not initialize gps kalman filter variables");
-	 return -1; 
-	}
+      carmen_perror("Could not initialize gps state variables");
+      return -1;
     }
-
+ 
   return 0;
 }
 
@@ -293,9 +205,7 @@ int carmen_gps_run(void)
   double lat, lon, precdil;
   int satnum;
   static int bFirst = 1;
-  int bValid = 0;
-  double Xcoord = -1, Ycoord = -1, Theta = -1;
-  double Xvar = -1, Yvar = -1, Thetavar = -1;
+  double Xcoord = -1, Ycoord = -1;
   static struct timeval last_time;
   struct timeval current_time;
   int sec, msec;
@@ -320,7 +230,8 @@ int carmen_gps_run(void)
     }
 
 #if DEBUGFILE
-  fprintf(fDeb, "gps time passed: %d s %d ms, ", sec, msec);
+  fprintf(fDeb, "time=%f gps time passed: %d s %d ms, ", 
+	  carmen_get_time_ms(), sec, msec);
 #endif
 
   //get the gps data
@@ -328,8 +239,8 @@ int carmen_gps_run(void)
     {
       carmen_perror("\nerror executing gps cycle");
       return -1;
-    }  
-  /*debug_run(&lat, &lon, &satnum, &precdil); */
+    } 
+  /*debug_run(&lat, &lon, &satnum, &precdil); */ 
 
   //get the global gps coordinates
   if(carmen_gps_estimate_convertfromgps2local(lat, lon, satnum, 
@@ -344,60 +255,27 @@ int carmen_gps_run(void)
 	  lon,lat,satnum,precdil);
 #endif
 
-  //if integrated with odometry then pass it through a Kalman filter
-  if(parmintegrate_odometry)
-    {
-      //incorporate gps readings
-      if(carmen_gps_estimate_kalman_gpsobserv_update(Xcoord, Ycoord, 
-					      satnum, precdil) < 0)
-	{
-	  carmen_perror("\nerror incorporating a gps reading");
-	  return -1;
-	}      
-
-      //update the coordinates
-      carmen_gps_estimate_kalman_getstate(&Xcoord, &Ycoord, &Theta, 
-					  &Xvar, &Yvar, &Thetavar, &bValid);
-    }
-  else
-    {
-      //the data is valid whenever there are some satellites are visible
-      if(satnum > 0 && precdil > 0.005)
-	bValid = 1;
-      else
-	bValid = 0;
-
-      //set the theta
-      Theta = 0;
-      
-      //set the variances
-      Xvar = parmgpsXYstdper1precdil*parmgpsXYstdper1precdil*precdil;
-      Yvar = parmgpsXYstdper1precdil*parmgpsXYstdper1precdil*precdil;
-      Thetavar = 1000000; //theta is invalid
-    }
+#if LOGFILE
+  fprintf(fLog, "%f %.2f %.2f %f %f %d %f\n", 
+	  carmen_get_time_ms(), Xcoord, Ycoord, lon, lat, satnum, precdil);
+#endif
 
   //print the data on the screen
   if(bFirst)
     {
-      carmen_warn("x(lon)*y(lat)*sat*dil:\t%+010.1f(%8.4f)*%+010.1f(%8.4f)*%2d*%4.1f",
-		  Xcoord,lon,Ycoord,lat,satnum,precdil);
+      carmen_warn("x*y*sat*dil:\t%+010.1f*%+010.1f*%2d*%4.1f",
+		  Xcoord,Ycoord,satnum,precdil);
     }
   else
   {
-    carmen_warn("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%+010.1f(%8.4f)*%+010.1f(%8.4f)*%2d*%4.1f",
-		Xcoord,lon,Ycoord,lat,satnum,precdil);
+    carmen_warn("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%+010.1f*%+010.1f*%2d*%4.1f",
+		Xcoord,Ycoord,satnum,precdil);
   }
-
-#if DEBUGFILE
-  fprintf(fDebFinal, "%.2f %.2f %.2f %.2f %.2f %.2f %d\n", Xcoord, Ycoord, 
-	  Theta, Xvar, Yvar, Thetavar, bValid);
-#endif
   
-  if(bValid == 1)
+  if(satnum > 0)
     {
-      publish_gps_position(Xcoord, Ycoord, Theta, Xvar, Yvar, Thetavar);
+      publish_gps_position(Xcoord, Ycoord, satnum, precdil);
     }
-
 
   bFirst = 0;
 
@@ -414,9 +292,24 @@ void shutdown_gps(int signo __attribute__ ((unused)))
 
 int main(int argc, char **argv)
 {
+
 #if DEBUGFILE
   fDeb = fopen("gps.debug", "w");
-  fDebFinal = fopen("gps_final.debug", "w");
+  if(fDeb == NULL)
+    {
+      carmen_warn("ERROR: can not open debug file\n");
+      exit(1);
+    }
+#endif
+
+#if LOGFILE
+  fLog = fopen("gps.log", "w");
+  if(fLog == NULL)
+    {
+      carmen_warn("ERROR: can not open log file\n");
+      exit(1);
+    }
+  fprintf(fLog, "timestamp x y lon lat satnum precdil\n");
 #endif
   
   carmen_initialize_ipc(argv[0]);
@@ -429,6 +322,7 @@ int main(int argc, char **argv)
 
   while(1) {
     sleep_ipc(0.2);    
+
     if(carmen_gps_run() == -1)
       shutdown_gps(0);
   }

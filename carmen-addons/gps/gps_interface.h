@@ -32,7 +32,8 @@
 extern "C" {
 #endif
 
-#include <carmen/gps_messages.h>
+  //#include <carmen/gps_messages.h>
+#include <ringo_gps_messages.h>
 
 void carmen_gps_subscribe_position_message(carmen_gps_position_message 
 					   *gps_position_msg,
