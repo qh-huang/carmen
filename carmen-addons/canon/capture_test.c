@@ -37,7 +37,7 @@
 #include <carmen/carmen.h>
 #include "canon_interface.h"
 
-#define GET_THUMB 0
+#define GET_THUMB 1
 
 int main(int argc, char **argv)
 {

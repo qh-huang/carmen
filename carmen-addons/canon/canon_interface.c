@@ -161,6 +161,16 @@ int carmen_canon_stop_preview_command(void)
   return 0;
 }
 
+int carmen_canon_snap_preview_command(void)
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_SNAP_NAME, NULL);
+  carmen_test_ipc_return_int(err, "Could not publish", 
+			     CARMEN_CANON_PREVIEW_SNAP_NAME);
+  return 0;
+}
+
 static void 
 alive_interface_handler(MSG_INSTANCE msgRef __attribute__ ((unused)),
                          BYTE_ARRAY callData __attribute__ ((unused)),

@@ -66,6 +66,10 @@ int carmen_canon_start_preview_command(void);
 
 int carmen_canon_stop_preview_command(void);
 
+/* snap a single image from the previewer */
+
+int carmen_canon_snap_preview_command(void);
+
 /* subscribe to the heartbeat message */
 
 void
