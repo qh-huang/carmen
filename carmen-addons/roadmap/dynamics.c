@@ -14,28 +14,13 @@ static carmen_list_t *marked_edges = NULL;
 
 static carmen_map_t *map;
 
-static void correct(double *x, double *y)
-{
-  carmen_world_point_t wp;
-  carmen_map_point_t mp;
-
-  wp.pose.x = *x;
-  wp.pose.y = *y;
-  wp.map = map;
-  carmen_world_to_map(&wp, &mp);
-  *x = mp.x;
-  *y = mp.y;
-}
-
 static void people_handler(carmen_dot_all_people_msg *people_msg)
 {
   int i;
 
   people->length = 0;
-  for (i = 0; i < people_msg->num_people; i++) {
-    correct(&(people_msg->people[i].x), &(people_msg->people[i].y));
-    carmen_list_add(people, people_msg->people+i);
-  }
+  for (i = 0; i < people_msg->num_people; i++) 
+    carmen_list_add(people, people_msg->people+i);  
 }
 
 static void simulator_objects_handler(carmen_simulator_objects_message 
@@ -58,8 +43,6 @@ static void simulator_objects_handler(carmen_simulator_objects_message
   person.vxy = 0.125;
   person.id = 0;
 
-  correct(&(person.x), &(person.y));
-
   if (people->length > 0) {
     person_ptr = (carmen_dot_person_t *)carmen_list_get(people, 0);    
     *person_ptr = person;
@@ -75,10 +58,8 @@ static void trash_handler(carmen_dot_all_trash_msg *trash_msg)
   int i;
 
   trash->length = 0;
-  for (i = 0; i < trash_msg->num_trash; i++) {
-    correct(&(trash_msg->trash[i].x), &(trash_msg->trash[i].y));
+  for (i = 0; i < trash_msg->num_trash; i++) 
     carmen_list_add(trash, trash_msg->trash+i);
-  }
 }
 
 static void doors_handler(carmen_dot_all_doors_msg *door_msg)
@@ -86,10 +67,8 @@ static void doors_handler(carmen_dot_all_doors_msg *door_msg)
   int i;
 
   doors->length = 0;
-  for (i = 0; i < door_msg->num_doors; i++) {
-    correct(&(door_msg->doors[i].x), &(door_msg->doors[i].y));
+  for (i = 0; i < door_msg->num_doors; i++) 
     carmen_list_add(doors, door_msg->doors+i);
-  }
 }
 
 void carmen_dynamics_initialize(carmen_map_t *new_map)
@@ -129,15 +108,6 @@ void carmen_dynamics_update_person(carmen_dot_person_t *update_person)
 {
   int i;
   carmen_dot_person_t *person;
-  carmen_world_point_t wp;
-  carmen_map_point_t mp;
-
-  wp.pose.x = update_person->x;
-  wp.pose.y = update_person->y;
-  wp.map = map;
-  carmen_world_to_map(&wp, &mp);
-  update_person->x = mp.x;
-  update_person->y = mp.y;
 
   for (i = 0; i < people->length; i++) {
     person = (carmen_dot_person_t *)carmen_list_get(people, i);
@@ -222,15 +192,13 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 
 #endif
 
-static int is_blocked(int n1x, int n1y, int n2x, int n2y, double x, double y, 
-		      double vx, double vxy, double vy)
+static int is_blocked(double n1x, double n1y, double n2x, double n2y, 
+		      double x, double y, double vx, double vxy, double vy)
 {
   double numerator;
   double denominator;
   double i_x, i_y;
   double dist_along_line;
-  carmen_world_point_t wp;
-  carmen_map_point_t mp;
   double radius;
   double e1, e2;
   double theta;
@@ -238,21 +206,15 @@ static int is_blocked(int n1x, int n1y, int n2x, int n2y, double x, double y,
   e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
   e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
 
-  e1 = 3*sqrt(e1);
-  e2 = 3*sqrt(e2);
+  e1 = sqrt(e1);
+  e2 = sqrt(e2);
 
   if (e1 < 1)
     e1 = .5;
   if (e2 < 1)
     e2 = .5;
 
-  wp.pose.x = e1;
-  wp.pose.y = e2;
-  wp.map = map;
-
-  #error these are wrong
-  carmen_world_to_map(&wp, &mp);
-  radius = (mp.x + mp.y) / 2;
+  radius = (e1 + e2) / 2;
 
   numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
   denominator = hypot(n2x-n1x, n2y-n1y);
@@ -278,7 +240,8 @@ static int is_blocked(int n1x, int n1y, int n2x, int n2y, double x, double y,
   return 1;
 }
 
-static int do_blocking(int n1x, int n1y, int n2x, int n2y, int avoid_people)
+static int do_blocking(double n1x, double n1y, double n2x, double n2y, 
+		       int avoid_people)
 {
   carmen_dot_person_t *person;
   carmen_dot_trash_t *trash_bin;
@@ -316,81 +279,101 @@ int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1,
 				   carmen_roadmap_vertex_t *n2,
 				   int avoid_people)
 {
-  return do_blocking(n1->x, n1->y, n2->x, n2->y, avoid_people);
+  carmen_world_point_t pt1, pt2;
+  carmen_map_point_t map_pt;
+
+  map_pt.x = n1->x;
+  map_pt.y = n1->y;
+  map_pt.map = map;
+  carmen_map_to_world(&map_pt, &pt1);
+
+  map_pt.x = n2->x;
+  map_pt.y = n2->y;
+  carmen_map_to_world(&map_pt, &pt2);
+
+
+  return do_blocking(pt1.pose.x, pt1.pose.y, pt2.pose.x, pt2.pose.y, 
+		     avoid_people);
 }
 
 int carmen_dynamics_test_point_for_block(carmen_roadmap_vertex_t *n, 
 					 carmen_world_point_t *point,
 					 int avoid_people)
 {
+  carmen_world_point_t world_pt;
   carmen_map_point_t map_pt;
-  carmen_world_to_map(point, &map_pt);
 
-  return do_blocking(n->x, n->y, map_pt.x, map_pt.y, avoid_people);  
+  map_pt.x = n->x;
+  map_pt.y = n->y;
+  map_pt.map = map;
+  carmen_map_to_world(&map_pt, &world_pt);
+
+  return do_blocking(world_pt.pose.x, world_pt.pose.y, 
+		     point->pose.x, point->pose.y, avoid_people);  
 }
 
-static int is_too_close(carmen_roadmap_vertex_t *n1, double x, double y, 
+static int is_too_close(double nx, double ny, double x, double y, 
 			double vx, double vxy, double vy)
 {
-  carmen_world_point_t wp;
-  carmen_map_point_t mp;
   double radius;
   double e1, e2;
 
   e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
   e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
 
-  e1 = 3*sqrt(e1);
-  e2 = 3*sqrt(e2);
+  e1 = sqrt(e1);
+  e2 = sqrt(e2);
 
   if (e1 < 1)
     e1 = .5;
   if (e2 < 1)
     e2 = .5;
 
-  wp.pose.x = e1;
-  wp.pose.y = e2;
-  wp.map = map;
-  carmen_world_to_map(&wp, &mp);
+  radius = (e1 + e2) / 2;
 
-  radius = (mp.x + mp.y) / 2;
-
-  if (hypot(n1->x-x, n1->y-y) > radius) 
+  if (hypot(nx-x, ny-y) > radius) 
     return 0;
 
   return 1;
 }
 
 
-int carmen_dynamics_test_node(carmen_roadmap_vertex_t *n1, 
-				   int avoid_people)
+int carmen_dynamics_test_node(carmen_roadmap_vertex_t *n1, int avoid_people)
 {
   carmen_dot_person_t *person;
   carmen_dot_trash_t *trash_bin;
   carmen_dot_door_t *door;
+  carmen_world_point_t world_pt;
+  carmen_map_point_t map_pt;
 
   int i;
+
+  map_pt.x = n1->x;
+  map_pt.y = n1->y;
+  map_pt.map = map;
+  carmen_map_to_world(&map_pt, &world_pt);
 
   if (avoid_people) {
     for (i = 0; i < people->length; i++) {
       person = (carmen_dot_person_t *)carmen_list_get(people, i);
-      if (is_too_close(n1, person->x, person->y, person->vx,
-		       person->vxy, person->vy))
+      if (is_too_close(world_pt.pose.x, world_pt.pose.y, person->x, person->y, 
+		       person->vx, person->vxy, person->vy))
 	return 1;
     }
   }
 
   for (i = 0; i < trash->length; i++) {
     trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
-    if (is_too_close(n1, trash_bin->x, trash_bin->y, trash_bin->vx,
-		   trash_bin->vxy, trash_bin->vy))
+    if (is_too_close(world_pt.pose.x, world_pt.pose.y, trash_bin->x, 
+		     trash_bin->y, trash_bin->vx, trash_bin->vxy, 
+		     trash_bin->vy))
       return 1;
   }
 
   for (i = 0; i < doors->length; i++) {
     door = (carmen_dot_door_t *)carmen_list_get(doors, i);
-    if (is_too_close(n1, door->x, door->y, door->vx, door->vxy,
-		   door->vy))
+    if (is_too_close(world_pt.pose.x, world_pt.pose.y, door->x, door->y, 
+		     door->vx, door->vxy, door->vy))
       return 1;
   }
 
