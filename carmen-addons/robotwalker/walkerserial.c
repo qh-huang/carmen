@@ -107,6 +107,8 @@ int main(int argc, char *argv[]) {
       break;
   if (i == 10)
     carmen_die("Error: could not open serial port %s.\n", argv[1]);
+
+  fprintf(stderr, "Connected to stamp\n");
   
   b = 0;
   while (1) {
@@ -118,6 +120,8 @@ int main(int argc, char *argv[]) {
       if (i <= 0)
 	continue;
       for (j = 0; j < i; j++) {
+	fprintf(stderr, "0x%x ", buf[j]);
+	fflush(stderr);
 	if (buf[j] == 0xff)
 	  b = 0;
 	else if (b == 0) {

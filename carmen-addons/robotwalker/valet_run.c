@@ -95,6 +95,9 @@ int filedescriptor(char *dev)
   int filed;
   
   filed = open_serialport(dev);
+
+  sleep(1);
+
   init_irman(filed);
   return filed;
 }

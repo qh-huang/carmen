@@ -619,14 +619,14 @@ void path_handler(carmen_gnav_path_msg *path_msg) {
 
 void button_handler(carmen_walkerserial_button_msg *button_msg) {
 
-  if (button_msg->button == 6) {
+  if (button_msg->button == 1) {
     dest_display_index = dest_display_index + 4;
     if (dest_display_index >= topology->num_rooms)
       dest_display_index = 0;
     draw_top_canvas();
   }
-  else if (button_msg->button > 1)
-    carmen_walker_set_goal(dest_display_index + button_msg->button - 2);
+  else if (button_msg->button < 6)
+    carmen_walker_set_goal(dest_display_index + 5 - button_msg->button);
 }
 
 void goal_changed_handler(carmen_walker_goal_changed_msg *goal_changed_msg) {
