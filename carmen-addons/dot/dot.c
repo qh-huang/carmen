@@ -110,6 +110,7 @@ static int sensor_update_cnt;
 static int person_filter_velocity_window;
 static double person_filter_velocity_threshold;
 static int kill_hidden_person_cnt;
+static double laser_max_range;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
@@ -119,10 +120,32 @@ static int do_sensor_update = 1;
 static carmen_map_t static_map;
 static carmen_dot_filter_p filters = NULL;
 static int num_filters = 0;
-static double laser_max_range;
 
 
 static void publish_dot_msg(carmen_dot_filter_p f, int delete);
+
+static void print_filters() {
+
+  int i;
+
+  for (i = 0; i < num_filters; i++) {
+    switch (filters[i].type) {
+    case CARMEN_DOT_PERSON:
+      printf("P");
+      break;
+    case CARMEN_DOT_TRASH:
+	printf("T");
+	break;
+    case CARMEN_DOT_DOOR:
+      printf("D");
+      break;
+    }
+    printf("%d", filters[i].id);
+    if (i < num_filters-1)
+      printf(",");
+  }
+  printf("\n");
+}
 
 static void reset() {
 
@@ -279,13 +302,15 @@ static void person_filter_motion_update(carmen_dot_person_filter_p f) {
   f->pxy = ax*ax*f->pxy + f->qxy;
   f->py = ay*ay*f->py + f->qy;
 
-  f->vx[f->vpos] = ax;
-  f->vy[f->vpos] = ay;
-  f->vpos = (f->vpos+1) % person_filter_velocity_window;
-  if (f->vlen < person_filter_velocity_window)
-    f->vlen++;
-  else
-    f->vlen = person_filter_velocity_window;
+  if (f->hidden_cnt == 0) {
+    f->vx[f->vpos] = ax;
+    f->vy[f->vpos] = ay;
+    f->vpos = (f->vpos+1) % person_filter_velocity_window;
+    if (f->vlen < person_filter_velocity_window)
+      f->vlen++;
+    else
+      f->vlen = person_filter_velocity_window;
+  }
 }
 
 static void person_filter_sensor_update(carmen_dot_person_filter_p f,
@@ -329,13 +354,17 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
 
   x2 = f->x + kxx*(x - f->x) + kxy*(y - f->y);
   y2 = f->y + kyx*(x - f->x) + kyy*(y - f->y);
-  f->vx[f->vpos] = x2 - f->x;
-  f->vy[f->vpos] = y2 - f->y;
-  f->vpos = (f->vpos+1) % person_filter_velocity_window;
-  if (f->vlen < person_filter_velocity_window)
-    f->vlen++;
-  else
-    f->vlen = person_filter_velocity_window;
+
+  if (f->hidden_cnt == 0) {
+    f->vx[f->vpos] = x2 - f->x;
+    f->vy[f->vpos] = y2 - f->y;
+    f->vpos = (f->vpos+1) % person_filter_velocity_window;
+    if (f->vlen < person_filter_velocity_window)
+      f->vlen++;
+    else
+      f->vlen = person_filter_velocity_window;
+  }
+
   f->x = x2;
   f->y = y2;
   f->px = (1.0 - kxx)*pxx + (-kxy)*pyx;
@@ -457,6 +486,7 @@ static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, doub
 static void add_new_dot_filter(int *cluster_map, int c, int n,
 			       double *x, double *y) {
   int i, id;
+  double ux, uy, cnt;
 
   for (id = 0; id < num_filters; id++) {
     for (i = 0; i < num_filters; i++)
@@ -465,6 +495,8 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
     if (i == num_filters)
       break;
   }
+
+  printf("A%d\n", id);
 
   for (i = 0; i < n && cluster_map[i] != c; i++);
   if (i == n)
@@ -476,8 +508,19 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   filters[num_filters-1].id = id;
 
-  filters[num_filters-1].person_filter.x = x[i];
-  filters[num_filters-1].person_filter.y = y[i];
+  ux = uy = 0.0;
+  cnt = 0;
+  for (i = 0; i < n; i++)
+    if (cluster_map[i] == c) {
+      ux += x[i];
+      uy += y[i];
+      cnt++;
+    }
+  ux /= (double)cnt;
+  uy /= (double)cnt;
+
+  filters[num_filters-1].person_filter.x = ux;
+  filters[num_filters-1].person_filter.y = uy;
   for (i = 0; i < MAX_PERSON_FILTER_VELOCITY_WINDOW; i++) {
     filters[num_filters-1].person_filter.vx[i] = 0.0;
     filters[num_filters-1].person_filter.vy[i] = 0.0;
@@ -497,11 +540,14 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].person_filter.rxy = default_person_filter_rxy;
 
   for (i = 0; i < n; i++)
-    if (cluster_map[i] == c)
+    if (cluster_map[i] == c) {
+      //printf(" (%.2f, %.2f)", x[i], y[i]);
       person_filter_sensor_update(&filters[num_filters-1].person_filter, x[i], y[i]);
+    }
+  //printf("\n");
 
-  filters[num_filters-1].trash_filter.x = x[i];
-  filters[num_filters-1].trash_filter.y = y[i];
+  filters[num_filters-1].trash_filter.x = ux;
+  filters[num_filters-1].trash_filter.y = uy;
   filters[num_filters-1].trash_filter.px = default_trash_filter_px;
   filters[num_filters-1].trash_filter.py = default_trash_filter_py;
   filters[num_filters-1].trash_filter.a = default_trash_filter_a;
@@ -516,8 +562,8 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
     if (cluster_map[i] == c)
       trash_filter_sensor_update(&filters[num_filters-1].trash_filter, x[i], y[i]);
 
-  filters[num_filters-1].door_filter.x = x[i];
-  filters[num_filters-1].door_filter.y = y[i];
+  filters[num_filters-1].door_filter.x = ux;
+  filters[num_filters-1].door_filter.y = uy;
   filters[num_filters-1].door_filter.t =
     bnorm_theta(filters[num_filters-1].person_filter.px,
 		filters[num_filters-1].person_filter.py,
@@ -542,6 +588,8 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].do_motion_update = 0;
   filters[num_filters-1].updated = 1;
   filters[num_filters-1].last_type = filters[num_filters-1].type;
+
+  print_filters();
 }
 
 static double map_prob(double x, double y) {
@@ -762,11 +810,15 @@ static int cluster(int *cluster_map, int cluster_cnt, int current_reading,
 
 static void delete_filter(int i) {
 
+  printf("D%d\n", filters[i].id);
+
   publish_dot_msg(&filters[i], 1);
 
   if (i < num_filters-1)
     memmove(&filters[i], &filters[i+1], (num_filters-i-1)*sizeof(carmen_dot_filter_t));
   num_filters--;
+
+  print_filters();
 }
 
 static void kill_people() {
@@ -859,11 +911,25 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       filters[i].type = filters[i].last_type;
       publish_dot_msg(&filters[i], 1);
       filters[i].type = n;
+      /*
+      switch (filters[i].type) {
+      case CARMEN_DOT_PERSON:
+	printf("publishing add person %d msg\n", filters[i].id);
+	break;
+      case CARMEN_DOT_TRASH:
+	printf("publishing add trash %d msg\n", filters[i].id);
+	break;
+      case CARMEN_DOT_DOOR:
+	printf("publishing add door %d msg\n", filters[i].id);
+	break;
+      }
+      */
     }
     if (filters[i].updated)
       publish_dot_msg(&filters[i], 0);
   }
 
+  /*
   for (i = 0; i < num_filters; i++) {
     printf("vel = %.4f, ", person_filter_velocity(&filters[i].person_filter));
     if (filters[i].type == CARMEN_DOT_PERSON) {
@@ -885,6 +951,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
 	     filters[i].door_filter.pt);
   }
   printf("\n");
+  */
 }
 
 static void publish_person_msg(carmen_dot_filter_p f, int delete) {
@@ -965,12 +1032,18 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
 
   switch (f->type) {
   case CARMEN_DOT_PERSON:
+    //if (delete)
+    //printf("publishing delete person %d msg\n", f->id);
     publish_person_msg(f, delete);
     break;
   case CARMEN_DOT_TRASH:
+    //if (delete)
+    //printf("publishing delete trash %d msg\n", f->id);
     publish_trash_msg(f, delete);
     break;
   case CARMEN_DOT_DOOR:
+    //if (delete)
+    //printf("publishing delete door %d msg\n", f->id);
     publish_door_msg(f, delete);
     break;
   }
@@ -978,9 +1051,16 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
 
 static void respond_all_people_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_people_msg msg;
+  static carmen_dot_all_people_msg msg;
+  static int first = 1;
   IPC_RETURN_TYPE err;
   int i, n;
+
+  if (first) {
+    first = 0;
+    msg.people = NULL;
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+  }
   
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_PERSON)
@@ -990,7 +1070,8 @@ static void respond_all_people_msg(MSG_INSTANCE msgRef) {
   if (n == 0)
     msg.people = NULL;
   else {
-    msg.people = (carmen_dot_person_p)calloc(n, sizeof(carmen_dot_person_t));
+    msg.people = (carmen_dot_person_p)
+		  realloc(msg.people, n*sizeof(carmen_dot_person_t));
     carmen_test_alloc(msg.people);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_PERSON) {
@@ -1006,7 +1087,6 @@ static void respond_all_people_msg(MSG_INSTANCE msgRef) {
   }
 
   msg.timestamp = carmen_get_time_ms();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
@@ -1015,9 +1095,16 @@ static void respond_all_people_msg(MSG_INSTANCE msgRef) {
 
 static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_trash_msg msg;
+  static carmen_dot_all_trash_msg msg;
+  static int first = 1;
   IPC_RETURN_TYPE err;
   int i, n;
+  
+  if (first) {
+    first = 0;
+    msg.trash = NULL;
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+  }
   
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_TRASH)
@@ -1028,7 +1115,8 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
     msg.trash = NULL;
 
   else {
-    msg.trash = (carmen_dot_trash_p)calloc(n, sizeof(carmen_dot_trash_t));
+    msg.trash = (carmen_dot_trash_p)
+      realloc(msg.trash, n*sizeof(carmen_dot_trash_t));
     carmen_test_alloc(msg.trash);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_TRASH) {
@@ -1044,7 +1132,6 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
   }
 
   msg.timestamp = carmen_get_time_ms();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
@@ -1053,9 +1140,16 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 
 static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_doors_msg msg;
+  static carmen_dot_all_doors_msg msg;
+  static int first = 1;
   IPC_RETURN_TYPE err;
   int i, n;
+  
+  if (first) {
+    first = 0;
+    msg.doors = NULL;
+    strcpy(msg.host, carmen_get_tenchar_host_name());
+  }
   
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_DOOR)
@@ -1066,7 +1160,8 @@ static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
     msg.doors = NULL;
 
   else {
-    msg.doors = (carmen_dot_door_p)calloc(n, sizeof(carmen_dot_door_t));
+    msg.doors = (carmen_dot_door_p)
+      realloc(msg.doors, n*sizeof(carmen_dot_door_t));
     carmen_test_alloc(msg.doors);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_DOOR) {
@@ -1084,7 +1179,6 @@ static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
   }
 
   msg.timestamp = carmen_get_time_ms();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
@@ -1181,7 +1275,6 @@ static void person_filter_velocity_window_handler() {
 static void params_init(int argc, char *argv[]) {
 
   carmen_param_t param_list[] = {
-    {"robot", "front_laser_max", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL},
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &localize_params.front_laser_offset, 0, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
@@ -1261,7 +1354,8 @@ static void params_init(int argc, char *argv[]) {
      &person_filter_velocity_threshold, 1, NULL},
     {"dot", "kill_hidden_person_cnt", CARMEN_PARAM_INT, &kill_hidden_person_cnt, 1, NULL},
     {"dot", "sensor_update_dist", CARMEN_PARAM_DOUBLE, &sensor_update_dist, 1, NULL},
-    {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL}
+    {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL},
+    {"dot", "laser_max_range", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL}
   };
 
   carmen_param_install_params(argc, argv, param_list,
