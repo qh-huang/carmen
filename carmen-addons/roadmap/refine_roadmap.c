@@ -73,8 +73,8 @@ void carmen_roadmap_refine_get_radius(double vx, double vy, double vxy,
   e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
   e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
 
-  e1 = 2*sqrt(e1);
-  e2 = 2*sqrt(e2);
+  e1 = 1.3*sqrt(e1);
+  e2 = 1.3*sqrt(e2);
 
   if (e1 < 1)
     e1 = .5;

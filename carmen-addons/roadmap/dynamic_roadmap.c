@@ -1006,7 +1006,7 @@ int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
   if (!node)
     return 0;
 
-  carmen_warn("Path length: %d\n", roadmap->path->length);
+  //  carmen_warn("Path length: %d\n", roadmap->path->length);
 
   return 1;
 }
