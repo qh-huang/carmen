@@ -108,8 +108,14 @@ static carmen_base_odometry_message odometry;
 static int use_sonar = 0;
 
 static double x, y, theta;
+static double voltage;
+static double voltage_time_elapsed = 0;
 
-static int 
+static int temperature_fault;
+static int left_temperature,right_temperature;
+static double temperature_time_elapsed = 0;
+
+static int
 initialize_robot(char *dev)
 {
   int result;
@@ -412,6 +418,43 @@ command_robot(void)
 
     } 
   while (error < 0);
+
+  //increment the voltage check timer, check it every 3 seconds
+  voltage_time_elapsed += time_elapsed;
+  if( voltage_time_elapsed > 3000)
+    {
+      printf("V: ");
+      error = carmen_cerebellum_get_voltage(&voltage);
+      if( error < 0)
+	{
+	  printf("error, voltage command didn't work\n");
+	}
+      else
+	printf("voltage: %lf\n",voltage);
+
+      voltage_time_elapsed=0;
+    }
+
+  //increment the temperature check timer, check it every 3 seconds
+  temperature_time_elapsed += time_elapsed;
+  if( temperature_time_elapsed > 6000)
+    {
+      printf("C: ");
+      error = carmen_cerebellum_get_temperatures(&temperature_fault,
+						&left_temperature,
+						&right_temperature);
+      if( error < 0)
+	{
+	  printf("error, temperature command didn't work\n");
+	}
+      else
+	printf("temp: fault:%d L:%d R:%d\n", temperature_fault,
+	       left_temperature,right_temperature);
+
+      temperature_time_elapsed=0;
+    }
+ 
+
   
   current_time = carmen_get_time_ms();
   last_update = current_time;
