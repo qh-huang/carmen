@@ -66,6 +66,8 @@ typedef struct dot_filter {
   int do_motion_update;
   int updated;
   int last_type;
+  int invisible;
+  int invisible_cnt;
 } carmen_dot_filter_t, *carmen_dot_filter_p;
 
 
@@ -111,6 +113,7 @@ static int person_filter_velocity_window;
 static double person_filter_velocity_threshold;
 static int kill_hidden_person_cnt;
 static double laser_max_range;
+static double see_through_stdev;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
@@ -588,6 +591,8 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].do_motion_update = 0;
   filters[num_filters-1].updated = 1;
   filters[num_filters-1].last_type = filters[num_filters-1].type;
+  filters[num_filters-1].invisible = 0;
+  filters[num_filters-1].invisible_cnt = 0;
 
   print_filters();
 }
@@ -846,6 +851,29 @@ static void filter_motion() {
       filters[i].updated = 1;
   }
 }
+
+/*
+void trace_laser(int x1, int y1, int x2, int y2) {
+
+  int x, y, dx, dy, i;
+  double stdev;
+
+  dx = trace_resolution * 
+
+  stdev = see_through_stdev;
+
+  do {
+    carmen_get_current_point(&params, &X, &Y);
+    if (!is_in_map(X, Y))
+      break;
+    //check for intersection with filters
+    for (i = 0; i < num_filters; i++) {
+      if (!filters[i].invisible && dot_contains(&filters[i], X, Y, stdev))
+	filters[i].invisible = 1;
+    }
+  } while (carmen_get_next_point(&params));
+}
+*/
 
 static void laser_handler(carmen_robot_laser_message *laser) {
 
@@ -1355,7 +1383,8 @@ static void params_init(int argc, char *argv[]) {
     {"dot", "kill_hidden_person_cnt", CARMEN_PARAM_INT, &kill_hidden_person_cnt, 1, NULL},
     {"dot", "sensor_update_dist", CARMEN_PARAM_DOUBLE, &sensor_update_dist, 1, NULL},
     {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL},
-    {"dot", "laser_max_range", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL}
+    {"dot", "laser_max_range", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL},
+    {"dot", "see_through_stdev", CARMEN_PARAM_DOUBLE, &see_through_stdev, 1, NULL}
   };
 
   carmen_param_install_params(argc, argv, param_list,
