@@ -28,7 +28,7 @@ typedef struct point_node {
 typedef struct path_node {
   int *path;
   int pathlen;
-  int cost;
+  double cost;
   struct path_node *next;
 } path_node_t, *path_node_p;
 
@@ -749,7 +749,7 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
   GdkPoint dim[2];
   int dim_x, dim_y, dim_width, dim_height;
 
-  printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
+  //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
   
   vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
@@ -767,9 +767,9 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
   dim_width = (dim[0].x < dim[1].x ? dim[1].x - dim[0].x : dim[0].x - dim[1].x);
   dim_height = (dim[0].y < dim[1].y ? dim[1].y - dim[0].y : dim[0].y - dim[1].y);
 
-  printf("dim = [(%d, %d), (%d, %d)]\n", dim[0].x, dim[0].y, dim[1].x, dim[1].y);
-  printf("dim_x = %d, dim_y = %d, dim_width = %d, dim_height = %d\n",
-	 dim_x, dim_y, dim_width, dim_height);
+  //printf("dim = [(%d, %d), (%d, %d)]\n", dim[0].x, dim[0].y, dim[1].x, dim[1].y);
+  //printf("dim_x = %d, dim_y = %d, dim_width = %d, dim_height = %d\n",
+  //	 dim_x, dim_y, dim_width, dim_height);
 
   draw_grid(dim_x, dim_y, dim_width, dim_height);
 }
@@ -946,9 +946,10 @@ static void gui_init() {
   carmen_graphics_setup_colors();
 }
 
-static int pq_f(path_node_p p) {
+static double pq_f(path_node_p p) {
 
-  int d, g, h, h2;
+  int d;
+  double g, h, h2;
 
   g = p->cost;
 
@@ -1072,11 +1073,28 @@ static path_node_p pq_init() {
 
 static void print_path(int *p, int plen) {
 
+  int i, r;
+
+  r = room;
+
+  printf("path = %d", r);
+  for (i = 0; i < plen; i++) {
+    r = (doors[p[i]].room1 == r ? doors[p[i]].room2 : doors[p[i]].room1);
+    printf(" %d", r);
+  }
+  printf("\n");
+}
+
+static void pq_print(path_node_p pq) {
+
+  path_node_p tmp;
   int i;
 
-  printf("path =");  
-  for (i = 0; i < plen; i++)
-    printf(" %d", p[i]);
+  printf("\n");
+  for (i = 1, tmp = pq; tmp; tmp = tmp->next, i++) {
+    printf("%2d.  f-value: %.2f, ", i, pq_f(tmp));
+    print_path(tmp->path, tmp->pathlen);
+  }
   printf("\n");
 }
 
@@ -1124,6 +1142,7 @@ static int get_path() {
   }
 
   for (pq = pq_init(); pq != NULL; pq = pq_expand(pq)) {
+    //pq_print(pq);
     if (is_goal(pq)) {
       changed = !path_eq(path, pathlen, pq->path, pq->pathlen);
 #ifndef NO_GRAPHICS
