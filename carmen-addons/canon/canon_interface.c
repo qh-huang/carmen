@@ -1,3 +1,39 @@
+/*********************************************************
+ *
+ * This source code is part of the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, and Sebastian Thrun
+ *
+ * CARMEN is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public 
+ * License as published by the Free Software Foundation; 
+ * either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * CARMEN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied 
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more 
+ * details.
+ *
+ * You should have received a copy of the GNU General 
+ * Public License along with CARMEN; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, 
+ * Suite 330, Boston, MA  02111-1307 USA
+ *
+ ********************************************************/
+
+/********************************************************
+ *
+ * The CARMEN Canon module was written by 
+ * Mike Montemerlo (mmde+@cs.cmu.edu)
+ * Chunks of code were taken from the Canon library that
+ * is part of Gphoto2.  http://www.gphoto.com
+ *
+ ********************************************************/
+
 #include <carmen/carmen.h>
 #include "canon.h"
 #include "canon_messages.h"
@@ -49,8 +85,9 @@ void carmen_canon_free_image(carmen_canon_image_message **message)
     }
 }
 
-static void preview_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-				      void *clientData __attribute__ ((unused)))
+static void
+preview_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			  void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err = IPC_OK;
   FORMATTER_PTR formatter;
@@ -87,7 +124,7 @@ carmen_canon_subscribe_preview_message(carmen_canon_preview_message *preview,
     memset(preview_message_pointer_external, 0, 
            sizeof(carmen_canon_preview_message));
   }
-  else if (preview_message_pointer_external == NULL) {
+  else if(preview_message_pointer_external == NULL) {
     preview_message_pointer_external = (carmen_canon_preview_message *)
       calloc(1, sizeof(carmen_canon_preview_message));
     carmen_test_alloc(preview_message_pointer_external);
