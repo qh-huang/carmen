@@ -43,14 +43,17 @@ static void draw_graph(GtkMapViewer *the_map_view)
   carmen_map_point_t map_pt;
   carmen_world_point_t world_pt, next;
   GdkColor color;
+  GdkGCValues gcvalues;
   carmen_roadmap_vertex_t *node_list;
   double max_util, min_util, scale;
+  int path_ok;
+  carmen_traj_point_t traj_point;
 
   node_list = (carmen_roadmap_vertex_t *)roadmap->nodes->list;
   max_util = -MAXFLOAT;
   min_util = MAXFLOAT;
   for (i = 0; i < roadmap->nodes->length; i++) {
-    if (node_list[i].utility < MAXFLOAT/2) {
+    if (node_list[i].utility >= 0) {
       if (node_list[i].utility < min_util)
 	min_util = node_list[i].utility;
       if (node_list[i].utility > max_util)
@@ -81,7 +84,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
     w2.pose.x += .1;
     w2.pose.y -= .1;
 
-    if (n1->utility < MAXFLOAT/2) {
+    if (n1->utility < MAXFLOAT/2 && n1->utility >= 0) {
       scale = 1-(n1->utility-min_util)/(max_util-min_util);
       color = carmen_graphics_add_color_rgb(255*scale, 0, 0);
     } else
@@ -91,6 +94,11 @@ static void draw_graph(GtkMapViewer *the_map_view)
     w2.pose.y += .2;
     carmen_map_graphics_draw_line(the_map_view, &color, &w1, &w2);
 
+  }
+
+  if (person.map != NULL) {
+    carmen_map_graphics_draw_ellipse(the_map_view, &carmen_black, &person,
+				     .375, .125, .375, 1);
   }
 
   if (start.map == NULL) 
@@ -107,45 +115,41 @@ static void draw_graph(GtkMapViewer *the_map_view)
   carmen_map_graphics_draw_circle(the_map_view, &carmen_green, 0,
 				  &world_pt, 1);
   
-  if (person.map != NULL) {
-    carmen_map_graphics_draw_circle(the_map_view, &carmen_blue, 1,
-				    &person, 1);
-    carmen_map_graphics_draw_circle(the_map_view, &carmen_black, 0,
-				    &person, 1);
-  }
-
   if (carmen_distance_world(&start, &world_pt) >= 2)
     return;
 
-  //  carmen_warn("%f %f\n", start.pose.x, start.pose.y);
+  traj_point.x = start.pose.x;
+  traj_point.y = start.pose.y;
+  path_ok = carmen_roadmap_generate_path(&traj_point, roadmap);
 
-  //  carmen_warn("%d %d %f\n", n1->x, n1->y, n1->utility);
-
-  if (carmen_dynamics_test_node(n1, 1)) 
+  if (!path_ok)
     return;
 
-  n2 = (carmen_roadmap_vertex_t *)
-    carmen_list_get(roadmap->nodes, roadmap->goal_id);
-  if (carmen_dynamics_test_node(n2, 1)) 
-    return;
 
-  do {
-    n2 = carmen_roadmap_next_node(n1, roadmap);
-    
-    if (n2 == NULL)
-      break;
+  gdk_gc_get_values (the_map_view->drawing_gc, &gcvalues);
 
-    //    carmen_warn("%d %d %f\n", n2->x, n2->y, n2->utility);
+  gdk_gc_set_line_attributes(the_map_view->drawing_gc, 2,
+			     gcvalues.line_style, gcvalues.cap_style,
+			     gcvalues.join_style);
 
-    map_pt.x = n2->x;
-    map_pt.y = n2->y;
-    carmen_map_to_world(&map_pt, &next);
+  traj_point = *(carmen_traj_point_t *)carmen_list_get(roadmap->path, 0);
+  world_pt.pose.x = traj_point.x;
+  world_pt.pose.y = traj_point.y;
+  world_pt.map = roadmap->c_space;
+
+  for (i = 1; i < roadmap->path->length; i++) {
+    traj_point = *(carmen_traj_point_t *)carmen_list_get(roadmap->path, i);
+    next.pose.x = traj_point.x;
+    next.pose.y = traj_point.y;
+    next.map = roadmap->c_space;
     carmen_map_graphics_draw_line(the_map_view, &carmen_green, &world_pt,
 				  &next);	
     world_pt = next;
-    n1 = n2;
-  } while (n2->utility > 0);
+  } 
 
+  gdk_gc_set_line_attributes(the_map_view->drawing_gc, 1,
+			     gcvalues.line_style, gcvalues.cap_style,
+			     gcvalues.join_style);
 }
 
 static gint motion_handler (GtkMapViewer *the_map_view, 

@@ -51,6 +51,7 @@ typedef struct {
   carmen_list_t *nodes;
   int goal_id;
   carmen_map_p c_space;
+  carmen_list_t *path;
   int avoid_people;
 } carmen_roadmap_t;
 
@@ -72,6 +73,8 @@ carmen_roadmap_vertex_t *carmen_roadmap_best_node
 double carmen_roadmap_get_cost(carmen_world_point_t *point, 
 			       carmen_roadmap_vertex_t *node,
 			       carmen_roadmap_t *roadmap);
+int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
+				 carmen_roadmap_t *roadmap);
 #ifdef __cplusplus
 }
 #endif
