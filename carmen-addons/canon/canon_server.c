@@ -3,6 +3,7 @@
 #include "canon.h"
 
 usb_dev_handle *camera_handle;
+int use_flash;
 
 void shutdown_module(int x)
 {
@@ -76,11 +77,23 @@ void initialize_ipc_messages(void)
   IPC_setMsgQueueLength(CARMEN_CANON_IMAGE_REQUEST_NAME, 100);
 }
 
-int main(int argc __attribute__ ((unused)), char **argv)
+void read_parameters(int argc, char **argv)
+{
+  carmen_param_t camera_params[] = {
+    {"canon", "flash", CARMEN_PARAM_ONOFF, &use_flash, 0, NULL}
+  };
+
+  carmen_param_install_params(argc, argv, camera_params,
+                              sizeof(camera_params) / 
+			      sizeof(camera_params[0]));
+}
+
+int main(int argc, char **argv)
 {
   /* initialize IPC */
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
+  read_parameters(argc, argv);
   initialize_ipc_messages();
   signal(SIGINT, shutdown_module);
 
@@ -91,7 +104,8 @@ int main(int argc __attribute__ ((unused)), char **argv)
   if(canon_initialize_camera(camera_handle) < 0)
     carmen_die("Erorr: could not open initialize camera.\n");
   sleep(1);
-  if(canon_initialize_capture(camera_handle, THUMB_TO_PC | FULL_TO_PC) < 0)
+  if(canon_initialize_capture(camera_handle, THUMB_TO_PC | FULL_TO_PC,
+			      use_flash) < 0)
     carmen_die("Error: could not start image capture.\n");
 
   fprintf(stderr, "READY TO CAPTURE\n");
