@@ -114,6 +114,8 @@ static double person_filter_velocity_threshold;
 static int kill_hidden_person_cnt;
 static double laser_max_range;
 static double see_through_stdev;
+static double trace_resolution;
+static int invisible_cnt;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
@@ -229,6 +231,45 @@ static double bnorm_f(double x, double y, double ux, double uy,
   z = (x - ux)*(x - ux)/vx - 2.0*p*(x - ux)*(y - uy)/vxy + (y - uy)*(y - uy)/vy;
 
   return exp(-z/(2.0*(1 - p*p)))/(2.0*M_PI*sqrt(vx*vy*(1 - p*p)));
+}
+
+static int dot_contains(carmen_dot_filter_p f, double x, double y, double stdev) {
+
+  double theta;
+  double dx, dy, ux, uy, vx, vy, vxy;
+
+  if (f->type == CARMEN_DOT_PERSON) {
+    ux = f->person_filter.x;
+    uy = f->person_filter.y;
+    vx = f->person_filter.px;
+    vy = f->person_filter.py;
+    vxy = f->person_filter.pxy;
+  }
+  else if (f->type == CARMEN_DOT_TRASH) {
+    ux = f->trash_filter.x;
+    uy = f->trash_filter.y;
+    vx = f->trash_filter.px;
+    vy = f->trash_filter.py;
+    vxy = f->trash_filter.pxy;
+  }
+  else {  // door
+    ux = f->door_filter.x;
+    uy = f->door_filter.y;
+    vx = f->door_filter.px;
+    vy = f->door_filter.py;
+    vxy = f->door_filter.pxy;
+  }
+
+  dx = x - ux;
+  dy = y - uy;
+
+  theta = bnorm_theta(vx, vy, vxy);
+  rotate2d(&dx, &dy, -theta);
+  if (fabs(dx) <= stdev*sqrt(vx/fabs(cos(theta))) && 
+      fabs(dy) <= stdev*sqrt(vy/fabs(sin(theta))))
+    return 1;
+
+  return 0;
 }
 
 static int dot_classify(carmen_dot_filter_p f) {
@@ -721,18 +762,18 @@ static int dot_filter(double x, double y) {
       filters[imax].do_motion_update = 0;
       trash_filter_motion_update(&filters[imax].trash_filter);
       door_filter_motion_update(&filters[imax].door_filter);
-      filters[imax].updated = 1;
+      //filters[imax].updated = 1;
     }
     if (do_sensor_update || filters[imax].sensor_update_cnt < sensor_update_cnt) {
       filters[imax].sensor_update_cnt++;
       trash_filter_sensor_update(&filters[imax].trash_filter, x, y);
       door_filter_sensor_update(&filters[imax].door_filter, x, y);
-      filters[imax].updated = 1;
+      //filters[imax].updated = 1;
     }
     filters[imax].type = dot_classify(&filters[imax]);
 
-    if (filters[imax].type == CARMEN_DOT_PERSON)
-      filters[imax].updated = 1;
+    //if (filters[imax].type == CARMEN_DOT_PERSON)
+    filters[imax].updated = 1;
     
     return 1;
   }
@@ -853,28 +894,27 @@ static void filter_motion() {
   }
 }
 
-/*
-void trace_laser(int x1, int y1, int x2, int y2) {
+void trace_laser(double x1, double y1, double x2, double y2) {
 
-  int x, y, dx, dy, i;
-  double stdev;
+  int i;
+  double x, y, dx, dy, stdev;
 
-  dx = trace_resolution * 
+  dx = trace_resolution * cos(atan2(y2-y1, x2-x1));
+  dy = trace_resolution * sin(atan2(y2-y1, x2-x1));
 
   stdev = see_through_stdev;
 
-  do {
-    carmen_get_current_point(&params, &X, &Y);
-    if (!is_in_map(X, Y))
-      break;
+  x = x1;
+  y = y1;
+  while ((dx >= 0 ? x <= x2 : x >= x2) && (dy >= 0 ? y <= y2 : y >= y2)) {
     //check for intersection with filters
-    for (i = 0; i < num_filters; i++) {
-      if (!filters[i].invisible && dot_contains(&filters[i], X, Y, stdev))
+    for (i = 0; i < num_filters; i++)
+      if (!filters[i].invisible && dot_contains(&filters[i], x, y, stdev))
 	filters[i].invisible = 1;
-    }
-  } while (carmen_get_next_point(&params));
+    x += dx;
+    y += dy;
+  }
 }
-*/
 
 static void laser_handler(carmen_robot_laser_message *laser) {
 
@@ -891,6 +931,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   for (i = 0; i < num_filters; i++) {
     filters[i].updated = 0;
     filters[i].last_type = filters[i].type;
+    filters[i].invisible = 0;
   }
 
   kill_people();
@@ -915,12 +956,22 @@ static void laser_handler(carmen_robot_laser_message *laser) {
     if (laser->range[i] < laser_max_range) {
       x[i] = laser->x + cos(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       y[i] = laser->y + sin(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
+      trace_laser(laser->x, laser->y, x[i], y[i]);
       if (!dot_filter(x[i], y[i]) && !map_filter(x[i], y[i]))
 	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
       else
 	cluster_map[i] = 0;
     }
   }
+
+  for (i = 0; i < num_filters; i++) {
+    if (filters[i].invisible && !filters[i].updated) {
+      if (++filters[i].invisible_cnt >= invisible_cnt)
+	delete_filter(i);
+    }
+    else
+      filters[i].invisible_cnt = 0;
+  }      
 
   //printf("cluster_cnt = %d\n", cluster_cnt);
 
@@ -934,6 +985,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       add_new_dot_filter(cluster_map, c, laser->num_readings, x, y);
   }
 
+#if 0
   for (i = 0; i < num_filters; i++) {
     if (filters[i].type != filters[i].last_type) {
       n = filters[i].type;
@@ -957,6 +1009,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
     //if (filters[i].updated)
     //publish_dot_msg(&filters[i], 0);
   }
+#endif
 
   /*
   for (i = 0; i < num_filters; i++) {
@@ -1493,7 +1546,9 @@ static void params_init(int argc, char *argv[]) {
     {"dot", "sensor_update_dist", CARMEN_PARAM_DOUBLE, &sensor_update_dist, 1, NULL},
     {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL},
     {"dot", "laser_max_range", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL},
-    {"dot", "see_through_stdev", CARMEN_PARAM_DOUBLE, &see_through_stdev, 1, NULL}
+    {"dot", "see_through_stdev", CARMEN_PARAM_DOUBLE, &see_through_stdev, 1, NULL},
+    {"dot", "trace_resolution", CARMEN_PARAM_DOUBLE, &trace_resolution, 1, NULL},
+    {"dot", "invisible_cnt", CARMEN_PARAM_INT, &invisible_cnt, 1, NULL}
   };
 
   carmen_param_install_params(argc, argv, param_list,
