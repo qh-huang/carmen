@@ -404,9 +404,9 @@ void navigator_plan_handler(carmen_navigator_plan_message *plan)
     }
 }
 
-void initialize_ipc_connections(char *progname)
+void initialize_ipc_connections(char *progname, int simulation)
 {
-  int i;
+  int i,j;
   char servername[100];
   IPC_RETURN_TYPE err;
 
@@ -439,6 +439,22 @@ void initialize_ipc_connections(char *progname)
     robot_info[i].plan_length = 0;
     robot_info[i].plan = NULL;
   }
+
+  //added by curt for simulation purposes
+  //this lets the simulated robots see each other
+  //this also assumes that this program is called after the simulators
+  //are running, otherwise it won't be able to connect them up
+  if(simulation){
+    for(i = 0; i < num_robots; i++) {
+      IPC_setContext(robot_info[i].context);
+      for(j = 0; j < num_robots; j++) {
+	if( i != j){
+	  sprintf(servername, "%s:%d", robot_info[j].host, robot_info[j].port);
+	  carmen_simulator_connect_robots(servername);  
+	}
+      }
+    }
+  }
 }
 
 void get_map(void)
@@ -452,10 +468,10 @@ void get_map(void)
 }
 
 
-void initialize(int argc, char **argv)
+void initialize(int argc, char **argv, int simulation)
 {
   initialize_glut(argc, argv);
-  initialize_ipc_connections(argv[0]);
+  initialize_ipc_connections(argv[0],simulation);
   get_map();
   create_map_texture(&carmen_map, &map);
 }
@@ -479,12 +495,15 @@ void read_config_file(char *filename)
 int main(int argc, char **argv)
 {
   char filename[200];
+  int simulation=0;
   
   strcpy(filename, "ipc.config");
   if(argc >= 2)
     strcpy(filename, argv[1]);
+  if(argc >= 3)
+    simulation =1;
   read_config_file(filename);
-  initialize(argc, argv);
+  initialize(argc, argv, simulation);
   glutMainLoop();
   return 0;
 }
