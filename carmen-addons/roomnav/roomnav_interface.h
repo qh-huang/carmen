@@ -11,9 +11,9 @@ extern "C" {
 
 int carmen_roomnav_get_room();
 int carmen_roomnav_get_room_from_point(carmen_map_point_t point);
-void carmen_roomnav_subscribe_room_message
-(carmen_roomnav_room_msg *room_msg, carmen_handler_t handler,
- carmen_subscribe_t subscribe_how);
+void carmen_roomnav_subscribe_room_message(carmen_roomnav_room_msg *room_msg,
+					   carmen_handler_t handler,
+					   carmen_subscribe_t subscribe_how);
 
 int carmen_roomnav_get_path(int **path);
 void carmen_roomnav_subscribe_path_message(carmen_roomnav_path_msg *path_msg,
