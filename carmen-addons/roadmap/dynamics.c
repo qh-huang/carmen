@@ -200,21 +200,9 @@ static int is_blocked(double n1x, double n1y, double n2x, double n2y,
   double i_x, i_y;
   double dist_along_line;
   double radius;
-  double e1, e2;
   double theta;
 
-  e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
-  e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
-
-  e1 = sqrt(e1);
-  e2 = sqrt(e2);
-
-  if (e1 < 1)
-    e1 = .5;
-  if (e2 < 1)
-    e2 = .5;
-
-  radius = (e1 + e2) / 2;
+  carmen_roadmap_refine_get_radius(vx, vy, vxy, &radius);
 
   numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
   denominator = hypot(n2x-n1x, n2y-n1y);
@@ -481,3 +469,21 @@ void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap)
   }
   marked_edges->length = 0;
 }
+
+int carmen_dynamics_num_blocking_people(carmen_traj_point_t *p1, 
+					carmen_traj_point_t *p2)
+{
+  int i;
+  int count = 0;
+  carmen_dot_person_t *person;
+
+  for (i = 0; i < people->length; i++) {
+    person = (carmen_dot_person_t *)carmen_list_get(people, i);
+    if (is_blocked(p1->x, p1->y, p2->x, p2->y, person->x, person->y, 
+		   person->vx, person->vxy, person->vy)) 
+      count++;
+  }
+  
+  return count;
+}
+

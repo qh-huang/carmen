@@ -49,6 +49,10 @@ extern "C" {
   int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1, 
 				     carmen_roadmap_vertex_t *n2,
 				     int avoid_people);
+
+  int carmen_dynamics_num_blocking_people(carmen_traj_point_t *p1, 
+					  carmen_traj_point_t *p2);
+
   int carmen_dynamics_test_point_for_block(carmen_roadmap_vertex_t *n, 
 					   carmen_world_point_t *point,
 					   int avoid_people);
