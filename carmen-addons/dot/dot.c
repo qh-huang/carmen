@@ -978,7 +978,7 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
 
 static void respond_all_people_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_people_msg *msg;
+  carmen_dot_all_people_msg msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
@@ -986,45 +986,36 @@ static void respond_all_people_msg(MSG_INSTANCE msgRef) {
     if (filters[i].type == CARMEN_DOT_PERSON)
       n++;
 
-  msg = (carmen_dot_all_people_msg *)calloc(1, sizeof(carmen_dot_all_people_msg));
-  carmen_test_alloc(msg);
-
-  printf("break 1\n");
-
-  msg->num_people = n;
+  msg.num_people = n;
   if (n == 0)
-    msg->people = NULL;
+    msg.people = NULL;
   else {
-    msg->people = (carmen_dot_person_p)calloc(n, sizeof(carmen_dot_person_t));
-    carmen_test_alloc(msg->people);
+    msg.people = (carmen_dot_person_p)calloc(n, sizeof(carmen_dot_person_t));
+    carmen_test_alloc(msg.people);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_PERSON) {
-	msg->people[n].id = filters[i].id;
-	msg->people[n].x = filters[i].person_filter.x;
-	msg->people[n].y = filters[i].person_filter.y;
-	msg->people[n].vx = filters[i].person_filter.px;
-	msg->people[n].vy = filters[i].person_filter.py;
-	msg->people[n].vxy = filters[i].person_filter.pxy;
+	msg.people[n].id = filters[i].id;
+	msg.people[n].x = filters[i].person_filter.x;
+	msg.people[n].y = filters[i].person_filter.y;
+	msg.people[n].vx = filters[i].person_filter.px;
+	msg.people[n].vy = filters[i].person_filter.py;
+	msg.people[n].vxy = filters[i].person_filter.pxy;
 	n++;
       }
     }
   }
 
-  printf("break 2\n");
+  msg.timestamp = carmen_get_time_ms();
+  strcpy(msg.host, carmen_get_tenchar_host_name());
 
-  msg->timestamp = carmen_get_time_ms();
-  strcpy(msg->host, carmen_get_tenchar_host_name());
-
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, msg);
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
-
-  printf("break 3\n");
 }
 
 static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_trash_msg *msg;
+  carmen_dot_all_trash_msg msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
@@ -1032,40 +1023,37 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
     if (filters[i].type == CARMEN_DOT_TRASH)
       n++;
 
-  msg = (carmen_dot_all_trash_msg *)calloc(1, sizeof(carmen_dot_all_trash_msg));
-  carmen_test_alloc(msg);
-
-  msg->num_trash = n;
+  msg.num_trash = n;
   if (n == 0)
-    msg->trash = NULL;
+    msg.trash = NULL;
 
   else {
-    msg->trash = (carmen_dot_trash_p)calloc(n, sizeof(carmen_dot_trash_t));
-    carmen_test_alloc(msg->trash);
+    msg.trash = (carmen_dot_trash_p)calloc(n, sizeof(carmen_dot_trash_t));
+    carmen_test_alloc(msg.trash);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_TRASH) {
-	msg->trash[n].id = filters[i].id;
-	msg->trash[n].x = filters[i].trash_filter.x;
-	msg->trash[n].y = filters[i].trash_filter.y;
-	msg->trash[n].vx = filters[i].trash_filter.px;
-	msg->trash[n].vy = filters[i].trash_filter.py;
-	msg->trash[n].vxy = filters[i].trash_filter.pxy;
+	msg.trash[n].id = filters[i].id;
+	msg.trash[n].x = filters[i].trash_filter.x;
+	msg.trash[n].y = filters[i].trash_filter.y;
+	msg.trash[n].vx = filters[i].trash_filter.px;
+	msg.trash[n].vy = filters[i].trash_filter.py;
+	msg.trash[n].vxy = filters[i].trash_filter.pxy;
 	n++;
       }
     }
   }
 
-  msg->timestamp = carmen_get_time_ms();
-  strcpy(msg->host, carmen_get_tenchar_host_name());
+  msg.timestamp = carmen_get_time_ms();
+  strcpy(msg.host, carmen_get_tenchar_host_name());
 
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, msg);
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_TRASH_MSG_NAME);
 }
 
 static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
 
-  carmen_dot_all_doors_msg *msg;
+  carmen_dot_all_doors_msg msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
@@ -1073,35 +1061,32 @@ static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
     if (filters[i].type == CARMEN_DOT_DOOR)
       n++;
 
-  msg = (carmen_dot_all_doors_msg *)calloc(1, sizeof(carmen_dot_all_doors_msg));
-  carmen_test_alloc(msg);
-
-  msg->num_doors = n;
+  msg.num_doors = n;
   if (n == 0)
-    msg->doors = NULL;
+    msg.doors = NULL;
 
   else {
-    msg->doors = (carmen_dot_door_p)calloc(n, sizeof(carmen_dot_door_t));
-    carmen_test_alloc(msg->doors);
+    msg.doors = (carmen_dot_door_p)calloc(n, sizeof(carmen_dot_door_t));
+    carmen_test_alloc(msg.doors);
     for (n = i = 0; i < num_filters; i++) {
       if (filters[i].type == CARMEN_DOT_DOOR) {
-	msg->doors[n].id = filters[i].id;
-	msg->doors[n].x = filters[i].door_filter.x;
-	msg->doors[n].y = filters[i].door_filter.y;
-	msg->doors[n].theta = filters[i].door_filter.t;
-	msg->doors[n].vx = filters[i].door_filter.px;
-	msg->doors[n].vy = filters[i].door_filter.py;
-	msg->doors[n].vxy = filters[i].door_filter.pxy;
-	msg->doors[n].vtheta = filters[i].door_filter.pt;
+	msg.doors[n].id = filters[i].id;
+	msg.doors[n].x = filters[i].door_filter.x;
+	msg.doors[n].y = filters[i].door_filter.y;
+	msg.doors[n].theta = filters[i].door_filter.t;
+	msg.doors[n].vx = filters[i].door_filter.px;
+	msg.doors[n].vy = filters[i].door_filter.py;
+	msg.doors[n].vxy = filters[i].door_filter.pxy;
+	msg.doors[n].vtheta = filters[i].door_filter.pt;
 	n++;
       }
     }
   }
 
-  msg->timestamp = carmen_get_time_ms();
-  strcpy(msg->host, carmen_get_tenchar_host_name());
+  msg.timestamp = carmen_get_time_ms();
+  strcpy(msg.host, carmen_get_tenchar_host_name());
 
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, msg);
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, &msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_DOORS_MSG_NAME);
 }
