@@ -3,14 +3,14 @@
 #include "roadmap.h"
 #include "dynamics.h"
 
-#include <values.h>
+#include <limits.h>
 #include <assert.h>
 
 static void get_blocking_object_to_next(carmen_dot_t *blocking_object,
 					carmen_roadmap_vertex_t *node, 
 					carmen_roadmap_t *roadmap)
 {
-  double best_utility = MAXFLOAT;
+  double best_utility = FLT_MAX;
   int best_neighbour = 0;
   double utility;
   int i;
@@ -21,7 +21,7 @@ static void get_blocking_object_to_next(carmen_dot_t *blocking_object,
   edges = (carmen_roadmap_edge_t *)(node->edges->list);
 
   best_neighbour = -1;
-  best_utility = MAXFLOAT;
+  best_utility = FLT_MAX;
   for (i = 0; i < node->edges->length; i++) {
     utility = edges[i].cost + node_list[edges[i].id].utility;
     if (utility < best_utility) {

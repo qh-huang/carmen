@@ -1,5 +1,5 @@
 #include <carmen/carmen.h>
-#include <values.h>
+#include <limits.h>
 #include <assert.h>
 #include "roadmap.h"
 #include "mdp_roadmap.h"
@@ -72,7 +72,7 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
     time = compute_path_time(roadmap->roadmap);
     //    carmen_warn("Computed path with people: %f\n", time);
   } else 
-    time = MAXFLOAT;
+    time = FLT_MAX;
   
   //  carmen_warn("Synchronizing lists\n");
 
@@ -93,9 +93,9 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
       compute_path_time(roadmap->roadmap_without_people);
     //    carmen_warn("Computed path without people: %f\n", time_without_people);
   } else 
-    time_without_people = MAXFLOAT;
+    time_without_people = FLT_MAX;
 
-  if (time > MAXFLOAT/2 && time_without_people > MAXFLOAT/2)
+  if (time > FLT_MAX/2 && time_without_people > FLT_MAX/2)
     return NULL;
 
   carmen_warn("Avoiding people: %f Ignoring people: %f\n",

@@ -1,6 +1,6 @@
 #include <carmen/carmen_graphics.h>
 #include <assert.h>
-#include <values.h>
+#include <limits.h>
 #include <carmen/dot.h>
 #include <carmen/dot_messages.h>
 #include <carmen/dot_interface.h>
@@ -56,8 +56,8 @@ static void draw_graph(GtkMapViewer *the_map_view)
 
   node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
   num_nodes = roadmap->nodes->length;
-  max_util = -MAXFLOAT;
-  min_util = MAXFLOAT;
+  max_util = -FLT_MAX;
+  min_util = FLT_MAX;
 
   for (i = 0; i < num_nodes; i++) {
     if (node_list[i].utility >= 0) {
@@ -90,7 +90,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
     w2.pose.x += .1;
     w2.pose.y -= .1;
 
-    if (n1->utility < MAXFLOAT/2 && n1->utility >= 0) {
+    if (n1->utility < FLT_MAX/2 && n1->utility >= 0) {
       scale = 1-(n1->utility-min_util)/(max_util-min_util);
       color = carmen_graphics_add_color_rgb(255*scale, 0, 0);
     } else
