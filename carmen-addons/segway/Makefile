@@ -13,7 +13,7 @@ PUBLIC_LIBRARIES = libsegway_interface.a libsegwayplayback_interface.a
 PUBLIC_BINARIES = segway
 MAN_PAGES =
 
-TARGETS = libsegwaycore.a segway libsegway_interface.a segway_test segwaylogger keystick
+TARGETS = libsegwaycore.a segway libsegway_interface.a segway_test segwaylogger segwayplayback keystick
 
 # rules
 

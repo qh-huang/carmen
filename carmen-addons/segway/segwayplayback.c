@@ -193,10 +193,8 @@ void wait_for_timestamp(double ts)
   if(playback_starttime == 0.0)
     playback_starttime = carmen_get_time_ms() - ts;
   current_time = carmen_get_time_ms() - playback_starttime;
-  if(!fast && !paused && ts > current_time) {
-    printf("napping\n");
+  if(!fast && !paused && ts > current_time)
     usleep((ts - current_time) * 1e6);
-  }
 }
 
 int read_message(int message_num, int publish)
@@ -348,7 +346,7 @@ void main_playback_loop(void)
     if (fast) {
       sleep_ipc(0.001);
     } else {
-      sleep_ipc(0.1);
+      sleep_ipc(0);
     }
   }
 }
