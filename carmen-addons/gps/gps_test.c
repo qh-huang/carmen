@@ -31,7 +31,7 @@ without CARMEN
 **********************************************************/
 
 #include <carmen/carmen.h>
-#include "ringo_gps_interface.h"
+#include "gps_interface.h"
 
 carmen_gps_position_message gps;
 
