@@ -104,7 +104,7 @@ main(int argc,
   double tv, rv;
   int a,b,c,d;
   int error;
-  int voltage;
+  double voltage;
   //double start_time;
 
 
@@ -160,7 +160,7 @@ main(int argc,
 	break;
       case 'b': 
 	error = carmen_cerebellum_get_voltage(&voltage);
-	fprintf(stderr, "Voltage: %d  %d\r\n",voltage,error);
+	fprintf(stderr, "Voltage: %lf  %d\r\n",voltage,error);
 	break;
       case 'a': error = carmen_cerebellum_reconnect_robot(); 
 	printf("got: %d\r\n",error); 

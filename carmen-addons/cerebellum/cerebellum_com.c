@@ -374,7 +374,7 @@ carmen_cerebellum_set_velocity(int command_vl, int command_vr)
 }
 
 int
-carmen_cerebellum_get_voltage(int *batt_voltage)
+carmen_cerebellum_get_voltage(double *batt_voltage)
 {
   unsigned char buf[20];
   int index = 0;
@@ -383,6 +383,7 @@ carmen_cerebellum_get_voltage(int *batt_voltage)
     return -1;
 
   usleep(PIC_READ_DELAY);
+  usleep(10000);
 
   if(cereb_read_string(buf, 5) < 0)
     return -1;
@@ -390,7 +391,33 @@ carmen_cerebellum_get_voltage(int *batt_voltage)
   if(verify_checksum(buf, 4) < 0)
     return -1;
 
-  *batt_voltage = unpack_buffer(buf, &index);
+  *batt_voltage =  0.1 * (double)(unpack_buffer(buf, &index));
+
+  return 0;
+}
+
+int
+carmen_cerebellum_get_temperatures(int *fault, int *temp_l, int *temp_r)
+{
+  unsigned char buf[20];
+
+  if(cereb_send_command(PRINT_TEMP) < 0)
+    return -1;
+
+  usleep(PIC_READ_DELAY);
+  usleep(10000);
+
+  //reads in 4 bytes into buffer which starts with index 0
+  if(cereb_read_string(buf, 4) < 0)
+    return -1;
+
+  //byte 3 contains checksum
+  if(verify_checksum(buf, 3) < 0)
+    return -1;
+
+  *fault = buf[0];
+  *temp_l = buf[1];
+  *temp_r = buf[2];
 
   return 0;
 }

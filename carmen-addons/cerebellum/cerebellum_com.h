@@ -38,7 +38,9 @@ int carmen_cerebellum_ac(int acc);
 int carmen_cerebellum_set_velocity(int command_vl, int command_vr);
 int carmen_cerebellum_get_state(int *left_tics, int *right_tics,
 				int *left_vel, int *right_vel);
-  int carmen_cerebellum_get_voltage(int *batt_voltage);
+  int carmen_cerebellum_get_voltage(double *batt_voltage);
+  int carmen_cerebellum_get_temperatures(int *fault, int *temp_l, int *temp_r);
+
 int carmen_cerebellum_limp(void);
 int carmen_cerebellum_engage(void);
 int carmen_cerebellum_disconnect_robot(void);
