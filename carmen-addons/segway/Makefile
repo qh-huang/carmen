@@ -2,12 +2,12 @@ include ../Makefile.conf
 
 CFLAGS += -D_REENTRANT
 IFLAGS += 
-LFLAGS += -lrobot_interface -llogger_io -lcanlib -pthread -lparam_interface -lbase_interface -lglobal -lipc -llaser_interface -lamtec_interface -limu_interface -lz -lm
+LFLAGS += -lcanlib -pthread -lparam_interface -lbase_interface -lglobal -lipc -lm
 
 MODULE_NAME = SEGWAY
 MODULE_COMMENT = Segway RMP Base Module
 
-SOURCES = segwaycore.c segway_interface.c segwaylogger.c segway_test.c segway.c keystick.c
+SOURCES = segwaycore.c segway_interface.c segway_test.c segway.c keystick.c
 PUBLIC_INCLUDES = segway_messages.h segway_interface.h
 PUBLIC_LIBRARIES = libsegway_interface.a
 PUBLIC_BINARIES = segway keystick
