@@ -18,6 +18,7 @@ typedef struct {
   int id;
   double x;
   double y;
+  double r;
   double vx;
   double vy;
   double vxy;

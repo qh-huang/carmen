@@ -1,7 +1,12 @@
+#ifdef NO_GRAPHICS
 #include <carmen/carmen.h>
+#else
+#include <carmen/carmen_graphics.h>
+#endif
 #include "dot_messages.h"
 #include "dot.h"
 #include <gsl/gsl_linalg.h>
+
 
 #define MI(M,i,j) ((i)*(M)->tda + (j))
 
@@ -14,7 +19,7 @@ typedef struct dot_person_filter {
   double x;
   double y;
   double logr;  // natural log of circle radius
-  gsl_matrix *P;  // estimated state covariance matrix: rows and columns in order of: x, y, r
+  gsl_matrix *P;  // estimated state covariance matrix: rows and columns in order of: x, y, logr
   double a;
   gsl_matrix *Q;  // process noise covariance matrix
   gsl_matrix *R;  // sensor noise covariance matrix
@@ -28,7 +33,7 @@ typedef struct dot_trash_filter {
   double theta;
   double logw1;  // natural log of major eigenvalue
   double logw2;  // natural log of minor eigenvalue
-  gsl_matrix *P;  // estimated state covariance matrix: rows and columns in order of: x, y, r
+  gsl_matrix *P;  // estimated state covariance matrix: rows and columns in order of: x, y, theta, logw1, logw2
   double a;
   gsl_matrix *Q;  // process noise covariance matrix
   gsl_matrix *R;  // sensor noise covariance matrix
@@ -118,12 +123,404 @@ static double person_filter_displacement_threshold;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
+static carmen_robot_laser_message laser_msg;
 static carmen_localize_globalpos_message odom;
 static carmen_point_t last_sensor_update_odom;
 static int do_sensor_update = 1;
 static carmen_map_t static_map;
 static carmen_dot_filter_p filters = NULL;
 static int num_filters = 0;
+static int filter_highlight = -1;
+
+
+static inline int is_in_map(int x, int y) {
+
+  return (x >= 0 && y >= 0 && x < static_map.config.x_size &&
+	  y < static_map.config.y_size);
+}
+
+
+/*********** GRAPHICS ************/
+
+#ifdef HAVE_GRAPHICS
+
+static GtkWidget *canvas;
+static GdkPixmap *pixmap = NULL, *map_pixmap = NULL;
+static int pixmap_xpos, pixmap_ypos;
+static int canvas_width = 804, canvas_height = 804;
+static GdkGC *drawing_gc = NULL;
+
+static int laser_mask[500];
+
+/*
+static void draw_points() {
+
+  int i;
+
+  for (i = 0; i < num_points; i++) {
+    if (cluster_mask[i])
+      gdk_gc_set_foreground(drawing_gc, &carmen_red);
+    else
+      gdk_gc_set_foreground(drawing_gc, &carmen_black);
+    gdk_draw_arc(pixmap, drawing_gc, TRUE, (int)xpoints[i], (int)ypoints[i],
+		 10, 10, 0, 360 * 64);
+  }
+}
+*/
+
+static void get_map_window() {
+
+  carmen_map_point_t mp;
+  carmen_world_point_t wp;
+  
+  wp.map = &static_map;
+  wp.pose.x = odom.globalpos.x;
+  wp.pose.y = odom.globalpos.y;
+
+  carmen_world_to_map(&wp, &mp);
+
+  pixmap_xpos = 4*(mp.x-100);
+  pixmap_ypos = 4*(static_map.config.y_size - mp.y - 101);
+
+  //pixmap_xpos = carmen_clamp(0, pixmap_xpos, 4*(static_map.config.x_size - 200));
+  //pixmap_ypos = carmen_clamp(0, pixmap_ypos, 4*(static_map.config.y_size - 200));  
+}
+
+static void draw_map() {
+
+  int x, y;
+  double p = 0.0;
+  GdkColor color;
+  static int first = 1;
+
+  if (!first)
+    return;
+  
+  first = 0;
+
+  for (x = 0; x < static_map.config.x_size; x++) {
+    for (y = 0; y < static_map.config.y_size; y++) {
+      if (is_in_map(x,y))
+	p = exp(localize_map.prob[x][y]);
+      else
+	p = -1.0;
+      if (p >= 0.0)
+	color = carmen_graphics_add_color_rgb((int)(256*(1.0-p)), (int)(256*(1.0-p)), (int)(256*(1.0-p)));
+      else
+	color = carmen_blue;
+      gdk_gc_set_foreground(drawing_gc, &color);
+      gdk_draw_rectangle(map_pixmap, drawing_gc, TRUE, 4*x, 4*(static_map.config.y_size-y-1), 4, 4);
+    }
+  }
+}
+
+static void draw_robot() {
+
+  gdk_gc_set_foreground(drawing_gc, &carmen_red);
+  gdk_draw_arc(pixmap, drawing_gc, TRUE, canvas_width/2 - 5, canvas_height/2 - 5,
+	       10, 10, 0, 360 * 64);
+  gdk_gc_set_foreground(drawing_gc, &carmen_black);
+  gdk_draw_arc(pixmap, drawing_gc, FALSE, canvas_width/2 - 5, canvas_height/2 - 5,
+	       10, 10, 0, 360 * 64);
+}
+
+static int laser_point_belongs_to_dot(carmen_dot_filter_p f, int laser_index) {
+
+  int i, s;
+
+  printf("break 1\n");
+
+  for (i = 0; i < f->person_filter.sensor_update_list->length; i++) {
+    s = *(int*)carmen_list_get(f->person_filter.sensor_update_list, i);
+    if (s == laser_index)
+      return 1;
+  }
+
+  printf("break 2\n");
+
+  return 0;
+}
+
+static void draw_laser() {
+
+  int i, xpos, ypos;
+  double x, y, theta;
+  carmen_map_point_t mp;
+  carmen_world_point_t wp;
+  
+  wp.map = &static_map;
+
+  for (i = 0; i < laser_msg.num_readings; i++) {
+    if (laser_msg.range[i] < laser_max_range) {
+      theta = carmen_normalize_theta(laser_msg.theta + (i-90)*M_PI/180.0);
+      x = laser_msg.x + cos(theta) * laser_msg.range[i];
+      y = laser_msg.y + sin(theta) * laser_msg.range[i];
+      wp.pose.x = x;
+      wp.pose.y = y;
+      carmen_world_to_map(&wp, &mp);
+      xpos = 4*mp.x - pixmap_xpos;
+      ypos = 4*(static_map.config.y_size - mp.y - 1) - pixmap_ypos;
+      printf("break 0\n");
+      if (num_filters > 0 && filter_highlight >= 0 && laser_point_belongs_to_dot(&filters[filter_highlight], i))
+	gdk_gc_set_foreground(drawing_gc, &carmen_blue);
+      else if (laser_mask[i])
+	gdk_gc_set_foreground(drawing_gc, &carmen_red);
+      else
+	gdk_gc_set_foreground(drawing_gc, &carmen_yellow);
+      printf("break 1\n");
+      gdk_draw_arc(pixmap, drawing_gc, TRUE, xpos-2, ypos-2,
+		   4, 4, 0, 360 * 64);      
+    }
+  }
+}
+
+static void draw_ellipse(double ux, double uy, double vx, double vxy, double vy, double k) {
+
+#define ELLIPSE_PLOTPOINTS 30
+
+  static GdkPoint poly[ELLIPSE_PLOTPOINTS];
+  double len;
+  gint i;
+  double discriminant, eigval1, eigval2,
+    eigvec1x, eigvec1y, eigvec2x, eigvec2y;
+  //carmen_world_point_t point, e1, e2;
+  carmen_graphics_screen_point_t p1;
+  carmen_map_point_t mp;
+
+  /* check for special case of axis-aligned */
+  if (fabs(vxy) < (fabs(vx) + fabs(vy) + 1e-4) * 1e-4) {
+    eigval1 = vx;
+    eigval2 = vy;
+    eigvec1x = 1.;
+    eigvec1y = 0.;
+    eigvec2x = 0.;
+    eigvec2y = 1.;
+  } else {
+
+    /* compute axes and scales of ellipse */
+    discriminant = sqrt(4*carmen_square(vxy) + 
+			carmen_square(vx - vy));
+    eigval1 = .5 * (vx + vy - discriminant);
+    eigval2 = .5 * (vx + vy + discriminant);
+    eigvec1x = (vx - vy - discriminant) / (2.*vxy);
+    eigvec1y = 1.;
+    eigvec2x = (vx - vy + discriminant) / (2.*vxy);
+    eigvec2y = 1.;
+
+    /* normalize eigenvectors */
+    len = sqrt(carmen_square(eigvec1x) + 1.);
+    eigvec1x /= len;
+    eigvec1y /= len;
+    len = sqrt(carmen_square(eigvec2x) + 1.);
+    eigvec2x /= len;
+    eigvec2y /= len;
+  }
+
+  /* take square root of eigenvalues and scale -- once this is
+     done, eigvecs are unit vectors along axes and eigvals are
+     corresponding radii */
+  if (eigval1 < 0 || eigval2 < 0) {
+    return;
+  }
+
+  eigval1 = sqrt(eigval1) * k;
+  eigval2 = sqrt(eigval2) * k;
+  if (eigval1 < .01) eigval1 = .01;
+  if (eigval2 < .01) eigval2 = .01;
+
+  /* compute points around edge of ellipse */
+  for (i = 0; i < ELLIPSE_PLOTPOINTS; i++) {
+    double theta = M_PI * (-1 + 2.*i/ELLIPSE_PLOTPOINTS);
+    double xi = cos(theta) * eigval1;
+    double yi = sin(theta) * eigval2;
+
+    mp.x = (int)((xi * eigvec1x + yi * eigvec2x + ux)/(static_map.config.resolution/4.0));
+    mp.y = (int)((xi * eigvec1y + yi * eigvec2y + uy)/(static_map.config.resolution/4.0));
+
+    p1.x = mp.x - pixmap_xpos;
+    p1.y = (4*static_map.config.y_size - mp.y - 1) - pixmap_ypos;
+
+    poly[i].x = p1.x;
+    poly[i].y = p1.y;
+  }
+
+  /* finally we can draw it */
+  gdk_draw_polygon(pixmap, drawing_gc, FALSE,
+                   poly, ELLIPSE_PLOTPOINTS);
+
+  /*  
+  e1 = *mean;
+  e1.pose.x = mean->pose.x + eigval1 * eigvec1x;
+  e1.pose.y = mean->pose.y + eigval1 * eigvec1y;
+
+  e2 = *mean;
+  e2.pose.x = mean->pose.x - eigval1 * eigvec1x;
+  e2.pose.y = mean->pose.y - eigval1 * eigvec1y;
+
+  carmen_map_graphics_draw_line(map_view, colour, &e1, &e2);
+
+  e1.pose.x = mean->pose.x + eigval2 * eigvec2x;
+  e1.pose.y = mean->pose.y + eigval2 * eigvec2y;
+  e2.pose.x = mean->pose.x - eigval2 * eigvec2x;
+  e2.pose.y = mean->pose.y - eigval2 * eigvec2y;
+
+  carmen_map_graphics_draw_line(map_view, colour, &e1, &e2);
+  */
+}
+
+static void draw_dots() {
+
+  int i;
+  double ux, uy, vx, vy, vxy, r;
+
+  for (i = 0; i < num_filters; i++) {
+    if (filters[i].type == CARMEN_DOT_PERSON) {
+      gdk_gc_set_foreground(drawing_gc, &carmen_orange);
+      ux = filters[i].person_filter.x;
+      uy = filters[i].person_filter.y;
+      r = exp(filters[i].person_filter.logr);
+      vx = r*r;
+      vy = r*r;
+      vxy = 0.0;
+      draw_ellipse(ux, uy, vx, vxy, vy, 1);
+    }
+    else if (filters[i].type == CARMEN_DOT_TRASH) {
+      gdk_gc_set_foreground(drawing_gc, &carmen_green);
+      ux = filters[i].trash_filter.x;
+      uy = filters[i].trash_filter.y;
+      vx = fabs(cos(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
+      vy = fabs(sin(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
+      vxy = (exp(filters[i].trash_filter.logw1) - vx) / tan(filters[i].trash_filter.theta);
+      draw_ellipse(ux, uy, vx, vxy, vy, 1);
+    }
+  }
+}
+
+static void redraw() {
+
+  if (pixmap == NULL)
+    return;
+
+  draw_map();
+
+  gdk_gc_set_foreground(drawing_gc, &carmen_blue);
+  gdk_draw_rectangle(pixmap, drawing_gc, TRUE, 0, 0, canvas_width, canvas_height);
+  gdk_draw_pixmap(pixmap, drawing_gc,
+		  map_pixmap, pixmap_xpos, pixmap_ypos, 0, 0, canvas_width, canvas_height);
+  draw_robot();
+  draw_laser();
+  draw_dots();
+
+  gdk_draw_pixmap(canvas->window,
+		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
+		  pixmap, 0, 0, 0, 0, canvas_width, canvas_height);
+}
+
+static void canvas_button_press(GtkWidget *w __attribute__ ((unused)),
+				GdkEventButton *event) {
+
+  event = NULL;  //dbug
+
+  if (event->button == 1)
+    filter_highlight = (num_filters > 0 ? (filter_highlight+1) % num_filters : -1);
+  else
+    filter_highlight = -1;
+
+  redraw();
+}
+
+static void canvas_expose(GtkWidget *w __attribute__ ((unused)),
+			  GdkEventExpose *event) {
+
+  gdk_draw_pixmap(canvas->window,
+		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
+		  pixmap, event->area.x, event->area.y,
+		  event->area.x, event->area.y,
+		  event->area.width, event->area.height);
+}
+
+static void canvas_configure(GtkWidget *w __attribute__ ((unused))) {
+
+  int display = (drawing_gc != NULL);
+
+  /*
+  canvas_width = canvas->allocation.width;
+  canvas_height = canvas->allocation.height;
+  if (pixmap)
+    gdk_pixmap_unref(pixmap);
+  */
+
+  pixmap = gdk_pixmap_new(canvas->window, canvas_width, canvas_height, -1);
+  map_pixmap = gdk_pixmap_new(canvas->window, 4*static_map.config.x_size,
+			      4*static_map.config.y_size, -1);
+
+  /*
+  gdk_gc_set_foreground(drawing_gc, &carmen_white);
+  gdk_draw_rectangle(pixmap, canvas->style->white_gc, TRUE, 0, 0,
+		     canvas_width, canvas_height);
+  gdk_draw_pixmap(canvas->window,
+		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
+		  pixmap, 0, 0, 0, 0, canvas_width, canvas_height);
+  */
+
+  if (display)
+    redraw();
+}
+
+static void window_destroy(GtkWidget *w __attribute__ ((unused))) {
+
+  gtk_main_quit();
+}
+
+static void gui_init() {
+
+  GtkWidget *window, *vbox;
+
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_policy(GTK_WINDOW(window), FALSE, FALSE, FALSE);
+  gtk_signal_connect(GTK_OBJECT(window), "destroy",
+		     GTK_SIGNAL_FUNC(window_destroy), NULL);
+
+  vbox = gtk_vbox_new(TRUE, 0);
+
+  canvas = gtk_drawing_area_new();
+
+  gtk_drawing_area_size(GTK_DRAWING_AREA(canvas), canvas_width,
+			canvas_height);
+
+  gtk_box_pack_start(GTK_BOX(vbox), canvas, TRUE, TRUE, 0);
+
+  gtk_signal_connect(GTK_OBJECT(canvas), "expose_event",
+		     GTK_SIGNAL_FUNC(canvas_expose), NULL);
+
+  gtk_signal_connect(GTK_OBJECT(canvas), "configure_event",
+		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
+
+  gtk_signal_connect(GTK_OBJECT(canvas), "button_press_event",
+		     GTK_SIGNAL_FUNC(canvas_button_press), NULL);
+
+  gtk_widget_add_events(canvas, GDK_BUTTON_PRESS_MASK);
+
+  gtk_container_add(GTK_CONTAINER(window), vbox);
+
+  gtk_widget_show_all(window);
+
+  drawing_gc = gdk_gc_new(canvas->window);
+  carmen_graphics_setup_colors();
+}
+
+static gint updateIPC(gpointer *data __attribute__ ((unused))) {
+
+  sleep_ipc(0.01);
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
+
+  return 1;
+}
+
+#endif
+
+/**************************************************/
+
 
 
 //static void publish_dot_msg(carmen_dot_filter_p f, int delete);
@@ -1833,8 +2230,12 @@ static int dot_filter(double lx, double ly, double ltheta, double x, double y, i
 	   pmax, map_prob(x, y), imax, x, y);
   */
 
-  if (map_prob(x, y) >= map_occupied_threshold)
+  if (map_prob(x, y) >= map_occupied_threshold) {
+#ifdef HAVE_GRAPHICS
+    laser_mask[ri] = 0;
+#endif
     return 1;
+  }
 
   if (imax >= 0 && pmax > map_prob(x, y)) {
     carmen_list_add(filters[imax].person_filter.sensor_update_list, &ri);
@@ -1859,8 +2260,6 @@ static void update_dots(double lx, double ly, double ltheta, float *range) {
 	filters[i].updated = 1;
       }
       person_filter_sensor_update(&filters[i].person_filter, lx, ly, ltheta, range);
-      filters[i].person_filter.sensor_update_list->length = 0;
-      filters[i].person_filter.unsensor_update_list->length = 0;
     }
 
     if (1) { //filters[i].do_motion_update) {
@@ -1877,19 +2276,11 @@ static void update_dots(double lx, double ly, double ltheta, float *range) {
 	//door_filter_sensor_update(&filters[i].door_filter, x, y);
 	filters[i].updated = 1;
       }
-      filters[i].trash_filter.sensor_update_list->length = 0;
-      filters[i].trash_filter.unsensor_update_list->length = 0;
     }
 
     //if (filters[i].type == CARMEN_DOT_PERSON)
     //filters[i].updated = 1;
   }
-}
-
-static inline int is_in_map(int x, int y) {
-
-  return (x >= 0 && y >= 0 && x < static_map.config.x_size &&
-	  y < static_map.config.y_size);
 }
 
 // returns 1 if point is in map
@@ -2049,9 +2440,9 @@ void trace_laser(double x1, double y1, double x2, double y2) {
   }
 }
 
-static void laser_handler(carmen_robot_laser_message *laser) {
+ static void laser_handler(carmen_robot_laser_message *laser) {
 
-  int i, c, n;
+   int i, c, n, dotf, mapf;
   static int cluster_map[500];
   static int cluster_cnt;
   static double x[500], y[500];
@@ -2077,6 +2468,10 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   for (i = 0; i < num_filters; i++) {
     filters[i].updated = 0;
     filters[i].invisible = 0;
+    filters[i].person_filter.sensor_update_list->length = 0;
+    filters[i].person_filter.unsensor_update_list->length = 0;
+    filters[i].trash_filter.sensor_update_list->length = 0;
+    filters[i].trash_filter.unsensor_update_list->length = 0;
   }
 
   // don't update trash & door filters unless we've moved
@@ -2101,7 +2496,16 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       x[i] = laser->x + cos(ltheta) * laser->range[i];
       y[i] = laser->y + sin(ltheta) * laser->range[i];
       trace_laser(laser->x, laser->y, x[i], y[i]);
-      if (!dot_filter(laser->x, laser->y, ltheta, x[i], y[i], i) && !map_filter(x[i], y[i], laser->range[i]))
+#ifdef HAVE_GRAPHICS
+      laser_mask[i] = 1;
+#endif
+      dotf = dot_filter(laser->x, laser->y, ltheta, x[i], y[i], i);
+      mapf = (dotf ? 0 : map_filter(x[i], y[i], laser->range[i]));
+#ifdef HAVE_GRAPHICS
+      if (mapf)
+	laser_mask[i] = 0;
+#endif
+      if (!dotf && !mapf)
 	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
     }
   }
@@ -2118,7 +2522,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       filters[i].invisible_cnt = 0;
   }      
 
-  printf("\nclusters: ");
+  //printf("\nclusters: ");
   for (c = 1; c <= cluster_cnt; c++) {
     printf("( ");
     n = 0;
@@ -2144,6 +2548,14 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   else
     odd = 0;
   */
+
+
+#ifdef HAVE_GRAPHICS
+  get_map_window();
+  redraw();
+#endif
+
+
 }
 
 /*******************************************
@@ -2251,7 +2663,6 @@ static void publish_all_dot_msgs() {
   static int first = 1;
   IPC_RETURN_TYPE err;
   int i, n;
-  double r;
   
   if (first) {
     all_people_msg.people = NULL;
@@ -2279,13 +2690,10 @@ static void publish_all_dot_msgs() {
 	all_people_msg.people[n].id = filters[i].id;
 	all_people_msg.people[n].x = filters[i].person_filter.x;
 	all_people_msg.people[n].y = filters[i].person_filter.y;
-	r = exp(filters[i].person_filter.logr);
-	all_people_msg.people[n].vx = r*r;
-	all_people_msg.people[n].vy = r*r;
-	all_people_msg.people[n].vxy = 0.0;
-	//all_people_msg.people[n].vx = gsl_matrix_get(filters[i].person_filter.P, 0, 0);
-	//all_people_msg.people[n].vy = gsl_matrix_get(filters[i].person_filter.P, 1, 1);
-	//all_people_msg.people[n].vxy = gsl_matrix_get(filters[i].person_filter.P, 0, 1);
+	all_people_msg.people[n].r = exp(filters[i].person_filter.logr);
+	all_people_msg.people[n].vx = gsl_matrix_get(filters[i].person_filter.P, 0, 0);
+	all_people_msg.people[n].vy = gsl_matrix_get(filters[i].person_filter.P, 1, 1);
+	all_people_msg.people[n].vxy = gsl_matrix_get(filters[i].person_filter.P, 0, 1);
 	n++;
       }
   }
@@ -2311,10 +2719,12 @@ static void publish_all_dot_msgs() {
 	all_trash_msg.trash[n].id = filters[i].id;
 	all_trash_msg.trash[n].x = filters[i].trash_filter.x;
 	all_trash_msg.trash[n].y = filters[i].trash_filter.y;
-	//dbug!
-	all_trash_msg.trash[n].vx = fabs(cos(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
-	all_trash_msg.trash[n].vy = fabs(sin(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
-	all_trash_msg.trash[n].vxy = (exp(filters[i].trash_filter.logw1) - all_trash_msg.trash[n].vx) / tan(filters[i].trash_filter.theta);
+	all_trash_msg.trash[n].theta = filters[i].trash_filter.theta;
+	all_trash_msg.trash[n].major = exp(filters[i].trash_filter.logw1);
+	all_trash_msg.trash[n].minor = exp(filters[i].trash_filter.logw2);
+	all_trash_msg.trash[n].vx = gsl_matrix_get(filters[i].trash_filter.P, 0, 0);
+	all_trash_msg.trash[n].vy = gsl_matrix_get(filters[i].trash_filter.P, 1, 1);
+	all_trash_msg.trash[n].vxy = gsl_matrix_get(filters[i].trash_filter.P, 0, 1);
 	n++;
       }
   }
@@ -2563,7 +2973,7 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_DOT_RESET_MSG_NAME);
   IPC_setMsgQueueLength(CARMEN_DOT_RESET_MSG_NAME, 100);
 
-  carmen_robot_subscribe_frontlaser_message(NULL,
+  carmen_robot_subscribe_frontlaser_message(&laser_msg,
 					    (carmen_handler_t)laser_handler,
 					    CARMEN_SUBSCRIBE_LATEST);
   carmen_localize_subscribe_globalpos_message(&odom, NULL,
@@ -2676,8 +3086,6 @@ void shutdown_module(int sig) {
 
 int main(int argc, char *argv[]) {
 
-  //int c;
-
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
   carmen_randomize(&argc, &argv);
@@ -2700,25 +3108,14 @@ int main(int argc, char *argv[]) {
   carmen_to_localize_map(&static_map, &localize_map, &localize_params);
   printf("done\n");
 
-  carmen_terminal_cbreak(0);
-
-  while (1) {
-    sleep_ipc(0.01);
-    /****************
-    c = getchar();
-    if (c != EOF) {
-      switch (c) {
-      case ' ':
-	get_background_range = 1;
-	printf("\nCollecting background range...");
-	fflush(0);
-	break;
-      case 'p':
-	display_position = !display_position;
-      }
-    }
-    ****************/
-  }
-
+#ifdef HAVE_GRAPHICS
+  gtk_init(&argc, &argv);
+  gui_init();
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
+  gtk_main();
+#else
+  IPC_dispatch();
+#endif
+  
   return 0;
 }

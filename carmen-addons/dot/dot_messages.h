@@ -36,7 +36,7 @@ typedef struct {
 } carmen_dot_person_msg;
 
 #define CARMEN_DOT_PERSON_MSG_NAME "carmen_dot_person_msg"
-#define CARMEN_DOT_PERSON_MSG_FMT  "{{int, double, double, double, double, double}, int, double, [char:10]}"
+#define CARMEN_DOT_PERSON_MSG_FMT  "{{int, double, double, double, double, double, double}, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_person_p people;
@@ -46,7 +46,7 @@ typedef struct {
 } carmen_dot_all_people_msg;
 
 #define CARMEN_DOT_ALL_PEOPLE_MSG_NAME "carmen_dot_all_people_msg"
-#define CARMEN_DOT_ALL_PEOPLE_MSG_FMT  "{<{int, double, double, double, double, double}:2>, int, double, [char:10]}"
+#define CARMEN_DOT_ALL_PEOPLE_MSG_FMT  "{<{int, double, double, double, double, double, double}:2>, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_trash_t trash;
