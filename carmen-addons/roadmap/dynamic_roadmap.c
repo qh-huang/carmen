@@ -527,10 +527,16 @@ carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p new_map)
   roadmap->avoid_people = 1;
 
   carmen_param_set_module("robot");
-  if (carmen_param_get_double("max_t_vel",&(roadmap->robot_speed)) < 0) {
-    roadmap->robot_speed = .8;
+  if (carmen_param_get_double("max_t_vel",&(roadmap->max_t_vel)) < 0) {
+    roadmap->max_t_vel = .8;
     carmen_warn("Could not set robot speed. Setting to default %f\n",
-		roadmap->robot_speed);
+		roadmap->max_t_vel);
+  }
+
+  if (carmen_param_get_double("max_r_vel",&(roadmap->max_r_vel)) < 0) {
+    roadmap->max_r_vel = .8;
+    carmen_warn("Could not set robot speed. Setting to default %f\n",
+		roadmap->max_r_vel);
   }
 
   for (i = 0; i < node_list->length; i++) 
@@ -617,6 +623,7 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
   int i, neighbour_edge;
   int length;
   double cost = 0;
+  double turning_angle, radius, speed, turning_cost;
 
   edges = (carmen_roadmap_edge_t *)(node->edges->list);
   length = node->edges->length;
@@ -648,7 +655,25 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
     return 1e6;
   }
 
-  return edges[i].cost;
+
+  if (node->theta > MAXFLOAT/2)
+    return edges[i].cost;
+
+  turning_angle = atan2(node->y-parent_node->y, node->x-parent_node->x) - node->theta;
+  turning_angle = fabs(carmen_normalize_theta(turning_angle));
+  if (turning_angle < M_PI/8)
+    return edges[i].cost;
+    
+  turning_angle = M_PI - turning_angle;
+  radius = 2 * roadmap->c_space->config.resolution * 
+    sin(turning_angle/2)/(1-sin(turning_angle/2));
+  speed = roadmap->max_r_vel * radius;
+  if (speed > roadmap->max_t_vel)
+    return edges[i].cost;
+
+  turning_cost = roadmap->max_t_vel / speed * radius*1.5;
+
+  return edges[i].cost + turning_cost;
 }
 
 static inline void 
@@ -676,6 +701,7 @@ add_neighbours_to_queue(int id, carmen_roadmap_t *roadmap, double *utility,
 
     assert(new_util > 0);
     if (cur_util < 0 || cur_util > new_util) {
+      cur_neighbour->theta = atan2(node->y-cur_neighbour->y, node->x-cur_neighbour->x);
       push_state(cur_neighbour_id, id, edges[i].cost, new_util, state_queue);
       utility[cur_neighbour_id] = new_util;
     } /* End of for (Index = 0...) */
@@ -692,6 +718,8 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
   queue state_queue;
   state_ptr current_state;
 
+  node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
+
   utility = (double *)calloc(roadmap->nodes->length, sizeof(double));
   carmen_test_alloc(utility);
 
@@ -700,6 +728,8 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
     *(utility_ptr++) = MAXFLOAT;
 
   state_queue = make_queue();
+
+  node_list[roadmap->goal_id].theta = MAXFLOAT;
 
   push_state(roadmap->goal_id, roadmap->goal_id, 0, 0, state_queue);
   utility[roadmap->goal_id] = 0;
@@ -714,7 +744,6 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
     free(current_state);
   }
 
-  node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
   for (index = 0; index < roadmap->nodes->length; index++)
     node_list[index].utility = utility[index];
 
@@ -903,7 +932,7 @@ static int compute_path_segments(carmen_world_point_t *world_robot,
   carmen_roadmap_vertex_t *node;
 
   node = carmen_roadmap_best_node(world_robot, road);  
-  if (!node || carmen_dynamics_test_node(node, 1))
+  if (!node || carmen_dynamics_test_node(node, road->avoid_people))
     return 0;
 
   length = 0;
@@ -937,7 +966,7 @@ int carmen_roadmap_check_path(carmen_traj_point_t *robot,
   goal_node = (carmen_roadmap_vertex_t *)
     carmen_list_get(road->nodes, road->goal_id);
 
-  if (carmen_dynamics_test_node(goal_node, 1))
+  if (carmen_dynamics_test_node(goal_node, road->avoid_people))
     return 0;
 
   map_pt.x = goal_node->x;

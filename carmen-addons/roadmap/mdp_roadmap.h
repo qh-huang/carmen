@@ -8,7 +8,8 @@ typedef struct {
   carmen_map_t *c_space;
   carmen_list_t *path;
   carmen_list_t *nodes;
-  double robot_speed;
+  double max_t_vel;
+  double max_r_vel;
   int goal_id;
 } carmen_roadmap_mdp_t;
 
