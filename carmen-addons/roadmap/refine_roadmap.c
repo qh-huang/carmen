@@ -73,8 +73,8 @@ void carmen_roadmap_refine_get_radius(double vx, double vy, double vxy,
   e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
   e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
 
-  e1 = 1.3*sqrt(e1);
-  e2 = 1.3*sqrt(e2);
+  e1 = 3*sqrt(e1);
+  e2 = 3*sqrt(e2);
 
   if (e1 < 1)
     e1 = .5;
@@ -154,6 +154,8 @@ void carmen_roadmap_refine_graph(carmen_world_point_t *robot,
   map_pt.y = goal_node->y;
   map_pt.map = road->c_space;
   carmen_map_to_world(&map_pt, &goal);
+
+  carmen_warn("Refine: Goal: %f %f\n", goal.pose.x, goal.pose.y);
 
   carmen_roadmap_plan(road, &goal);
 }

@@ -23,36 +23,6 @@ static void people_handler(carmen_dot_all_people_msg *people_msg)
     carmen_list_add(people, people_msg->people+i);  
 }
 
-static void simulator_objects_handler(carmen_simulator_objects_message 
-				      *objects_msg)
-{
-  carmen_dot_person_t person, *person_ptr;
-
-  if (objects_msg->num_objects == 0) {
-    if (people->length > 0) {
-      people->length = 0;
-      carmen_warn("Removed simulator person\n");
-    }
-    return;
-  }
-
-  person.x = objects_msg->objects_list[0].x;
-  person.y = objects_msg->objects_list[0].y;
-  person.vx = 0.375;
-  person.vy = 0.375;
-  person.vxy = 0.125;
-  person.id = 0;
-
-  if (people->length > 0) {
-    person_ptr = (carmen_dot_person_t *)carmen_list_get(people, 0);    
-    *person_ptr = person;
-  } else {
-    carmen_list_add(people, &person);
-    carmen_warn("Added simulator person\n");
-  }
-}
-
-
 static void trash_handler(carmen_dot_all_trash_msg *trash_msg)
 {
   int i;
@@ -85,11 +55,6 @@ void carmen_dynamics_initialize(carmen_map_t *new_map)
     (NULL, (carmen_handler_t) trash_handler, CARMEN_SUBSCRIBE_LATEST);
   carmen_dot_subscribe_all_doors_message
     (NULL, (carmen_handler_t) doors_handler,CARMEN_SUBSCRIBE_LATEST);
-
-  //  if (0)
-  carmen_simulator_subscribe_objects_message
-    (NULL, (carmen_handler_t)simulator_objects_handler, 
-     CARMEN_SUBSCRIBE_LATEST);
 
   marked_edges = carmen_list_create(sizeof(carmen_roadmap_marked_edge_t), 10);
 }

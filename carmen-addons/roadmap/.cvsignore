@@ -1,3 +1,5 @@
 navigator
 roadmap_test
 libfwd_lazy_dynamic_roadmap.a
+dot_simul
+Makefile.depend
