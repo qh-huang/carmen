@@ -26,9 +26,13 @@
 
 #define FIRE                      102 // 'f'()  [shoots gun]
 #define TILT_GUN                  116 // 't'(level) as a single character, range is restricted
+#define GET_SHROUD                'S' // 'S' gets if we've been hit and
+#define FLASH                     'F'
+
 #define HEARTBEAT                 104 // 'h'() sends keepalive
 
 #define PRINT_TEMP                 '-' // '-'() sends get temperature
+
 
 /***********ACK VALUES***************/
 

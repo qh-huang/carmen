@@ -400,6 +400,32 @@ carmen_cerebellum_get_voltage(double *batt_voltage)
 }
 
 int
+carmen_cerebellum_get_shroud(char *hit, char *where)
+{
+  unsigned char buf[20];
+  int index = 0;
+  int temp;
+
+  if(cereb_send_command(GET_SHROUD) < 0)
+    return -1;
+
+  usleep(PIC_READ_DELAY);
+  usleep(10000);
+
+  if(cereb_read_string(buf, 3) < 0)
+    return -1;
+
+  if(verify_checksum(buf, 2) < 0)
+    return -1;
+
+  *hit = buf[0];
+  *where = buf[1];
+
+  return 0;
+}
+
+
+int
 carmen_cerebellum_get_temperatures(int *fault, int *temp_l, int *temp_r)
 {
   unsigned char buf[20];
@@ -483,15 +509,22 @@ carmen_cerebellum_fire(void)
   return cereb_send_command(FIRE);
 }
 
+int 
+carmen_cerebellum_flash(void)
+{
+  return cereb_send_command(FLASH);
+}
+
+
 int carmen_cerebellum_heartbeat(void)
 {
   return cereb_send_command(HEARTBEAT);
 }
 
 int 
-carmen_cerebellum_tilt(char value)
+carmen_cerebellum_tilt(int value)
 {
-  return cereb_send_1char_command(TILT_GUN, value);
+  return cereb_send_2int_command(TILT_GUN, value,0);
 }
 
 int 
