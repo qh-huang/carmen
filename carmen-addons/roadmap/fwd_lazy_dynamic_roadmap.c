@@ -1,5 +1,5 @@
 #include <carmen/carmen.h>
-#include <values.h>
+#include <limits.h>
 #include <assert.h>
 #include "roadmap.h"
 #include "dynamics.h"
@@ -581,11 +581,11 @@ static void add_neighbours_to_queue(carmen_roadmap_t *roadmap, int id,
   edges = (carmen_roadmap_edge_t *)node_list[id].edges->list;
   assert(node_list[id].edges->length > 0);
 
-  best_known_answer = MAXFLOAT;
+  best_known_answer = FLT_MAX;
   best_known_edge = -1;
   for (i = 0; i < node_list[id].edges->length; i++) {   
     neighbour_id = edges[i].id;
-    if (node_list[neighbour_id].utility > MAXFLOAT/2)
+    if (node_list[neighbour_id].utility > FLT_MAX/2)
       continue;
     cost = get_cost(node_list+neighbour_id, node_list+id, roadmap);
     new_util = parent_utility+cost+node_list[neighbour_id].utility;
@@ -600,7 +600,7 @@ static void add_neighbours_to_queue(carmen_roadmap_t *roadmap, int id,
     if (open_list[neighbour_id] == -2)
       continue;
     cost = get_cost(node_list+neighbour_id, node_list+id, roadmap);
-    if (node_list[neighbour_id].utility < MAXFLOAT/2) {
+    if (node_list[neighbour_id].utility < FLT_MAX/2) {
       if (i != best_known_edge)
 	continue;
       new_util = parent_utility+cost+node_list[neighbour_id].utility;
@@ -661,10 +661,10 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
   
   node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
 
-  best_dist = MAXFLOAT;
+  best_dist = FLT_MAX;
   closest_node = 0;
   for (i = 0; i < roadmap->nodes->length; i++) {
-    node_list[i].utility = MAXFLOAT;
+    node_list[i].utility = FLT_MAX;
     dist = hypot(node_list[i].x-map_goal.x,node_list[i].y-map_goal.y);
     if (dist < best_dist) {
       best_dist = dist;
@@ -689,7 +689,7 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
     roadmap->goal_id = closest_node;
 
   for (i = 0; i < roadmap->nodes->length; i++) 
-    node_list[i].utility = MAXFLOAT;
+    node_list[i].utility = FLT_MAX;
 }
 
 static void search(carmen_roadmap_vertex_t *start_node, 
@@ -716,7 +716,7 @@ static void search(carmen_roadmap_vertex_t *start_node,
   fwd_utilities = (double *)calloc(roadmap->nodes->length, sizeof(double));
   carmen_test_alloc(fwd_utilities);
   for (i = 0; i < roadmap->nodes->length; i++)
-    fwd_utilities[i] = MAXFLOAT;
+    fwd_utilities[i] = FLT_MAX;
 
   open_list = (double *)calloc(roadmap->nodes->length, sizeof(double));
   carmen_test_alloc(open_list);
@@ -758,7 +758,7 @@ static void search(carmen_roadmap_vertex_t *start_node,
 
   carmen_warn("Num Expanded %d\n", num_expanded);
 
-  if (fwd_utilities[roadmap->goal_id] > MAXFLOAT/2)
+  if (fwd_utilities[roadmap->goal_id] > FLT_MAX/2)
     carmen_warn("PROBLEM\n");
   else if (0) {
     node_list[roadmap->goal_id].utility = 0;
@@ -766,7 +766,7 @@ static void search(carmen_roadmap_vertex_t *start_node,
     while (i != start_node->id) {
       edges = (carmen_roadmap_edge_t *)(node_list[i].edges->list);
       assert (node_list[i].edges->length > 0);
-      min_neighbour_utility = MAXFLOAT;      
+      min_neighbour_utility = FLT_MAX;      
       min_neighbour = -1;
       min_edge = -1;
       for (j = 0; j < node_list[i].edges->length; j++) {
@@ -782,24 +782,24 @@ static void search(carmen_roadmap_vertex_t *start_node,
       }
       assert (min_neighbour >= 0);
       assert (min_neighbour_utility < fwd_utilities[i]);
-      assert(node_list[min_neighbour].utility > MAXFLOAT/2 ||
+      assert(node_list[min_neighbour].utility > FLT_MAX/2 ||
 	     node_list[min_neighbour].utility ==
 	     node_list[i].utility + edges[min_edge].cost);      
 
-      if (node_list[min_neighbour].utility > MAXFLOAT/2) {
+      if (node_list[min_neighbour].utility > FLT_MAX/2) {
 	node_list[min_neighbour].utility = node_list[i].utility + 
 	  edges[min_edge].cost;
 
-	assert(node_list[i].utility < MAXFLOAT/2);
-	assert(fwd_utilities[i] < MAXFLOAT/2);
-	assert(fwd_utilities[min_neighbour] < MAXFLOAT/2);
+	assert(node_list[i].utility < FLT_MAX/2);
+	assert(fwd_utilities[i] < FLT_MAX/2);
+	assert(fwd_utilities[min_neighbour] < FLT_MAX/2);
 	assert(node_list[min_neighbour].utility < 1e5);
       }
       assert (node_list[i].utility < node_list[min_neighbour].utility);
-      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, MAXFLOAT/2);
+      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, FLT_MAX/2);
 
       i = min_neighbour;
-      assert(node_list[i].utility < MAXFLOAT/2);
+      assert(node_list[i].utility < FLT_MAX/2);
     }
   } else {
     node_list[roadmap->goal_id].utility = 0;
@@ -818,21 +818,21 @@ static void search(carmen_roadmap_vertex_t *start_node,
 	  break;
       }
       assert (min_edge < node_list[i].edges->length);
-      assert(node_list[min_neighbour].utility > MAXFLOAT/2 ||
+      assert(node_list[min_neighbour].utility > FLT_MAX/2 ||
 	     fabs(node_list[min_neighbour].utility  - 
 		  (node_list[i].utility + edges[min_edge].cost)) < 1e6);      
 
-      if (node_list[min_neighbour].utility > MAXFLOAT/2) {
+      if (node_list[min_neighbour].utility > FLT_MAX/2) {
 	carmen_roadmap_edge_t *edges2;
 	edges2 = (carmen_roadmap_edge_t *)node_list[min_neighbour].edges->list;
 	node_list[min_neighbour].utility = node_list[i].utility + 
 	  edges[min_edge].cost;
 	best_neighbour = -1;
-	best_utility = MAXFLOAT;
+	best_utility = FLT_MAX;
 	for (j = 0; j < node_list[min_neighbour].edges->length; j++) {
 	  if (edges2[j].cost > 1e5 || edges2[j].blocked)
 	    continue;      
-	  if (node_list[edges2[j].id].utility > MAXFLOAT/2)
+	  if (node_list[edges2[j].id].utility > FLT_MAX/2)
 	    continue;
 	  utility = node_list[edges2[j].id].utility;
 	  if (utility < best_utility) {
@@ -843,20 +843,20 @@ static void search(carmen_roadmap_vertex_t *start_node,
 	
 	if (best_neighbour < 0)
 	  continue;
-	assert (best_utility < MAXFLOAT/2);
+	assert (best_utility < FLT_MAX/2);
 	assert (node_list[best_neighbour].utility < 
 		node_list[min_neighbour].utility);
 
-	assert(node_list[i].utility < MAXFLOAT/2);
-	assert(fwd_utilities[i] < MAXFLOAT/2);
-	assert(fwd_utilities[min_neighbour] < MAXFLOAT/2);
+	assert(node_list[i].utility < FLT_MAX/2);
+	assert(fwd_utilities[i] < FLT_MAX/2);
+	assert(fwd_utilities[min_neighbour] < FLT_MAX/2);
 	assert(node_list[min_neighbour].utility < 1e5);
       }
       assert (node_list[i].utility < node_list[min_neighbour].utility);
-      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, MAXFLOAT/2);
+      //      carmen_warn("%d %d %f %f\n", node_list[i].x, node_list[i].y, node_list[i].utility, FLT_MAX/2);
 
       i = min_neighbour;
-      assert(node_list[i].utility < MAXFLOAT/2);
+      assert(node_list[i].utility < FLT_MAX/2);
     }
   }
 
@@ -868,15 +868,15 @@ static void search(carmen_roadmap_vertex_t *start_node,
       continue;
     edges = (carmen_roadmap_edge_t *)(node_list[i].edges->list);
 
-    if (node_list[i].utility > MAXFLOAT/2)
+    if (node_list[i].utility > FLT_MAX/2)
       continue;
 
     best_neighbour = -1;
-    best_utility = MAXFLOAT;
+    best_utility = FLT_MAX;
     for (j = 0; j < node_list[i].edges->length; j++) {
       if (edges[j].cost > 1e5 || edges[j].blocked)
 	continue;      
-      if (node_list[edges[j].id].utility > MAXFLOAT/2)
+      if (node_list[edges[j].id].utility > FLT_MAX/2)
 	continue;
       utility = node_list[edges[j].id].utility;
       if (utility < best_utility) {
@@ -887,7 +887,7 @@ static void search(carmen_roadmap_vertex_t *start_node,
 
     if (best_neighbour < 0)
       continue;
-    assert (best_utility < MAXFLOAT/2);
+    assert (best_utility < FLT_MAX/2);
     assert (node_list[best_neighbour].utility < node_list[i].utility);
   }
 
@@ -898,7 +898,7 @@ static void search(carmen_roadmap_vertex_t *start_node,
 carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
 (carmen_world_point_t *point, carmen_roadmap_t *roadmap)
 {
-  double best_dist = MAXFLOAT;
+  double best_dist = FLT_MAX;
   int closest_node = 0;
   double dist;
   int i;
@@ -921,7 +921,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
 carmen_roadmap_vertex_t *carmen_roadmap_next_node
 (carmen_roadmap_vertex_t *node, carmen_roadmap_t *roadmap)
 {
-  double best_utility = MAXFLOAT;
+  double best_utility = FLT_MAX;
   int best_neighbour = 0;
   double utility;
   int i, j;
@@ -929,7 +929,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
   carmen_roadmap_vertex_t *node_list;
   int length;
 
-  if (node->edges->length == 0 || node->utility > MAXFLOAT/2) 
+  if (node->edges->length == 0 || node->utility > FLT_MAX/2) 
     search(node, roadmap);
   if (node->edges->length == 0) 
     return NULL;
@@ -938,7 +938,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
   edges = (carmen_roadmap_edge_t *)(node->edges->list);
 
   best_neighbour = -1;
-  best_utility = MAXFLOAT;
+  best_utility = FLT_MAX;
   for (i = 0; i < node->edges->length; i++) {
     if (edges[i].cost > 1e5 || edges[i].blocked)
       continue;
@@ -975,7 +975,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
     return NULL;
   assert (edges[best_neighbour].cost < 1e5);
 
-  if (best_utility > MAXFLOAT/2)
+  if (best_utility > FLT_MAX/2)
     return NULL;
   
   if (node_list[edges[best_neighbour].id].utility >= node->utility) {

@@ -1,5 +1,5 @@
 #include <carmen/carmen.h>
-#include <values.h>
+#include <limits.h>
 #include <assert.h>
 #include "roadmap.h"
 #include "dynamics.h"
@@ -180,7 +180,7 @@ static void add_node(carmen_list_t *node_list, int x, int y)
   vertex.x = x;
   vertex.y = y;
   vertex.label = -1;
-  vertex.utility = MAXFLOAT;
+  vertex.utility = FLT_MAX;
   vertex.bad = 0;
   vertex.edges = carmen_list_create(sizeof(carmen_roadmap_edge_t), 10);
   carmen_list_add(node_list, &vertex);
@@ -657,7 +657,7 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
 
   return edges[i].cost;
 
-  if (node->theta > MAXFLOAT/2)
+  if (node->theta > FLT_MAX/2)
     return edges[i].cost;
 
   turning_angle = atan2(node->y-parent_node->y, node->x-parent_node->x) - 
@@ -730,11 +730,11 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
 
   utility_ptr = utility;
   for (index = 0; index < roadmap->nodes->length; index++) 
-    *(utility_ptr++) = MAXFLOAT;
+    *(utility_ptr++) = FLT_MAX;
 
   state_queue = make_queue();
 
-  node_list[roadmap->goal_id].theta = MAXFLOAT;
+  node_list[roadmap->goal_id].theta = FLT_MAX;
 
   push_state(roadmap->goal_id, roadmap->goal_id, 0, 0, state_queue);
   utility[roadmap->goal_id] = 0;
@@ -797,7 +797,7 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
 carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
 (carmen_world_point_t *point, carmen_roadmap_t *roadmap)
 {
-  double best_dist = MAXFLOAT;
+  double best_dist = FLT_MAX;
   int closest_node = -1;
   double dist;
   int i;
@@ -810,7 +810,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
   for (i = 0; i < roadmap->nodes->length; i++) {
     dist = hypot(node_list[i].x-pt.x, node_list[i].y-pt.y);
     if (dist < best_dist && node_list[i].utility >= 0 &&
-	node_list[i].utility < MAXFLOAT/2 && 
+	node_list[i].utility < FLT_MAX/2 && 
 	carmen_roadmap_is_visible(node_list+i, point, roadmap->c_space) &&
 	!carmen_dynamics_test_point_for_block
 	(node_list+i, point, roadmap->avoid_people)) {
@@ -828,7 +828,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
 carmen_roadmap_vertex_t *carmen_roadmap_best_node
 (carmen_world_point_t *point, carmen_roadmap_t *roadmap)
 {
-  double best_utility = MAXFLOAT;
+  double best_utility = FLT_MAX;
   int best_node = -1;
   double utility, cost;
   int i;
@@ -860,14 +860,14 @@ carmen_roadmap_vertex_t *carmen_roadmap_best_node
 carmen_roadmap_vertex_t *carmen_roadmap_next_node
 (carmen_roadmap_vertex_t *node, carmen_roadmap_t *roadmap)
 {
-  double best_utility = MAXFLOAT;
+  double best_utility = FLT_MAX;
   int best_neighbour = 0;
   double utility;
   int i, neighbour_edge;
   carmen_roadmap_edge_t *edges;
   carmen_roadmap_vertex_t *node_list;
 
-  assert (node->edges->length > 0 && node->utility < MAXFLOAT/2);
+  assert (node->edges->length > 0 && node->utility < FLT_MAX/2);
   if (node->edges->length == 0) 
     return NULL;
 
@@ -875,7 +875,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
   edges = (carmen_roadmap_edge_t *)(node->edges->list);
 
   best_neighbour = -1;
-  best_utility = MAXFLOAT;
+  best_utility = FLT_MAX;
   for (i = 0; i < node->edges->length; i++) {
     if (edges[i].cost > 9e5 || edges[i].blocked)
       continue;
@@ -906,7 +906,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
     return NULL;
   assert (edges[best_neighbour].cost < 9e5);
 
-  if (best_utility > MAXFLOAT/2)
+  if (best_utility > FLT_MAX/2)
     return NULL;
 
   assert (!carmen_dynamics_test_for_block(node, node_list+edges[best_neighbour].id,
