@@ -66,6 +66,7 @@ void read_parameters(int argc, char **argv)
 int main(int argc, char **argv)
 {
   double current_time;
+  double last_alive = 0, last_battery = 0;
 
   /* connect to IPC network */
   carmen_initialize_ipc(argv[0]);
@@ -103,6 +104,15 @@ int main(int argc, char **argv)
 	fprintf(stderr, "\rTV = %.1f     RV = %.1f   Battery = %d%%      ",
 		command_tv, command_rv, (int)segway.voltage);
 	last_status = current_time;
+      }
+
+      if(current_time - last_battery > 10.0) {
+	carmen_segway_publish_battery(&segway);
+	last_battery = current_time;
+      }
+      if(current_time - last_alive > 1.0) {
+	carmen_segway_publish_alive();
+	last_alive = current_time;
       }
 
       segway_clear_status(&segway);

@@ -45,6 +45,18 @@ typedef struct {
 #define CARMEN_SEGWAY_POSE_NAME "carmen_segway_pose"
 #define CARMEN_SEGWAY_POSE_FMT "{double,double,double,double,double,double,double,double,double,double,double,double,[char:10]}"
 
+typedef struct {
+  int percent;
+  double timestamp;
+  char host[10];
+} carmen_segway_battery_message;
+
+#define CARMEN_SEGWAY_BATTERY_NAME "carmen_segway_battery"
+#define CARMEN_SEGWAY_BATTERY_FMT  "{int,double,[char:10]}"
+
+#define CARMEN_SEGWAY_ALIVE_NAME "carmen_segway_alive"
+#define CARMEN_SEGWAY_ALIVE_FMT  ""
+
 #ifdef __cplusplus
 }
 #endif
