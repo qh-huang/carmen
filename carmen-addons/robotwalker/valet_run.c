@@ -123,27 +123,41 @@ int main(int argc, char *argv[]) {
 
   int button_number;
   int fd;
+  char c;
 
   button_number = -1;
 
+  /*
   if (argc < 2)
     carmen_die("usage: valet_run <device>\n");
+  */
 
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
-  fd = filedescriptor(argv[1]);
+  fd = (argc < 2 ? -1 : filedescriptor(argv[1]));
  
   while (1) {
-    button_number = getbutton(fd);
-    if (button_number >= 0) {
-      if (button_number == BUTTON_PARK)
+    if (fd < 0) {
+      c = getchar();
+      if (c == 'p')
 	carmen_valet_park();
-      else if (button_number == BUTTON_RETURN)
+      else if (c == 'r')
 	carmen_valet_return();
+    }
+    else {
+      button_number = getbutton(fd);
+      if (button_number >= 0) {
+	if (button_number == BUTTON_PARK)
+	  carmen_valet_park();
+	else if (button_number == BUTTON_RETURN)
+	  carmen_valet_return();
+      }
     }
   }
 
-  close_serialport(fd);
+  if (fd >= 0)
+    close_serialport(fd);
+
   return 0;
 }

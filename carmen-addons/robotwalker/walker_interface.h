@@ -11,9 +11,6 @@ extern "C" {
 
 void carmen_walker_set_goal(int goal);
 
-void carmen_walker_subscribe_goal_changed_message
-(carmen_walker_goal_changed_msg *msg, carmen_handler_t handler,
- carmen_subscribe_t subscribe_how);
 
 #ifdef __cplusplus
 }
