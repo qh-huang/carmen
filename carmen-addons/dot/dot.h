@@ -27,6 +27,9 @@ typedef struct {
   int id;
   double x;
   double y;
+  double theta;
+  double major;
+  double minor;
   double vx;
   double vy;
   double vxy;
