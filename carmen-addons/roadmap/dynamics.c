@@ -240,8 +240,20 @@ static int is_blocked(double n1x, double n1y, double n2x, double n2y,
   return 1;
 }
 
+static void fill_in_object(carmen_dot_t *blocking_object, void *data, 
+			   carmen_dot_enum_t type)
+{
+  blocking_object->dot_type = type;
+  if (type == carmen_dot_person) 
+    blocking_object->data.person = *(carmen_dot_person_t *)data;
+  else if (type == carmen_dot_trash) 
+    blocking_object->data.trash = *(carmen_dot_trash_t *)data;
+  else if (type == carmen_dot_door) 
+    blocking_object->data.door = *(carmen_dot_door_t *)data;
+}
+
 static int do_blocking(double n1x, double n1y, double n2x, double n2y, 
-		       int avoid_people)
+		       carmen_dot_t *blocking_object, int avoid_people)
 {
   carmen_dot_person_t *person;
   carmen_dot_trash_t *trash_bin;
@@ -253,23 +265,32 @@ static int do_blocking(double n1x, double n1y, double n2x, double n2y,
     for (i = 0; i < people->length; i++) {
       person = (carmen_dot_person_t *)carmen_list_get(people, i);
       if (is_blocked(n1x, n1y, n2x, n2y, person->x, person->y, 
-		     person->vx, person->vxy, person->vy))
+		     person->vx, person->vxy, person->vy)) {
+	if (blocking_object) 
+	  fill_in_object(blocking_object, person, carmen_dot_person);
 	return 1;
+      }
     }
   }
 
   for (i = 0; i < trash->length; i++) {
     trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
     if (is_blocked(n1x, n1y, n2x, n2y, trash_bin->x, trash_bin->y, 
-		   trash_bin->vx, trash_bin->vxy, trash_bin->vy))
+		   trash_bin->vx, trash_bin->vxy, trash_bin->vy)) {
+      if (blocking_object) 
+	fill_in_object(blocking_object, trash, carmen_dot_trash);
       return 1;
+    }
   }
 
   for (i = 0; i < doors->length; i++) {
     door = (carmen_dot_door_t *)carmen_list_get(doors, i);
     if (is_blocked(n1x, n1y, n2x, n2y, door->x, door->y, door->vx, 
-		   door->vxy, door->vy))
+		   door->vxy, door->vy)) {
+      if (blocking_object) 
+	fill_in_object(blocking_object, door, carmen_dot_door);
       return 1;
+    }
   }
 
   return 0;
@@ -293,7 +314,7 @@ int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1,
 
 
   return do_blocking(pt1.pose.x, pt1.pose.y, pt2.pose.x, pt2.pose.y, 
-		     avoid_people);
+		     NULL, avoid_people);
 }
 
 int carmen_dynamics_test_point_for_block(carmen_roadmap_vertex_t *n, 
@@ -309,7 +330,28 @@ int carmen_dynamics_test_point_for_block(carmen_roadmap_vertex_t *n,
   carmen_map_to_world(&map_pt, &world_pt);
 
   return do_blocking(world_pt.pose.x, world_pt.pose.y, 
-		     point->pose.x, point->pose.y, avoid_people);  
+		     point->pose.x, point->pose.y, NULL, avoid_people);  
+}
+
+int carmen_dynamics_get_block(carmen_roadmap_vertex_t *n1, 
+			      carmen_roadmap_vertex_t *n2,
+			      carmen_dot_t *blocking_object,
+			      int avoid_people)
+{
+  carmen_world_point_t pt1, pt2;
+  carmen_map_point_t map_pt;
+  
+  map_pt.x = n1->x;
+  map_pt.y = n1->y;
+  map_pt.map = map;
+  carmen_map_to_world(&map_pt, &pt1);
+
+  map_pt.x = n2->x;
+  map_pt.y = n2->y;
+  carmen_map_to_world(&map_pt, &pt2);
+
+  return do_blocking(pt1.pose.x, pt1.pose.y, pt2.pose.x, pt2.pose.y, 
+		     blocking_object, avoid_people);
 }
 
 static int is_too_close(double nx, double ny, double x, double y, 
