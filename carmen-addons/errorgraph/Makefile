@@ -1,5 +1,4 @@
 include ../Makefile.conf
-include $(CARMEN_HOME)/src/Makefile.conf
 
 MODULE_NAME = ERRORGRAPH
 MODULE_COMMENT = Error Graphing
