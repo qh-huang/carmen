@@ -11,6 +11,8 @@ typedef struct dot_person_filter {
   int vpos;
   int vlen;
   int hidden_cnt;
+  double x0;
+  double y0;
   double x;
   double y;
   double px;
@@ -105,6 +107,7 @@ static double default_door_filter_rt;
 static int new_filter_threshold;
 static double new_cluster_threshold;
 static double map_diff_threshold;
+static double map_diff_threshold_scalar;
 static double map_occupied_threshold;
 static double sensor_update_dist;
 static int sensor_update_cnt;
@@ -116,6 +119,7 @@ static double laser_max_range;
 static double see_through_stdev;
 static double trace_resolution;
 static int invisible_cnt;
+static double person_filter_displacement_threshold;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
@@ -209,13 +213,12 @@ static int invert2d(double *a, double *b, double *c, double *d) {
 static double bnorm_theta(double vx, double vy, double vxy) {
 
   double theta;
-  double e1, e2;  // eigenvalues
+  double e;  // major eigenvalue
   double ex, ey;  // major eigenvector
 
-  e1 = (vx + vy)/2.0 + sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
-  e2 = (vx + vy)/2.0 - sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
+  e = (vx + vy)/2.0 + sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
   ex = vxy;
-  ey = (e1>e2?e1:e2) - vx;
+  ey = e - vx;
 
   theta = atan2(ey, ex);
 
@@ -282,6 +285,8 @@ static int dot_classify(carmen_dot_filter_p f) {
 
   if (!f->allow_change)
     return f->type;
+  else
+    return CARMEN_DOT_TRASH;
 
   pf = &f->person_filter;
   tf = &f->trash_filter;
@@ -566,6 +571,8 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   filters[num_filters-1].person_filter.x = ux;
   filters[num_filters-1].person_filter.y = uy;
+  filters[num_filters-1].person_filter.x0 = ux;
+  filters[num_filters-1].person_filter.y0 = uy;
   for (i = 0; i < MAX_PERSON_FILTER_VELOCITY_WINDOW; i++) {
     filters[num_filters-1].person_filter.vx[i] = 0.0;
     filters[num_filters-1].person_filter.vy[i] = 0.0;
@@ -788,7 +795,7 @@ static inline int is_in_map(int x, int y) {
 }
 
 // returns 1 if point is in map
-static int map_filter(double x, double y) {
+static int map_filter(double x, double y, double r) {
 
   carmen_world_point_t wp;
   carmen_map_point_t mp;
@@ -801,9 +808,9 @@ static int map_filter(double x, double y) {
 
   carmen_world_to_map(&wp, &mp);
 
-  d = map_diff_threshold/static_map.config.resolution;
+  d = (map_diff_threshold + r*map_diff_threshold_scalar)/static_map.config.resolution;
   md = carmen_round(d);
-
+  
   for (i = mp.x-md; i <= mp.x+md; i++)
     for (j = mp.y-md; j <= mp.y+md; j++)
       if (is_in_map(i, j) && dist(i-mp.x, j-mp.y) <= d &&
@@ -873,24 +880,38 @@ static void kill_people() {
   int i;
 
   for (i = 0; i < num_filters; i++)
-    if (++filters[i].person_filter.hidden_cnt >= kill_hidden_person_cnt &&
-	filters[i].type == CARMEN_DOT_PERSON)
-      delete_filter(i);
+    if (!filters[i].updated)
+      if (++filters[i].person_filter.hidden_cnt >= kill_hidden_person_cnt &&
+	  filters[i].type == CARMEN_DOT_PERSON)
+	delete_filter(i);
 }
 
 static void filter_motion() {
 
   int i;
+  double dx, dy;
 
   for (i = 0; i < num_filters; i++) {
+    /*
     if (person_filter_velocity(&filters[i].person_filter) >=
 	person_filter_velocity_threshold) {
       filters[i].type = CARMEN_DOT_PERSON;
       filters[i].allow_change = 0;
     }
-    person_filter_motion_update(&filters[i].person_filter);
-    if (filters[i].type == CARMEN_DOT_PERSON)
+    */
+    
+    dx = filters[i].person_filter.x - filters[i].person_filter.x0;
+    dy = filters[i].person_filter.y - filters[i].person_filter.y0;
+
+    if (dist(dx, dy) >= person_filter_displacement_threshold) {
+      filters[i].type = CARMEN_DOT_PERSON;
+      filters[i].allow_change = 0;
+    }
+    
+    if (filters[i].person_filter.hidden_cnt == 0 || filters[i].type == CARMEN_DOT_PERSON) {
+      person_filter_motion_update(&filters[i].person_filter);
       filters[i].updated = 1;
+    }
   }
 }
 
@@ -928,14 +949,14 @@ static void laser_handler(carmen_robot_laser_message *laser) {
 
   carmen_localize_correct_laser(laser, &odom);
 
+  kill_people();
+  filter_motion();
+
   for (i = 0; i < num_filters; i++) {
     filters[i].updated = 0;
     filters[i].last_type = filters[i].type;
     filters[i].invisible = 0;
   }
-
-  kill_people();
-  filter_motion();
 
   if (dist(last_sensor_update_odom.x - odom.globalpos.x,
 	   last_sensor_update_odom.y - odom.globalpos.y) >= sensor_update_dist) {
@@ -957,7 +978,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       x[i] = laser->x + cos(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       y[i] = laser->y + sin(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       trace_laser(laser->x, laser->y, x[i], y[i]);
-      if (!dot_filter(x[i], y[i]) && !map_filter(x[i], y[i]))
+      if (!dot_filter(x[i], y[i]) && !map_filter(x[i], y[i], laser->range[i]))
 	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
       else
 	cluster_map[i] = 0;
@@ -1537,11 +1558,15 @@ static void params_init(int argc, char *argv[]) {
     {"dot", "new_filter_threshold", CARMEN_PARAM_INT, &new_filter_threshold, 1, NULL},
     {"dot", "new_cluster_threshold", CARMEN_PARAM_DOUBLE, &new_cluster_threshold, 1, NULL},
     {"dot", "map_diff_threshold", CARMEN_PARAM_DOUBLE, &map_diff_threshold, 1, NULL},
+    {"dot", "map_diff_threshold_scalar", CARMEN_PARAM_DOUBLE,
+     &map_diff_threshold_scalar, 1, NULL},
     {"dot", "map_occupied_threshold", CARMEN_PARAM_DOUBLE, &map_occupied_threshold, 1, NULL},
     {"dot", "person_filter_velocity_window", CARMEN_PARAM_INT, &person_filter_velocity_window,
      1, (carmen_param_change_handler_t)person_filter_velocity_window_handler},
     {"dot", "person_filter_velocity_threshold", CARMEN_PARAM_DOUBLE,
      &person_filter_velocity_threshold, 1, NULL},
+    {"dot", "person_filter_displacement_threshold", CARMEN_PARAM_DOUBLE,
+     &person_filter_displacement_threshold, 1, NULL},
     {"dot", "kill_hidden_person_cnt", CARMEN_PARAM_INT, &kill_hidden_person_cnt, 1, NULL},
     {"dot", "sensor_update_dist", CARMEN_PARAM_DOUBLE, &sensor_update_dist, 1, NULL},
     {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL},
@@ -1584,7 +1609,7 @@ int main(int argc, char *argv[]) {
 
   printf("occupied_prob = %f\n", localize_params.occupied_prob);
   printf("getting localize map...");
-  fflush(0);  
+  fflush(0);
   carmen_to_localize_map(&static_map, &localize_map, &localize_params);
   printf("done\n");
 
