@@ -1,4 +1,11 @@
+#define NO_GRAPHICS 1
+
+#ifndef NO_GRAPHICS
 #include <carmen/carmen_graphics.h>
+#else
+#include <carmen/carmen.h>
+#endif
+
 #include <carmen/map_interface.h>
 #include <carmen/map_io.h>
 
@@ -59,6 +66,8 @@ static int num_rooms;
 static door_p doors;
 static int num_doors;
 
+#ifndef NO_GRAPHICS
+
 static GdkGC *drawing_gc = NULL;
 static GdkPixmap *pixmap = NULL;
 static GtkWidget *window, *canvas;
@@ -68,6 +77,8 @@ static int canvas_width = 300, canvas_height = 300;
 
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
+
+#endif
 
 
 inline double dist(double x, double y) {
@@ -81,7 +92,8 @@ void print_doors() {
 
   for (i = 0; i < num_doors; i++) {
     printf("door %d:  ", i);
-    //printf("rooms(%d, %d), ", doors[i].room1->num, doors[i].room2->num);
+    printf("rooms(%d, %d), ", doors[i].room1 != NULL ? doors[i].room1->num : -1,
+	   doors[i].room2 != NULL ? doors[i].room2->num : -1);
     printf("pos(%.2f, %.2f, %.0f), ", doors[i].pos.x, doors[i].pos.y,
 	   carmen_radians_to_degrees(doors[i].pos.theta));
     printf("width(%.2f)", doors[i].width);
@@ -158,6 +170,8 @@ int probe(int px, int py) {
   int x, y, i, j, step, cell, num;
   //int bbx0, bby0, bbx1, bby1;
 
+  printf("probe break 1\n");
+
   blob = (blob_p) calloc(1, sizeof(blob_t));
   carmen_test_alloc(blob);
 
@@ -178,11 +192,17 @@ int probe(int px, int py) {
   //bbx1 = px + step;
   //bby1 = py + step;
   
+  printf("probe break 2\n");
+
   while (blob->probe_stack != NULL) {
+
+    //printf("probe break 2.1\n");
 
     x = blob->probe_stack->x;
     y = blob->probe_stack->y;
   
+    //printf("probe break 2.2\n");
+
     //if (x < bbx0)
     //  bbx0 = x;
     //else if (x + step > bbx1)
@@ -196,6 +216,8 @@ int probe(int px, int py) {
     blob->probe_stack = blob->probe_stack->next;
     free(tmp);
   
+    //printf("probe break 2.3\n");
+
     for (i = x; i < x + step; i++) {
       for (j = y; j < y + step; j++) {
 	//printf("adding (%d, %d) to room_stack\n", i, j);
@@ -209,6 +231,8 @@ int probe(int px, int py) {
       }
     }
     
+    //printf("probe break 2.4\n");
+
     // up
     cell = GRID_NONE;
     for (i = x; i < x + step && cell == GRID_NONE; i++)
@@ -225,6 +249,8 @@ int probe(int px, int py) {
       blob->probe_stack = tmp;
     }
     
+    //printf("probe break 2.5\n");
+
     // down
     cell = GRID_NONE;
     for (i = x; i < x + step && cell == GRID_NONE; i++)
@@ -241,6 +267,8 @@ int probe(int px, int py) {
       blob->probe_stack = tmp;
     }
   
+    //printf("probe break 2.6\n");
+
     // right
     cell = GRID_NONE;
     for (i = x + step; i < x + 2*step && cell == GRID_NONE; i++)
@@ -257,6 +285,8 @@ int probe(int px, int py) {
       blob->probe_stack = tmp;
     }
     
+    //printf("probe break 2.7\n");
+
     // left
     cell = GRID_NONE;
     for (i = x-1; i >= x - step && cell == GRID_NONE; i--)
@@ -273,9 +303,18 @@ int probe(int px, int py) {
       blob->probe_stack = tmp;
     }
 
+    //printf("probe break 2.8\n");
+
+#ifndef NO_GRAPHICS
+
     grid_to_image(x-2, y-2, step+4, step+4);
     draw_grid(x-2, y-2, step+4, step+4);
+
+#endif
+
   }
+
+  printf("probe break 3\n");
 
   if (blob->num == -1)
     blob->num = num_rooms;
@@ -289,7 +328,11 @@ int probe(int px, int py) {
     free(tmp);
   }
 
+  printf("probe break 4\n");
+
   free(blob);
+
+  printf("probe break 5\n");
 
   return num;
 }
@@ -366,8 +409,12 @@ void get_rooms() {
     }
   }
 
+#ifndef NO_GRAPHICS
+
   grid_to_image(0, 0, grid_width, grid_height);
   draw_grid(0, 0, grid_width, grid_height);
+
+#endif
 
   // get probes
   for (i = 0; i < num_doors; i++) {
@@ -433,6 +480,8 @@ void get_rooms() {
     carmen_world_to_map(&world_point, &map_point);
     n = probe(map_point.x, map_point.y);
 
+    printf("get_rooms break 5\n");
+
     if (n == num_rooms) {
       rooms[n].num = n;
       rooms[n].doors = (door_p *) calloc(num_doors, sizeof(door_p));
@@ -444,12 +493,19 @@ void get_rooms() {
       num_rooms++;
     }
 
+    printf("get_rooms break 6\n");
+
     for (j = 0; j < rooms[n].num_doors; j++)
       if (rooms[n].doors[j]->num == i)
 	break;
 
+    printf("get_rooms break 7\n");
+
     if (j == rooms[n].num_doors)
       rooms[n].doors[num_doors++] = &doors[i];
+
+    printf("get_rooms break 8\n");
+
   }
 
   //dbug: fill in gaps in grid
@@ -485,6 +541,8 @@ void grid_init() {
     }
   }
 
+#ifndef NO_GRAPHICS
+
   canvas_width = grid_width;
   canvas_height = grid_height;
 
@@ -492,6 +550,8 @@ void grid_init() {
 
   while(gtk_events_pending())
     gtk_main_iteration_do(TRUE);
+
+#endif
 }
 
 void get_map() {
@@ -507,15 +567,12 @@ void get_map() {
   }
 
   grid_init();
-  printf("get_map break 1\n");
   get_doors(&placelist);
-  printf("get_map break 2\n");
-  print_doors();
-  printf("get_map break 3\n");
-  printf("\n");
   get_rooms();
-  printf("get_map break 4\n");
+  print_doors();
 }
+
+#ifndef NO_GRAPHICS
 
 static GdkColor grid_color(int cell) {
 
@@ -655,18 +712,20 @@ static void gui_init() {
   carmen_graphics_setup_colors();
 }
 
-static void params_init(int argc __attribute__ ((unused)),
-			char *argv[] __attribute__ ((unused))) {
-
-  grid_resolution = DEFAULT_GRID_RESOLUTION;
-}
-
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {
 
   sleep_ipc(0.01);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
 
   return 1;
+}
+
+#endif
+
+static void params_init(int argc __attribute__ ((unused)),
+			char *argv[] __attribute__ ((unused))) {
+
+  grid_resolution = DEFAULT_GRID_RESOLUTION;
 }
 
 int main(int argc, char *argv[]) {
@@ -676,27 +735,22 @@ int main(int argc, char *argv[]) {
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
-  printf("break 2\n");
-
+#ifndef NO_GRAPHICS
   gtk_init(&argc, &argv);
-
-  printf("break 3\n");
+#endif
 
   params_init(argc, argv);
-  printf("break 4\n");
+
+#ifndef NO_GRAPHICS
   gui_init();
-  printf("break 5\n");
+#endif
+
   get_map();
 
-  printf("break 6\n");
-
+#ifndef NO_GRAPHICS
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
-
-  printf("break 7\n");
-
   gtk_main();
-
-  printf("break 8\n");
+#endif
 
   return 0;
 }
