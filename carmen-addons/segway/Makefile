@@ -10,7 +10,7 @@ MODULE_COMMENT = Segway RMP Base Module
 SOURCES = segwaycore.c segway_interface.c segwaylogger.c segway_test.c segway.c keystick.c segwayplayback.c segwayplayback_interface.c
 PUBLIC_INCLUDES = segway_messages.h segway_interface.h segwayplayback_message.h segwayplayback_interface.h
 PUBLIC_LIBRARIES = libsegway_interface.a libsegwayplayback_interface.a
-PUBLIC_BINARIES = segway
+PUBLIC_BINARIES = segway segwaylogger segwayplayback keystick
 MAN_PAGES =
 
 TARGETS = libsegwaycore.a segway libsegway_interface.a segway_test segwaylogger segwayplayback keystick
