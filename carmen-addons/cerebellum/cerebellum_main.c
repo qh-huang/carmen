@@ -73,8 +73,7 @@ static int thread_is_running = 0;
 #define OBOT_WHEELBASE (.317)
 #define METERS_PER_OBOT_TICK (OBOT_WHEEL_CIRCUMFERENCE / OBOT_TICKS_PER_REV)
 #define TICKS_PER_MPS (1.0/(METERS_PER_OBOT_TICK * OBOT_LOOP_FREQUENCY))
-#define ROT_VEL_FACT_RAD (OBOT_WHEELBASE*TICKS_PER_MPS/2.0)
-#define MAXV (4.5*TICKS_PER_MPS)
+#define ROT_VEL_FACT_RAD (OBOT_WHEELBASE*TICKS_PER_MPS)
 #define MAX_CEREBELLUM_ACC 10
 #define MIN_OBOT_TICKS (4.0)
 #define MAX_READINGS_TO_DROP (10)
@@ -121,9 +120,9 @@ initialize_robot(char *dev)
   current_acceleration = robot_config.acceleration;
 
   //  printf("TROGDOR_M_PER_TICK: %lf\n", TROGDOR_M_PER_TICK);
-  printf("METERS_PER_OBOT_TICK: %lf\n", METERS_PER_OBOT_TICK);
+  //printf("METERS_PER_OBOT_TICK: %lf\n", METERS_PER_OBOT_TICK);
   //printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
-  printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
+  //printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
   
   if(result != 0)
     return 1;
@@ -265,8 +264,8 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   odometry.y = y;
   odometry.theta = theta;
 
-  printf("OD t:%f x:%f, y:%f\n",theta,x,y);
-  printf("TKS l:%d r:%d\n",left_ticks, right_ticks);
+  //printf("OD t:%f x:%f, y:%f\n",theta,x,y);
+  //printf("TKS l:%d r:%d\n",left_ticks, right_ticks);
   
   //keep history to compute velocities, the velocities the robot reports
   //are bogus
@@ -480,6 +479,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   IPC_RETURN_TYPE err;
   carmen_base_velocity_message vel;
   double vl, vr;
+  double max_wheel, min_wheel;
 
   FORMATTER_PTR formatter;
   
@@ -491,25 +491,39 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  vl = vel.tv * TICKS_PER_MPS;
-  vr = vel.tv * TICKS_PER_MPS;  
+  /*   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD; */
+  /*   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD; */
 
-  vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
-  vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
+  vl = vel.tv - 0.5 * vel.rv * OBOT_WHEELBASE;
+  vr = vel.tv + 0.5 * vel.rv * OBOT_WHEELBASE;
 
-  //  printf("V: t: %f r: %f\r\n",vel.tv,vel.rv);
-  //  printf("C: l: %f r: %f\r\n",vl, vr);
+  /* we want rotational velocity to dominate translational
+     velocity in the case that the user specifies a 
+     velocity that we can't actually meet */
+  max_wheel = vl > vr ? vl : vr;
+  min_wheel = vr > vl ? vl : vr;
+  if( max_wheel > robot_config.max_t_vel )
+    {
+      vl -= max_wheel-robot_config.max_t_vel;
+      vr -= max_wheel-robot_config.max_t_vel;
+    }
+  if( min_wheel < -robot_config.max_t_vel )
+    {
+      vl -= min_wheel+robot_config.max_t_vel;
+      vr -= min_wheel+robot_config.max_t_vel;
+    }
 
-  if(vl > MAXV)
-    vl = MAXV;
-  else if(vl < -MAXV)
-    vl = -MAXV;
-  if(vr > MAXV)
-      vr = MAXV;
-  else if(vr < -MAXV)
-    vr = -MAXV;
+  if(vl > robot_config.max_t_vel)
+    vl = robot_config.max_t_vel;
+  else if(vl < -robot_config.max_t_vel)
+    vl = -robot_config.max_t_vel;
+  if(vr > robot_config.max_t_vel)
+      vr = robot_config.max_t_vel;
+  else if(vr < -robot_config.max_t_vel)
+    vr = -robot_config.max_t_vel;
 
-  //printf("After maxing: %f %f\r\n",vl,vr);
+  vl *= TICKS_PER_MPS;
+  vr *= TICKS_PER_MPS;
 
   //we put in a minimum ticks per loop due to a bad motor controller
   //note that if we set one to the minimum we should increase
@@ -527,13 +541,13 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   if( vr> 0.0 && vr < MIN_OBOT_TICKS)
     {
-      vl = vl/vr * MIN_OBOT_TICKS;      
+      vl = vl/vr * MIN_OBOT_TICKS;
       vr = MIN_OBOT_TICKS;
     }
 
   if( vr< 0.0 && vr > -MIN_OBOT_TICKS)
     {
-      vl = vl/(fabs(vr)) * MIN_OBOT_TICKS;      
+      vl = vl/(fabs(vr)) * MIN_OBOT_TICKS;
 
       vr =-MIN_OBOT_TICKS;
 
