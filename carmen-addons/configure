@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+
+print "\nSearching for CARMEN_HOME... ";
+
+#$cur_path = $ENV{'PWD'} =~ m!(.*)/[^/]+!;
+$cur_path = $ENV{'PWD'};
+print "Current directory is $cur_path\n";
+
+if (exists $ENV{'CARMEN_HOME'}) {
+  $carmen_path = $ENV{'CARMEN_HOME'};
+}
+if (-d "$cur_path/../carmen/src") {
+  $carmen_path = "$cur_path/../carmen";
+}
+elsif (-d "$cur_path/../../carmen/src") {
+  $carmen_path = "$cur_path/../../carmen";
+}
+elsif (-d "$cur_path/../../../carmen/src") {
+  $carmen_path = "$cur_path/../../../carmen";
+}
+else {
+  $carmen_path = "none"
+}
+
+print "CARMEN_HOME [$carmen_path]: ";
+$usr_carmen_path = <STDIN>;
+chomp $usr_carmen_path;
+if (length($usr_carmen_path) > 0) {
+  $carmen_path = $usr_carmen_path;
+}
+
+while (($carmen_path eq "none") or (not -d "$carmen_path/src")) {
+  print <<EOF;
+
+Could not find CARMEN_HOME directory ($carmen_path).
+
+If CARMEN is installed, please type the full path of the carmen directory,
+or hit enter to cancel configuration of carmen-addons.
+
+EOF
+
+  print "CARMEN_HOME [$carmen_path]: ";
+  $usr_carmen_path = <STDIN>;
+  chomp $usr_carmen_path;
+  if (length($usr_carmen_path) > 0) {
+    $carmen_path = $usr_carmen_path;
+  }
+  else {
+    die "\n";
+  }
+}
+
+
+if (-f "/usr/include/usb.h") {
+  $no_usb = 0;
+  $usb_path = "/usr/include";
+}
+elsif (-f "/usr/local/include/usb.h") {
+  $no_usb = 0;
+  $usb_path = "/usr/local/include";
+}
+elsif (-f "/usr/include/linux/usb.h") {
+  $no_usb = 0;
+  $usb_path = "/usr/include/linux";
+}
+else {
+  $no_usb = 1;
+  $usb_path = "none";
+}
+
+while ($no_usb) {
+  print <<EOF;
+
+Could not find the USB library.
+
+If libusb is installed, please type the full path of the include directory
+where usb.h is located, or hit enter to disable usb support.
+
+EOF
+
+  print "USB Include Path [$usb_path]: ";
+  $usb_path = <STDIN>;
+  chomp $usb_path;
+  if (length($usb_path) == 0) {
+    last;
+  }
+  elsif (-f "$usb_path/usb.h") {
+    $no_usb = 0;
+  }
+}
+
+if (not $no_usb) {
+  print "USB Support Found.\n";
+}
+
+open OUTPUT, "> Makefile.vars";
+
+print OUTPUT<<EOF;
+# This is an automatically generated file.
+# DO NOT MODIFY!
+
+CARMEN_HOME = $carmen_path
+EOF
+
+if ($no_usb) {
+  print "NO_USB = $no_usb\n";
+}
+else {
+  print OUTPUT "USB_INCLUDE_PATH = $usb_path\n";
+}
+
+close OUTPUT;

@@ -28,4 +28,4 @@ gps_test:  gps_test.o libgps_interface.a
 
 # rules
 
-include ../Makefile.rules
+include $(CARMEN_HOME)/src/Makefile.rules
