@@ -176,7 +176,15 @@ carmen_segway_subscribe_alive_message(carmen_handler_t handler,
 void carmen_segway_kill_command(void)
 {
   IPC_RETURN_TYPE err;
-
+  static int first = 1;
+  
+  if(first) {
+    err = IPC_defineMsg(CARMEN_SEGWAY_KILL_NAME, IPC_VARIABLE_LENGTH, 
+                        CARMEN_SEGWAY_KILL_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+                         CARMEN_SEGWAY_KILL_NAME);
+    first = 0;
+  }
   err = IPC_publishData(CARMEN_SEGWAY_KILL_NAME, NULL);
   carmen_test_ipc(err, "Could not publish", CARMEN_SEGWAY_KILL_NAME);
 }
