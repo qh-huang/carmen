@@ -144,7 +144,15 @@ carmen_canon_subscribe_preview_message(carmen_canon_preview_message *preview,
 int carmen_canon_start_preview_command(void)
 {
   IPC_RETURN_TYPE err;
+  static int first = 1;
 
+  if(first) {
+    err = IPC_defineMsg(CARMEN_CANON_PREVIEW_START_NAME, IPC_VARIABLE_LENGTH, 
+                        CARMEN_CANON_PREVIEW_START_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+                         CARMEN_CANON_PREVIEW_START_NAME);
+    first = 0;
+  }
   err = IPC_publishData(CARMEN_CANON_PREVIEW_START_NAME, NULL);
   carmen_test_ipc_return_int(err, "Could not publish", 
 			     CARMEN_CANON_PREVIEW_START_NAME);
@@ -154,7 +162,15 @@ int carmen_canon_start_preview_command(void)
 int carmen_canon_stop_preview_command(void)
 {
   IPC_RETURN_TYPE err;
+  static int first = 1;
 
+  if(first) {
+    err = IPC_defineMsg(CARMEN_CANON_PREVIEW_STOP_NAME, IPC_VARIABLE_LENGTH, 
+                        CARMEN_CANON_PREVIEW_STOP_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+                         CARMEN_CANON_PREVIEW_STOP_NAME);
+    first = 0;
+  }
   err = IPC_publishData(CARMEN_CANON_PREVIEW_STOP_NAME, NULL);
   carmen_test_ipc_return_int(err, "Could not publish", 
 			     CARMEN_CANON_PREVIEW_STOP_NAME);
@@ -164,7 +180,15 @@ int carmen_canon_stop_preview_command(void)
 int carmen_canon_snap_preview_command(void)
 {
   IPC_RETURN_TYPE err;
+  static int first = 1;
 
+  if(first) {
+    err = IPC_defineMsg(CARMEN_CANON_PREVIEW_SNAP_NAME, IPC_VARIABLE_LENGTH, 
+                        CARMEN_CANON_PREVIEW_SNAP_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+                         CARMEN_CANON_PREVIEW_SNAP_NAME);
+    first = 0;
+  }
   err = IPC_publishData(CARMEN_CANON_PREVIEW_SNAP_NAME, NULL);
   carmen_test_ipc_return_int(err, "Could not publish", 
 			     CARMEN_CANON_PREVIEW_SNAP_NAME);
