@@ -39,6 +39,15 @@ carmen_segway_subscribe_pose_message(carmen_segway_pose_message *pose,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how);
 
+void
+carmen_segway_subscribe_battery_message(carmen_segway_battery_message *battery,
+					carmen_handler_t handler,
+					carmen_subscribe_t subscribe_how);
+
+void
+carmen_segway_subscribe_alive_message(carmen_handler_t handler,
+				      carmen_subscribe_t subscribe_how);
+
 #ifdef __cplusplus
 }
 #endif

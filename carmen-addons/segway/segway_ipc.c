@@ -76,6 +76,14 @@ void carmen_segway_register_messages(void)
 		      CARMEN_SEGWAY_POSE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_POSE_NAME);
 
+  err = IPC_defineMsg(CARMEN_SEGWAY_BATTERY_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_SEGWAY_BATTERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_POSE_NAME);
+
+  err = IPC_defineMsg(CARMEN_SEGWAY_ALIVE_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_SEGWAY_ALIVE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_POSE_NAME);
+
   /* setup incoming message handlers */
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, 
                       segway_velocity_handler, NULL);
@@ -127,4 +135,30 @@ void carmen_segway_publish_pose(segway_p segway, double timestamp)
 
   err = IPC_publishData(CARMEN_SEGWAY_POSE_NAME, &pose);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_SEGWAY_POSE_NAME);
+}
+
+void carmen_segway_publish_battery(segway_p segway)
+{
+  static carmen_segway_battery_message battery;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  char *host;
+
+  if(first) {
+    host = carmen_get_tenchar_host_name();
+    strcpy(battery.host, host);
+    first = 0;
+  }
+  battery.timestamp = carmen_get_time_ms();
+  battery.percent = segway->voltage;
+  err = IPC_publishData(CARMEN_SEGWAY_BATTERY_NAME, &battery);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_SEGWAY_BATTERY_NAME);
+}
+
+void carmen_segway_publish_alive(void)
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_publishData(CARMEN_SEGWAY_ALIVE_NAME, NULL);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_SEGWAY_ALIVE_NAME);
 }

@@ -36,4 +36,8 @@ void carmen_segway_publish_odometry(segway_p segway, double timestamp);
 
 void carmen_segway_publish_pose(segway_p segway, double timestamp);
 
+void carmen_segway_publish_battery(segway_p segway);
+
+void carmen_segway_publish_alive(void);
+
 #endif
