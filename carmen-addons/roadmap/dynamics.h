@@ -37,6 +37,11 @@
 extern "C" {
 #endif
 
+  typedef struct {
+    int n1, e1;
+    int n2, e2;
+  } carmen_roadmap_marked_edge_t;
+
   void carmen_dynamics_initialize(carmen_map_t *new_map);
   void carmen_dynamics_initialize_no_ipc(carmen_map_t *new_map);
   void carmen_dynamics_update_person(carmen_dot_person_t *update_person);
@@ -46,6 +51,10 @@ extern "C" {
 				     int avoid_people);
   int carmen_dynamics_test_node(carmen_roadmap_vertex_t *n1, 
 				int avoid_people);
+
+  void carmen_dynamics_mark_blocked(int node1_id, int edge1_id, 
+				    int node2_id, int edge2_id);
+  void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap);
 #ifdef __cplusplus
 }
 #endif
