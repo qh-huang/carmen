@@ -1,6 +1,6 @@
 
-#ifndef GNAV_INTERFACE_H
-#define GNAV_INTERFACE_H
+#ifndef GNAV_TYPES_H
+#define GNAV_TYPES_H
 
 #include <carmen/carmen.h>
 
