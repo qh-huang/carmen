@@ -37,7 +37,6 @@
 #ifndef CANON_S40_H
 #define CANON_S40_H
 
-//#include <linux/usb.h>
 #include "usb.h"
 
 /* four different transfer modes, they can be combined as well */
