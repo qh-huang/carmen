@@ -230,13 +230,15 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 
   if(abs(left_delta_tick) > max_ticks || abs(right_delta_tick) > max_ticks)
     {
-      if( ! transient_dropped)
+      if( transient_dropped==0)
 	{
 	  printf("CBldt: %d rdt: %d\n",left_delta_tick,right_delta_tick); 
 	  printf("delta tick unreal trying a drop\n");
 	  transient_dropped = 1;
 	  return(1);
 	}
+      else
+	printf("accepting large tick reading\n");
     }
 
 
@@ -257,6 +259,9 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 	  transient_dropped = 1;
 	  return(1);
 	}
+      else
+	printf("accepting large delta reading\n");
+
 
     }
 
