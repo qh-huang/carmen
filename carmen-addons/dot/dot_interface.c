@@ -38,6 +38,11 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people) {
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
 
+  err = IPC_defineMsg(CARMEN_DOT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_QUERY_NAME);  
+
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
 			      (void **) &response, 5000);
   carmen_test_ipc_return_int(err, "Could not query dot",
@@ -67,6 +72,11 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
 
+  err = IPC_defineMsg(CARMEN_DOT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_QUERY_NAME);  
+
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
 			      (void **) &response, 5000);
   carmen_test_ipc_return_int(err, "Could not query dot",
@@ -95,6 +105,11 @@ int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
   query.type = CARMEN_DOT_DOOR;
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_defineMsg(CARMEN_DOT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_QUERY_NAME);  
 
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
 			      (void **) &response, 5000);
@@ -139,6 +154,11 @@ void carmen_dot_subscribe_person_message(carmen_dot_person_msg *msg,
 					 carmen_subscribe_t subscribe_how) {
 
   IPC_RETURN_TYPE err = IPC_OK;  
+
+  err = IPC_defineMsg(CARMEN_DOT_PERSON_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_PERSON_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_PERSON_MSG_NAME);
 
   if(subscribe_how == CARMEN_UNSUBSCRIBE) {
     IPC_unsubscribe(CARMEN_DOT_PERSON_MSG_NAME, 
@@ -191,6 +211,11 @@ void carmen_dot_subscribe_trash_message(carmen_dot_trash_msg *msg,
 
   IPC_RETURN_TYPE err = IPC_OK;  
 
+  err = IPC_defineMsg(CARMEN_DOT_TRASH_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_TRASH_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_TRASH_MSG_NAME);
+
   if(subscribe_how == CARMEN_UNSUBSCRIBE) {
     IPC_unsubscribe(CARMEN_DOT_TRASH_MSG_NAME, 
 		    trash_msg_handler);
@@ -241,6 +266,11 @@ void carmen_dot_subscribe_door_message(carmen_dot_door_msg *msg,
 					 carmen_subscribe_t subscribe_how) {
 
   IPC_RETURN_TYPE err = IPC_OK;  
+
+  err = IPC_defineMsg(CARMEN_DOT_DOOR_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_DOOR_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_DOOR_MSG_NAME);
 
   if(subscribe_how == CARMEN_UNSUBSCRIBE) {
     IPC_unsubscribe(CARMEN_DOT_DOOR_MSG_NAME, 
