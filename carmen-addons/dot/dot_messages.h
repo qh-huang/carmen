@@ -25,12 +25,13 @@ typedef struct {
 } carmen_dot_query;
 
 #define CARMEN_DOT_QUERY_NAME "carmen_dot_query"
-#define CARMEN_DOT_QUERY_FMT  "{double, [char:10]}"
+#define CARMEN_DOT_QUERY_FMT  "{int, double, [char:10]}"
 
 
 typedef struct {
   carmen_dot_person_t person;
   int delete;
+  double timestamp;
   char host[10];
 } carmen_dot_person_msg;
 
@@ -40,6 +41,7 @@ typedef struct {
 typedef struct {
   carmen_dot_person_p people;
   int num_people;
+  double timestamp;
   char host[10];
 } carmen_dot_all_people_msg;
 
@@ -49,6 +51,7 @@ typedef struct {
 typedef struct {
   carmen_dot_trash_t trash;
   int delete;
+  double timestamp;
   char host[10];
 } carmen_dot_trash_msg;
 
@@ -58,6 +61,7 @@ typedef struct {
 typedef struct {
   carmen_dot_trash_p trash;
   int num_trash;
+  double timestamp;
   char host[10];
 } carmen_dot_all_trash_msg;
 
@@ -67,6 +71,7 @@ typedef struct {
 typedef struct {
   carmen_dot_door_t door;
   int delete;
+  double timestamp;
   char host[10];
 } carmen_dot_door_msg;
 
@@ -76,6 +81,7 @@ typedef struct {
 typedef struct {
   carmen_dot_door_p doors;
   int num_doors;
+  double timestamp;
   char host[10];
 } carmen_dot_all_doors_msg;
 
