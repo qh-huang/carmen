@@ -984,14 +984,13 @@ static void laser_handler(carmen_robot_laser_message *laser) {
 
   cluster_cnt = 0;
   for (i = 0; i < laser->num_readings; i++) {
+    cluster_map[i] = 0;
     if (laser->range[i] < laser_max_range) {
       x[i] = laser->x + cos(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       y[i] = laser->y + sin(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       trace_laser(laser->x, laser->y, x[i], y[i]);
       if (!dot_filter(x[i], y[i]) && !map_filter(x[i], y[i], laser->range[i]))
 	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
-      else
-	cluster_map[i] = 0;
     }
   }
 
