@@ -14,7 +14,7 @@ PUBLIC_LIBRARIES =
 PUBLIC_BINARIES = 
 MAN_PAGES =
 
-TARGETS = libcanon.a libcanon_interface.a canon_server canon_test camera_test
+TARGETS = libcanon.a libcanon_interface.a canon_server canon_test camera_test parse-log
 
 # rules
 
@@ -31,5 +31,7 @@ camera_test:	camera_test.o libcanon.a
 canon_server:	canon_server.o libcanon.a
 
 interface_test:	interface_test.o libcanon_interface.a
+
+parse-log:	parse-log.o
 
 include $(CARMEN_HOME)/src/Makefile.rules
