@@ -1493,10 +1493,10 @@ static void trash_filter_sensor_update(carmen_dot_trash_filter_p f, carmen_robot
 
   f->hull_size = compute_convex_hull(xpoints, ypoints, num_points, f->xhull, f->yhull);
 
-  printf("\nhull = ");
-  for (i = 0; i < f->hull_size; i++)
-    printf("(%.2f, %.2f) ", f->xhull[i], f->yhull[i]);
-  printf("\n");
+  //printf("\nhull = ");
+  //for (i = 0; i < f->hull_size; i++)
+  //  printf("(%.2f, %.2f) ", f->xhull[i], f->yhull[i]);
+  //printf("\n");
 
   f->x = mean_imasked(f->xhull, NULL, 0, f->hull_size);
   f->y = mean_imasked(f->yhull, NULL, 0, f->hull_size);
@@ -1504,7 +1504,7 @@ static void trash_filter_sensor_update(carmen_dot_trash_filter_p f, carmen_robot
   f->vy = var_imasked(f->yhull, f->y, NULL, 0, f->hull_size);
   f->vxy = cov_imasked(f->xhull, f->x, f->yhull, f->y, NULL, 0, f->hull_size);
 
-  printf("x = %.f, y = %.2f, vx = %.2f, vy = %.2f, vxy = %.2f\n", f->x, f->y, f->vx, f->vy, f->vxy);
+  //printf("x = %.f, y = %.2f, vx = %.2f, vy = %.2f, vxy = %.2f\n", f->x, f->y, f->vx, f->vy, f->vxy);
 }
 
 #if 0
@@ -1699,10 +1699,10 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
     }
   }
   tf->hull_size = compute_convex_hull(xbuf, ybuf, cnt, tf->xhull, tf->yhull);
-  printf("\nhull = ");
-  for (i = 0; i < tf->hull_size; i++)
-    printf("(%.2f, %.2f) ", tf->xhull[i], tf->yhull[i]);
-  printf("\n");
+  //printf("\nhull = ");
+  //for (i = 0; i < tf->hull_size; i++)
+  //  printf("(%.2f, %.2f) ", tf->xhull[i], tf->yhull[i]);
+  //printf("\n");
 
   /*
   for (i = 0; i < n; i++)
@@ -1935,7 +1935,7 @@ static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, in
   while (centroids_changed) {
     centroids_changed = 0;
     // step 2: assign points to closest centroids
-    printf("assigning points to centroids\n");
+    //printf("assigning points to centroids\n");
     for (i = 0; i < num_points; i++) {
       if (!laser_mask[i])
 	continue;
@@ -1953,24 +1953,24 @@ static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, in
 	}
       }
       cluster_map[i] = imin;
-      printf("(%.2f, %.2f) -> %d, ", xpoints[i], ypoints[i], cluster_map[i]);
+      //printf("(%.2f, %.2f) -> %d, ", xpoints[i], ypoints[i], cluster_map[i]);
     }
-    printf("\n");
+    //printf("\n");
     // step 3: re-calculate positions of centroids
-    printf("re-calculating positions of centroids\n");
+    //printf("re-calculating positions of centroids\n");
     for (i = 0; i < num_clusters; i++) {
-      printf(" - cluster %d: ", i);
+      //printf(" - cluster %d: ", i);
       x = y = 0.0;
       n = 0;
       for (j = 0; j < num_points; j++) {
 	if (laser_mask[j] && cluster_map[j] == i) {
-	  printf("(%.2f, %.2f) ", xpoints[j], ypoints[j]);
+	  //printf("(%.2f, %.2f) ", xpoints[j], ypoints[j]);
 	  x += xpoints[j];
 	  y += ypoints[j];
 	  n++;
 	}
       }
-      printf("\n");
+      //printf("\n");
       if (n == 0) {
 	num_clusters = delete_centroid(i, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
 	i--;
@@ -2012,7 +2012,7 @@ static int initialize_centroids(carmen_robot_laser_message *laser __attribute__ 
     }
     filter_map[i] = i;
     num_clusters++;
-    printf("centroid %d = (%.2f, %.2f)\n", i, xcentroids[i], ycentroids[i]);
+    //printf("centroid %d = (%.2f, %.2f)\n", i, xcentroids[i], ycentroids[i]);
   }
 
   return num_clusters;
@@ -2072,6 +2072,7 @@ static double compute_bic(double *xpoints, double *ypoints, int *cluster_map, in
   return bic;
 }
 
+#if 0
 static void print_clusters(double *xpoints, double *ypoints, int *cluster_map, int num_points,
 			   double *xcentroids, double *ycentroids, int *filter_map, int num_clusters) {
 
@@ -2087,6 +2088,7 @@ static void print_clusters(double *xpoints, double *ypoints, int *cluster_map, i
     printf("\n");
   }
 }
+#endif
 
 static void cluster(carmen_robot_laser_message *laser) {
 
@@ -2102,7 +2104,7 @@ static void cluster(carmen_robot_laser_message *laser) {
   static double vxy[500];
   double ltheta, bic, last_bic, fval, min;
 
-  printf("\n--------------------------------\n");
+  //printf("\n--------------------------------\n");
 
   // find points not in map
   num_points = 0;
@@ -2117,6 +2119,8 @@ static void cluster(carmen_robot_laser_message *laser) {
       else
 	num_points++;
     }
+    else
+      laser_mask[i] = 0;
   }
 
   if (num_points == 0)
@@ -2130,11 +2134,11 @@ static void cluster(carmen_robot_laser_message *laser) {
   last_bic = 1000000000.0; //dbug
   while (1) {
     num_clusters = cluster_kmeans(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
-    print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+    //print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
     mark_lonely_centroids(cluster_map, num_points, num_clusters);
     bic = compute_bic(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, num_clusters);
     unmark_lonely_centroids(cluster_map, num_points);
-    printf("BIC = %.2f\n", bic);
+    //printf("BIC = %.2f\n", bic);
     if (bic >= last_bic) {
       // delete new centroid (if any), re-cluster, and break
       for (i = 0; i < num_clusters; i++) {
@@ -2142,7 +2146,7 @@ static void cluster(carmen_robot_laser_message *laser) {
 	  num_clusters = delete_centroid(i, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
 	  num_clusters = cluster_kmeans(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
 	  num_clusters = delete_lonely_centroids(cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
-	  print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	  //print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
 	  break;
 	}
       }
@@ -2490,6 +2494,17 @@ static void publish_all_dot_msgs() {
 	all_trash_msg.trash[n].vx = filters[i].trash_filter.vx;
 	all_trash_msg.trash[n].vy = filters[i].trash_filter.vy;
 	all_trash_msg.trash[n].vxy = filters[i].trash_filter.vxy;
+	all_trash_msg.trash[n].xhull = (double *)
+	  calloc(filters[i].trash_filter.hull_size, sizeof(double));
+	carmen_test_alloc(all_trash_msg.trash[n].xhull);
+	memcpy(all_trash_msg.trash[n].xhull, filters[i].trash_filter.xhull,
+	       filters[i].trash_filter.hull_size*sizeof(double));
+	all_trash_msg.trash[n].yhull = (double *)
+	  calloc(filters[i].trash_filter.hull_size, sizeof(double));
+	carmen_test_alloc(all_trash_msg.trash[n].yhull);
+	memcpy(all_trash_msg.trash[n].yhull, filters[i].trash_filter.yhull,
+	       filters[i].trash_filter.hull_size*sizeof(double));
+	all_trash_msg.trash[n].hull_size = filters[i].trash_filter.hull_size;
 	n++;
       }
   }
@@ -2498,6 +2513,11 @@ static void publish_all_dot_msgs() {
 
   err = IPC_publishData(CARMEN_DOT_ALL_TRASH_MSG_NAME, &all_trash_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_TRASH_MSG_NAME);
+
+  for (i = 0; i < n; i++) {
+    free(all_trash_msg.trash[i].xhull);
+    free(all_trash_msg.trash[i].yhull);
+  }
 
   /*
   for (n = i = 0; i < num_filters; i++)
