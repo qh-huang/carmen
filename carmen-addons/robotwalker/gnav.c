@@ -1297,6 +1297,84 @@ static void publish_room_msg() {
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_GNAV_ROOM_MSG_NAME);  
 }
 
+static void gnav_room_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_gnav_room_msg *response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+  
+  response = (carmen_gnav_room_msg *)
+    calloc(1, sizeof(carmen_gnav_room_msg));
+  carmen_test_alloc(response);
+
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
+
+  response->room = room;
+
+  err = IPC_respondData(msgRef, CARMEN_GNAV_ROOM_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_GNAV_ROOM_MSG_NAME);
+}
+
+static void gnav_goal_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_gnav_goal_msg *response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+  
+  response = (carmen_gnav_goal_msg *)
+    calloc(1, sizeof(carmen_gnav_goal_msg));
+  carmen_test_alloc(response);
+
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
+
+  response->goal = goal;
+
+  err = IPC_respondData(msgRef, CARMEN_GNAV_GOAL_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_GNAV_GOAL_MSG_NAME);
+}
+
+static void gnav_path_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_gnav_path_msg *response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+  
+  response = (carmen_gnav_path_msg *)
+    calloc(1, sizeof(carmen_gnav_path_msg));
+  carmen_test_alloc(response);
+
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
+
+  response->path = (int *) calloc(pathlen, sizeof(int));
+  carmen_test_alloc(response->path);
+  memcpy(response->path, path, pathlen * sizeof(int));
+  response->pathlen = pathlen;
+
+  err = IPC_respondData(msgRef, CARMEN_GNAV_PATH_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_GNAV_PATH_MSG_NAME);
+}
+
 static void gnav_rooms_topology_query_handler
 (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
  void *clientData __attribute__ ((unused))) {
@@ -1401,6 +1479,25 @@ static void ipc_init() {
 		      CARMEN_GNAV_ROOM_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_ROOM_MSG_NAME);
 
+  err = IPC_defineMsg(CARMEN_GNAV_ROOM_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_ROOM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_GNAV_ROOM_QUERY_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_GOAL_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_GOAL_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_GOAL_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_GOAL_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_GOAL_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_GNAV_GOAL_QUERY_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_PATH_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_PATH_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_GNAV_PATH_QUERY_NAME);
+
   err = IPC_defineMsg(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
@@ -1421,6 +1518,24 @@ static void ipc_init() {
 
   carmen_localize_subscribe_globalpos_message(&global_pos, localize_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
+
+  err = IPC_subscribe(CARMEN_GNAV_ROOM_QUERY_NAME, 
+		      gnav_room_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", 
+		       CARMEN_GNAV_ROOM_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_GNAV_ROOM_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_GNAV_GOAL_QUERY_NAME, 
+		      gnav_goal_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", 
+		       CARMEN_GNAV_GOAL_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_GNAV_GOAL_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_GNAV_PATH_QUERY_NAME, 
+		      gnav_path_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", 
+		       CARMEN_GNAV_PATH_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_GNAV_PATH_QUERY_NAME, 100);
 
   err = IPC_subscribe(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, 
 		      gnav_rooms_topology_query_handler, NULL);
