@@ -71,6 +71,9 @@ typedef struct {
 #define      CARMEN_CANON_PREVIEW_STOP_NAME    "canon_preview_stop"
 #define      CARMEN_CANON_PREVIEW_STOP_FMT     ""
 
+#define      CARMEN_CANON_PREVIEW_SNAP_NAME    "canon_preview_stop"
+#define      CARMEN_CANON_PREVIEW_SNAP_FMT     ""
+
 typedef struct {
   int preview_length;
   char *preview;

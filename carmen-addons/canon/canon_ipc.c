@@ -54,7 +54,6 @@ void publish_preview(void *clientdata __attribute__ ((unused)),
     fprintf(stderr, "Error: could not download a preview.\n");
     return;
   }
-  fprintf(stderr, "(preview %d) ", preview.preview_length);
   err = IPC_publishData(CARMEN_CANON_PREVIEW_NAME, &preview);
   carmen_test_ipc_exit(err, "Could not publish", 
 		       CARMEN_CANON_PREVIEW_NAME);
@@ -79,6 +78,25 @@ void stop_preview(MSG_INSTANCE msgRef __attribute__ ((unused)),
     IPC_removeTimer(publish_preview);
     publishing_preview = 0;
   }
+}
+
+void snap_preview(MSG_INSTANCE msgRef __attribute__ ((unused)),
+		  BYTE_ARRAY callData __attribute__ ((unused)),
+		  void *clientData __attribute__ ((unused)))
+{
+  carmen_canon_preview_message preview;
+  IPC_RETURN_TYPE err;
+
+  if(canon_rcc_download_preview(camera_handle,
+				(unsigned char **)&preview.preview, 
+				&preview.preview_length) < 0) {
+    fprintf(stderr, "Error: could not download a preview.\n");
+    return;
+  }
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_NAME, &preview);
+  carmen_test_ipc_exit(err, "Could not publish", 
+		       CARMEN_CANON_PREVIEW_NAME);
+  free(preview.preview);
 }
 
 void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -162,6 +180,12 @@ void initialize_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_CANON_PREVIEW_STOP_NAME);
 
+  /* register preview snap message */
+  err = IPC_defineMsg(CARMEN_CANON_PREVIEW_SNAP_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_PREVIEW_SNAP_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_CANON_PREVIEW_SNAP_NAME);
+
   /* heartbeat message */
   err = IPC_defineMsg(CARMEN_CANON_ALIVE_NAME, IPC_VARIABLE_LENGTH, 
                       CARMEN_CANON_ALIVE_FMT);
@@ -187,5 +211,11 @@ void initialize_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not subscribe to", 
                        CARMEN_CANON_PREVIEW_STOP_NAME);
   IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_STOP_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_CANON_PREVIEW_SNAP_NAME,
+		      snap_preview, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+                       CARMEN_CANON_PREVIEW_SNAP_NAME);
+  IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_SNAP_NAME, 100);
 }
 
