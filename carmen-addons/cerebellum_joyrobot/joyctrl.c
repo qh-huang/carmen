@@ -132,6 +132,6 @@ void carmen_joystick_control(carmen_joystick_type *joystick, double max_tv,
   //  printf("buttons[0]: %d buttons[1]: %d buttons[2]: %d\n",
   //	 joystick->buttons[0], joystick->buttons[1],joystick->buttons[2]); 
 
-  printf("calc tilt: %d\n", *tilt);
-  printf("calc fire: %d\n", *fire);
+  //printf("calc tilt: %d\n", *tilt);
+  //printf("calc fire: %d\n", *fire);
 }
