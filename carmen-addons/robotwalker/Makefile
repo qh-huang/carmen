@@ -5,7 +5,8 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = robotwalker.c gnav.c gnav_interface.c #valet.c valet_interface.c
+SOURCES = robotwalker.c gnav.c gnav_interface.c valet.c valet_interface.c \
+		valet_test.c
 
 ifndef NO_GRAPHICS
 
@@ -13,9 +14,11 @@ SOURCES += gnav_gui.c
 
 CFLAGS +=
 IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
-LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lgdk_imlib -lglobal \
+LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lgdk_imlib \
+		-lglobal \
 		-lglobal_graphics -lipc `$(GTK_CONFIG) --libs gthread` \
-		-llocalize_interface -llaser_interface -lserial
+		-llocalize_interface -llaser_interface -lnavigator_interface \
+		-lserial
 else
 
 CFLAGS +=
@@ -26,7 +29,7 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = robotwalker gnav #autovalet
+TARGETS = robotwalker gnav valet valet_test
 
 ifndef NO_GRAPHICS
 TARGETS += gnav_gui
@@ -49,10 +52,11 @@ gnav_gui:	gnav_gui.o
 
 libgnav_interface.a:	gnav_interface.o
 
-#valet:	valet.o
+valet:	valet.o
 
-#libvalet_interface.a:	valet_interface.o
+libvalet_interface.a:	valet_interface.o
 
+valet_test:	valet_test.o valet_interface.o
 
 include $(CARMEN_HOME)/src/Makefile.rules
 
