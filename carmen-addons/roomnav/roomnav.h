@@ -27,6 +27,7 @@ struct carmen_door {
   carmen_point_t pose;  // in world coordinates
   double width;  // in meters
   int num;
+  int is_real_door;  // or just a border between rooms
 };
 
 struct carmen_room {
@@ -34,6 +35,18 @@ struct carmen_room {
   char *name;
   int *doors;
   int num_doors;
+  int type;
+  int num_cells;
+  double ux;   // mean x
+  double uy;   // mean y
+  double vx;   // var(x)
+  double vy;   // var(y)
+  double vxy;  // cov(x,y)
+  double w1;   // major eigenvalue
+  double w2;   // minor eigenvalue
+  double theta;  // orientation of bivariate normal
+  carmen_point_t e1;  // endpoint 1 (for hallways only)
+  carmen_point_t e2;  // endpoint 2 (for hallways only)
 };
 
 typedef struct carmen_door carmen_door_t, *carmen_door_p;
@@ -52,6 +65,8 @@ typedef struct {
 #define GRID_DOOR     -4
 #define GRID_PROBE    -5
 
+#define CARMEN_ROOM_TYPE_ROOM     0
+#define CARMEN_ROOM_TYPE_HALLWAY  1
 
 #ifdef __cplusplus
 }
