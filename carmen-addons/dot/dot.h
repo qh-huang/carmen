@@ -12,6 +12,7 @@ extern "C" {
 #define CARMEN_DOT_TRASH   1
 #define CARMEN_DOT_DOOR    2
 
+typedef enum {carmen_dot_person, carmen_dot_trash, carmen_dot_door} carmen_dot_enum_t;
 
 typedef struct {
   int id;
@@ -42,6 +43,14 @@ typedef struct {
   double vtheta;
 } carmen_dot_door_t, *carmen_dot_door_p;
 
+typedef struct {
+  int dot_type;
+  union {
+    carmen_dot_door_t door;
+    carmen_dot_person_t person;
+    carmen_dot_trash_t trash;
+  } data;
+} carmen_dot_t;
 
 #ifdef __cplusplus
 }
