@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 void carmen_dot_reset();
+// returns num people/trash/doors
 int carmen_dot_get_people(carmen_dot_person_p people);
 int carmen_dot_get_trash(carmen_dot_trash_p trash);
 int carmen_dot_get_doors(carmen_dot_door_p doors);
