@@ -26,6 +26,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
+#include <carmen/amtec_messages.h>
 #include "segway_messages.h"
 #include "segwaycore.h"
 
@@ -40,6 +41,7 @@ carmen_base_odometry_message odometry;
 carmen_robot_laser_message rearlaser;
 carmen_laser_laser_message frontlaser;
 carmen_segway_pose_message segway;
+carmen_amtec_status_message amtec;
 
 long *message_list = NULL;
 int message_list_length = 0;
@@ -135,6 +137,10 @@ void register_ipc_messages(void)
   err = IPC_defineMsg(CARMEN_SEGWAY_POSE_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_SEGWAY_POSE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_POSE_NAME);
+
+  err = IPC_defineMsg(CARMEN_AMTEC_STATUS_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_AMTEC_STATUS_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_AMTEC_STATUS_NAME);
   
   err = IPC_subscribe(CARMEN_PLAYBACK_COMMAND_NAME, command_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_PLAYBACK_COMMAND_NAME);
@@ -295,6 +301,16 @@ int read_message(int message_num, int publish)
     if (publish) {
       wait_for_timestamp(playback_timestamp);
       err = IPC_publishData(CARMEN_SEGWAY_POSE_NAME, &segway);
+    }
+  }
+  if (strcmp(message_name, "AMTEC") == 0) {
+    fprintf(stderr, "A");
+    sscanf(line_ptr, "%lf %lf %lf %lf %lf %s %lf\n",
+	   &amtec.pan, &amtec.tilt, &amtec.pan_vel, &amtec.tilt_vel,
+	   &amtec.timestamp, amtec.host, &playback_timestamp);
+    if (publish) {
+      wait_for_timestamp(playback_timestamp);
+      err = IPC_publishData(CARMEN_AMTEC_STATUS_NAME, &amtec);
     }
   }
   return 0;
