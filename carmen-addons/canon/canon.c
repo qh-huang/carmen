@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+//#include <linux/usb.h>
 #include <usb.h>
 #include "canon.h"
 

@@ -1,5 +1,4 @@
-CARMEN_HOME = /home/mmde/carmen
-include $(CARMEN_HOME)/src/Makefile.conf
+include ../Makefile.conf
 
 MODULE_NAME = CANON
 MODULE_COMMENT = Canon Powershot Camera Driver for CARMEN
@@ -12,6 +11,9 @@ PUBLIC_INCLUDES =
 PUBLIC_LIBRARIES = 
 PUBLIC_BINARIES = 
 MAN_PAGES =
+
+ifndef NO_USB
+#IFLAGS += -I$(USB_INCLUDE_PATH)
 SOURCES = canon.c canon_server.c canon_ipc.c capture_test.c parse-log.c
 TARGETS = libcanon.a libcanon_interface.a canon_server capture_test parse-log
 
@@ -20,6 +22,8 @@ IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += `$(GTK_CONFIG) --libs` -lgdk_imlib -lglobal_graphics
 SOURCES += previewer.c
 TARGETS += previewer
+endif
+
 endif
 
 # rules

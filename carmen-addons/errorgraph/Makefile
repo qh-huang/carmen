@@ -1,7 +1,4 @@
-ifndef CARMEN_HOME
-$(error CARMEN_HOME must be set in order to compile carmen-addons)
-endif
-
+include ../Makefile.conf
 include $(CARMEN_HOME)/src/Makefile.conf
 
 MODULE_NAME = ERRORGRAPH
