@@ -8,7 +8,7 @@ IFLAGS +=
 LFLAGS += -lparam_interface -lglobal -lipc -lusb -ljpeg
 
 PUBLIC_INCLUDES = canon_messages.h canon_interface.h
-PUBLIC_LIBRARIES = libcanon_interface.a
+PUBLIC_LIBRARIES = libcanon_interface.a libjpegread.a
 PUBLIC_BINARIES = canon_server previewer
 MAN_PAGES =
 
@@ -32,7 +32,9 @@ all:
 
 libcanon.a:	canon.o
 
-libcanon_interface.a:	canon_interface.o jpegread.o
+libjpegread.a:	jpegread.o
+
+libcanon_interface.a:	canon_interface.o libjpegread.a
 
 capture_test:	capture_test.o libcanon_interface.a
 
