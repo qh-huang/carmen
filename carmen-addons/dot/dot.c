@@ -592,6 +592,7 @@ static int invert2d(double *a, double *b, double *c, double *d) {
   return 0;
 }
 
+#if 0
 static double matrix_det(gsl_matrix *M) {
 
   gsl_matrix *A;
@@ -611,6 +612,8 @@ static double matrix_det(gsl_matrix *M) {
 
   return d;
 }
+#endif
+
 
 static void matrix_invert(gsl_matrix *M) {
 
@@ -686,6 +689,7 @@ static inline double bnorm_w2(double vx, double vy, double vxy) {
   return (vx + vy)/2.0 - sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
 }
 
+#if 0
 static double bnorm_f(double x, double y, double ux, double uy,
 		      double vx, double vy, double vxy) {
   
@@ -696,6 +700,7 @@ static double bnorm_f(double x, double y, double ux, double uy,
   
   return exp(-z/(2.0*(1 - p*p)))/(2.0*M_PI*sqrt(vx*vy*(1 - p*p)));
 }
+#endif
 
 //dbug: use errors P?
 static int person_contains(carmen_dot_person_filter_p f, double x, double y, double stdevs) {
@@ -1258,6 +1263,7 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
   gsl_matrix_free(P2);
 }
  
+#if 0
 static void person_filter_sensor_update_r(carmen_dot_person_filter_p f,
 					  double lx, double ly, double ltheta,
 					  double x, double y) {
@@ -1320,6 +1326,7 @@ static void person_filter_sensor_update_r(carmen_dot_person_filter_p f,
   //gsl_matrix_fprintf(stdout, f->P, "%f");
   //printf("\n\n");
 }
+#endif
 
 static void trash_filter_motion_update(carmen_dot_trash_filter_p f) {
 
@@ -1881,6 +1888,7 @@ static void trash_filter_sensor_update(carmen_dot_trash_filter_p f,
   gsl_matrix_free(P2);
 }
 
+#if 0
 static void door_filter_motion_update(carmen_dot_door_filter_p f) {
 
   double ax, ay;
@@ -1897,6 +1905,7 @@ static void door_filter_motion_update(carmen_dot_door_filter_p f) {
   f->pxy = ax*ax*f->pxy + f->qxy;
   f->py = ay*ay*f->py + f->qy;
 }
+#endif
 
 static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, double y) {
 
@@ -2150,6 +2159,7 @@ static double map_prob(double x, double y) {
   return exp(localize_map.gprob[mp.x][mp.y]);
 }
 
+#if 0
 static int list_contains(carmen_list_t *list, int entry) {
 
   int i;
@@ -2160,6 +2170,7 @@ static int list_contains(carmen_list_t *list, int entry) {
 
   return 0;
 }
+#endif
 
 static int dot_filter(double lx, double ly, double ltheta, double x, double y, int ri) {
 
