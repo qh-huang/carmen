@@ -38,8 +38,10 @@ double last_command = 0, last_status = 0;
 
 void shutdown_handler(int sig)
 {
-  if(sig == SIGINT)
+  if(sig == SIGINT) { 
+    fprintf(stderr, "\n");
     quit_signal = 1;
+  }
 }
 
 void read_parameters(int argc, char **argv)
@@ -98,7 +100,7 @@ int main(int argc, char **argv)
       sleep_ipc(0.001);
 
       if(current_time - last_status > 1.0) {
-	fprintf(stderr, "TV = %.1f     RV = %.1f   Battery = %d%%\r\n",
+	fprintf(stderr, "\rTV = %.1f     RV = %.1f   Battery = %d%%      ",
 		command_tv, command_rv, (int)segway.voltage);
 	last_status = current_time;
       }
