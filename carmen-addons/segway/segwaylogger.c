@@ -29,6 +29,8 @@
 #include "carmen/logger.h"
 #include "carmen/logger_io.h"
 #include "segway_interface.h"
+#include <carmen/amtec_messages.h>
+#include <carmen/amtec_interface.h>
 #include <ctype.h>
 
 int carmen_logger_nogz;
@@ -36,6 +38,8 @@ int carmen_playback_nogz;
 
 carmen_logger_file_p outfile = NULL;
 double logger_starttime;
+carmen_segway_pose_message pose;
+carmen_amtec_status_message amtec_status;
 
 void get_all_params(void)
 {
@@ -97,18 +101,16 @@ void base_odometry_handler(carmen_base_odometry_message *odometry)
 }
 
 
-void robot_frontlaser_handler(carmen_robot_laser_message *frontlaser)
+void robot_frontlaser_handler(carmen_laser_laser_message *frontlaser)
 {
+  int i;
   fprintf(stderr, "F");
-  carmen_logger_write_frontlaser(frontlaser, outfile, 
-				 carmen_get_time_ms() - logger_starttime);
-}
+  carmen_logger_fprintf(outfile, "FLASER %d ", frontlaser->num_readings);
+  for(i = 0; i < frontlaser->num_readings; i++)
+    carmen_logger_fprintf(outfile, "%.2f ", frontlaser->range[i]);
+  carmen_logger_fprintf(outfile, "%f %s %f\n", frontlaser->timestamp,
+	  frontlaser->host, carmen_get_time_ms() - logger_starttime);
 
-void robot_rearlaser_handler(carmen_robot_laser_message *rearlaser)
-{
-  fprintf(stderr, "R");
-  carmen_logger_write_rearlaser(rearlaser, outfile, 
-				carmen_get_time_ms() - logger_starttime);
 }
 
 void segway_pose_handler(carmen_segway_pose_message *pose)
@@ -119,6 +121,16 @@ void segway_pose_handler(carmen_segway_pose_message *pose)
 			pose->roll_rate, pose->lw_velocity, pose->rw_velocity,
 			pose->x, pose->y, pose->theta, pose->timestamp,
 			pose->host, carmen_get_time_ms() - logger_starttime);
+}
+
+void amtec_status_handler(carmen_amtec_status_message *amtec_status)
+{
+  fprintf(stderr, "A");
+  carmen_logger_fprintf(outfile, "AMTEC %f %f %f %f %f %s %f\n",
+			amtec_status->pan, amtec_status->tilt,
+			amtec_status->pan_vel, amtec_status->tilt_vel,
+			amtec_status->timestamp, amtec_status->host,
+			carmen_get_time_ms() - logger_starttime);
 }
 
 static void sync_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -170,7 +182,7 @@ int main(int argc, char **argv)
   char key;
 
   carmen_base_odometry_message odometry;
-  carmen_robot_laser_message frontlaser, rearlaser;
+  carmen_laser_laser_message frontlaser;
 
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);	
@@ -216,11 +228,11 @@ int main(int argc, char **argv)
 
   carmen_base_subscribe_odometry_message(&odometry, (carmen_handler_t)base_odometry_handler, 
 					 CARMEN_SUBSCRIBE_ALL);
-  carmen_robot_subscribe_frontlaser_message(&frontlaser, 
+  carmen_laser_subscribe_frontlaser_message(&frontlaser, 
 					    (carmen_handler_t)robot_frontlaser_handler, 
 					    CARMEN_SUBSCRIBE_ALL);
-  carmen_robot_subscribe_rearlaser_message(&rearlaser, (carmen_handler_t)robot_rearlaser_handler, 
-					   CARMEN_SUBSCRIBE_ALL);
+  carmen_segway_subscribe_pose_message(&pose, (carmen_handler_t)segway_pose_handler, CARMEN_SUBSCRIBE_ALL);
+  carmen_amtec_subscribe_status_message(&amtec_status, (carmen_handler_t)amtec_status_handler, CARMEN_SUBSCRIBE_ALL);
 
   logger_starttime = carmen_get_time_ms();
 
