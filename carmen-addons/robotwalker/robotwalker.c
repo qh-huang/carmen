@@ -41,7 +41,7 @@ static int num_doors;
 
 static GdkGC *drawing_gc = NULL;
 static GdkPixmap *pixmap = NULL;
-static GtkWidget *canvas;
+static GtkWidget *window, *canvas;
 static int canvas_width = 300, canvas_height = 300;
 
 //static int cnt = 0;
@@ -123,125 +123,12 @@ void get_doors(carmen_map_placelist_p placelist) {
   free(num_doorplaces);
 }
 
-gint do_probe(gpointer data) {
+void probe(int px, int py) {
 
   blob_p blob;
   point_node_p tmp;
   int x, y, i, j, step, cell;
-
-  step = (int) (0.4 / grid_resolution);
-  if (step == 0)
-    step = 1;
-
-  blob = (blob_p) data;
-
-  if (blob->probe_stack == NULL) {
-    draw_grid(0, 0, canvas_width, canvas_height);
-    return 0;
-  }
-
-  /*
-  if (cnt < 1000) {
-    cnt++;
-    return 1;
-  }
-  
-  cnt = 0;
-  */
-
-  x = blob->probe_stack->x;
-  y = blob->probe_stack->y;
-  
-  tmp = blob->probe_stack;
-  blob->probe_stack = blob->probe_stack->next;
-  free(tmp);
-  
-  for (i = x; i < x + step; i++) {
-    for (j = y; j < y + step; j++) {
-      //printf("adding (%d, %d) to room_stack\n", i, j);
-      grid[i][j] = GRID_PROBE;
-      tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-      carmen_test_alloc(tmp);
-      tmp->x = i;
-      tmp->y = i;
-      tmp->next = blob->room_stack;
-      blob->room_stack = tmp;
-    }
-  }
-  
-  // up
-  cell = GRID_NONE;
-  for (i = x; i < x + step && cell == GRID_NONE; i++)
-    for (j = y + step; j < y + 2*step && cell == GRID_NONE; j++)
-      cell = grid[i][j];
-  if (cell >= 0)
-    blob->num = cell;
-  else if (cell == GRID_NONE) {
-    tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-    carmen_test_alloc(tmp);
-    tmp->x = x;
-    tmp->y = y + step;
-    tmp->next = blob->probe_stack;
-    blob->probe_stack = tmp;
-  }
-  
-  // down
-  cell = GRID_NONE;
-  for (i = x; i < x + step && cell == GRID_NONE; i++)
-    for (j = y - 1; j >= y - step && cell == GRID_NONE; j--)
-      cell = grid[i][j];
-  if (cell >= 0)
-    blob->num = cell;
-  else if (cell == GRID_NONE) {
-    tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-    carmen_test_alloc(tmp);
-    tmp->x = x;
-    tmp->y = y - step;
-    tmp->next = blob->probe_stack;
-    blob->probe_stack = tmp;
-  }
-  
-  // right
-  cell = GRID_NONE;
-  for (i = x + step; i < x + 2*step && cell == GRID_NONE; i++)
-    for (j = y; j < y + step && cell == GRID_NONE; j++)
-      cell = grid[i][j];
-  if (cell >= 0)
-    blob->num = cell;
-  else if (cell == GRID_NONE) {
-    tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-    carmen_test_alloc(tmp);
-    tmp->x = x + step;
-    tmp->y = y;
-    tmp->next = blob->probe_stack;
-    blob->probe_stack = tmp;
-  }
-  
-  // left
-  cell = GRID_NONE;
-  for (i = x-1; i >= x - step && cell == GRID_NONE; i--)
-    for (j = y; j < y + step && cell == GRID_NONE; j++)
-      cell = grid[i][j];
-  if (cell >= 0)
-    blob->num = cell;
-  else if (cell == GRID_NONE) {
-    tmp = (point_node_p) calloc(1, sizeof(point_node_t));
-    carmen_test_alloc(tmp);
-    tmp->x = x - step;
-    tmp->y = y;
-    tmp->next = blob->probe_stack;
-    blob->probe_stack = tmp;
-  }
-  
-  grid_to_image(x, y, step, step);
-  //draw_grid(x, y, step, step);
-  
-  return 1;
-}
-
-void probe(int px, int py) {
-
-  blob_p blob;
+  //int bbx0, bby0, bbx1, bby1;
 
   blob = (blob_p) calloc(1, sizeof(blob_t));
   carmen_test_alloc(blob);
@@ -254,7 +141,120 @@ void probe(int px, int py) {
   blob->probe_stack->next = NULL;
   blob->room_stack = NULL;
 
-  gtk_idle_add_priority(GTK_PRIORITY_LOW, do_probe, (gpointer) blob);
+  step = (int) (0.4 / grid_resolution);
+  if (step == 0)
+    step = 1;
+
+  //bbx0 = px;
+  //bby0 = py;
+  //bbx1 = px + step;
+  //bby1 = py + step;
+  
+  while (blob->probe_stack != NULL) {
+
+    x = blob->probe_stack->x;
+    y = blob->probe_stack->y;
+  
+    //if (x < bbx0)
+    //  bbx0 = x;
+    //else if (x + step > bbx1)
+    //  bbx1 = x + step;
+    //if (y < bby0)
+    //  bby0 = y;
+    //else if (y + step > bby1)
+    //  bby1 = y + step;
+
+    tmp = blob->probe_stack;
+    blob->probe_stack = blob->probe_stack->next;
+    free(tmp);
+  
+    for (i = x; i < x + step; i++) {
+      for (j = y; j < y + step; j++) {
+	//printf("adding (%d, %d) to room_stack\n", i, j);
+	grid[i][j] = GRID_PROBE;
+	tmp = (point_node_p) calloc(1, sizeof(point_node_t));
+	carmen_test_alloc(tmp);
+	tmp->x = i;
+	tmp->y = i;
+	tmp->next = blob->room_stack;
+	blob->room_stack = tmp;
+      }
+    }
+    
+    // up
+    cell = GRID_NONE;
+    for (i = x; i < x + step && cell == GRID_NONE; i++)
+      for (j = y + step; j < y + 2*step && cell == GRID_NONE; j++)
+	cell = grid[i][j];
+    if (cell >= 0)
+      blob->num = cell;
+    else if (cell == GRID_NONE) {
+      tmp = (point_node_p) calloc(1, sizeof(point_node_t));
+      carmen_test_alloc(tmp);
+      tmp->x = x;
+      tmp->y = y + step;
+      tmp->next = blob->probe_stack;
+      blob->probe_stack = tmp;
+    }
+    
+    // down
+    cell = GRID_NONE;
+    for (i = x; i < x + step && cell == GRID_NONE; i++)
+      for (j = y - 1; j >= y - step && cell == GRID_NONE; j--)
+	cell = grid[i][j];
+    if (cell >= 0)
+      blob->num = cell;
+    else if (cell == GRID_NONE) {
+      tmp = (point_node_p) calloc(1, sizeof(point_node_t));
+      carmen_test_alloc(tmp);
+      tmp->x = x;
+      tmp->y = y - step;
+      tmp->next = blob->probe_stack;
+      blob->probe_stack = tmp;
+    }
+  
+    // right
+    cell = GRID_NONE;
+    for (i = x + step; i < x + 2*step && cell == GRID_NONE; i++)
+      for (j = y; j < y + step && cell == GRID_NONE; j++)
+	cell = grid[i][j];
+    if (cell >= 0)
+      blob->num = cell;
+    else if (cell == GRID_NONE) {
+      tmp = (point_node_p) calloc(1, sizeof(point_node_t));
+      carmen_test_alloc(tmp);
+      tmp->x = x + step;
+      tmp->y = y;
+      tmp->next = blob->probe_stack;
+      blob->probe_stack = tmp;
+    }
+    
+    // left
+    cell = GRID_NONE;
+    for (i = x-1; i >= x - step && cell == GRID_NONE; i--)
+      for (j = y; j < y + step && cell == GRID_NONE; j++)
+	cell = grid[i][j];
+    if (cell >= 0)
+      blob->num = cell;
+    else if (cell == GRID_NONE) {
+      tmp = (point_node_p) calloc(1, sizeof(point_node_t));
+      carmen_test_alloc(tmp);
+      tmp->x = x - step;
+      tmp->y = y;
+      tmp->next = blob->probe_stack;
+      blob->probe_stack = tmp;
+    }
+
+    grid_to_image(x-2, y-2, step+4, step+4);
+    draw_grid(x-2, y-2, step+4, step+4);
+  }
+
+  while(blob->room_stack != NULL) {
+    tmp = blob->room_stack;
+    grid[tmp->x][tmp->y] = blob->num;
+    blob->room_stack = blob->room_stack->next;
+    free(tmp);
+  }
 }
 
 int get_farthest(int door, int place) {
@@ -329,8 +329,8 @@ void get_rooms() {
     }
   }
 
-  grid_to_image(0, 0, canvas_width, canvas_height);
-  draw_grid(0, 0, canvas_width, canvas_height);
+  grid_to_image(0, 0, grid_width, grid_height);
+  draw_grid(0, 0, grid_width, grid_height);
 
   // get probes
   for (i = 0; i < num_doors; i++) {
@@ -404,6 +404,9 @@ void grid_init() {
   canvas_height = grid_height;
 
   gtk_drawing_area_size(GTK_DRAWING_AREA(canvas), canvas_width, canvas_height);
+
+  while(gtk_events_pending())
+    gtk_main_iteration_do(TRUE);
 }
 
 void get_map() {
@@ -440,11 +443,19 @@ static GdkColor grid_color(int cell) {
 
 static void grid_to_image(int x0, int y0, int width, int height) {
 
-  int x, y, x2, y2;
+  int x, y, x2, y2, cx, cy, cw, ch;
   GdkColor color;
 
-  for(x = x0; x < x0 + width; x++) {
-    for(y = x0; y < y0 + height; y++) {
+  if (x0 < 0 || x0+width > grid_width || y0 < 0 || y0+height > grid_height)
+    return;
+
+  cx = (int) ((x0 / (double) grid_width) * canvas_width);
+  cy = (int) ((1.0 - ((y0+height) / (double) grid_height)) * canvas_height);
+  cw = (int) ((width / (double) grid_width) * canvas_width);
+  ch = (int) ((height / (double) grid_height) * canvas_height);
+
+  for(x = cx; x < cx + cw; x++) {
+    for(y = cy; y < cy + ch; y++) {
       //printf("break %d%d1\n", x, y);
       x2 = (int) ((x / (double) canvas_width) * grid_width);
       y2 = (int) ((1.0 - ((y+1) / (double) canvas_height)) * grid_height);
@@ -460,9 +471,22 @@ static void grid_to_image(int x0, int y0, int width, int height) {
 
 static void draw_grid(int x, int y, int width, int height) {
 
+  int cx, cy, cw, ch;
+
+  if (x < 0 || x+width > grid_width || y < 0 || y+height > grid_height)
+    return;
+
+  cx = (int) ((x / (double) grid_width) * canvas_width);
+  cy = (int) ((1.0 - ((y+height+1) / (double) grid_height)) * canvas_height);
+  cw = (int) ((width / (double) grid_width) * canvas_width);
+  ch = (int) ((height / (double) grid_height) * canvas_height);
+
   gdk_draw_pixmap(canvas->window,
 		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
-		  pixmap, x, y, x, y, width, height);
+		  pixmap, cx, cy, cx, cy, cw, ch);
+
+  while(gtk_events_pending())
+    gtk_main_iteration_do(TRUE);
 }
 
 static gint canvas_configure(GtkWidget *widget,
@@ -480,8 +504,8 @@ static gint canvas_configure(GtkWidget *widget,
 			  canvas_height, -1);
 
   if (display) {
-    grid_to_image(0, 0, canvas_width, canvas_height);
-    draw_grid(0, 0, canvas_width, canvas_height);
+    grid_to_image(0, 0, grid_width, grid_height);
+    draw_grid(0, 0, grid_width, grid_height);
   }
 
   return TRUE;
@@ -492,12 +516,12 @@ static gint canvas_expose(GtkWidget *widget __attribute__ ((unused)),
 
   int display = (drawing_gc != NULL);
   
-  if (display) {
-    grid_to_image(event->area.x, event->area.y,
-		  event->area.width, event->area.height);
-    draw_grid(event->area.x, event->area.y,
-	      event->area.width, event->area.height);
-  }
+  if (display)
+    gdk_draw_pixmap(canvas->window,
+		    canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
+		    pixmap, event->area.x, event->area.y,
+		    event->area.x, event->area.y,
+		    event->area.width, event->area.height);
 
   return TRUE;
 }
@@ -509,7 +533,7 @@ static void window_destroy(GtkWidget *w __attribute__ ((unused))) {
 
 static void gui_init() {
 
-  GtkWidget *window, *vbox;
+  GtkWidget *vbox;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_policy(GTK_WINDOW(window), FALSE, FALSE, FALSE);
