@@ -28,7 +28,7 @@ void carmen_dot_reset() {
 			 CARMEN_DOT_RESET_MSG_NAME);
 }
 
-int carmen_dot_get_all_people(carmen_dot_person_p *people) {
+int carmen_dot_get_all_people(carmen_dot_person_p *people, int *num_people) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
@@ -63,11 +63,13 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people) {
     else
       *people = NULL;
   }
+  if (num_people)
+    *num_people = response->num_people;
 
-  return response->num_people;
+  return 0;
 }
 
-int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
+int carmen_dot_get_all_trash(carmen_dot_trash_p *trash, int *num_trash) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
@@ -97,11 +99,13 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
     else
       *trash = NULL;
   }
+  if (num_trash)
+    *num_trash = response->num_trash;
 
-  return response->num_trash;
+  return 0;
 }
 
-int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
+int carmen_dot_get_all_doors(carmen_dot_door_p *doors, int *num_doors) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
@@ -131,8 +135,10 @@ int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
     else
       *doors = NULL;
   }
+  if (num_doors)
+    *num_doors = response->num_doors;
 
-  return response->num_doors;
+  return 0;
 }
 
 static void person_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
