@@ -89,6 +89,8 @@ static int thread_is_running = 0;
 //this is in the current iteration of the motor driver
 #define        MAX_CEREBELLUM_ACC 10
 
+#define        MIN_OBOT_TICKS (4.0)
+
 static char *dev_name;
 static int State[4];
 static int set_velocity = 0;
@@ -490,11 +492,33 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   //printf("After maxing: %f %f\r\n",vl,vr);
 
-  if( vl> 0.0 && vl < 3.0) vl = 3.0;
-  if( vl< 0.0 && vl > -3.0) vl =-3.0;
-  if( vr> 0.0 && vr < 3.0) vr = 3.0;
-  if( vr< 0.0 && vr > -3.0) vr =-3.0;
+  //we put in a minimum ticks per loop due to a bad motor controller
+  //note that if we set one to the minimum we should increase
+  //the other speed in proportion
+  if( vl> 0.0 && vl < MIN_OBOT_TICKS)
+    {
+      vr = vr/vl * MIN_OBOT_TICKS;
+      vl = MIN_OBOT_TICKS;
+    }
+  if( vl< 0.0 && vl > -MIN_OBOT_TICKS)
+    {
+      vr = vr/(fabs(vl)) * MIN_OBOT_TICKS;
+      vl =-MIN_OBOT_TICKS;
+    }
 
+  if( vr> 0.0 && vr < MIN_OBOT_TICKS)
+    {
+      vl = vl/vr * MIN_OBOT_TICKS;      
+      vr = MIN_OBOT_TICKS;
+    }
+
+  if( vr< 0.0 && vr > -MIN_OBOT_TICKS)
+    {
+      vl = vl/(fabs(vr)) * MIN_OBOT_TICKS;      
+
+      vr =-MIN_OBOT_TICKS;
+
+    }
   command_vl = (int)vl;
   command_vr = (int)vr;
 
