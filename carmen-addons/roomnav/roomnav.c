@@ -69,9 +69,10 @@ static int canvas_width = 300, canvas_height = 300;
 
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
-static int closest_room(int x, int y, int max_shell);
 
 #endif
+
+static int closest_room(int x, int y, int max_shell);
 
 static int fast = 0;
 
@@ -998,6 +999,8 @@ static void gui_init() {
   carmen_graphics_setup_colors();
 }
 
+#endif
+
 static double pq_f(path_node_p p) {
 
   int d;
@@ -1498,8 +1501,12 @@ void localize_handler() {
   if (new_room != room) {
     room = new_room;
     printf("room = %d\n", room);
+
+#ifndef NO_GRAPHICS
     grid_to_image(0, 0, grid_width, grid_height);
     draw_grid(0, 0, grid_width, grid_height);
+#endif
+
     publish_room_msg();
   }
 
@@ -1586,6 +1593,8 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_ROOMNAV_SET_GOAL_MSG_NAME);
   IPC_setMsgQueueLength(CARMEN_ROOMNAV_SET_GOAL_MSG_NAME, 100);
 }
+
+#ifndef NO_GRAPHICS
 
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {
 
