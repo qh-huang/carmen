@@ -6,8 +6,9 @@
 #include <carmen/carmen.h>
 #endif
 
-#include <carmen/map_interface.h>
 #include <carmen/map_io.h>
+
+#include "gnav_messages.h"
 
 
 #define GRID_NONE     -1
@@ -16,31 +17,6 @@
 #define GRID_DOOR     -4
 #define GRID_PROBE    -5
 
-/*
- * (pos.x, pos.y) is the center of the door.
- * pos.theta is between 0 and pi and indicates the 
- * angle of the positive (upward-pointing) vector
- * normal to the door at the center point.
-*/
-struct door {
-  struct room *room1;
-  struct room *room2;
-  carmen_map_placelist_t points;
-  carmen_point_t pose;  // in world coordinates
-  double width;  // in meters
-  int num;
-};
-
-struct room {
-  struct door **doors;
-  char *name;
-  int num_doors;
-  int num;
-};
-
-typedef struct door door_t, *door_p;
-typedef struct room room_t, *room_p;
-
 #define DEFAULT_GRID_RESOLUTION 0.1
 
 typedef struct point_node {
@@ -48,6 +24,13 @@ typedef struct point_node {
   int y;
   struct point_node *next;
 } point_node_t, *point_node_p;
+
+typedef struct path_node {
+  int *path;
+  int pathlen;
+  int cost;
+  struct path_node *next;
+} path_node_t, *path_node_p;
 
 typedef struct fill_node {
   int x;
@@ -66,13 +49,16 @@ static carmen_map_t map;
 static int **grid;
 static int grid_width, grid_height;
 static double grid_resolution;
-static room_p rooms;
+static carmen_room_p rooms;
 static int num_rooms;
-static door_p doors;
+static carmen_door_p doors;
 static int num_doors;
 
 carmen_localize_globalpos_message global_pos;
 static int room = -1;
+static int goal = -1;
+static int *path = NULL;
+static int pathlen = -1;  // 0 = goal reached, -1 = goal unreachable
 
 #ifndef NO_GRAPHICS
 
@@ -88,22 +74,22 @@ static void grid_to_image(int x, int y, int width, int height);
 
 static int fast = 0;
 
-int get_farthest(int door, int place);
+static int get_farthest(int door, int place);
 
 
-inline double dist(double x, double y) {
+static inline double dist(double x, double y) {
 
   return sqrt(x*x + y*y);
 }
 
-void print_doors() {
+static void print_doors() {
 
   int i;
 
   for (i = 0; i < num_doors; i++) {
     printf("door %d:  ", i);
-    printf("rooms(%d, %d), ", doors[i].room1 != NULL ? doors[i].room1->num : -1,
-	   doors[i].room2 != NULL ? doors[i].room2->num : -1);
+    printf("rooms(%d, %d), ", doors[i].room1 != -1 ? rooms[doors[i].room1].num : -1,
+	   doors[i].room2 != -1 ? rooms[doors[i].room2].num : -1);
     printf("pose(%.2f, %.2f, %.0f), ", doors[i].pose.x, doors[i].pose.y,
 	   carmen_radians_to_degrees(doors[i].pose.theta));
     printf("width(%.2f)", doors[i].width);
@@ -112,7 +98,7 @@ void print_doors() {
 }
 
 // fmt of place names: "<door>.<place>" 
-void get_doors(carmen_map_placelist_p placelist) {
+static void get_doors(carmen_map_placelist_p placelist) {
 
   int num_doornames, num_places, *num_doorplaces;
   int i, j, k, n, e1, e2;
@@ -148,7 +134,7 @@ void get_doors(carmen_map_placelist_p placelist) {
   }
   
   num_doors = num_doornames;
-  doors = (door_p) calloc(num_doors, sizeof(door_t));
+  doors = (carmen_door_p) calloc(num_doors, sizeof(carmen_door_t));
   carmen_test_alloc(doors);
 
   // get door places
@@ -188,7 +174,7 @@ void get_doors(carmen_map_placelist_p placelist) {
 }
 
 /* returns room number */
-int probe(int px, int py) {
+static int probe(int px, int py) {
 
   blob_p blob;
   point_node_p tmp;
@@ -348,7 +334,7 @@ int probe(int px, int py) {
   return num;
 }
 
-int get_farthest(int door, int place) {
+static int get_farthest(int door, int place) {
 
   int i, n, f;
   double x, y, d, d2;
@@ -375,7 +361,7 @@ int get_farthest(int door, int place) {
   return f;
 }
 
-void get_rooms() {
+static void get_rooms() {
 
   int i, j, n, e1, e2;
   double x, y;
@@ -388,7 +374,7 @@ void get_rooms() {
   carmen_world_point_t world_point;
   carmen_map_point_t map_point;
 
-  rooms = (room_p) calloc(num_doors + 1, sizeof(room_t));
+  rooms = (carmen_room_p) calloc(num_doors + 1, sizeof(carmen_room_t));
   carmen_test_alloc(rooms);
   num_rooms = 0;
 
@@ -456,11 +442,11 @@ void get_rooms() {
     carmen_world_to_map(&world_point, &map_point);
     n = probe(map_point.x, map_point.y);
 
-    doors[i].room1 = &rooms[n];
+    doors[i].room1 = n;
 
     if (n == num_rooms) {
       rooms[n].num = n;
-      rooms[n].doors = (door_p *) calloc(num_doors, sizeof(door_p));
+      rooms[n].doors = (int *) calloc(num_doors, sizeof(int));
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
       rooms[n].name = (char *) calloc(10, sizeof(char));
@@ -470,22 +456,22 @@ void get_rooms() {
     }
 
     for (j = 0; j < rooms[n].num_doors; j++)
-      if (rooms[n].doors[j]->num == i)
+      if (doors[rooms[n].doors[j]].num == i)
 	break;
 
     if (j == rooms[n].num_doors)
-      rooms[n].doors[rooms[n].num_doors++] = &doors[i];
+      rooms[n].doors[rooms[n].num_doors++] = i;
 
     world_point.pose.x = p2x;
     world_point.pose.y = p2y;
     carmen_world_to_map(&world_point, &map_point);
     n = probe(map_point.x, map_point.y);
 
-    doors[i].room2 = &rooms[n];
+    doors[i].room2 = n;
 
     if (n == num_rooms) {
       rooms[n].num = n;
-      rooms[n].doors = (door_p *) calloc(num_doors, sizeof(door_p));
+      rooms[n].doors = (int *) calloc(num_doors, sizeof(int));
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
       rooms[n].name = (char *) calloc(10, sizeof(char));
@@ -495,17 +481,15 @@ void get_rooms() {
     }
 
     for (j = 0; j < rooms[n].num_doors; j++)
-      if (rooms[n].doors[j]->num == i)
+      if (doors[rooms[n].doors[j]].num == i)
 	break;
 
     if (j == rooms[n].num_doors)
-      rooms[n].doors[rooms[n].num_doors++] = &doors[i];
+      rooms[n].doors[rooms[n].num_doors++] = i;
   }
-
-  //dbug: find door width and pose
 }
 
-void grid_init() {
+static void grid_init() {
 
   int i, j;
 
@@ -624,7 +608,7 @@ static void cleanup_map() {
   }
 }
 
-void get_map() {
+static void get_map() {
 
   carmen_map_placelist_t placelist;
 
@@ -709,29 +693,19 @@ static void draw_grid(int x, int y, int width, int height) {
     gtk_main_iteration_do(TRUE);
 }
 
-/*
-static gint motion_notify_event(GtkWidget *widget __attribute__ ((unused)),
-				GdkEventMotion *event) {
+static gint button_press_event(GtkWidget *widget __attribute__ ((unused)),
+			       GdkEventMotion *event) {
 
-  int x, y, x2, y2;
-  GdkModifierType state;
+  int x, y;
 
-  if (event->is_hint)
-    gdk_window_get_pointer(event->window, &x, &y, &state);
-  else {
-    x = event->x;
-    y = event->y;
-    state = event->state;
-  }
+  x = (int) ((event->x / (double) canvas_width) * grid_width);
+  y = (int) ((1.0 - ((event->y+1) / (double) canvas_height)) * grid_height);
   
-  x2 = (int) ((x / (double) canvas_width) * grid_width);
-  y2 = (int) ((1.0 - ((y+1) / (double) canvas_height)) * grid_height);
-
-  printf("room %d\n", closest_room(x2,y2,10));
-
+  goal = closest_room(x,y,10);
+  printf("goal = %d\n", goal);
+  
   return TRUE;
 }
-*/
 
 static gint canvas_configure(GtkWidget *widget,
 			     gpointer p __attribute__ ((unused))) {
@@ -800,13 +774,11 @@ static void gui_init() {
 
   gtk_signal_connect(GTK_OBJECT(canvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
-  /*
-  gtk_signal_connect(GTK_OBJECT(canvas), "motion_notify_event",
-		     GTK_SIGNAL_FUNC(motion_notify_event), NULL);
 
-  gtk_widget_add_events(canvas, GDK_POINTER_MOTION_MASK |
-			GDK_POINTER_MOTION_HINT_MASK);
-  */
+  gtk_signal_connect(GTK_OBJECT(canvas), "button_press_event",
+		     GTK_SIGNAL_FUNC(button_press_event), NULL);
+
+  gtk_widget_add_events(canvas, GDK_BUTTON_PRESS_MASK);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -816,20 +788,262 @@ static void gui_init() {
   carmen_graphics_setup_colors();
 }
 
-static gint updateIPC(gpointer *data __attribute__ ((unused))) {
+static int pq_f(path_node_p p) {
 
-  sleep_ipc(0.01);
-  carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
+  int d, g, h, h2;
+
+  g = p->cost;
+
+  h = dist(doors[rooms[goal].doors[0]].pose.x - doors[p->path[p->pathlen-1]].pose.x,
+	   doors[rooms[goal].doors[0]].pose.y - doors[p->path[p->pathlen-1]].pose.y);
+
+  for (d = 1; d < rooms[goal].num_doors; d++) {
+    h2 = dist(doors[rooms[goal].doors[d]].pose.x - doors[p->path[p->pathlen-1]].pose.x,
+	      doors[rooms[goal].doors[d]].pose.y - doors[p->path[p->pathlen-1]].pose.y);
+    if (h2 < h)
+      h = h2;
+  }
+
+  return g+h;
+}
+
+static path_node_p pq_insert(path_node_p pq, path_node_p p) {
+
+  path_node_p tmp;
+  
+  if (pq == NULL || pq_f(p) <= pq_f(pq)) {
+    p->next = pq;
+    return p;
+  }
+
+  for (tmp = pq; tmp->next; tmp = tmp->next)
+    if (pq_f(p) <= pq_f(tmp->next))
+      break;
+
+  p->next = tmp->next;
+  tmp->next = p;
+
+  return pq;
+}
+
+static path_node_p pq_expand(path_node_p pq) {
+
+  path_node_p p, tmp;
+  int r, pd, rd, d;
+
+  p = pq;
+  pq = pq->next;
+
+  r = -1;
+
+  if (p->pathlen == 1) {
+    if (room == doors[p->path[0]].room1)
+      r = doors[p->path[0]].room2;
+    else
+      r = doors[p->path[0]].room1;
+  }
+  else {
+    if (doors[p->path[p->pathlen-2]].room1 == doors[p->path[p->pathlen-1]].room1 ||
+	doors[p->path[p->pathlen-2]].room2 == doors[p->path[p->pathlen-1]].room1)
+      r = doors[p->path[p->pathlen-1]].room2;
+    else
+      r = doors[p->path[p->pathlen-1]].room1;
+  }    
+
+  for (rd = 0; rd < rooms[r].num_doors; rd++) {
+    d = rooms[r].doors[rd];
+    for (pd = 0; pd < p->pathlen; pd++)
+      if (p->path[pd] == d)
+	break;
+    if (pd == p->pathlen) {
+      tmp = (path_node_p) calloc(1, sizeof(path_node_t));
+      carmen_test_alloc(tmp);
+      tmp->pathlen = p->pathlen + 1;
+      tmp->path = (int *) calloc(tmp->pathlen, sizeof(int));
+      carmen_test_alloc(tmp->path);
+      memcpy(tmp->path, p->path, p->pathlen * sizeof(int));
+      tmp->path[tmp->pathlen-1] = d;
+      tmp->cost = p->cost + dist(doors[d].pose.x - doors[p->path[p->pathlen-1]].pose.x,
+				 doors[d].pose.y - doors[p->path[p->pathlen-1]].pose.y);
+      pq = pq_insert(pq, tmp);
+    }
+  }
+
+  return pq;
+}
+
+static inline int is_goal(path_node_p p) {
+
+  return (doors[p->path[p->pathlen-1]].room1 == goal ||
+	  doors[p->path[p->pathlen-1]].room2 == goal);
+}
+
+static void pq_free(path_node_p pq) {
+
+  if (pq == NULL)
+    return;
+
+  pq_free(pq->next);
+
+  free(pq->path);
+  free(pq);
+}
+
+static path_node_p pq_init() {
+
+  path_node_p pq, tmp;
+  int rd, d;
+
+  pq = NULL;
+  d = -1;
+
+  for (rd = 0; rd < rooms[room].num_doors; rd++) {
+    d = rooms[room].doors[rd];
+    tmp = (path_node_p) calloc(1, sizeof(path_node_t));
+    carmen_test_alloc(tmp);
+    tmp->pathlen = 1;
+    tmp->path = (int *) calloc(tmp->pathlen, sizeof(int));
+    tmp->path[0] = d;
+    tmp->cost = dist(doors[d].pose.x - global_pos.globalpos.x,
+		     doors[d].pose.y - global_pos.globalpos.y);
+    pq = pq_insert(pq, tmp);
+  }
+
+  return pq;
+}
+
+static void print_path(int *p, int plen) {
+
+  int i;
+
+  printf("path =");  
+  for (i = 0; i < plen; i++)
+    printf(" %d", p[i]);
+  printf("\n");
+}
+
+static int path_eq(int *path1, int pathlen1, int *path2, int pathlen2) {
+
+  int i;
+
+  if (path1 == NULL)
+    return (path2 == NULL);
+
+  if (path2 == NULL)
+    return (path1 == NULL);
+
+  if (pathlen1 != pathlen2)
+    return 0;
+
+  for (i = 0; i < pathlen1; i++)
+    if (path1[i] != path2[i])
+      return 0;
 
   return 1;
 }
 
-#endif
+/*
+ * Perform A* search with current globalpos as the starting state
+ * and doors as nodes.  Returns 1 if path changed; 0 otherwise.
+ */
+static int get_path() {
 
-static void params_init(int argc __attribute__ ((unused)),
-			char *argv[] __attribute__ ((unused))) {
+  path_node_p pq;  //path queue
+  int changed = 0;
 
-  grid_resolution = DEFAULT_GRID_RESOLUTION;
+  if (goal == room) {
+    changed = !path_eq(path, pathlen, NULL, 0);
+    pathlen = 0;
+    if (path)
+      free(path);
+    path = NULL;
+    goal = -1;
+    return changed;
+  }
+
+  for (pq = pq_init(); pq != NULL; pq = pq_expand(pq)) {
+    if (is_goal(pq)) {
+      changed = !path_eq(path, pathlen, pq->path, pq->pathlen);
+      pathlen = pq->pathlen;
+      path = realloc(path, pathlen * sizeof(int));
+      memcpy(path, pq->path, pathlen * sizeof(int));
+      pq_free(pq);
+      return changed;
+    }
+  }
+
+  changed = !path_eq(path, pathlen, NULL, -1);
+  pathlen = -1;
+  if (path)
+    free(path);
+  path = NULL;
+
+  return changed;
+}
+
+/*
+ * assumes path != NULL
+ */
+static void publish_path_msg() {
+
+  static carmen_gnav_path_msg path_msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+
+  //fprintf(stderr, "publish_path_msg()\n");
+
+  if (first) {
+    strcpy(path_msg.host, carmen_get_tenchar_host_name());
+    path_msg.path = NULL;
+    path_msg.pathlen = 0;
+    first = 0;
+  }
+
+  path_msg.timestamp = carmen_get_time_ms();
+
+  path_msg.pathlen = pathlen;
+
+  //fprintf(stderr, "pathlen = %d\n", pathlen);
+
+  print_path(path, pathlen);
+
+  if (path != NULL) {
+    path_msg.path = (int *) realloc(path_msg.path, pathlen * sizeof(int));
+    carmen_test_alloc(path_msg.path);
+    memcpy(path_msg.path, path, pathlen * sizeof(int));
+  }
+  else
+    path_msg.path = NULL;
+
+  err = IPC_publishData(CARMEN_GNAV_PATH_MSG_NAME, &path_msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_GNAV_PATH_MSG_NAME);  
+}
+
+static void update_path() {
+
+  if (goal < 0)
+    return;
+
+  if (get_path())
+    publish_path_msg();  
+}
+
+static void publish_room_msg() {
+
+  static carmen_gnav_room_msg room_msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  
+  if (first) {
+    strcpy(room_msg.host, carmen_get_tenchar_host_name());
+    first = 0;
+  }
+
+  room_msg.timestamp = carmen_get_time_ms();
+  room_msg.room = room;
+
+  err = IPC_publishData(CARMEN_GNAV_ROOM_MSG_NAME, &room_msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_GNAV_ROOM_MSG_NAME);  
 }
 
 void localize_handler() {
@@ -848,14 +1062,42 @@ void localize_handler() {
   if (new_room != room) {
     room = new_room;
     printf("room = %d\n", room);
+    publish_room_msg();
   }
+
+  update_path();
 }
 
 static void messages_init() {
 
-  carmen_localize_subscribe_globalpos_message(&global_pos,
-					      localize_handler,
+  IPC_RETURN_TYPE err;
+
+  err = IPC_defineMsg(CARMEN_GNAV_ROOM_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_ROOM_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_ROOM_MSG_NAME);
+
+  err = IPC_defineMsg(CARMEN_GNAV_PATH_MSG_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GNAV_PATH_MSG_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_GNAV_PATH_MSG_NAME);
+
+  carmen_localize_subscribe_globalpos_message(&global_pos, localize_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
+}
+
+static gint updateIPC(gpointer *data __attribute__ ((unused))) {
+
+  sleep_ipc(0.01);
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
+
+  return 1;
+}
+
+#endif
+
+static void params_init(int argc __attribute__ ((unused)),
+			char *argv[] __attribute__ ((unused))) {
+
+  grid_resolution = DEFAULT_GRID_RESOLUTION;
 }
 
 int main(int argc, char *argv[]) {
@@ -865,6 +1107,8 @@ int main(int argc, char *argv[]) {
   for (i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "-fast"))
       fast = 1;
+    else
+      carmen_die("usage:  gnav [-fast]\n");      
   }
 
   carmen_initialize_ipc(argv[0]);

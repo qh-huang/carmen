@@ -5,7 +5,7 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = robotwalker.c gnav_map.c
+SOURCES = robotwalker.c gnav.c gnav_interface.c
 
 ifndef NO_GRAPHICS
 
@@ -24,7 +24,7 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = robotwalker gnav_map
+TARGETS = robotwalker gnav
 
 ifdef NO_ZLIB
 CFLAGS += -DNO_ZLIB
@@ -37,7 +37,9 @@ all:
 
 robotwalker:	robotwalker.o
 
-gnav_map:	gnav_map.o
+gnav:	gnav.o
+
+libgnav_interface.a:	gnav_interface.o
 
 # rules
 
