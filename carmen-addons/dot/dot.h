@@ -42,7 +42,7 @@ typedef struct {
   double vy;
   double vxy;
   double vtheta;
-} carmen_dot_door_t, *carmen_dot_doors_p;
+} carmen_dot_door_t, *carmen_dot_door_p;
 
 
 #ifdef __cplusplus
