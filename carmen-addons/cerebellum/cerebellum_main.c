@@ -50,21 +50,21 @@ static int thread_is_running = 0;
 /************************************************************************/
 /* Physical constants, in meters, radians, seconds (unless otherwise noted)
  * */
-#define TROGDOR_AXLE_LENGTH    0.317
-#define TROGDOR_WHEEL_DIAM     0.10795  /* 4.25 inches */
-#define TROGDOR_WHEEL_CIRCUM   (TROGDOR_WHEEL_DIAM * M_PI)
-#define TROGDOR_TICKS_PER_REV  5800.0
-#define TROGDOR_M_PER_TICK     (TROGDOR_WHEEL_CIRCUM / TROGDOR_TICKS_PER_REV)
+//#define TROGDOR_AXLE_LENGTH    0.317
+//#define TROGDOR_WHEEL_DIAM     0.10795  /* 4.25 inches */
+//#define TROGDOR_WHEEL_CIRCUM   (TROGDOR_WHEEL_DIAM * M_PI)
+//#define TROGDOR_TICKS_PER_REV  11600.0
+//#define TROGDOR_M_PER_TICK     (TROGDOR_WHEEL_CIRCUM / TROGDOR_TICKS_PER_REV)
 /* the internal PID loop runs every 1.55ms (we think) */
-#define TROGDOR_PID_FREQUENCY  (1/1.55e-3)
-#define TROGDOR_MPS_PER_TICK   (TROGDOR_M_PER_TICK * TROGDOR_PID_FREQUENCY)
+//#define TROGDOR_PID_FREQUENCY  (1/1.55e-3)
+//#define TROGDOR_MPS_PER_TICK   (TROGDOR_M_PER_TICK * TROGDOR_PID_FREQUENCY)
 
 /* assuming that the counts can use the full space of a signed 32-bit int
  * */
-#define TROGDOR_MAX_TICS 2147483648U
+//#define TROGDOR_MAX_TICS 2147483648U
 
 /* for safety */
-#define TROGDOR_MAX_WHEELSPEED   4.0
+//#define TROGDOR_MAX_WHEELSPEED   4.0
 
 
 #define        CEREBELLUM_TIMEOUT          (2.0)
@@ -75,7 +75,7 @@ static int thread_is_running = 0;
 #define        OBOT_LOOP_FREQUENCY  (1/1.55e-3)
 
 #define        OBOT_WHEEL_CIRCUMFERENCE  (4.25 * METERS_PER_INCH * 3.1415926535)
-#define        OBOT_TICKS_PER_REV       (5800.0)
+#define        OBOT_TICKS_PER_REV       (11600.0)
 #define        OBOT_WHEELBASE        (.317)
 
 
@@ -127,9 +127,9 @@ initialize_robot(char *dev)
   result = carmen_cerebellum_ac(25);
   current_acceleration = robot_config.acceleration;
 
-  printf("TROGDOR_M_PER_TICK: %lf\n", TROGDOR_M_PER_TICK);
+  //  printf("TROGDOR_M_PER_TICK: %lf\n", TROGDOR_M_PER_TICK);
   printf("METERS_PER_OBOT_TICK: %lf\n", METERS_PER_OBOT_TICK);
-  printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
+  //printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
   printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
 
   if(result != 0)
@@ -483,8 +483,8 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
 
-  //  printf("Velocities: %f %f\r\n",vel.tv,vel.rv);
-  //printf("After conv: %f %f\r\n",vl, vr);
+  //  printf("Velocities: trans: %f rot: %f\r\n",vel.tv,vel.rv);
+  //printf("After conv: left %f right %f\r\n",vl, vr);
 
   if(vl > MAXV)
     vl = MAXV;
