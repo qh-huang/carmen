@@ -12,8 +12,8 @@ PUBLIC_LIBRARIES =
 PUBLIC_BINARIES = 
 MAN_PAGES =
 
-ifndef NO_USB
-#IFLAGS += -I$(USB_INCLUDE_PATH)
+ifndef NO_LIBUSB
+IFLAGS += -I$(LIBUSB_INCLUDE_PATH)
 SOURCES = canon.c canon_server.c canon_ipc.c capture_test.c parse-log.c
 TARGETS = libcanon.a libcanon_interface.a canon_server capture_test parse-log
 
