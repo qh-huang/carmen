@@ -12,67 +12,37 @@ extern "C" {
 #define CARMEN_DOT_TRASH   1
 #define CARMEN_DOT_DOOR    2
 
-#define MAX_PERSON_FILTER_VELOCITY_WINDOW 1000
 
-typedef struct dot_person_filter {
-  double vx[MAX_PERSON_FILTER_VELOCITY_WINDOW];
-  double vy[MAX_PERSON_FILTER_VELOCITY_WINDOW];
-  int vpos;
-  int vlen;
-  int hidden_cnt;
+typedef struct {
+  int id;
+  int delete;
   double x;
   double y;
-  double px;
-  double py;
-  double pxy;
-  double a;
-  double qx;
-  double qy; 
-  double qxy;
-  double rx;
-  double ry;
-  double rxy;
-} carmen_dot_person_filter_t, *carmen_dot_person_filter_p;
+  double vx;
+  double vy;
+  double vxy;
+} carmen_dot_person_t, *carmen_dot_person_p;
 
-typedef struct dot_trash_filter {
+typedef struct {
+  int id;
+  int delete;
   double x;
   double y;
-  double px;
-  double py;
-  double pxy;
-  double a;
-  double qx;
-  double qy;
-  double qxy;
-  double rx;
-  double ry;
-  double rxy;
-} carmen_dot_trash_filter_t, *carmen_dot_trash_filter_p;
+  double vx;
+  double vy;
+  double vxy;
+} carmen_dot_trash_t, *carmen_dot_trash_p;
 
-typedef struct dot_door_filter {
+typedef struct {
+  int id;
   double x;
   double y;
-  double t;  //theta
-  double px;
-  double py;
-  double pt;
-  double pxy;
-  double a;
-  double qx;
-  double qy;
-  double qxy;
-  double qt;
-} carmen_dot_door_filter_t, *carmen_dot_door_filter_p;
-
-typedef struct dot_filter {
-  carmen_dot_person_filter_t person_filter;
-  carmen_dot_trash_filter_t trash_filter;
-  carmen_dot_door_filter_t door_filter;
-  int type;
-  int allow_change;
-  int sensor_update_cnt;
-  int do_motion_update;
-} carmen_dot_filter_t, *carmen_dot_filter_p;
+  double theta;
+  double vx;
+  double vy;
+  double vxy;
+  double vtheta;
+} carmen_dot_door_t, *carmen_dot_doors_p;
 
 
 #ifdef __cplusplus
