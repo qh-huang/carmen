@@ -11,10 +11,15 @@ extern "C" {
 
 /*
  * (pos.x, pos.y) is the center of the door.
- * pos.theta is between 0 and 2*pi and indicates the 
+ * pose.theta is between 0 and 2*pi and indicates the 
  * angle of the vector from room 1 to room 2
  * normal to the door at the center point.
-*/
+ * points.num_places == 0 and width > 0 => door is a ceiling.
+ * points.num_places == 0 and width < 0 => door is a floor.
+ * if door is a floor/ceiling, it is not shared between two rooms.
+ * thus, room1 is the room the door is in, and room2 is the room
+ * (on another floor, either up or down) that the door goes to.
+ */
 struct carmen_door {
   int room1;
   int room2;
