@@ -225,12 +225,13 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 {
   double numerator;
   double denominator;
-  double i_x;
+  double i_x, i_y;
   double dist_along_line;
   carmen_world_point_t wp;
   carmen_map_point_t mp;
   double radius;
   double e1, e2;
+  double theta;
 
   e1 = (vx + vy)/2.0 + sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
   e2 = (vx + vy)/2.0 - sqrt(4*vxy*vxy + (vx-vy)*(vx-vy))/2.0;
@@ -253,12 +254,17 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
   numerator = (n2->x - n1->x)*(n1->y - y) - (n1->x - x)*(n2->y - n1->y);
   denominator = hypot(n2->x-n1->x, n2->y-n1->y);
   
-  if (fabs(numerator)/denominator > radius) 
+  if (fabs(denominator) < 1e-9 || fabs(numerator)/denominator > radius) 
     return 0;
 
-  i_x = numerator/denominator * (n2->y - n1->y)/denominator + x;
-
-  dist_along_line = (i_x - n1->x) / (n2->x - n1->x);
+  theta = fabs(atan2(n2->y-n1->y, n2->x - n1->x));
+  if (theta > M_PI/4 && theta < 3*M_PI/4) {
+    i_y = numerator/denominator * (n2->x - n1->x)/denominator + y;
+    dist_along_line = (i_y - n1->y) / (n2->y - n1->y);
+  } else {
+    i_x = numerator/denominator * (n2->y - n1->y)/denominator + x;
+    dist_along_line = (i_x - n1->x) / (n2->x - n1->x);
+  }
 
   if (dist_along_line > 1 || dist_along_line < 0) {
     if (hypot(n2->x - x, n2->y - y) > radius && 
