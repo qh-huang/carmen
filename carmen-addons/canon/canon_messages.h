@@ -28,6 +28,16 @@ typedef struct {
 #define      CARMEN_CANON_IMAGE_NAME       "carmen_canon_image"
 #define      CARMEN_CANON_IMAGE_FMT        "{int,<char:1>,int,<char:3>,double,[char:10]}"
 
+typedef struct {
+  int preview_length;
+  char *preview;
+  double timestamp;
+  char host[10];
+} carmen_canon_preview_message;
+
+#define      CARMEN_CANON_PREVIEW_NAME     "carmen_canon_preview"
+#define      CARMEN_CANON_PREVIEW_FMT      "{int,<char:1>,double,[char:10]}"
+
 #ifdef __cplusplus
 }
 #endif

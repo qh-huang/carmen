@@ -59,9 +59,22 @@ int canon_rcc_download_full_image(usb_dev_handle *camera_handle,
 /* exit remote capture control mode */
 int canon_rcc_exit(usb_dev_handle *camera_handle);
 
+/* star the viewfinder */
+int canon_rcc_start_viewfinder(usb_dev_handle *camera_handle);
+
+/* select camera output ??? */
+int canon_rcc_select_camera_output(usb_dev_handle *camera_handle);
+
+/* download preview image */
+int canon_rcc_download_preview(usb_dev_handle *camera_handle,
+			       unsigned char **preview,
+			       int *preview_length);
+
 /* initialize remote capture control */
 int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode,
 			     int use_flash);
+
+int canon_initialize_preview(usb_dev_handle *camera_handle);
 
 /* capture image wrapper */
 int canon_capture_image(usb_dev_handle *camera_handle, 

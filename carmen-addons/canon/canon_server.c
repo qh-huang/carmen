@@ -81,6 +81,11 @@ void initialize_ipc_messages(void)
                       CARMEN_CANON_IMAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_CANON_IMAGE_NAME);
 
+  /* register preview message */
+  err = IPC_defineMsg(CARMEN_CANON_PREVIEW_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_PREVIEW_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_CANON_PREVIEW_NAME);
+
   /* subscribe to image requests */
   err = IPC_subscribe(CARMEN_CANON_IMAGE_REQUEST_NAME, 
 		      canon_image_query, NULL);
@@ -98,6 +103,28 @@ void read_parameters(int argc, char **argv)
   carmen_param_install_params(argc, argv, camera_params,
                               sizeof(camera_params) / 
 			      sizeof(camera_params[0]));
+}
+
+void publish_preview(void *clientdata __attribute__ ((unused)), 
+		     unsigned long t1 __attribute__ ((unused)), 
+		     unsigned long t2 __attribute__ ((unused)))
+{
+  carmen_canon_preview_message preview;
+  IPC_RETURN_TYPE err;
+
+  if(canon_rcc_download_preview(camera_handle,
+				(unsigned char **)&preview.preview, 
+				&preview.preview_length) < 0) {
+    fprintf(stderr, "Error: could not download a preview.\n");
+    return;
+  }
+  fprintf(stderr, "Preview size 0x%x bytes\n", preview.preview_length);
+
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_NAME, &preview);
+  carmen_test_ipc_exit(err, "Could not publish", 
+		       CARMEN_CANON_PREVIEW_NAME);
+
+  free(preview.preview);
 }
 
 int main(int argc, char **argv)
@@ -119,7 +146,13 @@ int main(int argc, char **argv)
   if(canon_initialize_capture(camera_handle, FULL_TO_DRIVE | THUMB_TO_PC,
 			      use_flash) < 0)
     carmen_die("Error: could not start image capture.\n");
+
+  if(canon_initialize_preview(camera_handle) < 0)
+    carmen_die("Error: could not initialize preview\n");
+
   fprintf(stderr, "Camera is ready to capture.\n");
+  
+  IPC_addTimer(5000, TRIGGER_FOREVER, publish_preview, NULL);
 
   /* run the main loop */
   IPC_dispatch();
