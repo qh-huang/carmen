@@ -1,3 +1,4 @@
+include ../Makefile.vars
 include $(CARMEN_HOME)/src/Makefile.conf
 
 IFLAGS += `$(CARMEN_HOME)/bin/carmen-config --cflags --graphics navigation`

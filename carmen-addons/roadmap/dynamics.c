@@ -122,6 +122,10 @@ void carmen_dynamics_initialize_no_ipc(carmen_map_t *new_map)
   people = carmen_list_create(sizeof(carmen_dot_person_t), 10);
   trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
   doors = carmen_list_create(sizeof(carmen_dot_door_t), 10); 
+
+  stored_people = carmen_list_create(sizeof(carmen_dot_person_t), 10);
+  stored_trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
+  stored_doors = carmen_list_create(sizeof(carmen_dot_door_t), 10);
 }
 
 void carmen_dynamics_update_person(carmen_dot_person_t *update_person)
