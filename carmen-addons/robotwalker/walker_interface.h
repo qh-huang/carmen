@@ -10,6 +10,8 @@ extern "C" {
 
 
 void carmen_walker_set_goal(int goal);
+void carmen_walker_engage_clutch();
+void carmen_walker_disengage_clutch();
 
 
 #ifdef __cplusplus

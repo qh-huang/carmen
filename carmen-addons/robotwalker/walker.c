@@ -1,7 +1,7 @@
 #include <carmen/carmen.h>
 #include <carmen/roomnav_interface.h>
 #include "walker_messages.h"
-#include "walkerserial_interface.h"
+#include "cerebellum_com.h"
 
 
 static void set_goal_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -20,18 +20,6 @@ static void set_goal_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_verbose("goal = %d\n", goal_msg.goal);
 
   carmen_roomnav_set_goal(goal_msg.goal);
-}
-
-static void button_handler(carmen_walkerserial_button_msg *msg) {
-
-  static int clutch = 0;
-
-  if (msg->button == 6) {
-    if (clutch)
-      carmen_walkerserial_disengage_clutch();
-    else
-      carmen_walkerserial_engage_clutch();
-  }
 }
 
 static void ipc_init() {
@@ -60,6 +48,8 @@ int main(int argc __attribute__ ((unused)), char *argv[]) {
   carmen_param_check_version(argv[0]);
 
   ipc_init();
+
+  carmen_cerebellum_engage_clutch();
 
   IPC_dispatch();
 
