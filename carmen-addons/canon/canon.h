@@ -33,6 +33,9 @@ int canon_rcc_init(usb_dev_handle *camera_handle);
 /* unknown remote camera control command */
 int canon_rcc_unknown(usb_dev_handle *camera_handle, int transfer_mode);
 
+/* turn off flash */
+int canon_rcc_turnoff_flash(usb_dev_handle *camera_handle);
+
 /* get release parameters */
 int canon_rcc_get_release_params(usb_dev_handle *camera_handle);
 

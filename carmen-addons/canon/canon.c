@@ -500,6 +500,27 @@ int canon_rcc_download_full_image(usb_dev_handle *camera_handle,
   return 0;
 }
 
+int canon_rcc_turnoff_flash(usb_dev_handle *camera_handle)
+{
+  unsigned char payload[0x38] = 
+  {0x07, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 
+   0x20, 0x03, 0x01, 0x00, 0x64, 0x00, 0x00, 0x01,
+   0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x01, 0x30,
+   0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0x7f,
+   0xff, 0xff, 0x40, 0x00, 0x28, 0x00, 0x70, 0x00,
+   0x18, 0x18, 0xff, 0xff, 0x20, 0x00, 0x38, 0x00, 
+   0xe3, 0x00, 0xaa, 0x02, 0xe3, 0x00, 0x20, 0x00};
+  unsigned char response[0x5c];
+
+  if(canon_query_response(camera_handle, 0x201, 0x13, 0x12, 0x10, 
+			  payload, 0x38, response, 0x5c) < 0) {
+    fprintf(stderr, "Error: rcc turn off flash failed.\n");
+    free(payload);
+    return -1;
+  }
+  return 0;
+}
+
 int canon_rcc_exit(usb_dev_handle *camera_handle)
 {
   unsigned char *payload, response[0x5c];
@@ -528,6 +549,10 @@ int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode)
   }
   if(canon_rcc_set_transfer_mode(camera_handle, transfer_mode) < 0) {
     fprintf(stderr, "rcc set transfer mode failed.\n");
+    return -1;
+  }
+  if(canon_rcc_turnoff_flash(camera_handle) < 0) {
+    fprintf(stderr, "rcc turnoff flash failed.\n");
     return -1;
   }
   return 0;
