@@ -28,9 +28,9 @@
 
 int fd1;
 int fd2;
-int test_speed = 50;
+//int test_speed = 50;
 
-static carmen_base_odometry_message odometry;
+//static carmen_base_odometry_message odometry;
 
 
 int icon_wait_for_response(int fd, int timeout)
@@ -133,6 +133,7 @@ static inline void rotate(double *x, double *y, double theta) {
   *y = (*x) * sin(theta) + (*y) * cos(theta);
 }
 
+/*
 static void update_odom() {
 
   double dt, dx, dy, dtheta;
@@ -149,6 +150,7 @@ static void update_odom() {
   odometry.theta += dtheta;
   odometry.timestamp = carmen_get_time_ms();
 }
+*/
 
 static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			     void *clientData __attribute__ ((unused))) {
@@ -181,11 +183,14 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   if(icon_command_setdc(fd2, 1, -75.0 * right_vel / MAX_VELOCITY) < 0)
     fprintf(stderr, "Error: could not set velocity on motor 2.\n");
 
+  /*
   update_odom();
   odometry.tv = v.tv;
   odometry.rv = v.rv;
+  */
 }
 
+/*
 static void init_odom() {
 
   odometry.x = 0.0;
@@ -196,6 +201,7 @@ static void init_odom() {
   odometry.timestamp = 0.0;
   strcpy(odometry.host, carmen_get_tenchar_host_name());
 }
+*/
 
 static void init_motors(char **argv) {
 
@@ -227,9 +233,11 @@ static void init_ipc() {
 
   IPC_RETURN_TYPE err;
 
+  /*
   err = IPC_defineMsg(CARMEN_BASE_ODOMETRY_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_BASE_ODOMETRY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_ODOMETRY_NAME);
+  */
 
   err = IPC_defineMsg(CARMEN_BASE_VELOCITY_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_BASE_VELOCITY_FMT);
@@ -240,6 +248,7 @@ static void init_ipc() {
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
 }
 
+/*
 static void test_motors() {
 
   if(icon_command_setdc(fd1, 1, test_speed) < 0)
@@ -261,32 +270,39 @@ static void test_motors() {
   icon_command_stop(fd2, 1);
   sleep(2);
 }
+*/
     
 int main(int argc, char **argv)
 {
+  /*
   IPC_RETURN_TYPE err;
   double last_published_update = 0.0;
   double update_delay = .03;
+  */
 
   if (argc < 3) {
-    fprintf(stderr, "usage: walker_motors <left motor device> <right motor device> [test_speed]\n");
+    //    fprintf(stderr, "usage: walker_motors <left motor device> <right motor device> [test_speed]\n");
+    fprintf(stderr, "usage: walker_motors <left motor device> <right motor device>\n");
     exit(1);
   }
-  
+
+  /*  
   if (argc >= 4)
     test_speed = atoi(argv[3]);
-  
+  */  
+
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
   init_motors(argv);
   init_ipc();
-  init_odom();
+  //  init_odom();
 
   while(1) {
 
     sleep_ipc(0.01);
 
+    /*
     if (carmen_get_time_ms() - last_published_update > update_delay) {
       update_odom();
       
@@ -297,6 +313,7 @@ int main(int argc, char **argv)
     }
 
     test_motors();
+    */
   }
 
   return 0;
