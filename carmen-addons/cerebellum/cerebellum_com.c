@@ -28,7 +28,7 @@
 #include "cerebellum_com.h"
 #include "cerebellum_defs.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 #define CEREB_BAUDRATE 115200
 #define PIC_WRITE_DELAY      10 // serial xfer delay, in us
@@ -254,12 +254,8 @@ static int cereb_init_serial(char * dev)
 int 
 carmen_cerebellum_connect_robot(char *dev)
 {
-  fprintf(stderr, "connected to robot %s\n", dev);
-
   if(cereb_init_serial(dev) < 0)
     return -1;
-
-  fprintf(stderr, "init serial succeeded\n");
 
   return cereb_init();
 }
@@ -340,8 +336,5 @@ carmen_cerebellum_engage(void)
 int 
 carmen_cerebellum_disconnect_robot(void)
 {
-  fprintf(stderr, "disconnecting from robot\n");
-
-  carmen_warn("About to send %d\n", DEINIT);
   return cereb_send_command(DEINIT);
 }
