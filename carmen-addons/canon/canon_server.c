@@ -23,6 +23,7 @@ void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   IPC_RETURN_TYPE err = IPC_OK;
   carmen_canon_image_message response;
   carmen_canon_image_request query;
+  int transfer_mode;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &query, 
@@ -30,8 +31,18 @@ void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   IPC_freeByteArray(callData);
   carmen_test_ipc(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));  
 
-  fprintf(stderr, "Received query image %d thumbnail %d\n", query.get_image,
-	  query.get_thumbnail);
+  fprintf(stderr, "Received query thumbnail_over_ipc %d image_over_ipc %d image_to_drive %d\n", query.thumbnail_over_ipc, query.image_over_ipc, query.image_to_drive);
+
+  transfer_mode = 0;
+  if(query.thumbnail_over_ipc)
+    transfer_mode |= THUMB_TO_PC;
+  if(query.image_over_ipc)
+    transfer_mode |= FULL_TO_PC;
+  if(query.image_to_drive)
+    transfer_mode |= FULL_TO_DRIVE;
+
+  if(canon_rcc_set_transfer_mode(camera_handle, transfer_mode) < 0)
+    carmen_warn("Warning: Could not set transfer mode.\n");
 
   if(canon_capture_image(camera_handle,
 			 (unsigned char **)&response.thumbnail, 
@@ -103,8 +114,8 @@ int main(int argc, char **argv)
     carmen_die("Erorr: could not open connection to camera.\n");
   if(canon_initialize_camera(camera_handle) < 0)
     carmen_die("Erorr: could not open initialize camera.\n");
-  sleep(1);
-  if(canon_initialize_capture(camera_handle, THUMB_TO_PC | FULL_TO_PC,
+
+  if(canon_initialize_capture(camera_handle, FULL_TO_DRIVE | THUMB_TO_PC,
 			      use_flash) < 0)
     carmen_die("Error: could not start image capture.\n");
 
