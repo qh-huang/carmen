@@ -31,7 +31,7 @@ without CARMEN
 **********************************************************/
 
 #include <carmen/carmen.h>
-#include "gps_interface.h"
+#include "ringo_gps_interface.h"
 
 carmen_gps_position_message gps;
 
@@ -45,8 +45,9 @@ void shutdown_gps(int sig)
 
 void gps_handler(void)
 {
-  fprintf(stderr, "%f %f %f\n", gps.gpscoordX, gps.gpscoordY, 
-	  gps.gpscoordTheta);
+  fprintf(stderr, "x=%f y=%f satnum=%d precdil=%f\n", 
+	  gps.gpscoordX, gps.gpscoordY, 
+	  gps.satnum, gps.precdil);
 }
 
 int main(int argc __attribute__ ((unused)), char **argv)
