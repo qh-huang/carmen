@@ -90,6 +90,7 @@ static int thread_is_running = 0;
 #define        MAX_CEREBELLUM_ACC 10
 
 #define        MIN_OBOT_TICKS (4.0)
+#define        MAX_READINGS_TO_DROP (10)
 
 static char *dev_name;
 static int State[4];
@@ -233,15 +234,18 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 
   if(abs(left_delta_tick) > max_ticks || abs(right_delta_tick) > max_ticks)
     {
-      if( transient_dropped==0)
+      if( transient_dropped < MAX_READINGS_TO_DROP )
 	{
 	  printf("CBldt: %d rdt: %d\n",left_delta_tick,right_delta_tick); 
 	  printf("delta tick unreal trying a drop\n");
-	  transient_dropped = 1;
+	  transient_dropped++;
 	  return(1);
 	}
       else
-	printf("accepting large tick reading\n");
+	{
+	  printf("accepting large tick reading\n");
+	  transient_dropped =0;
+	}
     }
 
 
@@ -254,48 +258,47 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 
   if(delta_angle > 0.5)
     {
-      if( transient_dropped==0)
+      if( transient_dropped < MAX_READINGS_TO_DROP)
 	{
 	  printf("CB:delta_angle: %lf, lt: %d rt: %d, olt: %d ort: %d",
 		 delta_angle,State[0],State[1],last_left_tick,last_right_tick);
 	  printf("dropping one reading\n");
-	  transient_dropped = 1;
+	  transient_dropped++;
 	  return(1);
 	}
       else
-	printf("accepting large delta reading\n");
+	{
+	  printf("accepting large delta reading\n");
+	  transient_dropped = 0;
+	}
 
 
     }
 
 
-  if( 1)
-    {
 
-
-      delta_distance = (right_delta + left_delta) / 2.0;
+  delta_distance = (right_delta + left_delta) / 2.0;
   
+  
+  x += delta_distance * cos(theta);
+  y += delta_distance * sin(theta);
+  theta += delta_angle;
+  
+  theta = NORMALIZE(theta);
+  
+  last_left_tick = State[0];
+  last_right_tick = State[1];
+  
+  last_published_update = odometry.timestamp;
+  
+  odometry.x = x;
+  odometry.y = y;
+  odometry.theta = theta;
 
-      x += delta_distance * cos(theta);
-      y += delta_distance * sin(theta);
-      theta += delta_angle;
-      
-      theta = NORMALIZE(theta);
-      
-      last_left_tick = State[0];
-      last_right_tick = State[1];
-      
-      last_published_update = odometry.timestamp;
-      
-      odometry.x = x;
-      odometry.y = y;
-      odometry.theta = theta;
-
-    }
 
   //the transient dropped flag lets us drop one and only one anomalous reading
-  if( transient_dropped ==1)
-    transient_dropped = 0;
+  if( transient_dropped > 0)
+    transient_dropped--;
 
 
   //  printf("x: %lf, y: %lf, theta: %lf \n", x,y,theta);
