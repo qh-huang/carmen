@@ -49,7 +49,7 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people) {
 		       CARMEN_DOT_QUERY_NAME);  
 
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
-			      (void **) &response, 5000);
+			      (void **) &response, 500);
   carmen_test_ipc_return_int(err, "Could not query dot",
 			     CARMEN_DOT_QUERY_NAME);
 
@@ -83,7 +83,7 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
 		       CARMEN_DOT_QUERY_NAME);  
 
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
-			      (void **) &response, 5000);
+			      (void **) &response, 500);
   carmen_test_ipc_return_int(err, "Could not query dot",
 			     CARMEN_DOT_QUERY_NAME);
 
@@ -117,7 +117,7 @@ int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
 		       CARMEN_DOT_QUERY_NAME);  
 
   err = IPC_queryResponseData(CARMEN_DOT_QUERY_NAME, &query,
-			      (void **) &response, 5000);
+			      (void **) &response, 500);
   carmen_test_ipc_return_int(err, "Could not query dot",
 			     CARMEN_DOT_QUERY_NAME);
 

@@ -111,7 +111,8 @@ static int person_filter_velocity_window;
 static double person_filter_velocity_threshold;
 static int kill_hidden_person_cnt;
 
-
+static carmen_localize_param_t localize_params;
+static carmen_localize_map_t localize_map;
 static carmen_localize_globalpos_message odom;
 static carmen_point_t last_sensor_update_odom;
 static int do_sensor_update = 1;
@@ -554,7 +555,16 @@ static double map_prob(double x, double y) {
 
   carmen_world_to_map(&wp, &mp);
 
-  return static_map.map[mp.x][mp.y];
+  /*
+  printf("map_prob(%.2f, %.2f): localize_map prob = %.4f\n", x, y,
+	 localize_map.prob[mp.x][mp.y]);
+  printf("map_prob(%.2f, %.2f): localize_map gprob = %.4f\n", x, y,
+	 localize_map.gprob[mp.x][mp.y]);
+  printf("map_prob(%.2f, %.2f): localize_map complete prob = %.4f\n", x, y,
+	 localize_map.complete_prob[mp.x*static_map.config.y_size+mp.y]);
+  */
+
+  return exp(localize_map.prob[mp.x][mp.y]);
 }
 
 static int dot_filter(double x, double y) {
@@ -645,7 +655,7 @@ static int dot_filter(double x, double y) {
   /*
   if (imax >= 0)
     printf("pmax = %.4f, map_prob = %.4f at filter %d (x=%.2f, y = %.2f)\n",
-	   pmax, map_prob(x, y), filters[imax].id, x, y);
+	   pmax, map_prob(x, y), imax, x, y);
   */
 
   if (imax >= 0 && pmax > map_prob(x, y)) {
@@ -702,7 +712,7 @@ static int map_filter(double x, double y) {
   for (i = mp.x-md; i <= mp.x+md; i++)
     for (j = mp.y-md; j <= mp.y+md; j++)
       if (is_in_map(i, j) && dist(i-mp.x, j-mp.y) <= d &&
-	  static_map.map[i][j] >= map_occupied_threshold)
+	  exp(localize_map.prob[i][j]) >= map_occupied_threshold)
 	return 1;
 
   return 0;
@@ -1187,6 +1197,45 @@ static void params_init(int argc, char *argv[]) {
 
   carmen_param_t param_list[] = {
     {"robot", "front_laser_max", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL},
+    {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
+     &localize_params.front_laser_offset, 0, NULL},
+    {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
+     &localize_params.rear_laser_offset, 0, NULL},
+    {"localize", "num_particles", CARMEN_PARAM_INT, 
+     &localize_params.num_particles, 0, NULL},
+    {"localize", "max_range", CARMEN_PARAM_DOUBLE, &localize_params.max_range, 1, NULL},
+    {"localize", "min_wall_prob", CARMEN_PARAM_DOUBLE, 
+     &localize_params.min_wall_prob, 0, NULL},
+    {"localize", "outlier_fraction", CARMEN_PARAM_DOUBLE, 
+     &localize_params.outlier_fraction, 0, NULL},
+    {"localize", "update_distance", CARMEN_PARAM_DOUBLE, 
+     &localize_params.update_distance, 0, NULL},
+    {"localize", "laser_skip", CARMEN_PARAM_INT, &localize_params.laser_skip, 1, NULL},
+    {"localize", "use_rear_laser", CARMEN_PARAM_ONOFF, 
+     &localize_params.use_rear_laser, 0, NULL},
+    {"localize", "do_scanmatching", CARMEN_PARAM_ONOFF,
+     &localize_params.do_scanmatching, 1, NULL},
+    {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF, 
+     &localize_params.constrain_to_map, 1, NULL},
+    {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &localize_params.odom_a1, 1, NULL},
+    {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &localize_params.odom_a2, 1, NULL},
+    {"localize", "odom_a3", CARMEN_PARAM_DOUBLE, &localize_params.odom_a3, 1, NULL},
+    {"localize", "odom_a4", CARMEN_PARAM_DOUBLE, &localize_params.odom_a4, 1, NULL},
+    {"localize", "occupied_prob", CARMEN_PARAM_DOUBLE, 
+     &localize_params.occupied_prob, 0, NULL},
+    {"localize", "lmap_std", CARMEN_PARAM_DOUBLE, 
+     &localize_params.lmap_std, 0, NULL},
+    {"localize", "global_lmap_std", CARMEN_PARAM_DOUBLE, 
+     &localize_params.global_lmap_std, 0, NULL},
+    {"localize", "global_evidence_weight", CARMEN_PARAM_DOUBLE, 
+     &localize_params.global_evidence_weight, 0, NULL},
+    {"localize", "global_distance_threshold", CARMEN_PARAM_DOUBLE, 
+     &localize_params.global_distance_threshold, 1, NULL},
+    {"localize", "global_test_samples", CARMEN_PARAM_INT,
+     &localize_params.global_test_samples, 1, NULL},
+    {"localize", "use_sensor", CARMEN_PARAM_ONOFF,
+     &localize_params.use_sensor, 0, NULL},
+
     {"dot", "person_filter_a", CARMEN_PARAM_DOUBLE, &default_person_filter_a, 1, NULL},
     {"dot", "person_filter_px", CARMEN_PARAM_DOUBLE, &default_person_filter_px, 1, NULL},
     {"dot", "person_filter_py", CARMEN_PARAM_DOUBLE, &default_person_filter_py, 1, NULL},
@@ -1252,8 +1301,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, shutdown_module);
 
   odom.timestamp = 0.0;
-  static_map.map = NULL;
-
+  //static_map.map = NULL;
   printf("getting gridmap...");
   fflush(0);
   carmen_map_get_gridmap(&static_map);
@@ -1261,6 +1309,12 @@ int main(int argc, char *argv[]) {
 
   params_init(argc, argv);
   ipc_init();
+
+  printf("occupied_prob = %f\n", localize_params.occupied_prob);
+  printf("getting localize map...");
+  fflush(0);  
+  carmen_to_localize_map(&static_map, &localize_map, &localize_params);
+  printf("done\n");
 
   carmen_terminal_cbreak(0);
 

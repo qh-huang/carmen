@@ -9,7 +9,7 @@ SOURCES = dot.c dot_interface.c
 CFLAGS +=
 IFLAGS 	+=
 LFLAGS 	+= 	-lparam_interface -lglobal -llocalize_interface -lgeometry \
-		-lipc -llaser_interface \
+		-lipc -llaser_interface -llocalize_core \
 		-lrobot_interface -lmap_interface 
 
 ifndef NO_ZLIB
