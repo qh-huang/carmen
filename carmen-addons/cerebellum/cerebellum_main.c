@@ -203,6 +203,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
       return 0;
     }
 
+  //printf("SHRT_MIN %d SHRT_MAX %d\n",SHRT_MIN,SHRT_MAX);
 
 
   /* update odometry message */
@@ -268,8 +269,9 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     }
 
 
-  if( transient_dropped == 0)
+  if( 1)
     {
+
 
       delta_distance = (right_delta + left_delta) / 2.0;
   
