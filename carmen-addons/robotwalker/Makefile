@@ -21,8 +21,6 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 
 ifndef NO_GRAPHICS
 
-#SOURCES += walker_gui.c
-
 CFLAGS +=
 IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
 LFLAGS 	+= 	-lgdk_imlib -lglobal_graphics `$(GTK_CONFIG) --libs gthread`
