@@ -56,7 +56,7 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people) {
   if (people) {
     if (response->people) {
       *people = (carmen_dot_person_p)
-	realloc(*people, response->num_people*sizeof(carmen_dot_person_t));
+	calloc(response->num_people, sizeof(carmen_dot_person_t));
       carmen_test_alloc(people);
       memcpy(*people, response->people, response->num_people*sizeof(carmen_dot_person_t));
     }
@@ -90,7 +90,7 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
   if (trash) {
     if (response->trash) {
       *trash = (carmen_dot_trash_p)
-	realloc(*trash, response->num_trash*sizeof(carmen_dot_trash_t));
+	calloc(response->num_trash, sizeof(carmen_dot_trash_t));
       carmen_test_alloc(trash);
       memcpy(*trash, response->trash, response->num_trash*sizeof(carmen_dot_trash_t));
     }
@@ -124,7 +124,7 @@ int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
   if (doors) {
     if (response->doors) {
       *doors = (carmen_dot_door_p)
-	realloc(*doors, response->num_doors*sizeof(carmen_dot_door_t));
+	calloc(response->num_doors, sizeof(carmen_dot_door_t));
       carmen_test_alloc(doors);
       memcpy(*doors, response->doors, response->num_doors*sizeof(carmen_dot_door_t));
     }
