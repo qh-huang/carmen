@@ -655,16 +655,17 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
     return 1e6;
   }
 
+  return edges[i].cost;
 
   if (node->theta > MAXFLOAT/2)
     return edges[i].cost;
 
-  turning_angle = atan2(node->y-parent_node->y, node->x-parent_node->x) - node->theta;
+  turning_angle = atan2(node->y-parent_node->y, node->x-parent_node->x) - 
+    node->theta;
   turning_angle = fabs(carmen_normalize_theta(turning_angle));
   if (turning_angle < M_PI/8)
     return edges[i].cost;
     
-  turning_angle = M_PI - turning_angle;
   radius = 2 * roadmap->c_space->config.resolution * 
     sin(turning_angle/2)/(1-sin(turning_angle/2));
   speed = roadmap->max_r_vel * radius;
@@ -672,6 +673,10 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
     return edges[i].cost;
 
   turning_cost = roadmap->max_t_vel / speed * radius*1.5;
+  turning_cost /= roadmap->c_space->config.resolution;
+
+  assert (turning_cost >= 0);
+  assert (turning_cost < 2000);    
 
   return edges[i].cost + turning_cost;
 }

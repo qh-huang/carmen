@@ -3,9 +3,8 @@
 #include <carmen/dot_messages.h>
 
 static carmen_list_t *person_list = NULL;
-static carmen_list_t *publish_list = NULL;
+static carmen_list_t *trash_list = NULL;
 
-static carmen_list_t *visible_list = NULL;
 static carmen_simulator_truepos_message truepose;
 
 static carmen_map_t *map;
@@ -39,112 +38,85 @@ static int points_are_visible(carmen_traj_point_t *p1,
   return 1;
 }
 
-static int find_in_list(carmen_list_t *list, int id)
-{
-  carmen_dot_person_t *person;
-  int i;
-
-  for (i = 0; i < list->length; i++) {
-    person = (carmen_dot_person_t *)carmen_list_get(list, i);
-    if (person->id == id)
-      return i;
-  }
-
-  return -1;
-}
-
-static void update_visible_list(carmen_dot_person_t *person)
-{
-  int entry;
-
-  entry = find_in_list(visible_list, person->id);
-  if (entry < 0) 
-    carmen_list_add(visible_list, person);
-  else
-    carmen_list_set(visible_list, entry, person);
-}
-
-static void delete_unused(carmen_list_t *visible_list, 
-			  carmen_list_t *person_list)
-{
-  carmen_dot_person_t *person;
-  int i;
-  int entry;
-
-  i = 0;
-  while (i < visible_list->length) {
-    person = (carmen_dot_person_t *)carmen_list_get(visible_list, i);
-    entry = find_in_list(person_list, person->id);
-    if (entry == -1) {
-      carmen_list_delete(visible_list, i);
-    } else
-      i++;
-  } 
-}
-
 static void simulator_objects_handler(carmen_simulator_objects_message 
 				      *objects_msg)
 {
-  carmen_dot_person_t person, *prev_position;
+  carmen_dot_person_t person;
+  carmen_dot_trash_t trash;
   carmen_traj_point_t p1;
-  carmen_dot_all_people_msg dot_msg;
+  carmen_dot_all_people_msg people_msg;
+  carmen_dot_all_trash_msg trash_msg;
   int i;
   IPC_RETURN_TYPE err;
-  int entry;
 
-  dot_msg.timestamp = carmen_get_time_ms();
-  strcpy(dot_msg.host, carmen_get_tenchar_host_name());
+  people_msg.timestamp = carmen_get_time_ms();
+  strcpy(people_msg.host, carmen_get_tenchar_host_name());
+
+  trash_msg.timestamp = carmen_get_time_ms();
+  strcpy(trash_msg.host, carmen_get_tenchar_host_name());
 
   if (person_list == NULL) 
     person_list = carmen_list_create(sizeof(carmen_dot_person_t), 10);
 
-  if (publish_list == NULL) 
-    publish_list = carmen_list_create(sizeof(carmen_dot_person_t), 10);
-
-  if (visible_list == NULL) 
-    visible_list = carmen_list_create(sizeof(carmen_dot_person_t), 10);
+  if (trash_list == NULL) 
+    trash_list = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
 
   person_list->length = 0;
-  publish_list->length = 0;
+  trash_list->length = 0;
   p1.x = truepose.truepose.x;
   p1.y = truepose.truepose.y;
 
   for (i = 0; i < objects_msg->num_objects; i++) {
-    person.x = objects_msg->objects_list[i].x;
-    person.y = objects_msg->objects_list[i].y;
-    person.vx = 0.375;
-    person.vy = 0.375;
-    person.vxy = 0.125;
-    person.id = i;
+    if (!points_are_visible(&p1, objects_msg->objects_list+i, map))
+      continue;
+    if (objects_msg->objects_list[i].t_vel < .2) {
+      trash.x = objects_msg->objects_list[i].x;
+      trash.y = objects_msg->objects_list[i].y;
+      trash.theta = objects_msg->objects_list[i].theta;
+      trash.major = 1;
+      trash.minor = .15;
+      trash.vx = 0.375;
+      trash.vy = 0.375;
+      trash.vxy = 0.125;
+      trash.id = i;
 
-    carmen_list_add(person_list, &person);
+      carmen_list_add(trash_list, &trash);
 
-    if (!points_are_visible(&p1, objects_msg->objects_list+i, map)) {
-      entry = find_in_list(visible_list, person.id);
-      if (entry >= 0) {
-	prev_position = 
-	  (carmen_dot_person_t *)carmen_list_get(visible_list, entry);
-	//	carmen_list_add(publish_list, prev_position);
-      }
     } else {
-      carmen_list_add(publish_list, &person);
-      update_visible_list(&person);
+      person.x = objects_msg->objects_list[i].x;
+      person.y = objects_msg->objects_list[i].y;
+      person.vx = 0.375;
+      person.vy = 0.375;
+      person.vxy = 0.125;
+      person.id = i;
+
+      carmen_list_add(person_list, &person);
     }
   }
 
-  delete_unused(visible_list, person_list);
-
-  if (publish_list->length > 0) {
-    dot_msg.num_people = publish_list->length;
-    dot_msg.people = (carmen_dot_person_t *)publish_list->list;
+  if (person_list->length > 0) {
+    people_msg.num_people = person_list->length;
+    people_msg.people = (carmen_dot_person_t *)person_list->list;
   } else {
-    dot_msg.num_people = 0;
-    dot_msg.people = NULL;
+    people_msg.num_people = 0;
+    people_msg.people = NULL;
   }
 
-  err = IPC_publishData(CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &dot_msg);
+  err = IPC_publishData(CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &people_msg);
   carmen_test_ipc_exit(err, "Could not publish", 
 		       CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
+
+  if (trash_list->length > 0) {
+    trash_msg.num_trash = trash_list->length;
+    trash_msg.trash = (carmen_dot_trash_t *)trash_list->list;
+  } else {
+    trash_msg.num_trash = 0;
+    trash_msg.trash = NULL;
+  }
+
+  err = IPC_publishData(CARMEN_DOT_ALL_TRASH_MSG_NAME, &trash_msg);
+  carmen_test_ipc_exit(err, "Could not publish", 
+		       CARMEN_DOT_ALL_TRASH_MSG_NAME);
 }
 
 int main(int argc, char *argv[]) 

@@ -9,6 +9,7 @@
 
 static carmen_list_t *people = NULL, *trash = NULL, *doors = NULL;
 static carmen_map_t *map;
+static double robot_width;
 
 static carmen_list_t *marked_edges = NULL;
 
@@ -55,6 +56,12 @@ void carmen_dynamics_initialize(carmen_map_t *new_map)
     (NULL, (carmen_handler_t) trash_handler, CARMEN_SUBSCRIBE_LATEST);
   carmen_dot_subscribe_all_doors_message
     (NULL, (carmen_handler_t) doors_handler,CARMEN_SUBSCRIBE_LATEST);
+
+  if (carmen_param_get_double("width",&robot_width) < 0) {
+    robot_width = .5;
+    carmen_warn("Could not set robot speed. Setting to default %f\n",
+		robot_width);
+  }
 
   marked_edges = carmen_list_create(sizeof(carmen_roadmap_marked_edge_t), 10);
 }
@@ -157,6 +164,44 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 
 #endif
 
+static int is_blocked_by_trash(double n1x, double n1y, double n2x, double n2y, 
+			       double x, double y, double trash_theta, 
+			       double major, double minor)
+{
+  double numerator;
+  double denominator;
+  double i_x, i_y;
+  double dist_along_line;
+  double radius;
+  double theta;
+  
+  trash_theta = trash_theta;
+  radius = (major+minor)/2+robot_width;
+
+  numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
+  denominator = hypot(n2x-n1x, n2y-n1y);
+  
+  if (fabs(denominator) < 1e-9 || fabs(numerator)/denominator > radius) 
+    return 0;
+
+  theta = fabs(atan2(n2y-n1y, n2x - n1x));
+  if (theta > M_PI/4 && theta < 3*M_PI/4) {
+    i_y = numerator/denominator * (n2x - n1x)/denominator + y;
+    dist_along_line = (i_y - n1y) / (n2y - n1y);
+  } else {
+    i_x = numerator/denominator * (n2y - n1y)/denominator + x;
+    dist_along_line = (i_x - n1x) / (n2x - n1x);
+  }
+
+  if (dist_along_line > 1 || dist_along_line < 0) {
+    if (hypot(n2x - x, n2y - y) > radius && 
+	hypot(n1x - x, n1y - y) > radius)
+      return 0;
+  }
+
+  return 1;
+}
+
 static int is_blocked(double n1x, double n1y, double n2x, double n2y, 
 		      double x, double y, double vx, double vxy, double vy)
 {
@@ -228,10 +273,11 @@ static int do_blocking(double n1x, double n1y, double n2x, double n2y,
 
   for (i = 0; i < trash->length; i++) {
     trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
-    if (is_blocked(n1x, n1y, n2x, n2y, trash_bin->x, trash_bin->y, 
-		   trash_bin->vx, trash_bin->vxy, trash_bin->vy)) {
+    if (is_blocked_by_trash(n1x, n1y, n2x, n2y, trash_bin->x, trash_bin->y, 
+			    trash_bin->theta, trash_bin->major, 
+			    trash_bin->minor)) {
       if (blocking_object) 
-	fill_in_object(blocking_object, trash, carmen_dot_trash);
+	fill_in_object(blocking_object, trash_bin, carmen_dot_trash);
       return 1;
     }
   }

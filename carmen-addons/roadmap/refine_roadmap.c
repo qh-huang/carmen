@@ -108,22 +108,26 @@ void carmen_roadmap_refine_graph(carmen_world_point_t *robot,
     varx = blocking_object.data.person.vx;
     vary = blocking_object.data.person.vy;
     varxy = blocking_object.data.person.vxy;
+
+    carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
+    radius *= 1.1;
   } else if (blocking_object.dot_type == carmen_dot_trash) {
     x = blocking_object.data.trash.x;
     y = blocking_object.data.trash.y;
-    varx = blocking_object.data.trash.vx;
-    vary = blocking_object.data.trash.vy;
-    varxy = blocking_object.data.trash.vxy;
+    radius = (blocking_object.data.trash.major + 
+	      blocking_object.data.trash.minor)/2;
+    radius *= 1.1;
+
   } else { // if (blocking_object.dot_type == carmen_dot_door) {
     x = blocking_object.data.door.x;
     y = blocking_object.data.door.y;
     varx = blocking_object.data.door.vx;
     vary = blocking_object.data.door.vy;
     varxy = blocking_object.data.door.vxy;
-  }
 
-  carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
-  radius *= 1.1;
+    carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
+    radius *= 1.1;
+  }
 
   node_list = (carmen_roadmap_vertex_t *)road->nodes->list;
 
