@@ -15,7 +15,6 @@ extern "C" {
 
 typedef struct {
   int id;
-  int delete;
   double x;
   double y;
   double vx;
@@ -25,7 +24,6 @@ typedef struct {
 
 typedef struct {
   int id;
-  int delete;
   double x;
   double y;
   double vx;
