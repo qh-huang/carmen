@@ -5,8 +5,8 @@
 
 static carmen_gnav_room_msg *room_msg_ptr_ext = NULL;
 static carmen_handler_t room_msg_handler_ext = NULL;
-static carmen_gnav_rooms_msg *rooms_msg_ptr_ext = NULL;
-static carmen_handler_t rooms_msg_handler_ext = NULL;
+//static carmen_gnav_rooms_topology_msg *rooms_msg_ptr_ext = NULL;
+//static carmen_handler_t rooms_msg_handler_ext = NULL;
 static carmen_gnav_path_msg *path_msg_ptr_ext = NULL;
 static carmen_handler_t path_msg_handler_ext = NULL;
 
@@ -17,7 +17,7 @@ static void room_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err = IPC_OK;
 
-  formatter = IPC_msInstanceFormatter(msgRef);
+  formatter = IPC_msgInstanceFormatter(msgRef);
 
   if (room_msg_ptr_ext)
     err = IPC_unmarshallData(formatter, callData, room_msg_ptr_ext,
@@ -36,7 +36,7 @@ void carmen_gnav_subscribe_room_message(carmen_gnav_room_msg *room_msg,
   IPC_RETURN_TYPE err = IPC_OK;  
 
   if(subscribe_how == CARMEN_UNSUBSCRIBE) {
-    IPC_unsubscribe(CARMEN_GNAV_ROOM_NAME, 
+    IPC_unsubscribe(CARMEN_GNAV_ROOM_MSG_NAME, 
 		    room_msg_handler);
     return;
   }
@@ -50,15 +50,15 @@ void carmen_gnav_subscribe_room_message(carmen_gnav_room_msg *room_msg,
   }
 
   room_msg_handler_ext = handler;
-  err = IPC_subscribe(CARMEN_GNAV_ROOM_NAME, 
+  err = IPC_subscribe(CARMEN_GNAV_ROOM_MSG_NAME, 
 		      room_msg_handler, NULL);
 
   if(subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_GNAV_ROOM_NAME, 1);
+    IPC_setMsgQueueLength(CARMEN_GNAV_ROOM_MSG_NAME, 1);
   else
-    IPC_setMsgQueueLength(CARMEN_GNAV_ROOM_NAME, 100);
+    IPC_setMsgQueueLength(CARMEN_GNAV_ROOM_MSG_NAME, 100);
 
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_ROOM_NAME);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_ROOM_MSG_NAME);
 }
 
 carmen_rooms_topology_p carmen_gnav_get_rooms_topology() {
@@ -84,7 +84,7 @@ static void path_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err = IPC_OK;
 
-  formatter = IPC_msInstanceFormatter(msgRef);
+  formatter = IPC_msgInstanceFormatter(msgRef);
 
   if (path_msg_ptr_ext)
     err = IPC_unmarshallData(formatter, callData, path_msg_ptr_ext,
@@ -103,7 +103,7 @@ void carmen_gnav_subscribe_path_message(carmen_gnav_path_msg *path_msg,
   IPC_RETURN_TYPE err = IPC_OK;
 
   if(subscribe_how == CARMEN_UNSUBSCRIBE) {
-    IPC_unsubscribe(CARMEN_GNAV_PATH_NAME, 
+    IPC_unsubscribe(CARMEN_GNAV_PATH_MSG_NAME, 
 		    path_msg_handler);
     return;
   }
@@ -117,15 +117,15 @@ void carmen_gnav_subscribe_path_message(carmen_gnav_path_msg *path_msg,
   }
 
   path_msg_handler_ext = handler;
-  err = IPC_subscribe(CARMEN_GNAV_PATH_NAME, 
+  err = IPC_subscribe(CARMEN_GNAV_PATH_MSG_NAME, 
 		      path_msg_handler, NULL);
 
   if(subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_GNAV_PATH_NAME, 1);
+    IPC_setMsgQueueLength(CARMEN_GNAV_PATH_MSG_NAME, 1);
   else
-    IPC_setMsgQueueLength(CARMEN_GNAV_PATH_NAME, 100);
+    IPC_setMsgQueueLength(CARMEN_GNAV_PATH_MSG_NAME, 100);
 
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_PATH_NAME);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_PATH_MSG_NAME);
 }
 
 void carmen_gnav_set_goal(int goal) {

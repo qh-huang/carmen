@@ -6,7 +6,7 @@ MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
 SOURCES = robotwalker.c gnav.c gnav_interface.c valet.c valet_interface.c \
-		valet_test.c
+		valet_test.c walkerserial.c walkerserial_interface.c
 
 ifndef NO_GRAPHICS
 
@@ -29,7 +29,8 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = robotwalker gnav valet valet_test
+TARGETS = robotwalker gnav valet valet_run walkerserial libgnav_interface.a \
+		libvalet_interface.a libwalkerserial_interface.a
 
 ifndef NO_GRAPHICS
 TARGETS += gnav_gui
@@ -56,7 +57,11 @@ valet:	valet.o
 
 libvalet_interface.a:	valet_interface.o
 
-valet_test:	valet_test.o valet_interface.o
+valet_run:	valet_run.o valet_interface.o
+
+walkerserial:	walkerserial.o
+
+libwalkerserial_interface.a:	walkerserial_interface.o
 
 include $(CARMEN_HOME)/src/Makefile.rules
 

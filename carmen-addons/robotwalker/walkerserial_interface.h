@@ -1,5 +1,5 @@
-#ifndef WALKERSERIAL_MESSAGES_H
-#define WALKERSERIAL_MESSAGES_H
+#ifndef WALKERSERIAL_INTERFACE_H
+#define WALKERSERIAL_INTERFACE_H
 
 #include <carmen/carmen.h>
 #include "walkerserial_messages.h"

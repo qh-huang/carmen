@@ -1106,6 +1106,7 @@ static void print_path(int *p, int plen) {
   printf("\n");
 }
 
+/*
 static void pq_print(path_node_p pq) {
 
   path_node_p tmp;
@@ -1118,6 +1119,7 @@ static void pq_print(path_node_p pq) {
   }
   printf("\n");
 }
+*/
 
 static int path_eq(int *path1, int pathlen1, int *path2, int pathlen2) {
 

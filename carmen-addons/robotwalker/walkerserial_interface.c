@@ -13,7 +13,7 @@ static void button_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err = IPC_OK;
 
-  formatter = IPC_msInstanceFormatter(msgRef);
+  formatter = IPC_msgInstanceFormatter(msgRef);
 
   if (button_msg_ptr_ext)
     err = IPC_unmarshallData(formatter, callData, button_msg_ptr_ext,
