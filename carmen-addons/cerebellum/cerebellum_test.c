@@ -3,8 +3,8 @@
 
 #include "cerebellum_com.h"
 
-#define METRES_PER_CEREBELLUM 1.0
-#define ROT_VEL_FACT_RAD 1.0
+#define METRES_PER_CEREBELLUM .010
+#define ROT_VEL_FACT_RAD 100
 
 static double max_t_vel = 1.0;
 
@@ -26,7 +26,6 @@ set_wheel_velocities(double vl, double vr)
   carmen_cerebellum_set_velocity((int)vl, (int)vr);
 }
 
-
 void 
 shutdown_cerebellum(int signo __attribute__ ((unused))) 
 {
@@ -47,25 +46,36 @@ main(int argc __attribute__ ((unused)),
   double vl, vr;
   int k;
   double tv, rv;
+  int a,b,c,d;
+  int error;
+
+  tv = rv = a = b = c = d = error = 0;
 
   signal(SIGINT, shutdown_cerebellum);
   signal(SIGTERM, shutdown_cerebellum);
 
   carmen_terminal_cbreak(0);
 
-  strcpy(dev_name, "/dev/ttyS24");
+  strcpy(dev_name, "/dev/ttyS0");
   wheel_diameter = 0.165;
 
   if (carmen_cerebellum_connect_robot(dev_name) < 0) 
     return -1;
 
   while(1) {
-    fprintf(stderr, ".");
+    //fprintf(stderr, ".");
 
     k = getchar();
 
     if (k != EOF) {
       switch(k) {
+      case 'e': 
+	error = carmen_cerebellum_get_state(&a, &b, &c, &d);
+
+	fprintf(stderr, "%8x %8x %8x %8x %d\n",a,b,c,d,error);
+
+	break;
+      case 'd': carmen_cerebellum_limp(); break;
       case 'u': tv = 0.5; rv = 0.2; break;
       case 'i': tv = 0.5; rv = 0.0; break;
       case 'o': tv = 0.5; rv = -0.2; break;
@@ -77,14 +87,16 @@ main(int argc __attribute__ ((unused)),
       case '.': tv = -0.5; rv = -0.2; break;
       default:  tv = 0.0; rv = 0; break;
       }
+
       if (tv == 0.0 && rv == 0.0) {
 	carmen_cerebellum_set_velocity(0, 0);
       } else {
-	vl = tv;
-	vr = tv;
+	vl = tv / METRES_PER_CEREBELLUM;
+	vr = tv / METRES_PER_CEREBELLUM;
 	vl -= 0.5 * rv * ROT_VEL_FACT_RAD*3;
 	vr += 0.5 * rv * ROT_VEL_FACT_RAD*3;
-	carmen_cerebellum_set_velocity(vl, vr);
+	fprintf(stderr, "%x %x\n",(int)vl,(int)vr);
+	carmen_cerebellum_set_velocity((int)vl, (int)vr);
       }
     }
   }

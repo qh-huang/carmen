@@ -31,6 +31,8 @@
 #include <values.h>
 #include "cerebellum_com.h"
 
+#undef _REENTRANT
+
 #ifdef _REENTRANT
 #include <pthread.h>
 static pthread_t main_thread;
@@ -72,15 +74,19 @@ initialize_robot(char *dev)
   double acc;
 
   result = carmen_cerebellum_connect_robot(dev);
-  if(result == FALSE)
-    return -1;
+  if(result != 0)
+    {
+      carmen_warn("connect failed\n");
+      return -1;
+    }
+  carmen_warn("connect succeeded\n");
 
   acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
   result = carmen_cerebellum_ac(acc);
   current_acceleration = robot_config.acceleration;
 
-  if(result == FALSE)
-    return -1;
+  if(result != 0)
+    return 1;
 
   last_update = carmen_get_time_ms();
 
@@ -381,6 +387,13 @@ carmen_cerebellum_initialize_ipc(void)
 static void *
 start_thread(void *data __attribute__ ((unused))) 
 {
+  sigset_t set;
+
+  sigemptyset(&set);
+  sigaddset(&set, SIGINT);
+  sigaddset(&set, SIGPIPE);
+  sigprocmask(SIG_BLOCK, &set, NULL);
+
   while (1) {    
     command_robot();
     usleep(30000);
@@ -401,6 +414,8 @@ carmen_cerebellum_start(int argc, char **argv)
       carmen_warn("\nError: Could not initialize IPC.\n");
       return -1;
     }
+
+  carmen_warn("Connecting to %s\n", dev_name);
 
   if(initialize_robot(dev_name) < 0)
     {

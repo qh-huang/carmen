@@ -26,8 +26,9 @@
  ********************************************************/
 #include <carmen/carmen.h>
 #include "cerebellum_com.h"
-#include "cereb_commands.h"
-//#define DEBUG 1
+#include "cerebellum_defs.h"
+
+#define DEBUG 1
 
 #define CEREB_BAUDRATE 115200
 #define PIC_WRITE_DELAY      10 // serial xfer delay, in us
@@ -169,7 +170,7 @@ void checksum_data(char *ptr, int * index)
 }
 
 // returns the status of the Cerebellum acknowledgement.
-int check_ack()
+int check_ack(void)
 {
   char buf[1];
 
@@ -220,6 +221,7 @@ cereb_send_command(char command)
   buf[0] = command;
 
   cereb_send_string(buf, 1);
+
   return check_ack();
 }
 
@@ -252,8 +254,12 @@ static int cereb_init_serial(char * dev)
 int 
 carmen_cerebellum_connect_robot(char *dev)
 {
+  fprintf(stderr, "connected to robot %s\n", dev);
+
   if(cereb_init_serial(dev) < 0)
     return -1;
+
+  fprintf(stderr, "init serial succeeded\n");
 
   return cereb_init();
 }
@@ -334,5 +340,8 @@ carmen_cerebellum_engage(void)
 int 
 carmen_cerebellum_disconnect_robot(void)
 {
+  fprintf(stderr, "disconnecting from robot\n");
+
+  carmen_warn("About to send %d\n", DEINIT);
   return cereb_send_command(DEINIT);
 }

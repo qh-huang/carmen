@@ -31,6 +31,7 @@
 static void 
 shutdown_cerebellum(int signo) 
 {
+  carmen_warn("Inside shutdown_cerebellum\n");
   carmen_cerebellum_shutdown(signo);
   close_ipc();
   exit(-1);
