@@ -42,8 +42,8 @@ static int thread_is_running = 0;
 #define        CEREBELLUM_TIMEOUT          2.0
 
 #define        METRES_PER_INCH        0.0254
-#define        METRES_PER_CEREBELLUM_VELOCITY (METRES_PER_INCH/10.0)
 
+#define        METRES_PER_CEREBELLUM_VELOCITY (METRES_PER_INCH/10.0)
 #define        METRES_PER_CEREBELLUM (METRES_PER_INCH/10.0)
 
 #define        WHEELBASE        (13.4 * METRES_PER_INCH)
@@ -75,11 +75,7 @@ initialize_robot(char *dev)
 
   result = carmen_cerebellum_connect_robot(dev);
   if(result != 0)
-    {
-      carmen_warn("connect failed\n");
-      return -1;
-    }
-  carmen_warn("connect succeeded\n");
+    return -1;
 
   acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
   result = carmen_cerebellum_ac(acc);
@@ -160,12 +156,28 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     right_delta_tick -= SHRT_MIN;
   right_delta = right_delta_tick*METRES_PER_CEREBELLUM;
 
-  inner_radius = (left_delta*WHEELBASE)/
-    (right_delta-left_delta);
+  if (fabs(right_delta - left_delta) < .001) 
+    delta_angle = 0;
+  else
+    {
+      if (fabs(left_delta) > 0) 
+	{
+	  inner_radius = (left_delta*WHEELBASE)/
+	    (right_delta-left_delta);
+	  
+	  delta_angle = left_delta/inner_radius;  
+	} 
+      else
+	{
+	  inner_radius = (right_delta*WHEELBASE)/
+	    (left_delta-right_delta);
+	  
+	  delta_angle = right_delta/inner_radius;
+	} 
+    }
 
-  delta_angle = left_delta/inner_radius;  
   delta_distance = (left_delta + right_delta) / 2.0;
-
+  
   if (0) 
     {
       centre_x = x + inner_radius*cos(theta+M_PI/2.0);
@@ -414,8 +426,6 @@ carmen_cerebellum_start(int argc, char **argv)
       carmen_warn("\nError: Could not initialize IPC.\n");
       return -1;
     }
-
-  carmen_warn("Connecting to %s\n", dev_name);
 
   if(initialize_robot(dev_name) < 0)
     {
