@@ -28,7 +28,7 @@
 #define TILT_GUN                  116 // 't'(level) as a single character, range is restricted
 #define HEARTBEAT                 104 // 'h'() sends keepalive
 
-#define PRINT_TEMP                 130 // 'h'() sends keepalive
+#define PRINT_TEMP                 '-' // '-'() sends get temperature
 
 /***********ACK VALUES***************/
 

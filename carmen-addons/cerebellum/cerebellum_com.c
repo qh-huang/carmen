@@ -378,6 +378,7 @@ carmen_cerebellum_get_voltage(double *batt_voltage)
 {
   unsigned char buf[20];
   int index = 0;
+  int temp;
 
   if(cereb_send_command(GET_BATT_VOLTAGE) < 0)
     return -1;
@@ -391,7 +392,9 @@ carmen_cerebellum_get_voltage(double *batt_voltage)
   if(verify_checksum(buf, 4) < 0)
     return -1;
 
-  *batt_voltage =  0.1 * (double)(unpack_buffer(buf, &index));
+  temp = unpack_buffer(buf, &index);
+  printf("voltage_int = %d\n",temp);
+  *batt_voltage =  0.1 * (double)(temp);
 
   return 0;
 }
