@@ -236,6 +236,15 @@ static void test_motors() {
 
   if(icon_command_setdc(fd1, 1, test_speed) < 0)
     fprintf(stderr, "Error: could not set velocity on motor 1.\n");
+  sleep(2);
+  icon_command_stop(fd1, 1);
+  if(icon_command_setdc(fd2, 1, test_speed) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 2.\n");
+  sleep(2);
+  icon_command_stop(fd2, 1);
+  sleep(2);
+  if(icon_command_setdc(fd1, 1, test_speed) < 0)
+    fprintf(stderr, "Error: could not set velocity on motor 1.\n");
   if(icon_command_setdc(fd2, 1, test_speed) < 0)
     fprintf(stderr, "Error: could not set velocity on motor 2.\n");
   sleep(4);
