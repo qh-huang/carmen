@@ -46,7 +46,7 @@ typedef struct {
 } carmen_dot_all_people_msg;
 
 #define CARMEN_DOT_ALL_PEOPLE_MSG_NAME "carmen_dot_all_people_msg"
-#define CARMEN_DOT_ALL_PEOPLE_MSG_FMT  "{<{int, double, double, double, double, double}:2>, double, [char:10]}"
+#define CARMEN_DOT_ALL_PEOPLE_MSG_FMT  "{<{int, double, double, double, double, double}:2>, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_trash_t trash;
@@ -66,7 +66,7 @@ typedef struct {
 } carmen_dot_all_trash_msg;
 
 #define CARMEN_DOT_ALL_TRASH_MSG_NAME "carmen_dot_all_trash_msg"
-#define CARMEN_DOT_ALL_TRASH_MSG_FMT  "{<{int, double, double, double, double, double}:2>, double, [char:10]}"
+#define CARMEN_DOT_ALL_TRASH_MSG_FMT  "{<{int, double, double, double, double, double}:2>, int, double, [char:10]}"
 
 typedef struct {
   carmen_dot_door_t door;
@@ -86,7 +86,7 @@ typedef struct {
 } carmen_dot_all_doors_msg;
 
 #define CARMEN_DOT_ALL_DOORS_MSG_NAME "carmen_dot_all_doors_msg"
-#define CARMEN_DOT_ALL_DOORS_MSG_FMT  "{<{int, double, double, double, double, double, double, double}:2>, double, [char:10]}"
+#define CARMEN_DOT_ALL_DOORS_MSG_FMT  "{<{int, double, double, double, double, double, double, double}:2>, int, double, [char:10]}"
 
 
 #ifdef __cplusplus
