@@ -536,7 +536,8 @@ int canon_rcc_exit(usb_dev_handle *camera_handle)
   return 0;
 }
 
-int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode)
+int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode,
+			     int use_flash)
 {
   if(canon_rcc_init(camera_handle) < 0) {
     fprintf(stderr, "rcc init failed.\n");
@@ -551,10 +552,11 @@ int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode)
     fprintf(stderr, "rcc set transfer mode failed.\n");
     return -1;
   }
-  if(canon_rcc_turnoff_flash(camera_handle) < 0) {
-    fprintf(stderr, "rcc turnoff flash failed.\n");
-    return -1;
-  }
+  if(!use_flash)
+    if(canon_rcc_turnoff_flash(camera_handle) < 0) {
+      fprintf(stderr, "rcc turnoff flash failed.\n");
+      return -1;
+    }
   return 0;
 }
 

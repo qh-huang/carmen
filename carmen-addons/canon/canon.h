@@ -60,7 +60,8 @@ int canon_rcc_download_full_image(usb_dev_handle *camera_handle,
 int canon_rcc_exit(usb_dev_handle *camera_handle);
 
 /* initialize remote capture control */
-int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode);
+int canon_initialize_capture(usb_dev_handle *camera_handle, int transfer_mode,
+			     int use_flash);
 
 /* capture image wrapper */
 int canon_capture_image(usb_dev_handle *camera_handle, 
