@@ -75,7 +75,9 @@ carmen_roadmap_vertex_t *carmen_roadmap_best_node
 double carmen_roadmap_get_cost(carmen_world_point_t *point, 
 			       carmen_roadmap_vertex_t *node,
 			       carmen_roadmap_t *roadmap);
-int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
+int carmen_roadmap_check_path(carmen_traj_point_t *robot, 
+			      carmen_roadmap_t *road, int allow_replan);
+void carmen_roadmap_generate_path(carmen_traj_point_t *robot,
 				 carmen_roadmap_t *roadmap);
 void carmen_roadmap_refine_graph(carmen_world_point_t *robot, 
 				 carmen_roadmap_t *road);

@@ -23,7 +23,7 @@ static double compute_path_time(carmen_roadmap_t *roadmap)
 		  dest->x, dest->y);
     if (!roadmap->avoid_people) {
       num_blocking_people = carmen_dynamics_num_blocking_people(start, dest);
-      total += 30*num_blocking_people;
+      total += 10*num_blocking_people;
     }
     start = dest;
   }
@@ -53,15 +53,22 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
   int path_ok, path_without_people_ok;
   double time, time_without_people;
 
-#error Fix me: We should only compare path times when we replan.
+  if (roadmap->current_roadmap) {
+    path_ok = carmen_roadmap_check_path(robot, roadmap->current_roadmap, 0);
+    if (path_ok > 0) {
+      carmen_roadmap_generate_path(robot, roadmap->current_roadmap);
+      return roadmap->current_roadmap->path;
+    }
+  }
 
-  //  carmen_warn("About to generate path with people\n");
+  //  carmen_warn("About to regenerate with people\n");
 
-  path_ok = carmen_roadmap_generate_path(robot, roadmap->roadmap);
+  path_ok = carmen_roadmap_check_path(robot, roadmap->roadmap, 1);
 
   //  carmen_warn("Generated path with people: %d\n", path_ok);
 
   if (path_ok > 0) {
+    carmen_roadmap_generate_path(robot, roadmap->roadmap);
     time = compute_path_time(roadmap->roadmap);
     //    carmen_warn("Computed path with people: %f\n", time);
   } else 
@@ -75,12 +82,13 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
 
   //  carmen_warn("About to generate path without people\n");
 
-  path_without_people_ok = carmen_roadmap_generate_path
-    (robot, roadmap->roadmap_without_people);
+  path_without_people_ok = 
+    carmen_roadmap_check_path(robot, roadmap->roadmap_without_people, 1);
 
   //  carmen_warn("Generated path without people: %d\n", path_without_people_ok);
 
   if (path_without_people_ok > 0) {
+    carmen_roadmap_generate_path(robot, roadmap->roadmap_without_people);
     time_without_people = 
       compute_path_time(roadmap->roadmap_without_people);
     //    carmen_warn("Computed path without people: %f\n", time_without_people);
@@ -89,15 +97,20 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
 
   if (time > MAXFLOAT/2 && time_without_people > MAXFLOAT/2)
     return NULL;
+
+  carmen_warn("Avoiding people: %f Ignoring people: %f\n",
+	      time, time_without_people);
   
   if (time > time_without_people) {
     roadmap->nodes = roadmap->roadmap_without_people->nodes;
     roadmap->path = roadmap->roadmap_without_people->path;
+    roadmap->current_roadmap = roadmap->roadmap_without_people;
     return roadmap->roadmap_without_people->path;
   }
 
   roadmap->nodes = roadmap->roadmap->nodes;
   roadmap->path = roadmap->roadmap->path;
+  roadmap->current_roadmap = roadmap->roadmap;
 
   return roadmap->roadmap->path;
 }
@@ -125,6 +138,7 @@ carmen_roadmap_mdp_t *carmen_roadmap_mdp_initialize(carmen_map_t *map)
 void carmen_roadmap_mdp_plan(carmen_roadmap_mdp_t *roadmap, 
 			     carmen_world_point_t *goal)
 {
+  roadmap->current_roadmap = NULL;
   carmen_roadmap_plan(roadmap->roadmap, goal);
   carmen_roadmap_plan(roadmap->roadmap_without_people, goal);
 
