@@ -18,7 +18,7 @@ endif
 
 
 PUBLIC_INCLUDES = dot_interface.h dot_messages.h dot.h
-PUBLIC_LIBRARIES = dot_interface.a
+PUBLIC_LIBRARIES = libdot_interface.a
 PUBLIC_BINARIES = dot
 
 TARGETS = dot libdot_interface.a
