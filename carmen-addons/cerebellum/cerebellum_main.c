@@ -58,39 +58,26 @@ static int thread_is_running = 0;
 /* the internal PID loop runs every 1.55ms (we think) */
 //#define TROGDOR_PID_FREQUENCY  (1/1.55e-3)
 //#define TROGDOR_MPS_PER_TICK   (TROGDOR_M_PER_TICK * TROGDOR_PID_FREQUENCY)
-
 /* assuming that the counts can use the full space of a signed 32-bit int
  * */
 //#define TROGDOR_MAX_TICS 2147483648U
-
 /* for safety */
 //#define TROGDOR_MAX_WHEELSPEED   4.0
 
-
-#define        CEREBELLUM_TIMEOUT          (2.0)
-#define        METERS_PER_INCH        (0.0254)
-#define        INCH_PER_METRE         (39.370)
-
-/* the new internal PID loop seems to run every 1.9375ms (we think) */
-#define        OBOT_LOOP_FREQUENCY  (1/1.9375e-3)
-
-#define        OBOT_WHEEL_CIRCUMFERENCE  (4.25 * METERS_PER_INCH * 3.1415926535)
-#define        OBOT_TICKS_PER_REV       (11600.0)
-#define        OBOT_WHEELBASE        (.317)
-
-
-#define        METERS_PER_OBOT_TICK (OBOT_WHEEL_CIRCUMFERENCE / OBOT_TICKS_PER_REV)
-#define        TICKS_PER_MPS (1.0/(METERS_PER_OBOT_TICK * OBOT_LOOP_FREQUENCY))
-
-#define        ROT_VEL_FACT_RAD (OBOT_WHEELBASE*TICKS_PER_MPS/2.0)
-
-#define        MAXV             (4.5*TICKS_PER_MPS)
-
-//this is in the current iteration of the motor driver
-#define        MAX_CEREBELLUM_ACC 10
-
-#define        MIN_OBOT_TICKS (4.0)
-#define        MAX_READINGS_TO_DROP (10)
+#define CEREBELLUM_TIMEOUT (2.0)
+#define METERS_PER_INCH (0.0254)
+#define INCH_PER_METRE (39.370)
+#define OBOT_LOOP_FREQUENCY (1/1.9375e-3)
+#define OBOT_WHEEL_CIRCUMFERENCE (4.25 * METERS_PER_INCH * 3.1415926535)
+#define OBOT_TICKS_PER_REV (11600.0)
+#define OBOT_WHEELBASE (.317)
+#define METERS_PER_OBOT_TICK (OBOT_WHEEL_CIRCUMFERENCE / OBOT_TICKS_PER_REV)
+#define TICKS_PER_MPS (1.0/(METERS_PER_OBOT_TICK * OBOT_LOOP_FREQUENCY))
+#define ROT_VEL_FACT_RAD (OBOT_WHEELBASE*TICKS_PER_MPS/2.0)
+#define MAXV (4.5*TICKS_PER_MPS)
+#define MAX_CEREBELLUM_ACC 10
+#define MIN_OBOT_TICKS (4.0)
+#define MAX_READINGS_TO_DROP (10)
 
 static char *dev_name;
 static int State[4];
@@ -137,7 +124,7 @@ initialize_robot(char *dev)
   printf("METERS_PER_OBOT_TICK: %lf\n", METERS_PER_OBOT_TICK);
   //printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
   printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
-
+  
   if(result != 0)
     return 1;
 
@@ -164,7 +151,6 @@ reset_status(void)
 static int
 update_status(void)  /* This function takes approximately 60 ms to run */
 {
-  double vl, vr;
   static double last_published_update;
   static int initialized = 0;
   static short last_left_tick = 0, last_right_tick = 0;
@@ -172,51 +158,41 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   
   short left_delta_tick, right_delta_tick;
   double left_delta, right_delta;
-
   double delta_angle;
   double delta_distance;
-  double max_ticks;
+  double delta_time;
+
+  int left_ticks = State[1];
+  int right_ticks = State[0]; 
 
   //make sure that this measurement doesn't come from some time in the future
-  if (last_published_update >= odometry.timestamp)
+  delta_time = odometry.timestamp - last_published_update;
+  if (delta_time < 0)
     {
       return 0; 
-      carmen_warn("Invalid.\n");
+      carmen_warn("Invalid odometry timestamp.\n");
     }
+
 
   //sometimes the robot returns 0 for left tic or right tic
   //this is an error, if that is the case, the reading is ignored
-
-  if(State[0] == 0 || State[1] == 0)
+  if(left_ticks == 0 || right_ticks == 0)
     {
       carmen_warn("0 odometry returned, ignoring it.\n");
       return(0);
     }
 
-  vl = ((double)State[2]) * TICKS_PER_MPS;
-  vr = ((double)State[3]) * TICKS_PER_MPS;
-
-  odometry.tv = 0.5 * (vl + vr);
-  odometry.rv = (vr - vl) * ROT_VEL_FACT_RAD;
-  
   if (!initialized)
     {
-      last_left_tick = State[0];
-      last_right_tick = State[1];
+      last_left_tick = left_ticks;
+      last_right_tick = right_ticks;
       initialized = 1;
-      
       x = y = theta = 0;
-
       return 0;
     }
 
-  //printf("SHRT_MIN %d SHRT_MAX %d\n",SHRT_MIN,SHRT_MAX);
-
-
   /* update odometry message */
-
-  left_delta_tick = State[0] - last_left_tick;
-
+  left_delta_tick = left_ticks - last_left_tick;
   //this will turn a rollover into a small number
   if (left_delta_tick > SHRT_MAX/2)
     left_delta_tick += SHRT_MIN;
@@ -224,8 +200,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     left_delta_tick -= SHRT_MIN;
   left_delta = left_delta_tick*METERS_PER_OBOT_TICK;
 
-  right_delta_tick = State[1] - last_right_tick;
-
+  right_delta_tick = right_ticks - last_right_tick;
   //these ifs will turn a rollover into a small number
   if (right_delta_tick > SHRT_MAX/2)
     right_delta_tick += SHRT_MIN;
@@ -233,12 +208,12 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     right_delta_tick -= SHRT_MIN;
   right_delta = right_delta_tick*METERS_PER_OBOT_TICK;
 
+  //compute translational velocity
+  delta_distance = (right_delta + left_delta) / 2.0;
+  odometry.tv = delta_distance / delta_time;
+
   //no wheel should go faster than 3.0 m/s
-  max_ticks = 3.0 /( METERS_PER_OBOT_TICK / (odometry.timestamp-last_published_update)) ;
-
-  //  printf("maxticks: %lf, time elapsed: %lf\n", max_ticks, (odometry.timestamp-last_published_update));
-
-  if(abs(left_delta_tick) > max_ticks || abs(right_delta_tick) > max_ticks)
+  if( (right_delta/delta_time) > 3.0 || (left_delta/delta_time) > 3.0)
     {
       if( transient_dropped < MAX_READINGS_TO_DROP )
 	{
@@ -254,20 +229,20 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 	}
     }
 
-
+  //compute rotational velocity
   if (fabs(right_delta - left_delta) < .001) 
     delta_angle = 0;
   else
-    {
-      delta_angle = (left_delta-right_delta)/OBOT_WHEELBASE;
-    }
+    delta_angle = (right_delta-left_delta)/OBOT_WHEELBASE;
+  odometry.rv = delta_angle / delta_time;
 
-  if(delta_angle > 0.5)
+  //the robot cannot rotate faster than 10 radians/s
+  if(odometry.rv > 10)
     {
       if( transient_dropped < MAX_READINGS_TO_DROP)
 	{
 	  printf("CB:delta_angle: %lf, lt: %d rt: %d, olt: %d ort: %d",
-		 delta_angle,State[0],State[1],last_left_tick,last_right_tick);
+		 delta_angle,left_ticks,right_ticks,last_left_tick,last_right_tick);
 	  printf("dropping one reading\n");
 	  transient_dropped++;
 	  return(1);
@@ -277,37 +252,31 @@ update_status(void)  /* This function takes approximately 60 ms to run */
 	  printf("accepting large delta reading\n");
 	  transient_dropped = 0;
 	}
-
-
     }
 
-
-
-  delta_distance = (right_delta + left_delta) / 2.0;
-  
-  
+  //update internal odometry
   x += delta_distance * cos(theta);
   y += delta_distance * sin(theta);
   theta += delta_angle;
-  
   theta = NORMALIZE(theta);
-  
-  last_left_tick = State[0];
-  last_right_tick = State[1];
-  
-  last_published_update = odometry.timestamp;
-  
+
+  //update odometry message
   odometry.x = x;
   odometry.y = y;
   odometry.theta = theta;
 
-
+  printf("OD t:%f x:%f, y:%f\n",theta,x,y);
+  printf("TKS l:%d r:%d\n",left_ticks, right_ticks);
+  
+  //keep history to compute velocities, the velocities the robot reports
+  //are bogus
+  last_left_tick = left_ticks;
+  last_right_tick = right_ticks;
+  last_published_update = odometry.timestamp;
+  
   //the transient dropped flag lets us drop one and only one anomalous reading
   if( transient_dropped > 0)
     transient_dropped--;
-
-
-  //  printf("x: %lf, y: %lf, th: %lf \n", x,y,theta);
 
   return 1;
 }
