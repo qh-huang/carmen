@@ -851,7 +851,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       filters[i].type = n;
     }
     if (filters[i].updated)
-      publish_dot_msg(&filters[i], 1);
+      publish_dot_msg(&filters[i], 0);
   }
 
   for (i = 0; i < num_filters; i++) {
