@@ -26,6 +26,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
+#include <carmen/cerebellum_interface.h>
 #include "joystick.h"
 #include "joyctrl.h"
 
@@ -90,6 +91,7 @@ int main(int argc, char **argv)
       carmen_joystick_control(&joystick, max_tv, max_rv,
 			      &command_tv, &command_rv, &tilt,&fire);
       carmen_robot_velocity_command(command_tv, command_rv);
+      carmen_cerebellum_tilt_command(tilt);
       f_timestamp = carmen_get_time_ms();
     }
     else if(carmen_read_char(&c)) {

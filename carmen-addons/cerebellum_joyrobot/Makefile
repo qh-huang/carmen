@@ -30,7 +30,7 @@ include $(CARMEN_HOME)/src/Makefile.conf
 
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lrobot_interface -lipc -lglobal -lparam_interface
+LFLAGS += -lrobot_interface -lipc -lglobal -lparam_interface -lcerebellum_interface
 
 MODULE_NAME = JOYSTICK
 MODULE_COMMENT = Cerebellum Joystick library and control modules
