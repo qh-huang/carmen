@@ -43,6 +43,7 @@ int carmen_cerebellum_limp(void);
 int carmen_cerebellum_engage(void);
 int carmen_cerebellum_disconnect_robot(void);
   int carmen_cerebellum_fire(void);
+  int carmen_cerebellum_heartbeat(void);
 
 #ifdef __cplusplus
 }

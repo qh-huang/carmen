@@ -32,7 +32,8 @@
 
 #define SLIVER 5
 
-#define CEREB_BAUDRATE 115200
+#define CEREB_BAUDRATE 57600
+//#define CEREB_BAUDRATE 115200
 #define PIC_WRITE_DELAY      10 // serial xfer delay, in us
                                 // keeps pic from losing
                                 // serial data
@@ -44,54 +45,66 @@ static int dev_fd;
 int
 cereb_send_string(char * ptr, int length)
 {
-  int i;
-  
+   int i;
+
+  //  return carmen_serial_writen(dev_fd, ptr, length);
+#ifdef DEBUG
+   printf("sending: ");
+#endif
+
   for(i = 0; i < length; ++i)
     {
       carmen_serial_writen(dev_fd, ptr+i, 1);
       // keeps the PIC from getting overwhelmed
-      usleep(PIC_WRITE_DELAY);
+      //      usleep(PIC_WRITE_DELAY);
       
 #ifdef DEBUG
       printf("%x ",ptr[i]);
 #endif
     }
-  
+
+#ifdef DEBUG
+   printf("\n");
+#endif
+    
   return 0;
-  
+
 }
 
 int
 cereb_read_string(char * ptr, int length)
 {
-  /*
+ 
   int x;
   int i;
 
   x = 0;
+  //#ifdef DEBUG
+  //printf("reading %d: ",length);
+  //#endif
 
   for(i = 0; i < length; ++i)
     {
       // keeps the PIC from getting overwhelmed
-      usleep(PIC_WRITE_DELAY);
+      //usleep(PIC_WRITE_DELAY);
       x = carmen_serial_readn(dev_fd, ptr+i, 1);
 
       if(x == -1)
 	return -1;
 
-#ifdef DEBUG
-      printf("%x ",ptr[i]);
-#endif
+      //#ifdef DEBUG
+      //printf("%x ",ptr[i]);
+      //#endif
     }
 
-#ifdef DEBUG
-  printf("\n");
-  printf("return val is: %x\n", x);
-#endif
+  //#ifdef DEBUG
+  //printf("\n");
+  //printf("return val is: %x\n", x);
+  //#endif
 
   return x;
-  */
-  return carmen_serial_readn(dev_fd, ptr, length);
+ 
+  //  return carmen_serial_readn(dev_fd, ptr, length);
 }
 
 // puts 32-bit ints into buffer in little-endian order for PIC to accept
@@ -167,27 +180,33 @@ int check_ack(void)
   char buf[1];
 
   //check for ack
+  //wait 1ms before checking for ack
+  //usleep(1000);
+
   cereb_read_string(buf, 1);   
+
+  //  printf("checking for acknowledge, received: %x\n",buf[0]);
 
   if(buf[0] == ACKNOWLEDGE)
     {
-#ifdef DEBUG
-      printf("ACK\n");
-#endif
+      //#ifdef DEBUG
+      printf("A");
+      fflush(stdout);
+      //#endif
       return 0;
     }
   else if(buf[0] == NACKNOWLEDGE)
     {
-#ifdef DEBUG
+      //#ifdef DEBUG
       printf("NACK\n");
-#endif
+      //#endif
       return -1;
     }
   else
     {
-#ifdef DEBUG
-      printf("UNKNOWN: %x",buf[0]);
-#endif
+      //#ifdef DEBUG
+      printf("UNKNOWN: %x, %d\n",buf[0],buf[0]);
+      //#endif
       return -2;
     }
 }
@@ -202,6 +221,7 @@ cereb_init(void)
   buf[2] = INIT3;
 
   cereb_send_string(buf, 3);
+  usleep(100000);
   return check_ack();
 }
 
@@ -217,16 +237,40 @@ cereb_send_command(char command)
   return check_ack();
 }
 
+static int cereb_send_1char_command(char command, char value)
+{
+  unsigned char buf[3];
+  int index = 0;
+
+  buf[index++] = command;
+  buf[index++] = value;
+  checksum_data(buf, &index);
+  cereb_send_string(buf, index);
+
+  return check_ack();
+}
+
 // sends left and right wheel velocities to mach5
 static int cereb_send_2int_command(char command, int left, int right)
 {
   unsigned char buf[20];
+
   int index = 0;
 
   buf[index++] = command;
   stuff_buffer(buf, &index, left);
   stuff_buffer(buf, &index, right);
   checksum_data(buf, &index);
+
+  /*
+  printf("Sending %x %x as: ",left,right);
+  for(i = 0; i < index; ++i)
+    {
+      printf("%x ",buf[i]);
+      
+    }
+  printf("\n");
+  */
   cereb_send_string(buf, index);
 
   return check_ack();
@@ -234,11 +278,17 @@ static int cereb_send_2int_command(char command, int left, int right)
 
 static int cereb_init_serial(char * dev)
 {
+
+  printf("carmen_serial_connect()\n"); fflush(stdout);
   if (carmen_serial_connect(&dev_fd, dev) < 0)
     return -1;
 
+  printf("carmen_serial_configure()\n"); fflush(stdout);
   //sets baud rate to CEREB_BAUDRATE
   carmen_serial_configure(dev_fd, CEREB_BAUDRATE, "N");
+
+
+  //  printf("serial connected\r\n");
 
   return 0;
 }  
@@ -246,32 +296,81 @@ static int cereb_init_serial(char * dev)
 int 
 carmen_cerebellum_connect_robot(char *dev)
 {
-  if(cereb_init_serial(dev) < 0)
+  int temp;
+  printf("initing serial before first connecting to robot\n");
+
+  //de-init the robot in case it is actually listening
+  cereb_send_command(DEINIT);
+
+  //close the file descriptor in case it's open
+  temp = close(dev_fd);
+  printf("the result of the close operation was: %d\n",temp);
+
+  //wait so that the robot has a chance to time out
+  printf("sleeping 700ms so robot should time out\n");
+  usleep(700000);//700ms
+
+  if (carmen_serial_connect(&dev_fd, dev) < 0)
     return -1;
 
-  return cereb_init();
+
+
+  if(cereb_init_serial(dev) < 0) {
+    fprintf(stderr, "*** error: cereb_init_serial()\n");
+    return -1;
+  }
+  //  cereb_send_string("TESTING",7);
+
+  temp = cereb_init();
+
+  //make sure we start with 0 velocity even if we don't think it started the robot correctly
+  carmen_cerebellum_set_velocity(0, 0);
+
+  return temp;
 }
 
-int carmen_cerebellum_reconnect_robot()
+int carmen_cerebellum_reconnect_robot(char *dev)
 {
-  return cereb_init();
+  int temp;
+  printf("reconecting to robot, initing serial now\n");
+  
+  //CB
+  if(cereb_init_serial(dev) < 0) {
+    fprintf(stderr, "*** error: cereb_init_serial()\n");
+    return -1;
+  }
+
+  temp = cereb_init();
+
+  //make sure we start with 0 velocity even if we don't think it started the robot correctly
+  carmen_cerebellum_set_velocity(0, 0);
+
+
+  return temp;
 }
 
 int carmen_cerebellum_ac(int acc)
 {
+
+  //the robot can only take accelerations between 1 and 10
+  if( acc > 10)
+    {
+      acc = 10;
+    }
+  else if ( acc < 1)
+    {
+      acc = 1;
+    }
+
+
   return cereb_send_2int_command(SET_ACCELERATIONS,acc,acc);
 }
 
 int 
 carmen_cerebellum_set_velocity(int command_vl, int command_vr)
 {
-  printf("%d  %d\r\n",command_vl, command_vr);
-
-#ifdef SLIVER
-  return cereb_send_2int_command(SET_VELOCITIES,command_vr, command_vl);
-#else 
+  //  printf("Sending l_ticks_per_loop:%d  r_ticks_per_loop:%d\r\n",command_vl, command_vr);
   return cereb_send_2int_command(SET_VELOCITIES,command_vl, command_vr);
-#endif
 }
 
 int
@@ -332,17 +431,17 @@ carmen_cerebellum_get_state(int *left_tics, int *right_tics,
   //fprintf(stderr, "is error? %f\n", (carmen_get_time_ms() - start_time)*1000);
 
   //start_time = carmen_get_time_ms();
-#ifdef SLIVER
+
   *right_tics = unpack_buffer(buf, &index);
   *left_tics = unpack_buffer(buf, &index);
   *right_vel = unpack_buffer(buf, &index);
   *left_vel = unpack_buffer(buf, &index);
-#else
+  /*
   *left_tics = unpack_buffer(buf, &index);
   *right_tics = unpack_buffer(buf, &index);
   *left_vel = unpack_buffer(buf, &index);
   *right_vel = unpack_buffer(buf, &index);
-#endif
+  */
   //fprintf(stderr, "buffer unpacking = %f\n", (carmen_get_time_ms() - start_time)*1000);  
 
   return 0;
@@ -352,6 +451,17 @@ int
 carmen_cerebellum_fire(void)
 {
   return cereb_send_command(FIRE);
+}
+
+int carmen_cerebellum_heartbeat(void)
+{
+  return cereb_send_command(HEARTBEAT);
+}
+
+int 
+carmen_cerebellum_tilt(char value)
+{
+  return cereb_send_1char_command(TILT_GUN, value);
 }
 
 int 

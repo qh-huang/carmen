@@ -25,6 +25,8 @@
 #define KILL                      107 // 'k'()  [shortcut for disable_velocity_control]
 
 #define FIRE                      102 // 'f'()  [shoots gun]
+#define TILT_GUN                  116 // 't'(level) as a single character, range is restricted
+#define HEARTBEAT                 104 // 'h'() sends keepalive
 
 /***********ACK VALUES***************/
 

@@ -31,36 +31,63 @@
 #include <values.h>
 #include "cerebellum_com.h"
 
+#undef _REENTRANT
 
-#define SLIVER 'y'
-
-#define        CEREBELLUM_TIMEOUT          (2.0)
-
-#define        METRES_PER_INCH        (0.0254)
-#define        INCH_PER_METRE         (39.370)
-
-#define        CEREBELLUM_LOOP_FREQUENCY  (300.0)
-
-#ifdef SLIVER // which robot on cerebellum?
-
-#define        MACH5_WHEEL_CIRCUMFERENCE  (4.25 * METRES_PER_INCH * 3.1415926535)
-#define        MACH5_TICKS_REV       (5800.0)
-#define        WHEELBASE        (.317)
-
-#else // MACH5
-
-#define        MACH5_WHEEL_CIRCUMFERENCE  (3.5 * METRES_PER_INCH * 3.1415926535)
-#define        MACH5_TICKS_REV       (5800.0)
-#define        WHEELBASE        (9.875 * METRES_PER_INCH)
-
+#ifdef _REENTRANT
+#include <pthread.h>
+static pthread_t main_thread;
+static int thread_is_running = 0;
 #endif
 
-#define        METRES_PER_CEREBELLUM (1.0/(MACH5_TICKS_REV / MACH5_WHEEL_CIRCUMFERENCE))
-#define        METRES_PER_CEREBELLUM_VELOCITY (1.0/(METRES_PER_CEREBELLUM * CEREBELLUM_LOOP_FREQUENCY))
 
-#define        ROT_VEL_FACT_RAD (WHEELBASE*METRES_PER_CEREBELLUM_VELOCITY/2)
+// Normalize angle to domain -pi, pi
+//
+#define NORMALIZE(z) atan2(sin(z), cos(z))
 
-#define        MAXV             (4.5*METRES_PER_CEREBELLUM_VELOCITY)
+// might need to define a longer delay to wait for acks
+#define TROGDOR_DELAY_US 10000
+
+/************************************************************************/
+/* Physical constants, in meters, radians, seconds (unless otherwise noted)
+ * */
+#define TROGDOR_AXLE_LENGTH    0.317
+#define TROGDOR_WHEEL_DIAM     0.10795  /* 4.25 inches */
+#define TROGDOR_WHEEL_CIRCUM   (TROGDOR_WHEEL_DIAM * M_PI)
+#define TROGDOR_TICKS_PER_REV  5800.0
+#define TROGDOR_M_PER_TICK     (TROGDOR_WHEEL_CIRCUM / TROGDOR_TICKS_PER_REV)
+/* the internal PID loop runs every 1.55ms (we think) */
+#define TROGDOR_PID_FREQUENCY  (1/1.55e-3)
+#define TROGDOR_MPS_PER_TICK   (TROGDOR_M_PER_TICK * TROGDOR_PID_FREQUENCY)
+
+/* assuming that the counts can use the full space of a signed 32-bit int
+ * */
+#define TROGDOR_MAX_TICS 2147483648U
+
+/* for safety */
+#define TROGDOR_MAX_WHEELSPEED   4.0
+
+
+#define        CEREBELLUM_TIMEOUT          (2.0)
+#define        METERS_PER_INCH        (0.0254)
+#define        INCH_PER_METRE         (39.370)
+
+/* the internal PID loop runs every 1.55ms (we think) */
+#define        OBOT_LOOP_FREQUENCY  (1/1.55e-3)
+
+#define        OBOT_WHEEL_CIRCUMFERENCE  (4.25 * METERS_PER_INCH * 3.1415926535)
+#define        OBOT_TICKS_PER_REV       (5800.0)
+#define        OBOT_WHEELBASE        (.317)
+
+
+#define        METERS_PER_OBOT_TICK (OBOT_WHEEL_CIRCUMFERENCE / OBOT_TICKS_PER_REV)
+#define        TICKS_PER_MPS (1.0/(METERS_PER_OBOT_TICK * OBOT_LOOP_FREQUENCY))
+
+#define        ROT_VEL_FACT_RAD (OBOT_WHEELBASE*TICKS_PER_MPS/2.0)
+
+#define        MAXV             (4.5*TICKS_PER_MPS)
+
+//this is in the current iteration of the motor driver
+#define        MAX_CEREBELLUM_ACC 10
 
 static char *dev_name;
 static int State[4];
@@ -75,7 +102,6 @@ static double current_acceleration;
 static double stopping_acceleration;
 static carmen_robot_config_t robot_config;
 static carmen_base_odometry_message odometry;
-static carmen_base_binary_data_message binary_data;
 static int use_sonar = 0;
 
 static double x, y, theta;
@@ -86,15 +112,21 @@ initialize_robot(char *dev)
   int result;
   double acc;
 
-  result = carmen_cerebellum_connect_robot(dev);
-  if(result != 0)
-    return -1;
+  carmen_terminal_cbreak(0);
 
-  acc = robot_config.acceleration*METRES_PER_CEREBELLUM_VELOCITY;
+  result = carmen_cerebellum_connect_robot(dev);
+  //  if(result != 0)
+  //  return -1;
+
+  acc = robot_config.acceleration*TICKS_PER_MPS;
 
   // SNEAKY HACK
   result = carmen_cerebellum_ac(25);
   current_acceleration = robot_config.acceleration;
+
+
+  printf("TROGDOR_MPS_PER_TICK: %lf\n",TROGDOR_MPS_PER_TICK);
+  printf("1/TICKS_PER_MPS: %lf\n",1.0/TICKS_PER_MPS);
 
   if(result != 0)
     return 1;
@@ -117,7 +149,6 @@ reset_status(void)
 
   host = carmen_get_tenchar_host_name();
   strcpy(odometry.host, host);   
-  strcpy(binary_data.host, host);
 }
 
 static int
@@ -127,23 +158,35 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   static double last_published_update;
   static int initialized = 0;
   static short last_left_tick = 0, last_right_tick = 0;
+  static int transient_dropped = 0;
   
   short left_delta_tick, right_delta_tick;
   double left_delta, right_delta;
 
-  double inner_radius;
   double delta_angle;
   double delta_distance;
-  double centre_x, centre_y;
 
+  //make sure that this measurement doesn't come from some time in the future
   if (last_published_update >= odometry.timestamp)
-    return 0; 
+    {
+      return 0; 
+      carmen_warn("Invalid.\n");
+    }
 
-  vl = ((double)State[2]) * METRES_PER_CEREBELLUM_VELOCITY;
-  vr = ((double)State[3]) * METRES_PER_CEREBELLUM_VELOCITY;
+  //sometimes the robot returns 0 for left tic or right tic
+  //this is an error, if that is the case, the reading is ignored
+
+  if(State[0] == 0 || State[1] == 0)
+    {
+      carmen_warn("0 odometry returned, ignoring it.\n");
+      return(0);
+    }
+
+  vl = ((double)State[2]) * TICKS_PER_MPS;
+  vr = ((double)State[3]) * TICKS_PER_MPS;
 
   odometry.tv = 0.5 * (vl + vr);
-  odometry.rv = (vl - vr) * ROT_VEL_FACT_RAD;
+  odometry.rv = (vr - vl) * ROT_VEL_FACT_RAD;
   
   if (!initialized)
     {
@@ -156,59 +199,66 @@ update_status(void)  /* This function takes approximately 60 ms to run */
       return 0;
     }
 
+
+
   /* update odometry message */
 
   left_delta_tick = State[0] - last_left_tick;
+
+  //this will turn a rollover into a small number
   if (left_delta_tick > SHRT_MAX/2)
     left_delta_tick += SHRT_MIN;
   if (left_delta_tick < -SHRT_MAX/2)
     left_delta_tick -= SHRT_MIN;
-  left_delta = left_delta_tick*METRES_PER_CEREBELLUM;
+  left_delta = left_delta_tick*METERS_PER_OBOT_TICK;
 
   right_delta_tick = State[1] - last_right_tick;
+
+  //these ifs will turn a rollover into a small number
   if (right_delta_tick > SHRT_MAX/2)
     right_delta_tick += SHRT_MIN;
   if (right_delta_tick < -SHRT_MAX/2)
     right_delta_tick -= SHRT_MIN;
-  right_delta = right_delta_tick*METRES_PER_CEREBELLUM;
+  right_delta = right_delta_tick*METERS_PER_OBOT_TICK;
+
+
+  if(abs(left_delta_tick) > 8000 || abs(right_delta_tick) > 8000)
+    {
+      if( ! transient_dropped)
+	{
+	  printf("ldt: %d rdt: %d\n",left_delta_tick,right_delta_tick); 
+	  printf("delta tick unreal trying a drop\n");
+	  transient_dropped = 1;
+	  return(1);
+	}
+    }
+
+  //the transient dropped flag lets us drop one and only one anomalous reading
+  if( transient_dropped ==1)
+    transient_dropped = 0;
 
   if (fabs(right_delta - left_delta) < .001) 
     delta_angle = 0;
   else
     {
-      if (fabs(left_delta) > 0) 
-	{
-	  inner_radius = (left_delta*WHEELBASE)/
-	    (right_delta-left_delta);
-	  
-	  delta_angle = left_delta/inner_radius;  
-	} 
-      else
-	{
-	  inner_radius = (right_delta*WHEELBASE)/
-	    (left_delta-right_delta);
-	  
-	  delta_angle = right_delta/inner_radius;
-	} 
+      delta_angle = (left_delta-right_delta)/OBOT_WHEELBASE;
     }
 
-  delta_distance = (left_delta + right_delta) / 2.0;
+  if(delta_angle > 0.5)
+    {
+      printf("delta_angle: %lf, lt: %d rt: %d, olt: %d ort: %d",
+      	     delta_angle,State[0],State[1],last_left_tick,last_right_tick);
+
+    }
+
+  delta_distance = (right_delta + left_delta) / 2.0;
   
-  if (0) 
-    {
-      centre_x = x + inner_radius*cos(theta+M_PI/2.0);
-      centre_y = y + inner_radius*sin(theta+M_PI/2.0);
-      
-      x = centre_x + inner_radius*cos(theta-M_PI/2.0+delta_angle);
-      y = centre_x + inner_radius*sin(theta-M_PI/2.0+delta_angle);
-      theta += delta_angle;
-    }
-  else 
-    {
-      x += delta_distance * cos(theta);
-      y += delta_distance * sin(theta);
-      theta += delta_angle;
-    }
+
+  x += delta_distance * cos(theta);
+  y += delta_distance * sin(theta);
+  theta += delta_angle;
+
+  theta = NORMALIZE(theta);
 
   last_left_tick = State[0];
   last_right_tick = State[1];
@@ -219,19 +269,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   odometry.y = y;
   odometry.theta = theta;
 
-  binary_data.timestamp = odometry.timestamp;
-  if (binary_data.data == NULL) 
-    {
-      binary_data.size = 
-	strlen("Nick likes Bass Ale. You should buy him a case.\n");
-      binary_data.data = (char *)calloc(binary_data.size+1, 1);
-      carmen_test_alloc(binary_data.data);
-      strcpy(binary_data.data, 
-	     "Nick likes Bass Ale. You should buy him a case.\n");
-    }
-
-  carmen_warn("This would be a good place to assemble the binary data\n"
-	      "packet, if you intend to publish one");
+  //  printf("x: %lf, y: %lf, theta: %lf \n", x,y,theta);
 
   return 1;
 }
@@ -246,7 +284,7 @@ command_robot(void)
 
   if(fire_gun)
     {
-      carmen_cerebellum_fire();
+      //carmen_cerebellum_fire();
       fire_gun = 0;
     }
 
@@ -255,22 +293,27 @@ command_robot(void)
       if(command_vl == 0 && command_vr == 0) 
 	{
 	  moving = 0;
+	  //	  printf("carmen says S\n");
 	  carmen_warn("S");
 	}
       else 
 	{
+	  //	  printf("if not moving setting acceleration1\n");
 	  if (!moving)
 	    {
-	      acc = robot_config.acceleration*METRES_PER_CEREBELLUM_VELOCITY;
+	      acc = robot_config.acceleration*TICKS_PER_MPS;
+	      acc = MAX_CEREBELLUM_ACC;
 	      do 
 		{
 		  error = carmen_cerebellum_ac(acc);
 		  if (error < 0)
-		    carmen_cerebellum_connect_robot(dev_name);
+		    carmen_cerebellum_reconnect_robot(dev_name);
 		} 
 	      while (error < 0);
 	      current_acceleration = robot_config.acceleration;
 	    }
+	  //	  printf("if not moving setting acceleration2\n");
+
 	  carmen_warn("V");
 	  moving = 1;
 	}
@@ -279,9 +322,13 @@ command_robot(void)
       timeout = 0;
       do 
 	{
+	  //	  printf("setting velocity1\n");
+
 	  error = carmen_cerebellum_set_velocity(command_vl, command_vr);
 	  if (error < 0)
-	    carmen_cerebellum_connect_robot(dev_name);
+	    carmen_cerebellum_reconnect_robot(dev_name);
+	  //	  printf("setting velocity2\n");
+
 	} 
       while (error < 0);
 
@@ -296,20 +343,28 @@ command_robot(void)
       moving = 0;
       do
 	{
-	  carmen_cerebellum_set_velocity(0, 0);      
+	  //	  printf("timeout1\n");
+
+	  error=carmen_cerebellum_set_velocity(0, 0);      
 	  if (error < 0)
-	    carmen_cerebellum_connect_robot(dev_name);
+	    carmen_cerebellum_reconnect_robot(dev_name);
+	  //	  printf("timeout2\n");
+
 	} 
       while (error < 0);
     }  
   else if (moving && current_acceleration == robot_config.acceleration)
     {
-      acc = stopping_acceleration*METRES_PER_CEREBELLUM_VELOCITY;
+      acc = stopping_acceleration*TICKS_PER_MPS;
       do 
 	{
-	  carmen_cerebellum_ac(acc);
+	  //	  printf("stopping1\n");
+
+	  error=carmen_cerebellum_ac(acc);
 	  if (error < 0)
-	    carmen_cerebellum_connect_robot(dev_name);
+	    carmen_cerebellum_reconnect_robot(dev_name);
+	  //	  printf("stopping2\n");
+
 	} 
       while (error < 0);
       current_acceleration = stopping_acceleration;
@@ -317,9 +372,12 @@ command_robot(void)
 
   do
     {
-      carmen_cerebellum_get_state(State+0, State+1, State+2, State+3);
+      //printf("getting state1\n");
+      error=carmen_cerebellum_get_state(State+0, State+1, State+2, State+3);
       if (error < 0)
-	carmen_cerebellum_connect_robot(dev_name);
+	carmen_cerebellum_reconnect_robot(dev_name);
+      //printf("getting state2\n");
+
     } 
   while (error < 0);
   
@@ -387,14 +445,14 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  vl = vel.tv * METRES_PER_CEREBELLUM_VELOCITY;
-  vr = vel.tv * METRES_PER_CEREBELLUM_VELOCITY;  
+  vl = vel.tv * TICKS_PER_MPS;
+  vr = vel.tv * TICKS_PER_MPS;  
 
   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
 
-  printf("Velocities: %f %f\r\n",vel.tv,vel.rv);
-  printf("After conv: %f %f\r\n",vl, vr);
+  //  printf("Velocities: %f %f\r\n",vel.tv,vel.rv);
+  //printf("After conv: %f %f\r\n",vl, vr);
 
   if(vl > MAXV)
     vl = MAXV;
@@ -405,12 +463,17 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   else if(vr < -MAXV)
     vr = -MAXV;
 
-  printf("After maxing: %f %f\r\n",vl,vr);
+  //printf("After maxing: %f %f\r\n",vl,vr);
+
+  if( vl> 0.0 && vl < 3.0) vl = 3.0;
+  if( vl< 0.0 && vl > -3.0) vl =-3.0;
+  if( vr> 0.0 && vr < 3.0) vr = 3.0;
+  if( vr< 0.0 && vr > -3.0) vr =-3.0;
 
   command_vl = (int)vl;
   command_vr = (int)vr;
 
-  printf("To_int: %d %d\r\n",command_vl, command_vr);
+  //printf("To_int: %d %d\r\n",command_vl, command_vr);
 
   set_velocity = 1;
 }
@@ -438,28 +501,6 @@ gun_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   fire_gun = 1;
 }
 */
-
-static void
-binary_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		       void *clientData __attribute__ ((unused)))
-{
-  IPC_RETURN_TYPE err;
-  carmen_base_binary_data_message msg;
-  FORMATTER_PTR formatter;
-
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  err = IPC_unmarshallData(formatter, callData, &msg,
-			   sizeof(carmen_base_binary_data_message));
-  IPC_freeByteArray(callData);
-
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
-
-  carmen_warn("Received binary data of length %d\n"
-	      "Someone needs to figure out what to do with this data", 
-	      msg.size);
-}
-
 int 
 carmen_cerebellum_initialize_ipc(void)
 {
@@ -474,39 +515,38 @@ carmen_cerebellum_initialize_ipc(void)
                       CARMEN_BASE_VELOCITY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
-  err = IPC_defineMsg(CARMEN_BASE_BINARY_COMMAND_NAME, 
-		      IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_BINARY_COMMAND_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
-		       CARMEN_BASE_BINARY_COMMAND_NAME);
-
-  err = IPC_defineMsg(CARMEN_BASE_BINARY_DATA_NAME, 
-		      IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_BINARY_DATA_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
-		       CARMEN_BASE_BINARY_DATA_NAME);
-
   /* setup incoming message handlers */
 
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
 
-  err = IPC_subscribe(CARMEN_BASE_BINARY_COMMAND_NAME, 
-		      binary_command_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", 
-		       CARMEN_BASE_BINARY_COMMAND_NAME);
-  IPC_setMsgQueueLength(CARMEN_BASE_BINARY_COMMAND_NAME, 1);
-
-  /*
-  err = IPC_subscribe(CARMEN_ROBOT_CEREB_FIRE_NAME, gun_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", 
-		       CARMEN_ROBOT_CEREB_FIRE_NAME);
-  IPC_setMsgQueueLength(CARMEN_ROBOT_CEREB_FIRE_NAME, 1);
-  */
+  //  err = IPC_subscribe(CARMEN_ROBOT_CEREB_FIRE_NAME, gun_handler, NULL);
+  //carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_CEREB_FIRE_NAME);
+  //IPC_setMsgQueueLength(CARMEN_ROBOT_CEREB_FIRE_NAME, 1);
 
   return IPC_No_Error;
 }
+
+#ifdef _REENTRANT
+static void *
+start_thread(void *data __attribute__ ((unused))) 
+{
+  sigset_t set;
+
+  sigemptyset(&set);
+  sigaddset(&set, SIGINT);
+  sigaddset(&set, SIGPIPE);
+  sigprocmask(SIG_BLOCK, &set, NULL);
+
+  while (1) {    
+    command_robot();
+    usleep(30000);
+  }
+  return(NULL);
+}  
+#endif
+
 
 int 
 carmen_cerebellum_start(int argc, char **argv)
@@ -531,6 +571,10 @@ carmen_cerebellum_start(int argc, char **argv)
 
   strcpy(odometry.host, carmen_get_tenchar_host_name());
 
+#ifdef _REENTRANT
+  pthread_create(&main_thread, NULL, start_thread, NULL);
+  thread_is_running = 1;
+#endif
   return 0;
 }
 
@@ -544,11 +588,10 @@ carmen_cerebellum_run(void)
       err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
       carmen_test_ipc_exit(err, "Could not publish", 
 			   CARMEN_BASE_ODOMETRY_NAME);
-      err = IPC_publishData(CARMEN_BASE_BINARY_DATA_NAME, &binary_data);
-      carmen_test_ipc_exit(err, "Could not publish", 
-			   CARMEN_BASE_BINARY_DATA_NAME);
-    }  
+    }
+#ifndef _REENTRANT
   command_robot();
+#endif
   
   return 1;
 }
