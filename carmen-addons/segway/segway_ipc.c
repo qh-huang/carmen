@@ -32,6 +32,7 @@
 extern segway_t segway;
 extern double command_tv, command_rv;
 extern double last_command;
+extern int quit_signal;
 
 static void segway_velocity_handler(MSG_INSTANCE msgRef, 
 				    BYTE_ARRAY callData,
@@ -52,6 +53,13 @@ static void segway_velocity_handler(MSG_INSTANCE msgRef,
 
   fprintf(stderr, "\rTV = %.1f     RV = %.1f   Battery = %d%%     ",
           command_tv, command_rv, (int)segway.voltage);
+}
+
+static void segway_kill_handler(MSG_INSTANCE msgRef __attribute__ ((unused)),
+				BYTE_ARRAY callData __attribute__ ((unused)),
+				void *clientData __attribute__ ((unused)))
+{
+  quit_signal = 1;
 }
 
 void carmen_segway_register_messages(void)
@@ -84,11 +92,19 @@ void carmen_segway_register_messages(void)
 		      CARMEN_SEGWAY_ALIVE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_POSE_NAME);
 
+  err = IPC_defineMsg(CARMEN_SEGWAY_KILL_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_SEGWAY_KILL_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_SEGWAY_KILL_NAME);
+
   /* setup incoming message handlers */
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, 
                       segway_velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
+
+  err = IPC_subscribe(CARMEN_SEGWAY_KILL_NAME, 
+                      segway_kill_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_SEGWAY_KILL_NAME);
 }
 
 void carmen_segway_publish_odometry(segway_p segway, double timestamp)

@@ -173,3 +173,10 @@ carmen_segway_subscribe_alive_message(carmen_handler_t handler,
   carmen_test_ipc(err, "Could not subscribe", CARMEN_SEGWAY_ALIVE_NAME);
 }
 
+void carmen_segway_kill_command(void)
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_publishData(CARMEN_SEGWAY_KILL_NAME, NULL);
+  carmen_test_ipc(err, "Could not publish", CARMEN_SEGWAY_KILL_NAME);
+}
