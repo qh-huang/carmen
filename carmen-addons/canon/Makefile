@@ -7,9 +7,9 @@ CFLAGS += -Wno-shadow
 IFLAGS += 
 LFLAGS += -lparam_interface -lglobal -lipc -lusb -ljpeg
 
-PUBLIC_INCLUDES = 
-PUBLIC_LIBRARIES = 
-PUBLIC_BINARIES = 
+PUBLIC_INCLUDES = canon_messages.h canon_interface.h
+PUBLIC_LIBRARIES = libcanon_interface.a
+PUBLIC_BINARIES = canon_server previewer
 MAN_PAGES =
 
 ifndef NO_LIBUSB
