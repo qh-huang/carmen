@@ -10,9 +10,12 @@
 
 #define MI(M,i,j) ((i)*(M)->tda + (j))
 
+#define FILTER_MAP_ADD_CLUSTER  -1
+#define FILTER_MAP_NEW_CLUSTER  -2
+
+
 typedef struct dot_person_filter {
   carmen_list_t *sensor_update_list;
-  carmen_list_t *unsensor_update_list;  // long readings
   int hidden_cnt;
   double x0;
   double y0;
@@ -27,46 +30,33 @@ typedef struct dot_person_filter {
 
 typedef struct dot_trash_filter {
   carmen_list_t *sensor_update_list;
-  carmen_list_t *unsensor_update_list;
   double x;
   double y;
-  double theta;
-  double logw1;  // natural log of major eigenvalue
-  double logw2;  // natural log of minor eigenvalue
-  gsl_matrix *P;  // estimated state covariance matrix: rows and columns in order of: x, y, theta, logw1, logw2
-  double a;
-  gsl_matrix *Q;  // process noise covariance matrix
-  gsl_matrix *R;  // sensor noise covariance matrix
+  double vx;
+  double vy;
+  double vxy;
+  double xhull[100];  //dbug
+  double yhull[100];  //dbug
+  double hull_size;
 } carmen_dot_trash_filter_t, *carmen_dot_trash_filter_p;
 
+/*
 typedef struct dot_door_filter {
-  carmen_list_t *sensor_update_list;
-  carmen_list_t *unsensor_update_list;
   double x;
   double y;
-  double t;  //theta
-  double px;
-  double py;
-  double pt;
-  double pxy;
-  double a;
-  double qx;
-  double qy;
-  double qxy;
-  double qt;
+  double t;  // theta
+  double w;  // width
 } carmen_dot_door_filter_t, *carmen_dot_door_filter_p;
+*/
 
 typedef struct dot_filter {
   carmen_dot_person_filter_t person_filter;
   carmen_dot_trash_filter_t trash_filter;
-  carmen_dot_door_filter_t door_filter;
+  //carmen_dot_door_filter_t door_filter;
   int id;
   int type;
   int allow_change;
-  int sensor_update_cnt;
-  int do_motion_update;
   int updated;
-  int invisible;
   int invisible_cnt;
 } carmen_dot_filter_t, *carmen_dot_filter_p;
 
@@ -82,55 +72,30 @@ static double default_person_filter_qlogr;
 static double default_person_filter_rx;
 static double default_person_filter_ry;
 static double default_person_filter_rxy;
-static double default_trash_filter_px;
-static double default_trash_filter_py;
-static double default_trash_filter_a;
-static double default_trash_filter_qx;
-static double default_trash_filter_qy;
-static double default_trash_filter_qxy;
-static double default_trash_filter_qtheta;
-static double default_trash_filter_qlogw1;
-static double default_trash_filter_qlogw2;
-static double default_trash_filter_rx;
-static double default_trash_filter_ry;
-static double default_trash_filter_rxy;
-static double default_door_filter_px;
-static double default_door_filter_py;
-static double default_door_filter_pt;
-static double default_door_filter_a;
-static double default_door_filter_qx;
-static double default_door_filter_qy;
-static double default_door_filter_qxy;
-static double default_door_filter_qt;
-static double default_door_filter_rx;
-static double default_door_filter_ry;
-static double default_door_filter_rt;
 
 static int new_filter_threshold;
 static double new_cluster_threshold;
 static double map_diff_threshold;
 static double map_diff_threshold_scalar;
 static double map_occupied_threshold;
-static double sensor_update_dist;
-static int sensor_update_cnt;
 
 static int kill_hidden_person_cnt;
 static double laser_max_range;
-static double see_through_stdev;
+static double trash_see_through_dist;
 static double trace_resolution;
 static int invisible_cnt;
 static double person_filter_displacement_threshold;
+static double bic_min_variance;
 
 static carmen_localize_param_t localize_params;
 static carmen_localize_map_t localize_map;
 static carmen_robot_laser_message laser_msg;
 static carmen_localize_globalpos_message odom;
-static carmen_point_t last_sensor_update_odom;
-static int do_sensor_update = 1;
 static carmen_map_t static_map;
 static carmen_dot_filter_p filters = NULL;
 static int num_filters = 0;
 static int filter_highlight = -1;
+static carmen_list_t *highlight_list;
 
 
 static inline int is_in_map(int x, int y) {
@@ -142,6 +107,8 @@ static inline int is_in_map(int x, int y) {
 
 /*********** GRAPHICS ************/
 
+static int laser_mask[500];
+
 #ifdef HAVE_GRAPHICS
 
 static GtkWidget *canvas;
@@ -149,24 +116,6 @@ static GdkPixmap *pixmap = NULL, *map_pixmap = NULL;
 static int pixmap_xpos, pixmap_ypos;
 static int canvas_width = 804, canvas_height = 804;
 static GdkGC *drawing_gc = NULL;
-
-static int laser_mask[500];
-
-/*
-static void draw_points() {
-
-  int i;
-
-  for (i = 0; i < num_points; i++) {
-    if (cluster_mask[i])
-      gdk_gc_set_foreground(drawing_gc, &carmen_red);
-    else
-      gdk_gc_set_foreground(drawing_gc, &carmen_black);
-    gdk_draw_arc(pixmap, drawing_gc, TRUE, (int)xpoints[i], (int)ypoints[i],
-		 10, 10, 0, 360 * 64);
-  }
-}
-*/
 
 static void get_map_window() {
 
@@ -266,6 +215,18 @@ static void draw_laser() {
 		   4, 4, 0, 360 * 64);      
     }
   }
+
+  //dbug
+  for (i = 0; i < highlight_list->length; i+=2) {
+    wp.pose.x = *(int*)carmen_list_get(highlight_list, i);
+    wp.pose.y = *(int*)carmen_list_get(highlight_list, i+1);
+    carmen_world_to_map(&wp, &mp);
+    xpos = 4*mp.x - pixmap_xpos;
+    ypos = 4*(static_map.config.y_size - mp.y - 1) - pixmap_ypos;
+    gdk_gc_set_foreground(drawing_gc, &carmen_purple);
+    gdk_draw_arc(pixmap, drawing_gc, TRUE, xpos-2, ypos-2,
+		 4, 4, 0, 360 * 64);
+  }
 }
 
 static void draw_ellipse(double ux, double uy, double vx, double vxy, double vy, double k) {
@@ -342,7 +303,7 @@ static void draw_ellipse(double ux, double uy, double vx, double vxy, double vy,
   gdk_draw_polygon(pixmap, drawing_gc, FALSE,
                    poly, ELLIPSE_PLOTPOINTS);
 
-  /*  
+  /*
   e1 = *mean;
   e1.pose.x = mean->pose.x + eigval1 * eigvec1x;
   e1.pose.y = mean->pose.y + eigval1 * eigvec1y;
@@ -360,6 +321,28 @@ static void draw_ellipse(double ux, double uy, double vx, double vxy, double vy,
 
   carmen_map_graphics_draw_line(map_view, colour, &e1, &e2);
   */
+}
+
+static void draw_polygon(double *xpoints, double *ypoints, double num_points) {
+
+  static GdkPoint *poly = NULL;
+  static int poly_size = 0;
+  double x, y;
+  int i;
+
+  if (num_points > poly_size) {
+    poly = (GdkPoint *)realloc(poly, num_points*sizeof(GdkPoint));
+    carmen_test_alloc(poly);
+  }
+
+  for (i = 0; i < num_points; i++) {
+    x = xpoints[i] / (static_map.config.resolution/4.0);
+    y = ypoints[i] / (static_map.config.resolution/4.0);
+    poly[i].x = x - pixmap_xpos;
+    poly[i].y = (4*static_map.config.y_size - y - 1) - pixmap_ypos;
+  }
+
+  gdk_draw_polygon(pixmap, drawing_gc, FALSE, poly, num_points);
 }
 
 static void draw_dots() {
@@ -380,11 +363,13 @@ static void draw_dots() {
     }
     else if (filters[i].type == CARMEN_DOT_TRASH) {
       gdk_gc_set_foreground(drawing_gc, &carmen_green);
+      draw_polygon(filters[i].trash_filter.xhull, filters[i].trash_filter.yhull, filters[i].trash_filter.hull_size);
+      gdk_gc_set_foreground(drawing_gc, &carmen_yellow);
       ux = filters[i].trash_filter.x;
       uy = filters[i].trash_filter.y;
-      vx = fabs(cos(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
-      vy = fabs(sin(filters[i].trash_filter.theta))*exp(filters[i].trash_filter.logw1);
-      vxy = (exp(filters[i].trash_filter.logw1) - vx) / tan(filters[i].trash_filter.theta);
+      vx = filters[i].trash_filter.vx;
+      vy = filters[i].trash_filter.vy;
+      vxy = filters[i].trash_filter.vxy;
       draw_ellipse(ux, uy, vx, vxy, vy, 1);
     }
   }
@@ -555,6 +540,7 @@ static inline double dist(double dx, double dy) {
   return sqrt(dx*dx+dy*dy);
 }
 
+#if 0
 static void rotate2d(double *x, double *y, double theta) {
 
   double x2, y2;
@@ -592,7 +578,6 @@ static int invert2d(double *a, double *b, double *c, double *d) {
   return 0;
 }
 
-#if 0
 static double matrix_det(gsl_matrix *M) {
 
   gsl_matrix *A;
@@ -613,7 +598,6 @@ static double matrix_det(gsl_matrix *M) {
   return d;
 }
 #endif
-
 
 static void matrix_invert(gsl_matrix *M) {
 
@@ -652,6 +636,7 @@ static gsl_matrix *matrix_mult(gsl_matrix *A, gsl_matrix *B) {
   return C;
 }
 
+#if 0
 /*
  * computes the orientation of the bivariate normal with variances
  * vx, vy, and covariance vxy.  returns an angle in [-pi/2, pi/2].
@@ -688,25 +673,306 @@ static inline double bnorm_w2(double vx, double vy, double vxy) {
 
   return (vx + vy)/2.0 - sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
 }
+#endif
 
-#if 0
 static double bnorm_f(double x, double y, double ux, double uy,
 		      double vx, double vy, double vxy) {
   
   double z, p;
   
-  p = vxy/sqrt(vx*vy);
+  p = carmen_clamp(-0.999, vxy/sqrt(vx*vy), 0.999);  //dbug
   z = (x - ux)*(x - ux)/vx - 2.0*p*(x - ux)*(y - uy)/vxy + (y - uy)*(y - uy)/vy;
-  
+
   return exp(-z/(2.0*(1 - p*p)))/(2.0*M_PI*sqrt(vx*vy*(1 - p*p)));
+}
+
+#if 0
+static double min_masked(double *data, int *mask, int n) {
+
+  int i;
+  double x;
+
+  i = 0;
+  if (mask) {
+    for (; i < n; i++)
+      if (mask[i])
+	break;
+    if (i == n)
+      return n/0.0;
+  }
+  x = data[i++];
+  for (; i < n; i++)
+    if ((!mask || mask[i]) && data[i] < x)
+      x = data[i];
+
+  return x;
+}
+
+static double argmin_imasked(double *data, int *mask, int i, int n) {
+
+  int j, jmin;
+  double x;
+
+  j = 0;
+  if (mask) {
+    for (; j < n; j++)
+      if (mask[j] == i)
+	break;
+    if (j == n)
+      return n/0.0;
+  }
+  jmin = j;
+  x = data[j++];
+  for (; j < n; j++) {
+    if ((!mask || mask[j] == i) && data[j] < x) {
+      jmin = j;
+      x = data[j];
+    }
+  }
+
+  return jmin;
+}
+
+static double argmin_masked(double *data, int *mask, int n) {
+
+  int j, jmin;
+  double x;
+
+  j = 0;
+  if (mask) {
+    for (; j < n; j++)
+      if (mask[j])
+	break;
+    if (j == n)
+      return n/0.0;
+  }
+  jmin = j;
+  x = data[j++];
+  for (; j < n; j++) {
+    if ((!mask || mask[j]) && data[j] < x) {
+      jmin = j;
+      x = data[j];
+    }
+  }
+
+  return jmin;
 }
 #endif
 
-//dbug: use errors P?
+static double argmin(double *data, int n) {
+
+  int i, imin;
+  double x;
+
+  x = data[0];
+  imin = 0;
+  for (i = 1; i < n; i++) {
+    if (data[i] < x) {
+      x = data[i];
+      imin = i;
+    }
+  }
+
+  return imin;
+}
+
+#if 0
+static double max_masked(double *data, int *mask, int n) {
+
+  int i;
+  double x;
+
+  i = 0;
+  if (mask) {
+    for (; i < n; i++)
+      if (mask[i])
+	break;
+    if (i == n)
+      return n/0.0;
+  }
+  x = data[i++];
+  for (; i < n; i++)
+    if ((!mask || mask[i]) && data[i] > x)
+      x = data[i];
+
+  return x;
+}
+
+static double argmax_imasked(double *data, int *mask, int i, int n) {
+
+  int j, jmax;
+  double x;
+
+  j = 0;
+  if (mask) {
+    for (; j < n; j++)
+      if (mask[j] == i)
+	break;
+    if (j == n)
+      return n/0.0;
+  }
+  jmax = j;
+  x = data[j++];
+  for (; j < n; j++) {
+    if ((!mask || mask[j] == i) && data[j] > x) {
+      jmax = j;
+      x = data[j];
+    }
+  }
+
+  return jmax;
+}
+
+static double argmax_masked(double *data, int *mask, int n) {
+
+  int j, jmax;
+  double x;
+
+  j = 0;
+  if (mask) {
+    for (; j < n; j++)
+      if (mask[j])
+	break;
+    if (j == n)
+      return n/0.0;
+  }
+  jmax = j;
+  x = data[j++];
+  for (; j < n; j++) {
+    if ((!mask || mask[j]) && data[j] > x) {
+      jmax = j;
+      x = data[j];
+    }
+  }
+
+  return jmax;
+}
+
+static double argmax(double *data, int n) {
+
+  int i, imax;
+  double x;
+
+  x = data[0];
+  imax = 0;
+  for (i = 1; i < n; i++) {
+    if (data[i] > x) {
+      x = data[i];
+      imax = i;
+    }
+  }
+
+  return imax;
+}
+#endif
+
+static double mean_imasked(double *data, int *mask, int i, int n) {
+
+  int j, cnt;
+  double m;
+  
+  m = 0.0;
+  cnt = 0;
+  for (j = 0; j < n; j++) {
+    if (!mask || mask[j] == i) {
+      m += data[j];
+      cnt++;
+    }
+  }
+  m /= (double)cnt;
+
+  return m;
+
+}
+
+static double var_imasked(double *data, double mean, int *mask, int i, int n) {
+
+  int j, cnt;
+  double v;
+  
+  v = 0.0;
+  cnt = 0;
+  for (j = 0; j < n; j++) {
+    if (!mask || mask[j] == i) {
+      v += (data[j]-mean)*(data[j]-mean);
+      cnt++;
+    }
+  }
+  v /= (double)cnt;
+
+  return v;
+}
+
+static double cov_imasked(double *xdata, double ux, double *ydata, double uy, int *mask, int i, int n) {
+
+  int j, cnt;
+  double v;
+  
+  v = 0.0;
+  cnt = 0;
+  for (j = 0; j < n; j++) {
+    if (!mask || mask[j] == i) {
+      v += (xdata[j]-ux)*(ydata[j]-uy);
+      cnt++;
+    }
+  }
+  v /= (double)cnt;
+
+  return v;
+}
+
+// gift wrapping algorithm for finding convex hull: returns size of hull
+static int compute_convex_hull(double *xpoints, double *ypoints, int num_points, double *xhull, double *yhull) {
+  
+  int a, b, i, hull_size;
+  static int cluster_mask[500];
+  double last_angle, max_angle, theta, dx, dy;
+
+  for (i = 0; i < num_points; i++)
+    cluster_mask[i] = 0;
+
+  a = argmin(ypoints, num_points);
+  cluster_mask[a] = 1;
+  xhull[0] = xpoints[a];
+  yhull[0] = ypoints[a];
+  hull_size = 1;
+
+  last_angle = 0.0;  // 0 for clockwise, pi for counter-clockwise wrapping
+  while (1) {
+    max_angle = -1.0;
+    b = -1;
+    for (i = 0; i < num_points; i++) {
+      if (i == a)
+	continue;
+      dx = xpoints[i] - xpoints[a];
+      dy = ypoints[i] - ypoints[a];
+      if (dist(dx, dy) == 0.0)
+	continue;
+      theta = fabs(carmen_normalize_theta(atan2(dy, dx) - last_angle));
+      if (theta > max_angle) {
+	max_angle = theta;
+	b = i;
+      }
+    }
+    if (cluster_mask[b])
+      break;
+    cluster_mask[b] = 1;
+    xhull[hull_size] = xpoints[b];
+    yhull[hull_size] = ypoints[b];
+    hull_size++;
+    dx = xpoints[a] - xpoints[b];
+    dy = ypoints[a] - ypoints[b];
+    last_angle = atan2(dy, dx);
+    a = b;
+  }
+
+  return hull_size;
+}
+
+#if 0
 static int person_contains(carmen_dot_person_filter_p f, double x, double y, double stdevs) {
   
   double ux, uy, theta, r, vx, vy, vxy, e1, e2, er;
-
 
   ux = f->x;
   uy = f->y;
@@ -723,24 +989,22 @@ static int person_contains(carmen_dot_person_filter_p f, double x, double y, dou
   return ((x-ux)*(x-ux) + (y-uy)*(y-uy) <= stdevs*stdevs*(r*r+er));
 }
 
-//dbug: use errors P?
 static int trash_contains(carmen_dot_trash_filter_p f, double x, double y, double stdevs) {
-
-  double ux, uy, theta, e1, e2, dx, dy;
+  
+  double ux, uy, theta, vx, vy, vxy, e1, e2, er;
 
   ux = f->x;
   uy = f->y;
-  theta = f->theta;
-  e1 = exp(f->logw1);
-  e2 = exp(f->logw2);
-  
-  dx = x - ux;
-  dy = y - uy;
+  vx = f->vx;
+  vy = f->vy;
+  vxy = f->vxy;
+  e1 = bnorm_w1(vx, vy, vxy);
+  e2 = bnorm_w2(vx, vy, vxy);
+  theta = atan2(y-uy, x-ux);
+  theta += bnorm_theta(vx, vy, vxy);
+  er = e2*e2*e1*e1/(e2*e2*cos(theta)*cos(theta) + e1*e1*sin(theta)*sin(theta));
 
-  rotate2d(&dx, &dy, -theta);
-
-  //return (e2*e2*dx*dx + e1*e1*dy*dy <= stdevs*stdevs*e1*e1*e2*e2);
-  return (dx*dx + dy*dy <= stdevs*stdevs*e1*e1);
+  return ((x-ux)*(x-ux) + (y-uy)*(y-uy) <= stdevs*stdevs*(er));
 }
 
 static int door_contains(carmen_dot_door_filter_p f, double x, double y, double stdevs) {
@@ -770,11 +1034,12 @@ static int dot_contains(carmen_dot_filter_p f, double x, double y, double stdevs
     return person_contains(&f->person_filter, x, y, stdevs);
   else if (f->type == CARMEN_DOT_TRASH)
     return trash_contains(&f->trash_filter, x, y, stdevs);
-  else
-    return door_contains(&f->door_filter, x, y, stdevs);
+  //else
+  //  return door_contains(&f->door_filter, x, y, stdevs);
 
   return 0;
 }
+#endif
 
 static void person_filter_motion_update(carmen_dot_person_filter_p f) {
 
@@ -831,7 +1096,7 @@ static int ray_intersect_arg(double rx, double ry, double rtheta,
 
 static int ray_intersect_circle(double rx, double ry, double rtheta,
 				double cx, double cy, double cr,
-				double *px, double *py) {
+				double *px1, double *py1, double *px2, double *py2) {
 
   double epsilon = 0.000001;
   double a, b, c, tan_rtheta;
@@ -840,14 +1105,16 @@ static int ray_intersect_circle(double rx, double ry, double rtheta,
   if (fabs(cos(rtheta)) < epsilon) {
     if (cr*cr - (rx-cx)*(rx-cx) < 0.0)
       return 0;
-    x1 = x2 = 0.0;
+    x1 = x2 = rx;
     y1 = cy + sqrt(cr*cr-(rx-cx)*(rx-cx));
     y2 = cy - sqrt(cr*cr-(rx-cx)*(rx-cx));
     switch (ray_intersect_arg(rx, ry, rtheta, x1, y1, x2, y2)) {
     case 0:
       return 0;
     case 2:
+      a = y1;
       y1 = y2;
+      y2 = a;
     }
   }
   else {
@@ -865,13 +1132,83 @@ static int ray_intersect_circle(double rx, double ry, double rtheta,
     case 0:
       return 0;
     case 2:
+      a = x1;
       x1 = x2;
+      x2 = a;
+      a = y1;
       y1 = y2;
+      y2 = a;
     }
   }
 
-  *px = x1;
-  *py = y1;
+  *px1 = x1;
+  *py1 = y1;
+  *px2 = x2;
+  *py2 = y2;
+
+  return 1;
+}
+
+static int ray_intersect_convex_polygon(double rx, double ry, double rtheta,
+					double *xpoly, double *ypoly, int np,
+					double *px1, double *py1, double *px2, double *py2) {
+  int i, cnt;
+  double x, y, x1, y1, x2, y2, theta;
+  double a, b, c, d;
+
+  x1 = y1 = x2 = y2 = 0.0;
+
+  a = tan(rtheta);
+  b = ry - a*rx;
+
+  cnt = 0;
+  for (i = 0; i < np && cnt < 2; i++) {
+    c = (ypoly[(i+1)%np] - ypoly[i]) / (xpoly[(i+1)%np] - xpoly[i]);
+    d = ypoly[i] - c*xpoly[i];
+    x = (d - b) / (a - c);
+    y = a*x + b;
+    theta = atan2(ypoly[(i+1)%np] - ypoly[i], xpoly[(i+1)%np] - xpoly[i]);
+    if (ray_intersect_arg(xpoly[i], ypoly[i], theta, x, y, x, y) &&
+	ray_intersect_arg(xpoly[(i+1)%np], ypoly[(i+1)%np],
+			  carmen_normalize_theta(theta+M_PI), x, y, x, y) &&
+	ray_intersect_arg(rx, ry, rtheta, x, y, x, y)) {
+      if (cnt == 0) {
+	x1 = x;
+	y1 = y;
+      }
+      else {
+	x2 = x;
+	y2 = y;
+      }
+      cnt++;
+    }
+  }
+
+  if (cnt == 0)
+    return 0;
+
+  if (cnt == 1) {
+    carmen_warn("ray_intersect_convex_polygon() found cnt = 1!\n");
+    x2 = x1;
+    y2 = y1;
+  }
+  
+  switch (ray_intersect_arg(rx, ry, rtheta, x1, y1, x2, y2)) {
+  case 0:
+    carmen_die("ray_intersect_convex_polygon() error!");
+  case 2:
+    a = x1;
+    x1 = x2;
+    x2 = a;
+    a = y1;
+    y1 = y2;
+    y2 = a;
+  }
+
+  *px1 = x1;
+  *py1 = y1;
+  *px2 = x2;
+  *py2 = y2;
 
   return 1;
 }
@@ -882,7 +1219,8 @@ static int ray_intersect_circle(double rx, double ry, double rtheta,
 static gsl_matrix *person_filter_measurement_jacobian(carmen_dot_person_filter_p f,
 						      double lx, double ly, double ltheta) {
 
-  gsl_matrix *H;
+  static gsl_matrix *H = NULL;
+  static int first = 1;
   double x0, y0, y1, y2, r;
   double cos_ltheta, sin_ltheta;
   double epsilon;
@@ -891,8 +1229,11 @@ static gsl_matrix *person_filter_measurement_jacobian(carmen_dot_person_filter_p
   sign = 1.0;
   epsilon = 0.00001;  //dbug: param?
 
-  H = gsl_matrix_calloc(2,3);
-  carmen_test_alloc(H);
+  if (first) {
+    first = 0;
+    H = gsl_matrix_calloc(2,3);
+    carmen_test_alloc(H);
+  }
 
   r = exp(f->logr);
   cos_ltheta = cos(ltheta);
@@ -993,28 +1334,46 @@ static int person_filter_max_likelihood_measurement(carmen_dot_person_filter_p f
   return 0;
 }
 
-static void person_filter_sensor_update(carmen_dot_person_filter_p f,
-					double lx, double ly, double ltheta,
-					float *range) {
+static void person_filter_sensor_update(carmen_dot_person_filter_p f, carmen_robot_laser_message *laser) {
 
-  gsl_matrix *K, *M1, *M2, *H, *HT, *R2, *P2;
+  static gsl_matrix *K = NULL;
+  static gsl_matrix *M1 = NULL;
+  static gsl_matrix *M2 = NULL;
+  static gsl_matrix *H = NULL;
+  static gsl_matrix *HT = NULL;
+  static gsl_matrix *R2 = NULL;
+  static gsl_matrix *P2 = NULL;
+  static int first = 1;
   double x, y, theta, hx, hy; //, d, dmin;
+  double lx, ly, ltheta;
+  float *range;
   int i, s, n; //, j, imin;
 
   //printf("update_person_filter()\n");
 
+  lx = laser->x;
+  ly = laser->y;
+  ltheta = laser->theta;
+  range = laser->range;
+
   P2 = gsl_matrix_calloc(3,3);
   carmen_test_alloc(P2);
-  
-  // (x,y) update
-  if (f->sensor_update_list->length > 0 /*|| f->unsensor_update_list->length > 0*/) {
-    H = gsl_matrix_alloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/, 3);
+
+  if (first) {
+    first = 0;
+    H = gsl_matrix_alloc(2*181, 3);
     carmen_test_alloc(H);
+    HT = gsl_matrix_alloc(3, 2*181);
+    carmen_test_alloc(HT);
+
+  }
+
+  // (x,y) update
+  if (f->sensor_update_list->length > 0) {
+    H->size1 = 2*f->sensor_update_list->length;
     n = 0;
-    printf("( ");
     for (i = 0; i < f->sensor_update_list->length; i++) {
       s = *(int*)carmen_list_get(f->sensor_update_list, i);
-      printf("%d ", s);
       theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
       M1 = person_filter_measurement_jacobian(f, lx, ly, theta);
       if (M1 == NULL)
@@ -1026,33 +1385,10 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
       H->data[MI(H,2*n+1,1)] = M1->data[MI(M1,1,1)];
       H->data[MI(H,2*n+1,2)] = M1->data[MI(M1,1,2)];
       n++;
-      gsl_matrix_free(M1);
     }
-    printf(")");
-    /*
-    printf("( ");
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      printf("%d ", s);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      M1 = person_filter_measurement_jacobian(f, lx, ly, theta);
-      if (M1 == NULL)
-	continue;
-      H->data[MI(H,2*n,0)] = M1->data[MI(M1,0,0)];
-      H->data[MI(H,2*n,1)] = M1->data[MI(M1,0,1)];
-      H->data[MI(H,2*n,2)] = M1->data[MI(M1,0,2)];
-      H->data[MI(H,2*n+1,0)] = M1->data[MI(M1,1,0)];
-      H->data[MI(H,2*n+1,1)] = M1->data[MI(M1,1,1)];
-      H->data[MI(H,2*n+1,2)] = M1->data[MI(M1,1,2)];
-      n++;
-      gsl_matrix_free(M1);
-    }
-    printf(")");
-    */
-    if (n < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/)
-      carmen_die("*** n < f->sensor_update_list->length + f->unsensor_update_list->length (Jacobian) ***");
-    HT = gsl_matrix_alloc(H->size2, H->size1);
-    carmen_test_alloc(HT);
+    if (n < f->sensor_update_list->length)
+      carmen_die("*** n < f->sensor_update_list->length (Jacobian) ***");
+    HT->size2 = H->size1;
     gsl_matrix_transpose_memcpy(HT, H);
     
     P2->data[MI(P2,0,0)] = f->P->data[MI(f->P,0,0)];
@@ -1069,10 +1405,10 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
     M1 = matrix_mult(H, P2);
     M2 = matrix_mult(M1, HT);
     gsl_matrix_free(M1);
-    R2 = gsl_matrix_calloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/,
-			   2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/);
+    R2 = gsl_matrix_calloc(2*f->sensor_update_list->length,
+			   2*f->sensor_update_list->length);
     carmen_test_alloc(R2);
-    for (i = 0; i < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/; i++) {
+    for (i = 0; i < f->sensor_update_list->length; i++) {
       R2->data[MI(R2,2*i,2*i)] = f->R->data[MI(f->R,0,0)];
       R2->data[MI(R2,2*i,2*i+1)] = f->R->data[MI(f->R,0,1)];
       R2->data[MI(R2,2*i+1,2*i)] = f->R->data[MI(f->R,1,0)];
@@ -1085,7 +1421,7 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
     K = matrix_mult(P2, M1);
     gsl_matrix_free(M1);
     
-    M1 = gsl_matrix_calloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/, 1);
+    M1 = gsl_matrix_calloc(2*f->sensor_update_list->length, 1);
     carmen_test_alloc(M1);
     n = 0;
     for (i = 0; i < f->sensor_update_list->length; i++) {
@@ -1099,35 +1435,8 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
       M1->data[MI(M1,2*n+1,0)] = y - hy;
       n++;
     }
-    /*
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      if (person_filter_max_likelihood_measurement(f, lx, ly, theta, &hx, &hy) < 0)
-	continue;
-      imin = -1;
-      dmin = -1.0;
-      for (j = 0; j < f->sensor_update_list->length; j++) {
-	s = *(int*)carmen_list_get(f->unsensor_update_list, j);
-	theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-	x = lx + cos(theta)*range[s];
-	y = ly + sin(theta)*range[s];
-	d = dist(x-hx, y-hy);
-	if (d > dmin) {
-	  dmin = d;
-	  imin = s;
-	}
-      }
-      theta = carmen_normalize_theta(ltheta + (imin-90)*M_PI/180.0);
-      x = lx + cos(theta)*range[imin];
-      y = ly + sin(theta)*range[imin];
-      M1->data[MI(M1,2*n,0)] = x - hx;
-      M1->data[MI(M1,2*n+1,0)] = y - hy;
-      n++;
-    }
-    */
-    if (n < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/)
-      carmen_die("*** n < f->sensor_update_list->length + f->unsensor_update_list->length (h) ***");
+    if (n < f->sensor_update_list->length)
+      carmen_die("*** n < f->sensor_update_list->length (h) ***");
     
     M2 = matrix_mult(K, M1);
     gsl_matrix_free(M1);
@@ -1154,738 +1463,48 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
 
     gsl_matrix_free(K);
     gsl_matrix_free(R2);
-    gsl_matrix_free(H);
-    gsl_matrix_free(HT);
-  }
-
-
-  // logr update
-  if (0) { //f->unsensor_update_list->length > 0) {
-    H = gsl_matrix_alloc(2*f->unsensor_update_list->length, 3);
-    carmen_test_alloc(H);
-    n = 0;
-    printf("( ");
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      printf("%d ", s);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      M1 = person_filter_measurement_jacobian(f, lx, ly, theta);
-      if (M1 == NULL)
-	continue;
-      H->data[MI(H,2*n,0)] = M1->data[MI(M1,0,0)];
-      H->data[MI(H,2*n,1)] = M1->data[MI(M1,0,1)];
-      H->data[MI(H,2*n,2)] = M1->data[MI(M1,0,2)];
-      H->data[MI(H,2*n+1,0)] = M1->data[MI(M1,1,0)];
-      H->data[MI(H,2*n+1,1)] = M1->data[MI(M1,1,1)];
-      H->data[MI(H,2*n+1,2)] = M1->data[MI(M1,1,2)];
-      n++;
-      gsl_matrix_free(M1);
-    }
-    printf(")");
-    //H->size1 = 2*n;
-    if (n < f->unsensor_update_list->length)
-      carmen_die("*** n < f->unsensor_update_list->length (Jacobian) ***");
-    HT = gsl_matrix_alloc(H->size2, H->size1);
-    carmen_test_alloc(HT);
-    gsl_matrix_transpose_memcpy(HT, H);
-    
-    P2->data[MI(P2,0,0)] = f->P->data[MI(f->P,0,0)];
-    P2->data[MI(P2,0,1)] = f->P->data[MI(f->P,0,1)];
-    P2->data[MI(P2,1,0)] = f->P->data[MI(f->P,1,0)];
-    P2->data[MI(P2,1,1)] = f->P->data[MI(f->P,1,1)];
-    P2->data[MI(P2,0,2)] = f->P->data[MI(f->P,0,2)];
-    P2->data[MI(P2,1,2)] = f->P->data[MI(f->P,1,2)];
-    P2->data[MI(P2,2,0)] = f->P->data[MI(f->P,2,0)];
-    P2->data[MI(P2,2,1)] = f->P->data[MI(f->P,2,1)];
-    P2->data[MI(P2,2,2)] = f->P->data[MI(f->P,2,2)];
-
-    M1 = matrix_mult(H, P2);
-    M2 = matrix_mult(M1, HT);
-    gsl_matrix_free(M1);
-    R2 = gsl_matrix_calloc(2*f->unsensor_update_list->length, 2*f->unsensor_update_list->length);
-    carmen_test_alloc(R2);
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      R2->data[MI(R2,2*i,2*i)] = f->R->data[MI(f->R,0,0)];
-      R2->data[MI(R2,2*i,2*i+1)] = f->R->data[MI(f->R,0,1)];
-      R2->data[MI(R2,2*i+1,2*i)] = f->R->data[MI(f->R,1,0)];
-      R2->data[MI(R2,2*i+1,2*i+1)] = f->R->data[MI(f->R,1,1)];
-    }
-    gsl_matrix_add(M2, R2);
-    matrix_invert(M2);
-    M1 = matrix_mult(HT, M2);
-    gsl_matrix_free(M2);
-    K = matrix_mult(P2, M1);
-    gsl_matrix_free(M1);
-    
-    M1 = gsl_matrix_calloc(2*f->unsensor_update_list->length, 1);
-    carmen_test_alloc(M1);
-    n = 0;
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      x = lx + cos(theta)*range[s];
-      y = ly + sin(theta)*range[s];
-      if (person_filter_max_likelihood_measurement(f, lx, ly, theta, &hx, &hy) < 0)
-	continue;
-      M1->data[MI(M1,2*n,0)] = x - hx;
-      M1->data[MI(M1,2*n+1,0)] = y - hy;
-      
-      n++;
-    }
-    //M1->size1 = 2*n;
-    if (n < f->unsensor_update_list->length)
-      carmen_die("*** n < f->unsensor_update_list->length (h) ***");
-    
-    M2 = matrix_mult(K, M1);
-    gsl_matrix_free(M1);
-    
-    //f->x += M2->data[MI(M2,0,0)];
-    //f->y += M2->data[MI(M2,1,0)];
-    f->logr += M2->data[MI(M2,2,0)];
-    if (exp(f->logr) < 0.2)
-      f->logr = log(0.2);
-    else if (exp(f->logr) > 0.4)
-      f->logr = log(0.4);
-    
-    gsl_matrix_free(M2);
-    M1 = matrix_mult(K, H);
-    M2 = gsl_matrix_alloc(3,3);  //dbug
-    carmen_test_alloc(M2);
-    gsl_matrix_set_identity(M2);
-    gsl_matrix_sub(M2, M1);
-    gsl_matrix_free(M1);
-    M1 = matrix_mult(M2, f->P);
-    gsl_matrix_free(M2);
-    gsl_matrix_free(f->P);
-    f->P = M1;
   }
 
   gsl_matrix_free(P2);
 }
  
-#if 0
-static void person_filter_sensor_update_r(carmen_dot_person_filter_p f,
-					  double lx, double ly, double ltheta,
-					  double x, double y) {
+//dbug: also need to shrink polygons!!
+static void trash_filter_sensor_update(carmen_dot_trash_filter_p f, carmen_robot_laser_message *laser) {
 
-  gsl_matrix *K, *M1, *M2, *H, *HT;
-  double hx, hy;
- 
-  H = person_filter_measurement_jacobian(f, lx, ly, ltheta);
-  if (H == NULL)
-    return;
-  //H->data[MI(H,0,0)] = 0.0;
-  //H->data[MI(H,0,1)] = 0.0;
-  //H->data[MI(H,1,0)] = 0.0;
-  //H->data[MI(H,1,1)] = 0.0;
-  HT = gsl_matrix_alloc(H->size2, H->size1);
-  carmen_test_alloc(HT);
-  gsl_matrix_transpose_memcpy(HT, H);
-
-  M1 = matrix_mult(H, f->P);
-  M2 = matrix_mult(M1, HT);
-  gsl_matrix_free(M1);
-  gsl_matrix_add(M2, f->R);
-  matrix_invert(M2);
-  M1 = matrix_mult(HT, M2);
-  gsl_matrix_free(M2);
-  K = matrix_mult(f->P, M1);
-  gsl_matrix_free(M1);
-
-  if (person_filter_max_likelihood_measurement(f, lx, ly, ltheta, &hx, &hy) < 0)
-    return;
-
-  M1 = gsl_matrix_calloc(2,1);
-  carmen_test_alloc(M1);
-  M1->data[MI(M1,0,0)] = x - hx;
-  M1->data[MI(M1,1,0)] = y - hy;
-  M2 = matrix_mult(K, M1);
-  gsl_matrix_free(M1);
-
-  //f->x += M2->data[MI(M2,0,0)];
-  //f->y += M2->data[MI(M2,1,0)];
-  f->logr += M2->data[MI(M2,2,0)];
-  if (exp(f->logr) < 0.2)
-    f->logr = log(0.2);
-  else if (exp(f->logr) > 0.4)
-    f->logr = log(0.4);
-
-  gsl_matrix_free(M2);
-  M1 = matrix_mult(K, H);
-  M2 = gsl_matrix_alloc(3,3);  //dbug
-  carmen_test_alloc(M2);
-  gsl_matrix_set_identity(M2);
-  gsl_matrix_sub(M2, M1);
-  gsl_matrix_free(M1);
-  M1 = matrix_mult(M2, f->P);
-  gsl_matrix_free(M2);
-  gsl_matrix_free(f->P);
-  f->P = M1;
-
-  //printf("\nMeasure");
-  //gsl_matrix_fprintf(stdout, f->P, "%f");
-  //printf("\n\n");
-}
-#endif
-
-static void trash_filter_motion_update(carmen_dot_trash_filter_p f) {
-
-  double ax, ay;
+  int i, s, num_points;
+  static double xpoints[500];
+  static double ypoints[500];
+  double theta;
   
-  // kalman filter time update with brownian motion model
-  ax = carmen_uniform_random(-1.0, 1.0) * f->a;
-  ay = carmen_uniform_random(-1.0, 1.0) * f->a;
-
-  //printf("ax = %.4f, ay = %.4f\n", ax, ay);
-
-  f->x += ax;
-  f->y += ay;
-  gsl_matrix_add(f->P, f->Q);
-}
-
-static gsl_matrix *trash_filter_measurement_jacobian(carmen_dot_trash_filter_p f,
-						     double lx, double ly, double ltheta) {
-
-  gsl_matrix *H;
-  double w1, w2;
-  double x1, y1, x2, y2;
-  double a, b, c;
-  double xlp, ylp, tlp;  // x_l', y_l', theta_l'
-  double xp, yp, k, xpp, ypp;
-  double sint, cost, sin2t, cos2t;
-  double sintlp, costlp, tantlp, sectlp;
-  double dxlpdx, dxlpdy, dxlpdt;
-  double dylpdx, dylpdy, dylpdt;
-  double dadx, dady, dadt, dadlnw1, dadlnw2;
-  double dbdx, dbdy, dbdt, dbdlnw1, dbdlnw2;
-  double dcdx, dcdy, dcdt, dcdlnw1, dcdlnw2;
-  double dxpdx, dxpdy, dxpdt, dxpdlnw1, dxpdlnw2;
-  double dypdx, dypdy, dypdt, dypdlnw1, dypdlnw2;
-  double dkdx, dkdy, dkdt, dkdlnw1, dkdlnw2;
-  double dxppdx, dxppdy, dxppdt, dxppdlnw1, dxppdlnw2;
-  double dyppdx, dyppdy, dyppdt, dyppdlnw1, dyppdlnw2;
-  double sign = 0.0;
-  double epsilon = 0.000001;
-
-  //printf("trash_filter_measurement_jacobian(%f,%f,%f)\n", lx, ly, ltheta);
-
-  xp = yp = 0.0;
-
-  H = gsl_matrix_calloc(2,5);
-  carmen_test_alloc(H);
-
-  w1 = exp(f->logw1);
-  w2 = exp(f->logw2);
-
-  sint = sin(f->theta);
-  cost = cos(f->theta);
-  sin2t = sin(2.0*f->theta);
-  cos2t = cos(2.0*f->theta);
-
-  xlp = cost*(lx - f->x) + sint*(ly - f->y);
-  ylp = -sint*(lx - f->x) + cost*(ly - f->y);
-  tlp = ltheta + f->theta;
-
-  //printf("\n***(f->x = %f, f->y = %f, f->theta = %f)***", f->x, f->y, f->theta);
-  //printf("\n***(xlp = %f, ylp = %f, tlp = %f)***\n", xlp, ylp, tlp);
-
-  sintlp = sin(tlp);
-  costlp = cos(tlp);
-  tantlp = tan(tlp);
-  sectlp = 1.0/costlp;
-  
-  dxlpdx = -cost;
-  dxlpdy = -sint;
-  dxlpdt = -sint*(lx-f->x) + cost*(ly-f->y);
-  dylpdx = sint;
-  dylpdy = -cost;
-  dylpdt = -cost*(lx-f->x) - sint*(ly-f->y);
-
-  if (fabs(fabs(tlp) - M_PI/2.0) <= epsilon) {  // theta_l' is approx. (+/-)pi/2
-    if ((1.0-w2*w2*xlp*xlp)/(w1*w1) < epsilon) {  // |L^E| = 0 or 1
-      sign = (xlp >= 0 ? 1.0 : -1.0);
-      H->data[MI(H,0,0)] = 1.0;
-      H->data[MI(H,0,1)] = 0.0;
-      H->data[MI(H,0,2)] = -sign*w1*sint;
-      H->data[MI(H,0,3)] = sign*w1*cost;
-      H->data[MI(H,0,4)] = 0.0;
-      H->data[MI(H,1,0)] = 0.0;
-      H->data[MI(H,1,1)] = 1.0;
-      H->data[MI(H,1,2)] = sign*w1*cost;
-      H->data[MI(H,1,3)] = sign*w1*sint;
-      H->data[MI(H,1,4)] = 0.0;
-    }
-    else {  // |L^E| = 2
-      x1 = cost*xlp - sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->x;
-      x2 = cost*xlp + sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->x;
-      y1 = sint*xlp + cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->y;
-      y2 = sint*xlp - cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->y;
-      switch (ray_intersect_arg(lx, ly, ltheta, x1, y1, x2, y2)) {
-      case 0:
-	carmen_warn("expected sensor reading isn't on ray! (break 1) (%f, %f, %f, %f, %f, %f, %f)",
-		    lx, ly, ltheta, x1, y1, x2, y2);
-	return NULL;
-      case 1:
-	sign = 1.0;
-	break;
-      case 2:
-	sign = -1.0;
-      }
-      H->data[MI(H,0,0)] = sint*sint - sign*sint*cost*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp));
-      H->data[MI(H,0,1)] = -sint*cost - sign*sint*sint*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp));
-      H->data[MI(H,0,2)] = (cos2t*(ly-f->y) - sin2t*(lx - f->x) - sign*cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1))
-			    + sign*sint*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp))*dxlpdt);
-      H->data[MI(H,0,3)] = sign*sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1));
-      H->data[MI(H,0,4)] = sign*sint*w2*w2*xlp*xlp/(w1*sqrt(1.0-w2*w2*xlp*xlp));
-      H->data[MI(H,1,0)] = -sint*cost + sign*cost*cost*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp));
-      H->data[MI(H,1,1)] = cost*cost + sign*sint*cost*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp));
-      H->data[MI(H,1,2)] = (cos2t*(lx-f->x) + sin2t*(ly - f->y) - sign*sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1))
-			    + sign*cost*(w2*w2/(w1*w1))*xlp*sqrt(w1*w1/(1.0-w2*w2*xlp*xlp))*dxlpdt);
-      H->data[MI(H,1,3)] = -sign*cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1));
-      H->data[MI(H,1,4)] = -sign*cost*w2*w2*xlp*xlp/(w1*sqrt(1.0-w2*w2*xlp*xlp));
-    }
-  }
-  else {  // theta_l' != (+/-)pi/2
-    a = w2*w2 + w1*w1*tantlp*tantlp;
-    b = 2.0*w1*w1*tantlp*(ylp-xlp*tantlp);
-    c = w1*w1*(ylp-xlp*tantlp)*(ylp-xlp*tantlp) - w1*w1*w2*w2;
-    
-    dadx = 0.0;
-    dady = 0.0;
-    dadt = 2.0*w1*w1*tantlp*sectlp*sectlp;
-    dadlnw1 = 2.0*w1*w1*tantlp*tantlp;
-    dadlnw2 = 2.0*w2*w2;
-    dbdx = 2.0*w1*w1*tantlp*(dylpdx - dxlpdx*tantlp);
-    dbdy = 2.0*w1*w1*tantlp*(dylpdy - dxlpdy*tantlp);
-    dbdt = 2.0*w1*w1*(sectlp*sectlp*ylp + tantlp*dylpdt - 2.0*tantlp*sectlp*sectlp*xlp - tantlp*tantlp*dxlpdt);
-    dbdlnw1 = 2.0*b;
-    dbdlnw2 = 0.0;
-    dcdx = 2.0*w1*w1*(ylp - xlp*tantlp)*(dylpdx - dxlpdx*tantlp);
-    dcdy = 2.0*w1*w1*(ylp - xlp*tantlp)*(dylpdy - dxlpdy*tantlp);
-    dcdt = 2.0*w1*w1*(ylp - xlp*tantlp)*(dylpdt - dxlpdt*tantlp - xlp*sectlp*sectlp);
-    dcdlnw1 = 2.0*c;
-    dcdlnw2 = -2.0*w1*w1*w2*w2;
-    
-    if (b*b - 4.0*a*c < 0.0) {  // |L^E| = 0
-      xp = -b/(2.0*a);
-      yp = xp*tantlp + ylp - xlp*tantlp;
-      k = (ylp - xlp*tantlp)/sqrt(w2*w2 + w1*w1*tantlp*tantlp);
-
-      xpp = xp/k;
-      ypp = yp/k;
-
-      dxpdx = (b*dadx - a*dbdx)/(2.0*a*a);
-      dxpdy = (b*dady - a*dbdy)/(2.0*a*a);
-      dxpdt = (b*dadt - a*dbdt)/(2.0*a*a);
-      dxpdlnw1 = (b*dadlnw1 - a*dbdlnw1)/(2.0*a*a);
-      dxpdlnw2 = (b*dadlnw2 - a*dbdlnw2)/(2.0*a*a);
-      dypdx = dxpdx*tantlp + dylpdx - dxlpdx*tantlp;
-      dypdy = dxpdy*tantlp + dylpdy - dxlpdy*tantlp;
-      dypdt = dxpdt*tantlp + xp*sectlp*sectlp + dylpdt - dxlpdt*tantlp - xlp*sectlp*sectlp;
-      dypdlnw1 = dxpdlnw1*tantlp;
-      dypdlnw2 = dxpdlnw2*tantlp;
-
-      dkdx = (dylpdx - dxlpdx*tantlp)/sqrt(w2*w2+w1*w1*tantlp*tantlp);
-      dkdy = (dylpdy - dxlpdy*tantlp)/sqrt(w2*w2+w1*w1*tantlp*tantlp);
-      dkdt = (sqrt(w2*w2+w1*w1*tantlp*tantlp)*(dylpdt - xlp*sectlp*sectlp - dxlpdt*tantlp) -
-	      (w1*w1*tantlp*sectlp*sectlp/sqrt(w2*w2+w1*w1*tantlp*tantlp))*(ylp - xlp*tantlp)) / (w2*w2+w1*w1*tantlp*tantlp);
-      dkdlnw1 = -(ylp - xlp*tantlp)*w1*w1*tantlp*tantlp/sqrt((w2*w2+w1*w1*tantlp*tantlp)*(w2*w2+w1*w1*tantlp*tantlp)*(w2*w2+w1*w1*tantlp*tantlp));
-      dkdlnw2 = -(ylp - xlp*tantlp)*w2*w2/sqrt((w2*w2+w1*w1*tantlp*tantlp)*(w2*w2+w1*w1*tantlp*tantlp)*(w2*w2+w1*w1*tantlp*tantlp));
-      
-      dxppdx = (k*dxpdx - xp*dkdx)/(k*k);
-      dxppdy = (k*dxpdy - xp*dkdy)/(k*k);
-      dxppdt = (k*dxpdt - xp*dkdt)/(k*k);
-      dxppdlnw1 = (k*dxpdlnw1 - xp*dkdlnw1)/(k*k);
-      dxppdlnw2 = (k*dxpdlnw2 - xp*dkdlnw2)/(k*k);
-      dyppdx = (k*dypdx - yp*dkdx)/(k*k);
-      dyppdy = (k*dypdy - yp*dkdy)/(k*k);
-      dyppdt = (k*dypdt - yp*dkdt)/(k*k);
-      dyppdlnw1 = (k*dypdlnw1 - yp*dkdlnw1)/(k*k);
-      dyppdlnw2 = (k*dypdlnw2 - yp*dkdlnw2)/(k*k);
-
-      xp = xpp;
-      yp = ypp;
-
-      dxpdx = dxppdx;
-      dxpdy = dxppdy;
-      dxpdt = dxppdt;
-      dxpdlnw1 = dxppdlnw1;
-      dxpdlnw2 = dxppdlnw2;
-      dypdx = dyppdx;
-      dypdy = dyppdy;
-      dypdt = dyppdt;
-      dypdlnw1 = dyppdlnw1;
-      dypdlnw2 = dyppdlnw2;
-    }
-    else if (b*b - 4.0*a*c < epsilon) {  // |L^E| = 1
-      xp = -b/(2.0*a);
-      yp = xp*tantlp + ylp - xlp*tantlp;
-
-      dxpdx = (b*dadx - a*dbdx)/(2.0*a*a);
-      dxpdy = (b*dady - a*dbdy)/(2.0*a*a);
-      dxpdt = (b*dadt - a*dbdt)/(2.0*a*a);
-      dxpdlnw1 = (b*dadlnw1 - a*dbdlnw1)/(2.0*a*a);
-      dxpdlnw2 = (b*dadlnw2 - a*dbdlnw2)/(2.0*a*a);
-      dypdx = dxpdx*tantlp + dylpdx - dxlpdx*tantlp;
-      dypdy = dxpdy*tantlp + dylpdy - dxlpdy*tantlp;
-      dypdt = dxpdt*tantlp + xp*sectlp*sectlp + dylpdt - dxlpdt*tantlp - xlp*sectlp*sectlp;
-      dypdlnw1 = dxpdlnw1*tantlp;
-      dypdlnw2 = dxpdlnw2*tantlp;
-    }
-    else {  // |L^E| = 2
-      x1 = (-b + sqrt(b*b-4.0*a*c))/(2.0*a);
-      x2 = (-b - sqrt(b*b-4.0*a*c))/(2.0*a);
-      y1 = x1*tantlp + ylp - xlp*tantlp;
-      y2 = x2*tantlp + ylp - xlp*tantlp;
-      switch (ray_intersect_arg(xlp, ylp, tlp, x1, y1, x2, y2)) {
-      case 0:
-	carmen_warn("expected sensor reading isn't on ray! (break 2) (%f, %f, %f, %f, %f, %f, %f)",
-		    xlp, ylp, tlp, x1, y1, x2, y2);
-	return NULL;
-      case 1:
-	xp = x1;
-	yp = y1;
-	sign = 1.0;
-	break;
-      case 2:
-	xp = x2;
-	yp = x2;
-	sign = -1.0;
-      }
-
-      dxpdx = (-a*dbdx + sign*a*(b*dbdx - 2.0*a*dcdx - 2.0*c*dadx)/sqrt(b*b-4.0*a*c) + (b - sign*sqrt(b*b-4.0*a*c))*dadx) / (2.0*a*a);
-      dxpdy = (-a*dbdy + sign*a*(b*dbdy - 2.0*a*dcdy - 2.0*c*dady)/sqrt(b*b-4.0*a*c) + (b - sign*sqrt(b*b-4.0*a*c))*dady) / (2.0*a*a);
-      dxpdt = (-a*dbdt + sign*a*(b*dbdt - 2.0*a*dcdt - 2.0*c*dadt)/sqrt(b*b-4.0*a*c) + (b - sign*sqrt(b*b-4.0*a*c))*dadt) / (2.0*a*a);
-      dxpdlnw1 = (-a*dbdlnw1 + sign*a*(b*dbdlnw1 - 2.0*a*dcdlnw1 - 2.0*c*dadlnw1)/sqrt(b*b-4.0*a*c) + (b - sign*sqrt(b*b-4.0*a*c))*dadlnw1) / (2.0*a*a);
-      dxpdlnw2 = (-a*dbdlnw2 + sign*a*(b*dbdlnw2 - 2.0*a*dcdlnw2 - 2.0*c*dadlnw2)/sqrt(b*b-4.0*a*c) + (b - sign*sqrt(b*b-4.0*a*c))*dadlnw2) / (2.0*a*a);
-      dypdx = dxpdx*tantlp + dylpdx - dxlpdx*tantlp;
-      dypdy = dxpdy*tantlp + dylpdy - dxlpdy*tantlp;
-      dypdt = dxpdt*tantlp + xp*sectlp*sectlp + dylpdt - dxlpdt*tantlp - xlp*sectlp*sectlp;
-      dypdlnw1 = dxpdlnw1*tantlp;
-      dypdlnw2 = dxpdlnw2*tantlp;
-    }
-
-    H->data[MI(H,0,0)] = cost*dxpdx - sint*dypdx + 1.0;
-    H->data[MI(H,0,1)] = cost*dxpdy - sint*dypdy;
-    H->data[MI(H,0,2)] = -sint*xp + cost*dxpdt - cost*yp - sint*dypdt;
-    H->data[MI(H,0,3)] = cost*dxpdlnw1 - sint*dypdlnw1;
-    H->data[MI(H,0,4)] = cost*dxpdlnw2 - sint*dypdlnw2;
-    H->data[MI(H,1,0)] = sint*dxpdx + cost*dypdx;
-    H->data[MI(H,1,1)] = sint*dxpdy + cost*dypdy + 1.0;
-    H->data[MI(H,1,2)] = cost*xp + sint*dxpdt - sint*yp + cost*dypdt;
-    H->data[MI(H,1,3)] = sint*dxpdlnw1 + cost*dypdlnw1;
-    H->data[MI(H,1,4)] = sint*dxpdlnw2 + cost*dypdlnw2;
+  num_points = 0;
+  for (i = 0; i < f->hull_size; i++) {
+    xpoints[num_points] = f->xhull[i];
+    ypoints[num_points] = f->yhull[i];
+    num_points++;
   }
 
-  return H;
-}
-
-static int trash_filter_max_likelihood_measurement(carmen_dot_trash_filter_p f, double lx, double ly,
-						   double ltheta, double *hx, double *hy) {
-  
-  double w1, w2;
-  double x1, y1, x2, y2;
-  double a, b, c;
-  double xlp, ylp, tlp;  // x_l', y_l', theta_l'
-  double sint, cost;
-  double sintlp, costlp, tantlp;
-  double xp, yp, k;
-  double epsilon = 0.000001;
-
-  w1 = exp(f->logw1);
-  w2 = exp(f->logw2);
-
-  sint = sin(f->theta);
-  cost = cos(f->theta);
-
-  xlp = cost*(lx - f->x) + sint*(ly - f->y);
-  ylp = -sint*(lx - f->x) + cost*(ly - f->y);
-  tlp = ltheta + f->theta;
-
-  sintlp = sin(tlp);
-  costlp = cos(tlp);
-  tantlp = tan(tlp);
-
-  if (fabs(fabs(tlp) - M_PI/2.0) <= epsilon) {  // theta_l' is approx. (+/-)pi/2
-    if ((1.0-w2*w2*xlp*xlp)/(w1*w1) < epsilon) {  // |L^E| = 0 or 1
-      if (xlp >= 0) {
-	*hx = w1*cost + f->x;
-	*hy = w1*sint + f->y;
-      }
-      else {
-	*hx = -w1*cost + f->x;
-	*hy = -w1*sint + f->y;
-      }
-    }
-    else {  // |L^E| = 2
-      x1 = cost*xlp - sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->x;
-      x2 = cost*xlp + sint*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->x;
-      y1 = sint*xlp + cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->y;
-      y2 = sint*xlp - cost*sqrt((1.0-w2*w2*xlp*xlp)/(w1*w1)) + f->y;
-      switch (ray_intersect_arg(lx, ly, ltheta, x1, y1, x2, y2)) {
-      case 0:
-	carmen_warn("expected sensor reading isn't on ray! (break 3) (%f, %f, %f, %f, %f, %f, %f)",
-		    lx, ly, ltheta, x1, y1, x2, y2);
-	return -1;
-      case 1:
-	*hx = x1;
-	*hy = y1;
-	break;
-      case 2:
-	*hx = x2;
-	*hy = y2;
-      }
-    }
-  }
-  else {  // theta_l' != (+/-)pi/2
-    a = w2*w2 + w1*w1*tantlp*tantlp;
-    b = 2.0*w1*w1*tantlp*(ylp-xlp*tantlp);
-    c = w1*w1*(ylp-xlp*tantlp)*(ylp-xlp*tantlp) - w1*w1*w2*w2;
-    if (b*b - 4.0*a*c < 0.0) {  // |L^E| = 0
-      xp = -b/(2.0*a);
-      yp = xp*tantlp + ylp - xlp*tantlp;
-      k = (ylp - xlp*tantlp)/sqrt(w2*w2 + w1*w1*tantlp*tantlp);
-      *hx = cost*(xp/k) - sint*(yp/k) + f->x;
-      *hy = sint*(xp/k) + cost*(yp/k) + f->y;
-    }
-    else if (b*b - 4.0*a*c < epsilon) {  // |L^E| = 1
-      xp = -b/(2.0*a);
-      yp = xp*tantlp + ylp - xlp*tantlp;
-      *hx = cost*xp - sint*yp + f->x;
-      *hy = sint*xp + cost*yp + f->y;
-    }
-    else {  // |L^E| = 2
-      x1 = (-b + sqrt(b*b-4.0*a*c))/(2.0*a);
-      x2 = (-b - sqrt(b*b-4.0*a*c))/(2.0*a);
-      y1 = x1*tantlp + ylp - xlp*tantlp;
-      y2 = x2*tantlp + ylp - xlp*tantlp;
-      switch (ray_intersect_arg(xlp, ylp, tlp, x1, y1, x2, y2)) {
-      case 0:
-	carmen_warn("expected sensor reading isn't on ray! (break 4) (%f, %f, %f, %f, %f, %f, %f)",
-		    xlp, ylp, tlp, x1, y1, x2, y2);
-	return -1;
-      case 1:
-	*hx = cost*x1 - sint*y1 + f->x;
-	*hy = sint*x1 + cost*y1 + f->y;
-	break;
-      case 2:
-	*hx = cost*x2 - sint*y2 + f->x;
-	*hy = sint*x2 + cost*y2 + f->y;
-      }
-    }
+  for (i = 0; i < f->sensor_update_list->length; i++) {
+    s = *(int*)carmen_list_get(f->sensor_update_list, i);
+    theta = carmen_normalize_theta(laser->theta + (s-90)*M_PI/180.0);
+    xpoints[num_points] = laser->x + cos(theta)*laser->range[s];
+    ypoints[num_points] = laser->y + sin(theta)*laser->range[s];
+    num_points++;
   }
 
-  //printf("\n ~~~ hx = %f, hy = %f ~~~\n", *hx, *hy);
+  f->hull_size = compute_convex_hull(xpoints, ypoints, num_points, f->xhull, f->yhull);
 
-  return 0;
-}
+  printf("\nhull = ");
+  for (i = 0; i < f->hull_size; i++)
+    printf("(%.2f, %.2f) ", f->xhull[i], f->yhull[i]);
+  printf("\n");
 
-static void trash_filter_sensor_update(carmen_dot_trash_filter_p f,
-				       double lx, double ly, double ltheta,
-				       float *range) {
+  f->x = mean_imasked(f->xhull, NULL, 0, f->hull_size);
+  f->y = mean_imasked(f->yhull, NULL, 0, f->hull_size);
+  f->vx = var_imasked(f->xhull, f->x, NULL, 0, f->hull_size);
+  f->vy = var_imasked(f->yhull, f->y, NULL, 0, f->hull_size);
+  f->vxy = cov_imasked(f->xhull, f->x, f->yhull, f->y, NULL, 0, f->hull_size);
 
-  gsl_matrix *K, *M1, *M2, *H, *HT, *R2, *P2;
-  double x, y, theta, hx, hy; //, d, dmin;
-  int i, s, n; //, j, imin;
-
-  //printf("update_trash_filter(%f,%f,%f)\n", lx, ly, ltheta);
-
-  P2 = gsl_matrix_calloc(5,5);
-  carmen_test_alloc(P2);
-  
-  if (f->sensor_update_list->length > 0 /*|| f->unsensor_update_list->length > 0*/) {
-    H = gsl_matrix_alloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/, 5);
-    carmen_test_alloc(H);
-    n = 0;
-    //printf(" list length = %d ", f->sensor_update_list->length);
-    printf("( ");
-    for (i = 0; i < f->sensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->sensor_update_list, i);
-      printf("%d ", s);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      M1 = trash_filter_measurement_jacobian(f, lx, ly, theta);
-      if (M1 == NULL)
-	continue;
-      H->data[MI(H,2*n,0)] = M1->data[MI(M1,0,0)];
-      H->data[MI(H,2*n,1)] = M1->data[MI(M1,0,1)];
-      H->data[MI(H,2*n,2)] = M1->data[MI(M1,0,2)];
-      H->data[MI(H,2*n,3)] = M1->data[MI(M1,0,3)];
-      H->data[MI(H,2*n,4)] = M1->data[MI(M1,0,4)];
-      H->data[MI(H,2*n+1,0)] = M1->data[MI(M1,1,0)];
-      H->data[MI(H,2*n+1,1)] = M1->data[MI(M1,1,1)];
-      H->data[MI(H,2*n+1,2)] = M1->data[MI(M1,1,2)];
-      H->data[MI(H,2*n+1,3)] = M1->data[MI(M1,1,3)];
-      H->data[MI(H,2*n+1,3)] = M1->data[MI(M1,1,4)];
-      n++;
-      gsl_matrix_free(M1);
-    }
-    printf(")");
-    /*
-    printf("( ");
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      printf("%d ", s);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      M1 = person_filter_measurement_jacobian(f, lx, ly, theta);
-      if (M1 == NULL)
-	continue;
-      H->data[MI(H,2*n,0)] = M1->data[MI(M1,0,0)];
-      H->data[MI(H,2*n,1)] = M1->data[MI(M1,0,1)];
-      H->data[MI(H,2*n,2)] = M1->data[MI(M1,0,2)];
-      H->data[MI(H,2*n+1,0)] = M1->data[MI(M1,1,0)];
-      H->data[MI(H,2*n+1,1)] = M1->data[MI(M1,1,1)];
-      H->data[MI(H,2*n+1,2)] = M1->data[MI(M1,1,2)];
-      n++;
-      gsl_matrix_free(M1);
-    }
-    printf(")");
-    */
-    if (n < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/)
-      carmen_die("*** n < f->sensor_update_list->length + f->unsensor_update_list->length (Jacobian) ***");
-    HT = gsl_matrix_alloc(H->size2, H->size1);
-    carmen_test_alloc(HT);
-    gsl_matrix_transpose_memcpy(HT, H);
-    
-    P2->data[MI(P2,0,0)] = f->P->data[MI(f->P,0,0)];
-    P2->data[MI(P2,0,1)] = f->P->data[MI(f->P,0,1)];
-    P2->data[MI(P2,1,0)] = f->P->data[MI(f->P,1,0)];
-    P2->data[MI(P2,1,1)] = f->P->data[MI(f->P,1,1)];
-    //dbug
-    P2->data[MI(P2,0,2)] = f->P->data[MI(f->P,0,2)];
-    P2->data[MI(P2,0,3)] = f->P->data[MI(f->P,0,3)];
-    P2->data[MI(P2,0,4)] = f->P->data[MI(f->P,0,4)];
-    P2->data[MI(P2,1,2)] = f->P->data[MI(f->P,1,2)];
-    P2->data[MI(P2,1,3)] = f->P->data[MI(f->P,1,3)];
-    P2->data[MI(P2,1,4)] = f->P->data[MI(f->P,1,4)];
-    P2->data[MI(P2,2,0)] = f->P->data[MI(f->P,2,0)];
-    P2->data[MI(P2,2,1)] = f->P->data[MI(f->P,2,1)];
-    P2->data[MI(P2,2,2)] = f->P->data[MI(f->P,2,2)];
-    P2->data[MI(P2,2,3)] = f->P->data[MI(f->P,2,3)];
-    P2->data[MI(P2,2,4)] = f->P->data[MI(f->P,2,4)];
-    P2->data[MI(P2,3,0)] = f->P->data[MI(f->P,3,0)];
-    P2->data[MI(P2,3,1)] = f->P->data[MI(f->P,3,1)];
-    P2->data[MI(P2,3,2)] = f->P->data[MI(f->P,3,2)];
-    P2->data[MI(P2,3,3)] = f->P->data[MI(f->P,3,3)];
-    P2->data[MI(P2,3,4)] = f->P->data[MI(f->P,3,4)];
-    P2->data[MI(P2,4,0)] = f->P->data[MI(f->P,4,0)];
-    P2->data[MI(P2,4,1)] = f->P->data[MI(f->P,4,1)];
-    P2->data[MI(P2,4,2)] = f->P->data[MI(f->P,4,2)];
-    P2->data[MI(P2,4,3)] = f->P->data[MI(f->P,4,3)];
-    P2->data[MI(P2,4,4)] = f->P->data[MI(f->P,4,4)];
-
-    M1 = matrix_mult(H, P2);
-    M2 = matrix_mult(M1, HT);
-    gsl_matrix_free(M1);
-    R2 = gsl_matrix_calloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/,
-			   2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/);
-    carmen_test_alloc(R2);
-    for (i = 0; i < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/; i++) {
-      R2->data[MI(R2,2*i,2*i)] = f->R->data[MI(f->R,0,0)];
-      R2->data[MI(R2,2*i,2*i+1)] = f->R->data[MI(f->R,0,1)];
-      R2->data[MI(R2,2*i+1,2*i)] = f->R->data[MI(f->R,1,0)];
-      R2->data[MI(R2,2*i+1,2*i+1)] = f->R->data[MI(f->R,1,1)];
-    }
-    gsl_matrix_add(M2, R2);
-    matrix_invert(M2);
-
-    if (isnan(M2->data[MI(M2,0,0)])) {
-      gsl_matrix_free(M2);
-      gsl_matrix_free(R2);
-      gsl_matrix_free(H);
-      gsl_matrix_free(HT);
-      gsl_matrix_free(P2);
-      return;
-    }
-
-    //printf("\nM2 = \n");
-    //gsl_matrix_fprintf(stdout, M2, "%f");
-    //printf("\n");
-
-    M1 = matrix_mult(HT, M2);
-    gsl_matrix_free(M2);
-    K = matrix_mult(P2, M1);
-    gsl_matrix_free(M1);
-    
-    M1 = gsl_matrix_calloc(2*f->sensor_update_list->length /*+ 2*f->unsensor_update_list->length*/, 1);
-    carmen_test_alloc(M1);
-    n = 0;
-    for (i = 0; i < f->sensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->sensor_update_list, i);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      x = lx + cos(theta)*range[s];
-      y = ly + sin(theta)*range[s];
-      if (trash_filter_max_likelihood_measurement(f, lx, ly, theta, &hx, &hy) < 0)
-	continue;
-      M1->data[MI(M1,2*n,0)] = x - hx;
-      M1->data[MI(M1,2*n+1,0)] = y - hy;
-      n++;
-    }
-    /*
-    for (i = 0; i < f->unsensor_update_list->length; i++) {
-      s = *(int*)carmen_list_get(f->unsensor_update_list, i);
-      theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-      if (person_filter_max_likelihood_measurement(f, lx, ly, theta, &hx, &hy) < 0)
-	continue;
-      imin = -1;
-      dmin = -1.0;
-      for (j = 0; j < f->sensor_update_list->length; j++) {
-	s = *(int*)carmen_list_get(f->unsensor_update_list, j);
-	theta = carmen_normalize_theta(ltheta + (s-90)*M_PI/180.0);
-	x = lx + cos(theta)*range[s];
-	y = ly + sin(theta)*range[s];
-	d = dist(x-hx, y-hy);
-	if (d > dmin) {
-	  dmin = d;
-	  imin = s;
-	}
-      }
-      theta = carmen_normalize_theta(ltheta + (imin-90)*M_PI/180.0);
-      x = lx + cos(theta)*range[imin];
-      y = ly + sin(theta)*range[imin];
-      M1->data[MI(M1,2*n,0)] = x - hx;
-      M1->data[MI(M1,2*n+1,0)] = y - hy;
-      n++;
-    }
-    */
-    if (n < f->sensor_update_list->length /*+ f->unsensor_update_list->length*/)
-      carmen_die("*** n < f->sensor_update_list->length + f->unsensor_update_list->length (h) ***");
-    
-    M2 = matrix_mult(K, M1);
-    gsl_matrix_free(M1);
-    
-    f->x += M2->data[MI(M2,0,0)];
-    f->y += M2->data[MI(M2,1,0)];
-    f->theta += carmen_normalize_theta(M2->data[MI(M2,2,0)]);
-    f->logw1 += M2->data[MI(M2,3,0)];
-    f->logw2 += M2->data[MI(M2,4,0)];
-
-    if (f->logw1 < f->logw2) {
-      x = f->logw1;
-      f->logw1 = f->logw2;
-      f->logw2 = x;
-    }
-    if (exp(f->logw1) < 0.15)
-      f->logw1 = log(0.15);
-
-    gsl_matrix_free(M2);
-    M1 = matrix_mult(K, H);
-    M2 = gsl_matrix_alloc(5,5);  //dbug
-    carmen_test_alloc(M2);
-    gsl_matrix_set_identity(M2);
-    gsl_matrix_sub(M2, M1);
-    gsl_matrix_free(M1);
-    M1 = matrix_mult(M2, f->P);
-    gsl_matrix_free(M2);
-    gsl_matrix_free(f->P);
-    f->P = M1;
-
-    gsl_matrix_free(R2);
-    gsl_matrix_free(H);
-    gsl_matrix_free(HT);
-    gsl_matrix_free(K);
-  }
-
-  gsl_matrix_free(P2);
+  printf("x = %.f, y = %.2f, vx = %.2f, vy = %.2f, vxy = %.2f\n", f->x, f->y, f->vx, f->vy, f->vxy);
 }
 
 #if 0
@@ -1905,7 +1524,6 @@ static void door_filter_motion_update(carmen_dot_door_filter_p f) {
   f->pxy = ax*ax*f->pxy + f->qxy;
   f->py = ay*ay*f->py + f->qy;
 }
-#endif
 
 static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, double y) {
 
@@ -1951,14 +1569,17 @@ static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, doub
   f->py = (-kyx)*pxy + (1.0 - kyy)*pyy;
   f->pt = (1.0 - kt)*pt;
 }
+#endif
 
 static void add_new_dot_filter(int *cluster_map, int c, int n,
 			       double *x, double *y) {
   int i, id, cnt;
   double ux, uy, ulogr, vx, vy, vxy, vlogr, vxlogr, vylogr, lr;
+  static double xbuf[500];
+  static double ybuf[500];
   carmen_dot_person_filter_p pf;
   carmen_dot_trash_filter_p tf;
-  carmen_dot_door_filter_p df;
+  //carmen_dot_door_filter_p df;
 
   for (id = 0; id < num_filters; id++) {
     for (i = 0; i < num_filters; i++)
@@ -2020,7 +1641,6 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   pf = &filters[num_filters-1].person_filter;
   pf->sensor_update_list = carmen_list_create(sizeof(int), 5);
-  pf->unsensor_update_list = carmen_list_create(sizeof(int), 5);
   pf->x = ux;
   pf->y = uy;
   pf->logr = ulogr;
@@ -2064,37 +1684,25 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   tf = &filters[num_filters-1].trash_filter;
   tf->sensor_update_list = carmen_list_create(sizeof(int), 5);
-  tf->unsensor_update_list = carmen_list_create(sizeof(int), 5);
   tf->x = ux;
   tf->y = uy;
-  tf->theta = bnorm_theta(vx, vy, vxy);
-  tf->logw1 = log(bnorm_w1(vx, vy, vxy));
-  tf->logw2 = log(bnorm_w2(vx, vy, vxy));
-  tf->P = gsl_matrix_calloc(5,5);
-  carmen_test_alloc(tf->P);
-  gsl_matrix_set(tf->P, 0, 0, vx);
-  gsl_matrix_set(tf->P, 0, 1, vxy);
-  gsl_matrix_set(tf->P, 1, 0, vxy);
-  gsl_matrix_set(tf->P, 1, 1, vy);
-  gsl_matrix_set(tf->P, 2, 2, 0.1);  //dbug: param?
-  gsl_matrix_set(tf->P, 3, 3, 0.1);  //dbug: param?
-  gsl_matrix_set(tf->P, 4, 4, 0.1);  //dbug: param?
-  tf->a = default_trash_filter_a;
-  tf->Q = gsl_matrix_calloc(5,5);
-  carmen_test_alloc(tf->Q);
-  gsl_matrix_set(tf->Q, 0, 0, default_trash_filter_qx);
-  gsl_matrix_set(tf->Q, 0, 1, default_trash_filter_qxy);
-  gsl_matrix_set(tf->Q, 1, 0, default_trash_filter_qxy);
-  gsl_matrix_set(tf->Q, 1, 1, default_trash_filter_qy);
-  gsl_matrix_set(tf->Q, 2, 2, default_trash_filter_qtheta);
-  gsl_matrix_set(tf->Q, 3, 3, default_trash_filter_qlogw1);
-  gsl_matrix_set(tf->Q, 4, 4, default_trash_filter_qlogw2);
-  tf->R = gsl_matrix_calloc(2,2);
-  carmen_test_alloc(tf->R);
-  gsl_matrix_set(tf->R, 0, 0, default_trash_filter_rx);
-  gsl_matrix_set(tf->R, 1, 0, default_trash_filter_rxy);
-  gsl_matrix_set(tf->R, 0, 1, default_trash_filter_rxy);
-  gsl_matrix_set(tf->R, 1, 1, default_trash_filter_ry);
+  tf->vx = vx;
+  tf->vy = vy;
+  tf->vxy = vxy;
+  //compute convex hull
+  cnt = 0;
+  for (i = 0; i < n; i++) {
+    if (cluster_map[i] == c) {
+      xbuf[cnt] = x[i];
+      ybuf[cnt] = y[i];
+      cnt++;
+    }
+  }
+  tf->hull_size = compute_convex_hull(xbuf, ybuf, cnt, tf->xhull, tf->yhull);
+  printf("\nhull = ");
+  for (i = 0; i < tf->hull_size; i++)
+    printf("(%.2f, %.2f) ", tf->xhull[i], tf->yhull[i]);
+  printf("\n");
 
   /*
   for (i = 0; i < n; i++)
@@ -2102,9 +1710,9 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
       trash_filter_sensor_update(tf, x[i], y[i]);
   */
 
+  /*
   df = &filters[num_filters-1].door_filter;
   df->sensor_update_list = carmen_list_create(sizeof(int), 5);
-  df->unsensor_update_list = carmen_list_create(sizeof(int), 5);
   df->x = ux;
   df->y = uy;
   df->t = bnorm_theta(vx, vy, vxy);
@@ -2120,17 +1728,17 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   df->qy = default_door_filter_qy;
   df->qxy = default_door_filter_qxy;
   df->qt = default_door_filter_qt;  
+  */
 
+  /*
   for (i = 0; i < n; i++)
     if (cluster_map[i] == c)
       door_filter_sensor_update(df, x[i], y[i]);
+  */
 
   filters[num_filters-1].type = CARMEN_DOT_TRASH;  //dbug?
   filters[num_filters-1].allow_change = 1;
-  filters[num_filters-1].sensor_update_cnt = 0;
-  filters[num_filters-1].do_motion_update = 0;
   filters[num_filters-1].updated = 1;
-  filters[num_filters-1].invisible = 0;
   filters[num_filters-1].invisible_cnt = 0;
 
   //print_filters();
@@ -2172,117 +1780,20 @@ static int list_contains(carmen_list_t *list, int entry) {
 }
 #endif
 
-static int dot_filter(double lx, double ly, double ltheta, double x, double y, int ri) {
-
-  int i, imax;
-  double p, pmax;
-  //double ux, uy;
-  //double vx, vy, vxy;
-  double hx, hy;
-  double px, py;
-
-  imax = -1;
-  pmax = 0.0;
-
-  for (i = 0; i < num_filters; i++) {
-    if (ray_intersect_circle(lx, ly, ltheta, filters[i].person_filter.x,
-			     filters[i].person_filter.y, exp(filters[i].person_filter.logr),
-			     &px, &py)) {
-      if (dist(x-lx, y-ly) - dist(px-lx, py-ly) > 1.0) {  // long reading that goes through filter
-	carmen_list_add(filters[i].person_filter.unsensor_update_list, &ri);
-      }
-	//person_filter_sensor_update_r(&filters[i].person_filter, lx, ly, ltheta, x, y);
-    }
-    if (person_contains(&filters[i].person_filter, x, y, 2.0)) {  //dbug: param?
-      person_filter_max_likelihood_measurement(&filters[i].person_filter, lx, ly, ltheta, &hx, &hy);
-      p = 0.2/dist(x-hx, y-hy);
-      if (p > pmax) {
-	pmax = p;
-	imax = i;
-      }
-    }
-
-    if (trash_contains(&filters[i].trash_filter, x, y, 2.0)) {  //dbug: param?
-      trash_filter_max_likelihood_measurement(&filters[i].trash_filter, lx, ly, ltheta, &hx, &hy);
-      p = 0.2/dist(x-hx, y-hy);
-      if (p > pmax) {
-	pmax = p;
-	imax = i;
-      }
-    }
-
-    /*    
-    if (door_contains(&filters[i].door_filter, x, y, 3)) {  //dbug: param?
-      ux = filters[i].door_filter.x;
-      uy = filters[i].door_filter.y;
-      vx = filters[i].door_filter.px;
-      vy = filters[i].door_filter.py;
-      vxy = filters[i].door_filter.pxy;
-      p = bnorm_f(x, y, ux, uy, vx, vy, vxy);  //dbug: change to door sensor model
-      if (p > pmax) {
-	pmax = p;
-	imax = i;
-      }
-    }
-    */
-  }
-
-  /*
-  if (imax >= 0)
-    printf("pmax = %.4f, map_prob = %.4f at filter %d (x=%.2f, y = %.2f)\n",
-	   pmax, map_prob(x, y), imax, x, y);
-  */
-
-  if (map_prob(x, y) >= map_occupied_threshold) {
-#ifdef HAVE_GRAPHICS
-    laser_mask[ri] = 0;
-#endif
-    return 1;
-  }
-
-  if (imax >= 0 && pmax > map_prob(x, y)) {
-    carmen_list_add(filters[imax].person_filter.sensor_update_list, &ri);
-    carmen_list_add(filters[imax].trash_filter.sensor_update_list, &ri);
-    return 1;
-  }
-
-  return 0;
-}
-
-static void update_dots(double lx, double ly, double ltheta, float *range) {
+static void update_dots(carmen_robot_laser_message *laser) {
 
   int i;
 
-  //printf("\nupdate_dots(%f,%f,%f)\n", lx, ly, ltheta);
-
   for (i = 0; i < num_filters; i++) {
-    if (filters[i].person_filter.sensor_update_list->length > 0 ||
-	filters[i].person_filter.unsensor_update_list->length > 0) {
-      if (filters[i].person_filter.sensor_update_list->length > 0) {
-	filters[i].person_filter.hidden_cnt = 0;
-	filters[i].updated = 1;
-      }
-      person_filter_sensor_update(&filters[i].person_filter, lx, ly, ltheta, range);
-    }
-
-    if (1) { //filters[i].do_motion_update) {
-      filters[i].do_motion_update = 0;
-      trash_filter_motion_update(&filters[i].trash_filter);
-      //door_filter_motion_update(&filters[i].door_filter);
-      //filters[i].updated = 1;
+    if (filters[i].person_filter.sensor_update_list->length > 0) {
+      filters[i].person_filter.hidden_cnt = 0;
+      filters[i].updated = 1;
+      person_filter_sensor_update(&filters[i].person_filter, laser);
     }
     if (filters[i].trash_filter.sensor_update_list->length > 0) {
-      if (do_sensor_update || filters[i].sensor_update_cnt < sensor_update_cnt) {
-	filters[i].sensor_update_cnt++;
-	trash_filter_sensor_update(&filters[i].trash_filter, lx, ly, ltheta, range);
-	//dbug: change!!
-	//door_filter_sensor_update(&filters[i].door_filter, x, y);
-	filters[i].updated = 1;
-      }
+      filters[i].updated = 1;
+      trash_filter_sensor_update(&filters[i].trash_filter, laser);
     }
-
-    //if (filters[i].type == CARMEN_DOT_PERSON)
-    //filters[i].updated = 1;
   }
 }
 
@@ -2312,46 +1823,373 @@ static int map_filter(double x, double y, double r) {
   return 0;
 }
 
-static int cluster(int *cluster_map, int cluster_cnt, int current_reading,
-		   double *x, double *y) {
-  
-  int i, r;
-  int nmin;
-  double dmin;
-  double d;
+static int delete_centroid(int centroid, int *cluster_map, int num_points, double *xcentroids,
+			   double *ycentroids, int *filter_map, int num_clusters) {
 
-  if (cluster_cnt == 0) {
-    cluster_map[current_reading] = 1;
-    //printf("putting reading %d at (%.2f %.2f) in cluster 1\n", current_reading, *x, *y);
-    return 1;
+  int i;
+
+  for (i = centroid; i < num_clusters-1; i++) {
+    xcentroids[i] = xcentroids[i+1];
+    ycentroids[i] = ycentroids[i+1];
+    filter_map[i] = filter_map[i+1];
+  }
+  for (i = 0; i < num_points; i++) {
+    if (laser_mask[i]) {
+      if (cluster_map[i] == centroid)
+	cluster_map[i] = -1;
+      else if (cluster_map[i] > centroid)
+	cluster_map[i]--;
+    }
+  }
+  num_clusters--;
+
+  return num_clusters;
+}
+
+// delete clusters with only one point
+static void mark_lonely_centroids(int *cluster_map, int num_points, int num_clusters) {
+  int i;
+  static int cnt[500];
+
+  for (i = 0; i < num_clusters; i++)
+    cnt[i] = 0;
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i])
+      cnt[cluster_map[i]]++;
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i] && cnt[cluster_map[i]] == 1)
+      cluster_map[i] = ~cluster_map[i];
+}
+
+static void unmark_lonely_centroids(int *cluster_map, int num_points) {
+  int i;
+
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i] && cluster_map[i] < 0)
+      cluster_map[i] = ~cluster_map[i];
+}
+
+// delete clusters with only one point
+static int delete_lonely_centroids(int *cluster_map, int num_points, double *xcentroids,
+				   double *ycentroids, int *filter_map, int num_clusters) {
+  int i;
+  static int cnt[500];
+
+  for (i = 0; i < num_clusters; i++)
+    cnt[i] = 0;
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i])
+      cnt[cluster_map[i]]++;
+  for (i = num_clusters-1; i >= 0; i--)
+    if (cnt[i] == 1)
+      num_clusters = delete_centroid(i, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+
+  return num_clusters;
+}
+
+// return num. clusters
+static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, int num_points,
+			  double *xcentroids, double *ycentroids, int *filter_map, int num_clusters) {
+
+#define CLUSTER_DIST .5
+#define CENTROID_MOVED_DIST 0
+
+  static int laser_map[500];
+  double x, y, d, dx, dy, dmin;
+  int n, i, j, assigned, imin, num_actual_points;
+  int centroids_changed;
+
+  num_actual_points = 0;
+  for (i = 0; i < num_points; i++) {
+    cluster_map[i] = -1;
+    if (laser_mask[i])
+      laser_map[num_actual_points++] = i;
   }
 
-  r = current_reading;
-  dmin = new_cluster_threshold;
-  nmin = -1;
+  if (num_clusters == 0) {  // step 1: initialize centroids    
+    n = 0;
+    while (n < num_actual_points) {
+      i = carmen_int_random(num_actual_points);
+      xcentroids[num_clusters] = xpoints[laser_map[i]];
+      ycentroids[num_clusters] = ypoints[laser_map[i]];
+      filter_map[num_clusters] = FILTER_MAP_ADD_CLUSTER;
+      num_clusters++;
+      assigned = 0;
+      for (i = 0; i < num_points; i++) {
+	if (!laser_mask[i])
+	  continue;
+	dx = xpoints[i] - xcentroids[num_clusters-1];
+	dy = ypoints[i] - ycentroids[num_clusters-1];
+	if (cluster_map[i] < 0 && dist(dx, dy) < CLUSTER_DIST) {
+	  cluster_map[i] = num_clusters-1;
+	  assigned = 1;
+	  n++;
+	}
+      }
+      if (!assigned)
+	num_clusters--;
+    }
+  }
 
-  // nearest neighbor
-  for (i = 0; i < r; i++) {
-    if (cluster_map[i]) {
-      d = dist(x[i]-x[r], y[i]-y[r]);
-      if (d < dmin) {
-	dmin = d;
-	nmin = i;
+  centroids_changed = 1;
+  while (centroids_changed) {
+    centroids_changed = 0;
+    // step 2: assign points to closest centroids
+    printf("assigning points to centroids\n");
+    for (i = 0; i < num_points; i++) {
+      if (!laser_mask[i])
+	continue;
+      dx = xpoints[i] - xcentroids[0];
+      dy = ypoints[i] - ycentroids[0];
+      dmin = dist(dx, dy);
+      imin = 0;
+      for (j = 0; j < num_clusters; j++) {
+	dx = xpoints[i] - xcentroids[j];
+	dy = ypoints[i] - ycentroids[j];
+	d = dist(dx, dy);
+	if (d < dmin) {
+	  dmin = d;
+	  imin = j;
+	}
+      }
+      cluster_map[i] = imin;
+      printf("(%.2f, %.2f) -> %d, ", xpoints[i], ypoints[i], cluster_map[i]);
+    }
+    printf("\n");
+    // step 3: re-calculate positions of centroids
+    printf("re-calculating positions of centroids\n");
+    for (i = 0; i < num_clusters; i++) {
+      printf(" - cluster %d: ", i);
+      x = y = 0.0;
+      n = 0;
+      for (j = 0; j < num_points; j++) {
+	if (laser_mask[j] && cluster_map[j] == i) {
+	  printf("(%.2f, %.2f) ", xpoints[j], ypoints[j]);
+	  x += xpoints[j];
+	  y += ypoints[j];
+	  n++;
+	}
+      }
+      printf("\n");
+      if (n == 0) {
+	num_clusters = delete_centroid(i, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	i--;
+      }
+      else {
+	x /= (double)n;
+	y /= (double)n;
+	if (!centroids_changed) {
+	  dx = x - xcentroids[i];
+	  dy = y - ycentroids[i];
+	  if (dist(dx, dy) > CENTROID_MOVED_DIST)
+	    centroids_changed = 1;
+	}
+	xcentroids[i] = x;
+	ycentroids[i] = y;
       }
     }
   }
 
-  if (nmin < 0) {
-    cluster_cnt++;
-    cluster_map[r] = cluster_cnt;
+  return num_clusters;
+}
+
+// returns num_clusters and populates xcentroids, ycentroids, and filter_map
+static int initialize_centroids(carmen_robot_laser_message *laser __attribute__ ((unused)),
+				double *xcentroids, double *ycentroids, int *filter_map) {
+
+  int i, num_clusters;
+
+  num_clusters = 0;
+  for (i = 0; i < num_filters; i++) {
+    //dbug: should check for visibility
+    if (filters[i].type == CARMEN_DOT_PERSON) {
+      xcentroids[i] = filters[i].person_filter.x;
+      ycentroids[i] = filters[i].person_filter.y;
+    }
+    else { //if (filters[i].type == CARMEN_DOT_TRASH) {
+      xcentroids[i] = filters[i].trash_filter.x;
+      ycentroids[i] = filters[i].trash_filter.y;
+    }
+    filter_map[i] = i;
+    num_clusters++;
+    printf("centroid %d = (%.2f, %.2f)\n", i, xcentroids[i], ycentroids[i]);
   }
-  else
-    cluster_map[r] = cluster_map[nmin];
 
-  //  printf("putting reading %d at (%.2f %.2f) in cluster %d\n", current_reading, *x, *y,
-  //	 cluster_map[r]);
+  return num_clusters;
+}
 
-  return cluster_cnt;
+static double compute_bic(double *xpoints, double *ypoints, int *cluster_map, int num_points,
+			  double *xcentroids, double *ycentroids, int num_clusters) {
+
+  int i;
+  static double vx[500];
+  static double vy[500];
+  static double vxy[500];
+  static double cnt[500];
+  double l, n, m, bic;
+
+  n = num_points;
+  m = 2*num_clusters;
+
+  for (i = 0; i < num_clusters; i++)
+    cnt[i] = 0;
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i] && cluster_map[i] >= 0)
+      cnt[cluster_map[i]]++;
+
+  for (i = 0; i < num_clusters; i++) {
+    if (cnt[i]) {
+      vx[i] = var_imasked(xpoints, xcentroids[i], cluster_map, i, num_points);
+      if (vx[i] < bic_min_variance)
+	vx[i] = bic_min_variance;
+      vy[i] = var_imasked(ypoints, ycentroids[i], cluster_map, i, num_points);
+      if (vy[i] < bic_min_variance)
+	vy[i] = bic_min_variance;
+      vxy[i] = cov_imasked(xpoints, xcentroids[i], ypoints, ycentroids[i], cluster_map, i, num_points);
+      if (cnt[i] == 2)
+	vxy[i] = carmen_clamp(-0.5*sqrt(vx[i]*vy[i]), vxy[i], 0.5*sqrt(vx[i]*vy[i]));
+    }
+  }
+
+  l = 0.0;
+  for (i = 0; i < num_points; i++)
+    if (laser_mask[i] && cluster_map[i] >= 0) {
+      l += log(bnorm_f(xpoints[i], ypoints[i], xcentroids[cluster_map[i]], ycentroids[cluster_map[i]],
+		       vx[cluster_map[i]], vy[cluster_map[i]], vxy[cluster_map[i]]));
+      if (isnan(l)) {
+	printf("x=%f, y=%f, ux=%f, uy=%f, vx=%f, vy=%f, vxy=%f\n", xpoints[i], ypoints[i],
+	       xcentroids[cluster_map[i]], ycentroids[cluster_map[i]],
+	       vx[cluster_map[i]], vy[cluster_map[i]], vxy[cluster_map[i]]);
+	printf("bnorm_f = %f\n", bnorm_f(xpoints[i], ypoints[i], xcentroids[cluster_map[i]], ycentroids[cluster_map[i]],
+					 vx[cluster_map[i]], vy[cluster_map[i]], vxy[cluster_map[i]]));
+	printf("i = %d, cluster_map[i] = %d, num_clusters = %d\n", i, cluster_map[i], num_clusters);
+	carmen_die(" ");
+      }
+    }
+
+  bic = -2*l + m*log(n);
+
+  return bic;
+}
+
+static void print_clusters(double *xpoints, double *ypoints, int *cluster_map, int num_points,
+			   double *xcentroids, double *ycentroids, int *filter_map, int num_clusters) {
+
+  int i, j;
+
+  printf("\n");
+  for (i = 0; i < num_clusters; i++) {
+    printf("centroid %d -> %d = (%.2f, %.2f)\n", i, filter_map[i], xcentroids[i], ycentroids[i]);
+    printf(" - ");
+    for (j = 0; j < num_points; j++)
+      if (laser_mask[j] && cluster_map[j] == i)
+	printf("(%.2f, %.2f) ", xpoints[j], ypoints[j]);
+    printf("\n");
+  }
+}
+
+static void cluster(carmen_robot_laser_message *laser) {
+
+  int i, f, num_points, num_clusters, imin;
+  static int cluster_map[500];
+  static int filter_map[500];
+  static double xpoints[500];
+  static double ypoints[500];
+  static double xcentroids[500];
+  static double ycentroids[500];
+  static double vx[500];
+  static double vy[500];
+  static double vxy[500];
+  double ltheta, bic, last_bic, fval, min;
+
+  printf("\n--------------------------------\n");
+
+  // find points not in map
+  num_points = 0;
+  for (i = 0; i < laser->num_readings; i++) {
+    if (laser->range[i] < laser_max_range) {
+      ltheta = carmen_normalize_theta(laser->theta + (i-90)*M_PI/180.0);
+      xpoints[i] = laser->x + cos(ltheta) * laser->range[i];
+      ypoints[i] = laser->y + sin(ltheta) * laser->range[i];
+      laser_mask[i] = 1;
+      if (map_filter(xpoints[i], ypoints[i], laser->range[i]))
+	laser_mask[i] = 0;
+      else
+	num_points++;
+    }
+  }
+
+  if (num_points == 0)
+    return;
+
+  num_points = laser->num_readings;
+
+  num_clusters = initialize_centroids(laser, xcentroids, ycentroids, filter_map);
+
+  // run k-means until BIC converges to a local minima
+  last_bic = 1000000000.0; //dbug
+  while (1) {
+    num_clusters = cluster_kmeans(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+    print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+    mark_lonely_centroids(cluster_map, num_points, num_clusters);
+    bic = compute_bic(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, num_clusters);
+    unmark_lonely_centroids(cluster_map, num_points);
+    printf("BIC = %.2f\n", bic);
+    if (bic >= last_bic) {
+      // delete new centroid (if any), re-cluster, and break
+      for (i = 0; i < num_clusters; i++) {
+	if (filter_map[i] == FILTER_MAP_NEW_CLUSTER) {
+	  num_clusters = delete_centroid(i, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	  num_clusters = cluster_kmeans(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	  num_clusters = delete_lonely_centroids(cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	  print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+	  break;
+	}
+      }
+      break;
+    }
+    // otherwise, if BIC not converged, add new centroid on data point with lowest likelihood
+    last_bic = bic;
+    for (i = 0; i < num_clusters; i++) {
+      if (filter_map[i] == FILTER_MAP_NEW_CLUSTER)
+	filter_map[i] = FILTER_MAP_ADD_CLUSTER;
+      vx[i] = var_imasked(xpoints, xcentroids[i], cluster_map, i, num_points);
+      vy[i] = var_imasked(ypoints, ycentroids[i], cluster_map, i, num_points);
+      vxy[i] = cov_imasked(xpoints, xcentroids[i], ypoints, ycentroids[i], cluster_map, i, num_points);
+    }
+    imin = -1;
+    min = 1000000000.0;
+    for (i = 0; i < num_points; i++) {
+      if (laser_mask[i] && cluster_map[i] >= 0) {
+	fval = bnorm_f(xpoints[i], ypoints[i], xcentroids[cluster_map[i]], ycentroids[cluster_map[i]],
+		       vx[cluster_map[i]], vy[cluster_map[i]], vxy[cluster_map[i]]);
+	if (imin < 0 || fval < min) {
+	  min = fval;
+	  imin = i;
+	}
+      }
+    }
+    xcentroids[num_clusters] = xpoints[imin];
+    ycentroids[num_clusters] = ypoints[imin];
+    filter_map[num_clusters] = FILTER_MAP_NEW_CLUSTER;
+    num_clusters++;
+  }
+
+  // prepare to update existing dots
+  for (i = 0; i < num_points; i++) {
+    if (!laser_mask[i] || cluster_map[i] < 0)
+      continue;
+    f = filter_map[cluster_map[i]];
+    if (f != FILTER_MAP_ADD_CLUSTER) {
+      carmen_list_add(filters[f].person_filter.sensor_update_list, &i);
+      carmen_list_add(filters[f].trash_filter.sensor_update_list, &i);
+    }
+  }
+
+  // add new dots
+  for (i = 0; i < num_clusters; i++)
+    if (filter_map[i] == FILTER_MAP_ADD_CLUSTER)
+      add_new_dot_filter(cluster_map, i, num_points, xpoints, ypoints);
 }
 
 static void delete_filter(int i) {
@@ -2361,16 +2199,9 @@ static void delete_filter(int i) {
   gsl_matrix_free(filters[i].person_filter.P);
   gsl_matrix_free(filters[i].person_filter.Q);
   gsl_matrix_free(filters[i].person_filter.R);
-  gsl_matrix_free(filters[i].trash_filter.P);
-  gsl_matrix_free(filters[i].trash_filter.Q);
-  gsl_matrix_free(filters[i].trash_filter.R);
 
   carmen_list_destroy(&filters[i].person_filter.sensor_update_list);
-  carmen_list_destroy(&filters[i].person_filter.unsensor_update_list);
   carmen_list_destroy(&filters[i].trash_filter.sensor_update_list);
-  carmen_list_destroy(&filters[i].trash_filter.unsensor_update_list);
-  carmen_list_destroy(&filters[i].door_filter.sensor_update_list);
-  carmen_list_destroy(&filters[i].door_filter.unsensor_update_list);
 
   if (i < num_filters-1)
     memmove(&filters[i], &filters[i+1], (num_filters-i-1)*sizeof(carmen_dot_filter_t));
@@ -2420,37 +2251,43 @@ static void filter_motion() {
   }
 }
 
-//dbug: change to use ray_intersect functions
-void trace_laser(double x1, double y1, double x2, double y2) {
+static int filter_invisible(carmen_dot_filter_p f, carmen_robot_laser_message *laser) {
 
   int i;
-  double x, y, dx, dy, stdev;
+  double x1, y1, x2, y2, theta, r;
 
-  dx = trace_resolution * cos(atan2(y2-y1, x2-x1));
-  dy = trace_resolution * sin(atan2(y2-y1, x2-x1));
-
-  stdev = see_through_stdev;
-
-  x = x1;
-  y = y1;
-  while ((dx >= 0 ? x <= x2 : x >= x2) && (dy >= 0 ? y <= y2 : y >= y2)) {
-    //check for intersection with filters
-    for (i = 0; i < num_filters; i++)
-      if (!filters[i].invisible && dot_contains(&filters[i], x, y, stdev))
-	filters[i].invisible = 1;
-    x += dx;
-    y += dy;
+  for (i = 0; i < laser->num_readings; i++) {
+    if (laser->range[i] > laser_max_range)
+      continue;
+    theta = carmen_normalize_theta(laser->theta + (i-90)*M_PI/180.0);
+    if (f->type == CARMEN_DOT_PERSON) {
+      if (ray_intersect_circle(laser->x, laser->y, theta, f->person_filter.x,
+			       f->person_filter.y, exp(f->person_filter.logr),
+			       &x1, &y1, &x2, &y2)) {
+	r = dist(x2 - laser->x, y2 - laser->y);
+	if (laser->range[i] > r)
+	  return 1;
+      }
+    }
+    else if (f->type == CARMEN_DOT_TRASH) {
+      if (ray_intersect_convex_polygon(laser->x, laser->y, theta, f->trash_filter.xhull,
+				       f->trash_filter.yhull, f->trash_filter.hull_size,
+				       &x1, &y1, &x2, &y2)) {
+	r = dist(x2 - laser->x, y2 - laser->y);
+	if (r < dist(x1 - laser->x, y1 - laser->y) + trash_see_through_dist)
+	  r = dist(x1 - laser->x, y1 - laser->y) + trash_see_through_dist;
+	if (laser->range[i] > r)
+	  return 1;
+      }
+    }
   }
+
+  return 0;
 }
 
- static void laser_handler(carmen_robot_laser_message *laser) {
+static void laser_handler(carmen_robot_laser_message *laser) {
 
-   int i, c, n, dotf, mapf;
-  static int cluster_map[500];
-  static int cluster_cnt;
-  static double x[500], y[500];
-  //static int odd = 0;
-  double ltheta;
+  int i;
 
   if (static_map.map == NULL || odom.timestamp == 0.0)
     return;
@@ -2460,64 +2297,20 @@ void trace_laser(double x1, double y1, double x2, double y2) {
   kill_people();  // when we haven't seen them for a while
   filter_motion();
 
-  /*
-  if (odd) {
-    printf("*M*");
-    fflush(0);
-    publish_all_dot_msgs();  //dbug
-  }
-  */
+  highlight_list->length = 0;  //dbug
 
   for (i = 0; i < num_filters; i++) {
     filters[i].updated = 0;
-    filters[i].invisible = 0;
     filters[i].person_filter.sensor_update_list->length = 0;
-    filters[i].person_filter.unsensor_update_list->length = 0;
     filters[i].trash_filter.sensor_update_list->length = 0;
-    filters[i].trash_filter.unsensor_update_list->length = 0;
   }
 
-  // don't update trash & door filters unless we've moved
-  if (dist(last_sensor_update_odom.x - odom.globalpos.x,
-	   last_sensor_update_odom.y - odom.globalpos.y) >= sensor_update_dist) {
-    do_sensor_update = 1;
-    for (i = 0; i < num_filters; i++)
-      filters[i].do_motion_update = 1;
-  }
-  else
-    do_sensor_update = 0;  
-  if (do_sensor_update) {
-    last_sensor_update_odom.x = odom.globalpos.x;
-    last_sensor_update_odom.y = odom.globalpos.y;
-  }
-
-  cluster_cnt = 0;
-  for (i = 0; i < laser->num_readings; i++) {
-    cluster_map[i] = 0;
-    if (laser->range[i] < laser_max_range) {
-      ltheta = carmen_normalize_theta(laser->theta + (i-90)*M_PI/180.0);
-      x[i] = laser->x + cos(ltheta) * laser->range[i];
-      y[i] = laser->y + sin(ltheta) * laser->range[i];
-      trace_laser(laser->x, laser->y, x[i], y[i]);
-#ifdef HAVE_GRAPHICS
-      laser_mask[i] = 1;
-#endif
-      dotf = dot_filter(laser->x, laser->y, ltheta, x[i], y[i], i);
-      mapf = (dotf ? 0 : map_filter(x[i], y[i], laser->range[i]));
-#ifdef HAVE_GRAPHICS
-      if (mapf)
-	laser_mask[i] = 0;
-#endif
-      if (!dotf && !mapf)
-	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
-    }
-  }
-
-  update_dots(laser->x, laser->y, laser->theta, laser->range);
+  cluster(laser);
+  update_dots(laser);
 
   // delete invisible filters (filters we can see through)
   for (i = 0; i < num_filters; i++) {
-    if (filters[i].invisible && !filters[i].updated) {
+    if (!filters[i].updated && filter_invisible(&filters[i], laser)) {
       if (++filters[i].invisible_cnt >= invisible_cnt)
 	delete_filter(i);
     }
@@ -2525,40 +2318,12 @@ void trace_laser(double x1, double y1, double x2, double y2) {
       filters[i].invisible_cnt = 0;
   }      
 
-  //printf("\nclusters: ");
-  for (c = 1; c <= cluster_cnt; c++) {
-    printf("( ");
-    n = 0;
-    for (i = 0; i < laser->num_readings; i++)
-      if (cluster_map[i] == c) {
-	printf("%d ", i);
-	n++;
-      }
-    printf(")");
-    if (n >= new_filter_threshold)
-      add_new_dot_filter(cluster_map, c, laser->num_readings, x, y);
-  }
-
-  /*
-  if (!odd) {  //dbug
-    printf("*S*");
-    fflush(0);
-  */
   publish_all_dot_msgs();
-  /*
-    odd = 1;
-  }
-  else
-    odd = 0;
-  */
-
 
 #ifdef HAVE_GRAPHICS
   get_map_window();
   redraw();
 #endif
-
-
 }
 
 /*******************************************
@@ -2662,7 +2427,7 @@ static void publish_all_dot_msgs() {
 
   static carmen_dot_all_people_msg all_people_msg;
   static carmen_dot_all_trash_msg all_trash_msg;
-  static carmen_dot_all_doors_msg all_doors_msg;
+  //static carmen_dot_all_doors_msg all_doors_msg;
   static int first = 1;
   IPC_RETURN_TYPE err;
   int i, n;
@@ -2672,8 +2437,8 @@ static void publish_all_dot_msgs() {
     strcpy(all_people_msg.host, carmen_get_tenchar_host_name());
     all_trash_msg.trash = NULL;
     strcpy(all_trash_msg.host, carmen_get_tenchar_host_name());
-    all_doors_msg.doors = NULL;
-    strcpy(all_doors_msg.host, carmen_get_tenchar_host_name());
+    //all_doors_msg.doors = NULL;
+    //strcpy(all_doors_msg.host, carmen_get_tenchar_host_name());
     first = 0;
   }
 
@@ -2722,12 +2487,9 @@ static void publish_all_dot_msgs() {
 	all_trash_msg.trash[n].id = filters[i].id;
 	all_trash_msg.trash[n].x = filters[i].trash_filter.x;
 	all_trash_msg.trash[n].y = filters[i].trash_filter.y;
-	all_trash_msg.trash[n].theta = filters[i].trash_filter.theta;
-	all_trash_msg.trash[n].major = exp(filters[i].trash_filter.logw1);
-	all_trash_msg.trash[n].minor = exp(filters[i].trash_filter.logw2);
-	all_trash_msg.trash[n].vx = gsl_matrix_get(filters[i].trash_filter.P, 0, 0);
-	all_trash_msg.trash[n].vy = gsl_matrix_get(filters[i].trash_filter.P, 1, 1);
-	all_trash_msg.trash[n].vxy = gsl_matrix_get(filters[i].trash_filter.P, 0, 1);
+	all_trash_msg.trash[n].vx = filters[i].trash_filter.vx;
+	all_trash_msg.trash[n].vy = filters[i].trash_filter.vy;
+	all_trash_msg.trash[n].vxy = filters[i].trash_filter.vxy;
 	n++;
       }
   }
@@ -2737,6 +2499,7 @@ static void publish_all_dot_msgs() {
   err = IPC_publishData(CARMEN_DOT_ALL_TRASH_MSG_NAME, &all_trash_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_TRASH_MSG_NAME);
 
+  /*
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_DOOR)
       n++;
@@ -2764,6 +2527,7 @@ static void publish_all_dot_msgs() {
 
   err = IPC_publishData(CARMEN_DOT_ALL_DOORS_MSG_NAME, &all_doors_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_DOORS_MSG_NAME);
+  */
 }
 
 static void respond_all_people_msg(MSG_INSTANCE msgRef) {
@@ -2840,9 +2604,9 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 	msg.trash[n].id = filters[i].id;
 	msg.trash[n].x = filters[i].trash_filter.x;
 	msg.trash[n].y = filters[i].trash_filter.y;
-	msg.trash[n].vx = gsl_matrix_get(filters[i].trash_filter.P, 0, 0);
-	msg.trash[n].vy = gsl_matrix_get(filters[i].trash_filter.P, 1, 1);
-	msg.trash[n].vxy = gsl_matrix_get(filters[i].trash_filter.P, 0, 1);
+	msg.trash[n].vx = filters[i].trash_filter.vx;
+	msg.trash[n].vy = filters[i].trash_filter.vy;
+	msg.trash[n].vxy = filters[i].trash_filter.vxy;
 	n++;
       }
     }
@@ -2855,6 +2619,7 @@ static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 		  CARMEN_DOT_ALL_TRASH_MSG_NAME);
 }
 
+#if 0
 static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
 
   static carmen_dot_all_doors_msg msg;
@@ -2901,6 +2666,7 @@ static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_DOORS_MSG_NAME);
 }
+#endif
 
 static void dot_query_handler
 (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -2925,9 +2691,9 @@ static void dot_query_handler
   case CARMEN_DOT_TRASH:
     respond_all_trash_msg(msgRef);
     break;
-  case CARMEN_DOT_DOOR:
-    respond_all_doors_msg(msgRef);
-    break;
+    //case CARMEN_DOT_DOOR:
+    //respond_all_doors_msg(msgRef);
+    //break;
   }
 }
 
@@ -2952,9 +2718,11 @@ static void ipc_init() {
 	 	      CARMEN_DOT_TRASH_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_TRASH_MSG_NAME);
 
+  /*
   err = IPC_defineMsg(CARMEN_DOT_DOOR_MSG_NAME, IPC_VARIABLE_LENGTH, 
 	 	      CARMEN_DOT_DOOR_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_DOOR_MSG_NAME);
+  */
 
   err = IPC_defineMsg(CARMEN_DOT_ALL_PEOPLE_MSG_NAME, IPC_VARIABLE_LENGTH, 
 	 	      CARMEN_DOT_ALL_PEOPLE_MSG_FMT);
@@ -2964,9 +2732,11 @@ static void ipc_init() {
 	 	      CARMEN_DOT_ALL_TRASH_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_ALL_TRASH_MSG_NAME);
 
+  /*
   err = IPC_defineMsg(CARMEN_DOT_ALL_DOORS_MSG_NAME, IPC_VARIABLE_LENGTH, 
 	 	      CARMEN_DOT_ALL_DOORS_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_DOT_ALL_DOORS_MSG_NAME);
+  */
 
   err = IPC_subscribe(CARMEN_DOT_QUERY_NAME, dot_query_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_DOT_QUERY_NAME);
@@ -3036,29 +2806,6 @@ static void params_init(int argc, char *argv[]) {
     {"dot", "person_filter_rx", CARMEN_PARAM_DOUBLE, &default_person_filter_rx, 1, NULL},
     {"dot", "person_filter_ry", CARMEN_PARAM_DOUBLE, &default_person_filter_ry, 1, NULL},
     {"dot", "person_filter_rxy", CARMEN_PARAM_DOUBLE, &default_person_filter_rxy, 1, NULL},
-    {"dot", "trash_filter_px", CARMEN_PARAM_DOUBLE, &default_trash_filter_px, 1, NULL},
-    {"dot", "trash_filter_py", CARMEN_PARAM_DOUBLE, &default_trash_filter_py, 1, NULL},
-    {"dot", "trash_filter_a", CARMEN_PARAM_DOUBLE, &default_trash_filter_a, 1, NULL},
-    {"dot", "trash_filter_qx", CARMEN_PARAM_DOUBLE, &default_trash_filter_qx, 1, NULL},
-    {"dot", "trash_filter_qy", CARMEN_PARAM_DOUBLE, &default_trash_filter_qy, 1, NULL},
-    {"dot", "trash_filter_qxy", CARMEN_PARAM_DOUBLE, &default_trash_filter_qxy, 1, NULL},
-    {"dot", "trash_filter_qtheta", CARMEN_PARAM_DOUBLE, &default_trash_filter_qtheta, 1, NULL},
-    {"dot", "trash_filter_qlogw1", CARMEN_PARAM_DOUBLE, &default_trash_filter_qlogw1, 1, NULL},
-    {"dot", "trash_filter_qlogw2", CARMEN_PARAM_DOUBLE, &default_trash_filter_qlogw2, 1, NULL},
-    {"dot", "trash_filter_rx", CARMEN_PARAM_DOUBLE, &default_trash_filter_rx, 1, NULL},
-    {"dot", "trash_filter_ry", CARMEN_PARAM_DOUBLE, &default_trash_filter_ry, 1, NULL},
-    {"dot", "trash_filter_rxy", CARMEN_PARAM_DOUBLE, &default_trash_filter_rxy, 1, NULL},
-    {"dot", "door_filter_px", CARMEN_PARAM_DOUBLE, &default_door_filter_px, 1, NULL},
-    {"dot", "door_filter_py", CARMEN_PARAM_DOUBLE, &default_door_filter_py, 1, NULL},
-    {"dot", "door_filter_pt", CARMEN_PARAM_DOUBLE, &default_door_filter_pt, 1, NULL},
-    {"dot", "door_filter_a", CARMEN_PARAM_DOUBLE, &default_door_filter_a, 1, NULL},
-    {"dot", "door_filter_qx", CARMEN_PARAM_DOUBLE, &default_door_filter_qx, 1, NULL},
-    {"dot", "door_filter_qy", CARMEN_PARAM_DOUBLE, &default_door_filter_qy, 1, NULL},
-    {"dot", "door_filter_qxy", CARMEN_PARAM_DOUBLE, &default_door_filter_qxy, 1, NULL},
-    {"dot", "door_filter_qt", CARMEN_PARAM_DOUBLE, &default_door_filter_qt, 1, NULL},
-    {"dot", "door_filter_rx", CARMEN_PARAM_DOUBLE, &default_door_filter_rx, 1, NULL},
-    {"dot", "door_filter_ry", CARMEN_PARAM_DOUBLE, &default_door_filter_ry, 1, NULL},
-    {"dot", "door_filter_rt", CARMEN_PARAM_DOUBLE, &default_door_filter_rt, 1, NULL},
     {"dot", "new_filter_threshold", CARMEN_PARAM_INT, &new_filter_threshold, 1, NULL},
     {"dot", "new_cluster_threshold", CARMEN_PARAM_DOUBLE, &new_cluster_threshold, 1, NULL},
     {"dot", "map_diff_threshold", CARMEN_PARAM_DOUBLE, &map_diff_threshold, 1, NULL},
@@ -3068,12 +2815,11 @@ static void params_init(int argc, char *argv[]) {
     {"dot", "person_filter_displacement_threshold", CARMEN_PARAM_DOUBLE,
      &person_filter_displacement_threshold, 1, NULL},
     {"dot", "kill_hidden_person_cnt", CARMEN_PARAM_INT, &kill_hidden_person_cnt, 1, NULL},
-    {"dot", "sensor_update_dist", CARMEN_PARAM_DOUBLE, &sensor_update_dist, 1, NULL},
-    {"dot", "sensor_update_cnt", CARMEN_PARAM_INT, &sensor_update_cnt, 1, NULL},
     {"dot", "laser_max_range", CARMEN_PARAM_DOUBLE, &laser_max_range, 1, NULL},
-    {"dot", "see_through_stdev", CARMEN_PARAM_DOUBLE, &see_through_stdev, 1, NULL},
     {"dot", "trace_resolution", CARMEN_PARAM_DOUBLE, &trace_resolution, 1, NULL},
-    {"dot", "invisible_cnt", CARMEN_PARAM_INT, &invisible_cnt, 1, NULL}
+    {"dot", "invisible_cnt", CARMEN_PARAM_INT, &invisible_cnt, 1, NULL},
+    {"dot", "trash_see_through_dist", CARMEN_PARAM_DOUBLE, &trash_see_through_dist, 1, NULL},
+    {"dot", "bic_min_variance", CARMEN_PARAM_DOUBLE, &bic_min_variance, 1, NULL}
   };
 
   carmen_param_install_params(argc, argv, param_list,
@@ -3083,7 +2829,6 @@ static void params_init(int argc, char *argv[]) {
 void shutdown_module(int sig) {
 
   sig = 0;
-
   exit(0);
 }
 
@@ -3094,6 +2839,8 @@ int main(int argc, char *argv[]) {
   carmen_randomize(&argc, &argv);
 
   signal(SIGINT, shutdown_module);
+
+  highlight_list = carmen_list_create(sizeof(int), 5);  //dbug
 
   odom.timestamp = 0.0;
   //static_map.map = NULL;

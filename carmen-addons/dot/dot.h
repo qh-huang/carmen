@@ -28,12 +28,12 @@ typedef struct {
   int id;
   double x;
   double y;
-  double theta;
-  double major;
-  double minor;
   double vx;
   double vy;
   double vxy;
+  //double *xhull;
+  //double *yhull;
+  //int hull_size;
 } carmen_dot_trash_t, *carmen_dot_trash_p;
 
 typedef struct {
