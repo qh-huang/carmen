@@ -31,7 +31,7 @@ by other modules.
 **********************************************************/
 
 #include <carmen/carmen.h>
-#include "ringo_gps_messages.h"
+#include "gps_messages.h"
 
 static carmen_gps_position_message *gps_position_pointer_external = NULL;
 static carmen_handler_t gps_position_handler_external = NULL;

@@ -34,7 +34,7 @@ high level functions
 
 #include "gps_garmin.h"
 #include "gps_estimate.h"
-#include "ringo_gps_messages.h"
+#include "gps_messages.h"
 
 
 //parameters
