@@ -10,23 +10,77 @@ extern "C" {
 
 
 typedef struct {
-  carmen_dot_filter_p filters;
-  int num_filters;
   double timestamp;
   char host[10];
-} carmen_dot_filters_msg;
+} carmen_dot_reset_msg;
 
-#define CARMEN_DOT_FILTERS_MSG_NAME "carmen_dot_filters_msg"
-#define CARMEN_DOT_FILTERS_MSG_FMT  "{<{{<double:4>, <double:4>, int, int, int, double, double, double, double, double, double, double, double, double, double, double, double}, {double, double, double, double, double, double, double, double, double, double, double, double}, {double, double, double, double, double, double, double, double, double, double, double, double}, int, int, int, int}:2>, int, double, [char:10]}"
+#define CARMEN_DOT_RESET_MSG_NAME "carmen_dot_reset_msg"
+#define CARMEN_DOT_RESET_MSG_FMT  "{double, [char:10]}"
 
 
 typedef struct {
+  int type;
   double timestamp;
   char host[10];
-} carmen_dot_start_msg;
+} carmen_dot_query;
 
-#define CARMEN_DOT_START_MSG_NAME "carmen_dot_start_msg"
-#define CARMEN_DOT_START_MSG_FMT  "{double, [char:10]}"
+#define CARMEN_DOT_QUERY_NAME "carmen_dot_query"
+#define CARMEN_DOT_QUERY_FMT  "{double, [char:10]}"
+
+
+typedef struct {
+  carmen_dot_person_t person;
+  int delete;
+  char host[10];
+} carmen_dot_person_msg;
+
+#define CARMEN_DOT_PERSON_MSG_NAME "carmen_dot_person_msg"
+#define CARMEN_DOT_PERSON_MSG_FMT  "{{int, double, double, double, double, double}, int, double, [char:10]}"
+
+typedef struct {
+  carmen_dot_person_p people;
+  int num_people;
+  char host[10];
+} carmen_dot_all_people_msg;
+
+#define CARMEN_DOT_ALL_PEOPLE_MSG_NAME "carmen_dot_all_people_msg"
+#define CARMEN_DOT_ALL_PEOPLE_MSG_FMT  "{<{int, double, double, double, double, double}:2>, double, [char:10]}"
+
+typedef struct {
+  carmen_dot_trash_t trash;
+  int delete;
+  char host[10];
+} carmen_dot_trash_msg;
+
+#define CARMEN_DOT_TRASH_MSG_NAME "carmen_dot_trash_msg"
+#define CARMEN_DOT_TRASH_MSG_FMT  "{{int, double, double, double, double, double}, int, double, [char:10]}"
+
+typedef struct {
+  carmen_dot_trash_p trash;
+  int num_trash;
+  char host[10];
+} carmen_dot_all_trash_msg;
+
+#define CARMEN_DOT_ALL_TRASH_MSG_NAME "carmen_dot_all_trash_msg"
+#define CARMEN_DOT_ALL_TRASH_MSG_FMT  "{<{int, double, double, double, double, double}:2>, double, [char:10]}"
+
+typedef struct {
+  carmen_dot_door_t door;
+  int delete;
+  char host[10];
+} carmen_dot_door_msg;
+
+#define CARMEN_DOT_DOOR_MSG_NAME "carmen_dot_door_msg"
+#define CARMEN_DOT_DOOR_MSG_FMT  "{{int, double, double, double, double, double, double, double}, int, double, [char:10]}"
+
+typedef struct {
+  carmen_dot_door_p doors;
+  int num_doors;
+  char host[10];
+} carmen_dot_all_doors_msg;
+
+#define CARMEN_DOT_ALL_DOORS_MSG_NAME "carmen_dot_all_doors_msg"
+#define CARMEN_DOT_ALL_DOORS_MSG_FMT  "{<{int, double, double, double, double, double, double, double}:2>, double, [char:10]}"
 
 
 #ifdef __cplusplus
