@@ -51,7 +51,7 @@ int carmen_planner_update_goal(carmen_world_point_p new_goal,
   goal = *new_goal;
 
   if (map) {
-    carmen_dynamics_update();
+    carmen_dynamics_clear_all_blocked(roadmap);
     carmen_roadmap_plan(roadmap, new_goal);
   }
 
@@ -163,7 +163,7 @@ void carmen_planner_get_status(carmen_planner_status_p status)
 
   if (long_length < 0) {
     status->path.length = 0;
-    carmen_dynamics_update();
+    carmen_dynamics_clear_all_blocked(roadmap);
     if (long_length > -2)
       carmen_roadmap_plan(roadmap, &goal);
     return;

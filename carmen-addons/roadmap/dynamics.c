@@ -10,7 +10,8 @@
 static carmen_list_t *people = NULL, *trash = NULL, *doors = NULL;
 static carmen_map_t *map;
 
-static carmen_list_t *stored_people = NULL, *stored_trash = NULL, *stored_doors = NULL;
+static carmen_list_t *marked_edges = NULL;
+
 static carmen_map_t *map;
 
 static void correct(double *x, double *y)
@@ -99,10 +100,6 @@ void carmen_dynamics_initialize(carmen_map_t *new_map)
   trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
   doors = carmen_list_create(sizeof(carmen_dot_door_t), 10);
 
-  stored_people = carmen_list_create(sizeof(carmen_dot_person_t), 10);
-  stored_trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
-  stored_doors = carmen_list_create(sizeof(carmen_dot_door_t), 10);
-
   carmen_dot_subscribe_all_people_message
     (NULL, (carmen_handler_t) people_handler,CARMEN_SUBSCRIBE_LATEST);
   carmen_dot_subscribe_all_trash_message
@@ -123,9 +120,7 @@ void carmen_dynamics_initialize_no_ipc(carmen_map_t *new_map)
   trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
   doors = carmen_list_create(sizeof(carmen_dot_door_t), 10); 
 
-  stored_people = carmen_list_create(sizeof(carmen_dot_person_t), 10);
-  stored_trash = carmen_list_create(sizeof(carmen_dot_trash_t), 10);
-  stored_doors = carmen_list_create(sizeof(carmen_dot_door_t), 10);
+  marked_edges = carmen_list_create(sizeof(carmen_roadmap_marked_edge_t), 10);
 }
 
 void carmen_dynamics_update_person(carmen_dot_person_t *update_person)
@@ -153,37 +148,6 @@ void carmen_dynamics_update_person(carmen_dot_person_t *update_person)
   carmen_list_add(people, update_person);
 }
 
-
-void carmen_dynamics_update(void)
-{
-  int i;
-  carmen_dot_person_t *person;
-  carmen_dot_trash_t *trash_bin;
-  carmen_dot_door_t *door;
-
-  carmen_warn("Erasing %d %d %d\n", stored_people->length,
-	      stored_trash->length, stored_doors->length);
-
-  stored_people->length = 0;
-  stored_trash->length = 0;
-  stored_doors->length = 0;
-
-  for (i = 0; i < people->length; i++) {
-    person = (carmen_dot_person_t *)carmen_list_get(people, i);
-    carmen_list_add(stored_people, person);
-  }
-
-  for (i = 0; i < trash->length; i++) {
-    trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
-    carmen_list_add(stored_trash, trash_bin);
-  }
-
-  for (i = 0; i < doors->length; i++) {
-    door = (carmen_dot_door_t *)carmen_list_get(doors, i);
-    carmen_list_add(stored_doors, door);
-  }
-
-}
 
 void coord_shift(double *x, double *y, double theta, 
 			  double delta_x, double delta_y)
@@ -317,13 +281,6 @@ int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1,
 
   if (avoid_people) {
     for (i = 0; i < people->length; i++) {
-      person = (carmen_dot_person_t *)carmen_list_get(stored_people, i);
-      if (is_blocked(n1, n2, person->x, person->y, person->vx,
-		     person->vxy, person->vy))
-	return 1;
-    }
-
-    for (i = 0; i < people->length; i++) {
       person = (carmen_dot_person_t *)carmen_list_get(people, i);
       if (is_blocked(n1, n2, person->x, person->y, person->vx,
 		     person->vxy, person->vy))
@@ -340,20 +297,6 @@ int carmen_dynamics_test_for_block(carmen_roadmap_vertex_t *n1,
 
   for (i = 0; i < doors->length; i++) {
     door = (carmen_dot_door_t *)carmen_list_get(doors, i);
-    if (is_blocked(n1, n2, door->x, door->y, door->vx, door->vxy,
-		   door->vy))
-      return 1;
-  }
-
-  for (i = 0; i < trash->length; i++) {
-    trash_bin = (carmen_dot_trash_t *)carmen_list_get(stored_trash, i);
-    if (is_blocked(n1, n2, trash_bin->x, trash_bin->y, trash_bin->vx,
-		   trash_bin->vxy, trash_bin->vy))
-      return 1;
-  }
-
-  for (i = 0; i < doors->length; i++) {
-    door = (carmen_dot_door_t *)carmen_list_get(stored_doors, i);
     if (is_blocked(n1, n2, door->x, door->y, door->vx, door->vxy,
 		   door->vy))
       return 1;
@@ -428,4 +371,40 @@ int carmen_dynamics_test_node(carmen_roadmap_vertex_t *n1,
   }
 
   return 0;
+}
+
+void carmen_dynamics_mark_blocked(int node1_id, int edge1_id, 
+				  int node2_id, int edge2_id)
+{
+  carmen_roadmap_marked_edge_t marked_edge;
+
+  marked_edge.n1 = node1_id;
+  marked_edge.e1 = edge1_id;
+  marked_edge.n2 = node2_id;
+  marked_edge.e2 = edge2_id;
+
+  carmen_list_add(marked_edges, &marked_edge);
+}
+
+void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap)
+{  
+  carmen_roadmap_marked_edge_t *edge_list;
+  carmen_roadmap_vertex_t *node_list;
+  int i;
+  int n1, e1, n2, e2;
+
+  if (!marked_edges || marked_edges->list)
+    return;
+
+  edge_list = (carmen_roadmap_marked_edge_t *)marked_edges->list;
+  node_list = (carmen_roadmap_vertex_t *)roadmap->nodes->list;
+  for (i = 0; i < marked_edges->length; i++) {    
+    n1 = edge_list[i].n1;
+    e1 = edge_list[i].e1;
+    n2 = edge_list[i].n2;
+    e2 = edge_list[i].e2;
+    ((carmen_roadmap_edge_t *)(node_list[n1].edges->list))[e1].blocked = 0;
+    ((carmen_roadmap_edge_t *)(node_list[n2].edges->list))[e2].blocked = 0;
+  }
+  marked_edges->length = 0;
 }

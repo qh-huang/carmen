@@ -121,6 +121,14 @@ static void draw_graph(GtkMapViewer *the_map_view)
 
   //  carmen_warn("%d %d %f\n", n1->x, n1->y, n1->utility);
 
+  if (carmen_dynamics_test_node(n1, 1)) 
+    return;
+
+  n2 = (carmen_roadmap_vertex_t *)
+    carmen_list_get(roadmap->nodes, roadmap->goal_id);
+  if (carmen_dynamics_test_node(n2, 1)) 
+    return;
+
   do {
     n2 = carmen_roadmap_next_node(n1, roadmap);
     
