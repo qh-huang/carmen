@@ -57,6 +57,8 @@ extern "C" {
 
   void carmen_dynamics_mark_blocked(int node1_id, int edge1_id, 
 				    int node2_id, int edge2_id);
+  int carmen_dynamics_find_edge_and_block(carmen_roadmap_vertex_t *parent_node,
+					  int child_id);
   void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap);
 #ifdef __cplusplus
 }

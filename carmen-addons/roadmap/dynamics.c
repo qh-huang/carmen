@@ -107,10 +107,12 @@ void carmen_dynamics_initialize(carmen_map_t *new_map)
   carmen_dot_subscribe_all_doors_message
     (NULL, (carmen_handler_t) doors_handler,CARMEN_SUBSCRIBE_LATEST);
 
-  if (0)
+  //  if (0)
   carmen_simulator_subscribe_objects_message
     (NULL, (carmen_handler_t)simulator_objects_handler, 
      CARMEN_SUBSCRIBE_LATEST);
+
+  marked_edges = carmen_list_create(sizeof(carmen_roadmap_marked_edge_t), 10);
 }
 
 void carmen_dynamics_initialize_no_ipc(carmen_map_t *new_map)
@@ -394,6 +396,27 @@ int carmen_dynamics_test_node(carmen_roadmap_vertex_t *n1,
   return 0;
 }
 
+int carmen_dynamics_find_edge_and_block(carmen_roadmap_vertex_t *parent_node, 
+					int child_id)
+{
+  carmen_roadmap_edge_t *edges;
+  int length;
+  int j;
+
+  length = parent_node->edges->length;
+  edges = (carmen_roadmap_edge_t *)
+    parent_node->edges->list;
+  for (j = 0; j < length; j++) {
+    if (edges[j].id == child_id)
+      break;
+  }
+  assert (j < length);
+  edges[j].blocked = 1;
+
+  return j;
+}
+
+
 void carmen_dynamics_mark_blocked(int node1_id, int edge1_id, 
 				  int node2_id, int edge2_id)
 {
@@ -414,7 +437,7 @@ void carmen_dynamics_clear_all_blocked(carmen_roadmap_t *roadmap)
   int i;
   int n1, e1, n2, e2;
 
-  if (!marked_edges || marked_edges->list)
+  if (!marked_edges || !marked_edges->list)
     return;
 
   edge_list = (carmen_roadmap_marked_edge_t *)marked_edges->list;

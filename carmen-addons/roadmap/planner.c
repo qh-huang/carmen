@@ -100,33 +100,57 @@ void carmen_planner_update_map(carmen_robot_laser_message *laser_msg)
 
 }
 
-static double check_path(carmen_roadmap_t *road, carmen_world_point_t *start,
-			 int *num_segments)
+static int compute_path_segments(carmen_world_point_t *world_robot,
+				 carmen_roadmap_t *road) 
 {
+  int length;
   carmen_roadmap_vertex_t *n1, *n2;
-  double length;
+  carmen_roadmap_vertex_t *node;
 
-  n1 = carmen_roadmap_nearest_node(start, road);
+  node = carmen_roadmap_best_node(world_robot, road);  
+  if (!node || carmen_dynamics_test_node(node, 1))
+    return 0;
 
-  if (carmen_dynamics_test_node(n1, 1)) 
-    return -2;
-
-  n2 = (carmen_roadmap_vertex_t *)carmen_list_get(road->nodes, road->goal_id);
-  if (carmen_dynamics_test_node(n2, 1)) 
-    return -2;
-  
   length = 0;
-  *num_segments = 1;
+
+  n1 = node;
+  length = 2;
   while (n1 != NULL && n1->utility > 0) {
     n2 = carmen_roadmap_next_node(n1, road);
-    if (n2 != NULL) 
-      length += hypot(n2->x - n1->x, n2->y - n1->y);
     n1 = n2;
-    (*num_segments)++;
+    length++;
   }
 
   if (!n1 || n1->utility > 0) 
     return -1;
+
+  return length;
+}
+
+static int check_path(carmen_roadmap_t *road)
+{
+  carmen_roadmap_vertex_t *goal_node;
+  int length;
+  carmen_world_point_t world_robot;
+
+  world_robot.pose.x = robot.x;
+  world_robot.pose.y = robot.y;
+  world_robot.map = map;
+
+  goal_node = (carmen_roadmap_vertex_t *)
+    carmen_list_get(road->nodes, road->goal_id);
+  if (carmen_dynamics_test_node(goal_node, 1))
+    return 0;
+
+  length = compute_path_segments(&world_robot, road);
+
+  if (length < 0) {
+    carmen_dynamics_clear_all_blocked(roadmap);
+    carmen_roadmap_plan(roadmap, &goal);
+    length = compute_path_segments(&world_robot, road);
+    if (length < 0)
+      length = 0;
+  }
 
   return length;
 }
@@ -138,8 +162,6 @@ void carmen_planner_get_status(carmen_planner_status_p status)
   carmen_map_point_t map_node;
   carmen_world_point_t world_robot, wp;
   //  double short_length;
-  double long_length;
-  int num_segments;
 
   status->goal_set = have_goal;
 
@@ -159,33 +181,23 @@ void carmen_planner_get_status(carmen_planner_status_p status)
   world_robot.pose.y = robot.y;
   world_robot.map = map;
 
-  long_length =  check_path(roadmap, &world_robot, &num_segments);
+  status->path.length = check_path(roadmap);
+  if (status->path.length > 0) {
+    status->path.points = (carmen_traj_point_p)
+      calloc(status->path.length, sizeof(carmen_traj_point_t));
+    carmen_test_alloc(status->path.points);
+    
+    status->path.points[0].x = robot.x;
+    status->path.points[0].y = robot.y;
 
-  if (long_length < 0) {
-    status->path.length = 0;
-    carmen_dynamics_clear_all_blocked(roadmap);
-    if (long_length > -2)
-      carmen_roadmap_plan(roadmap, &goal);
-    return;
-  } 
-  status->path.length = num_segments;
-
-  status->path.points = (carmen_traj_point_p)
-    calloc(status->path.length, sizeof(carmen_traj_point_t));
-  carmen_test_alloc(status->path.points);
-  node = carmen_roadmap_nearest_node(&world_robot, roadmap);
-  map_node.x = node->x;
-  map_node.y = node->y;
-  map_node.map = map;
-  carmen_map_to_world(&map_node, &wp);
-  
-  status->path.points[0].x = wp.pose.x;
-  status->path.points[0].y = wp.pose.y;
-  
-  index = 1;
-  while (node != NULL && node->utility > 0) {
-    node = carmen_roadmap_next_node(node, roadmap);
-    if (node != NULL) {
+    index = 1;
+    node = NULL;
+    map_node.map = map;
+    do {
+      if (!node)
+	node = carmen_roadmap_best_node(&world_robot, roadmap);  
+      else
+	node = carmen_roadmap_next_node(node, roadmap);
       map_node.x = node->x;
       map_node.y = node->y;
       carmen_map_to_world(&map_node, &wp);
@@ -193,8 +205,8 @@ void carmen_planner_get_status(carmen_planner_status_p status)
       status->path.points[index].x = wp.pose.x;
       status->path.points[index].y = wp.pose.y;
       index++;
-    }
-  }
+    } while (node != NULL && node->utility > 0);
+  } 
 
   return;
 }
@@ -214,8 +226,6 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
   start.pose.y = waypoint->y;
   start.pose.theta = waypoint->theta;
   start.map = map;
-
-
 
   node = carmen_roadmap_best_node(&start, roadmap);
   if (node == NULL)
