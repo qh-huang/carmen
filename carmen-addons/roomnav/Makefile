@@ -5,23 +5,18 @@ include ../Makefile.conf
 MODULE_NAME = ROOMNAV
 MODULE_COMMENT = Room-Based Navigator
 
-SOURCES = roomnav.c roomnav_interface.c
-
-ifndef NO_GRAPHICS
+SOURCES = roomnav.c roomnav_interface.c erni.c erni_planner.c
 
 CFLAGS +=
-IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
-LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lgdk_imlib \
-		-lglobal -lglobal_graphics \
-		-lipc `$(GTK_CONFIG) --libs gthread` \
-		-llocalize_interface -llaser_interface -lnavigator_interface \
-		-lrobot_interface
-else
-
-CFLAGS +=	-DNO_GRAPHICS
 IFLAGS 	+=
 LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
-		-lglobal_graphics -lipc -llocalize_interface
+		-lipc -llocalize_interface -llaser_interface \
+		-lnavigator_interface -lrobot_interface -rdynamic
+
+ifndef NO_GRAPHICS
+CFLAGS +=
+IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
+LFLAGS 	+= 	-lgdk_imlib -lglobal_graphics `$(GTK_CONFIG) --libs gthread`
 endif
 
 PUBLIC_INCLUDES = roomnav.h roomnav_messages.h roomnav_interface.h
@@ -36,11 +31,23 @@ else
 LFLAGS += -lz
 endif
 
+ifndef NO_DLL
+TARGETS += liberni.so
+PUBLIC_LIBRARIES += liberni.so
+CFLAGS += -DHAVE_DLL
+IFLAGS += -I$(CARMEN_HOME)/src/navigator
+endif
 
 all:
 
 roomnav:	roomnav.o
 
 libroomnav_interface.a:		roomnav_interface.o
+
+ifndef NO_DLL
+liberni.so: erni.o erni_planner.o roomnav_interface.o \
+	$(CARMEN_HOME)/src/navigator/trajectory.o \
+	$(CARMEN_HOME)/src/navigator/map_modify.o
+endif
 
 include $(CARMEN_HOME)/src/Makefile.rules
