@@ -61,6 +61,8 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people, int *num_people) {
 			     CARMEN_DOT_QUERY_NAME);
 
   if (people) {
+    *people = response->people;
+    /*
     if (response->people) {
       *people = (carmen_dot_person_p)
 	calloc(response->num_people, sizeof(carmen_dot_person_t));
@@ -69,6 +71,7 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people, int *num_people) {
     }
     else
       *people = NULL;
+    */
   }
   if (num_people)
     *num_people = response->num_people;
@@ -81,6 +84,7 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash, int *num_trash) {
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
   carmen_dot_all_trash_msg *response;
+  //int i;
 
   query.type = CARMEN_DOT_TRASH;
   query.timestamp = carmen_get_time_ms();
@@ -97,14 +101,25 @@ int carmen_dot_get_all_trash(carmen_dot_trash_p *trash, int *num_trash) {
 			     CARMEN_DOT_QUERY_NAME);
 
   if (trash) {
+    *trash = response->trash;
+    /*
     if (response->trash) {
       *trash = (carmen_dot_trash_p)
 	calloc(response->num_trash, sizeof(carmen_dot_trash_t));
       carmen_test_alloc(trash);
       memcpy(*trash, response->trash, response->num_trash*sizeof(carmen_dot_trash_t));
+      for (i = 0; i < response->num_trash; i++) {
+	(*trash)[i].xhull = (double *) calloc((*trash)[i].hull_size, sizeof(double));
+	carmen_test_alloc((*trash)[i].xhull);
+	memcpy((*trash)[i].xhull, response->trash[i].xhull, (*trash)[i].hull_size * sizeof(double));
+	(*trash)[i].yhull = (double *) calloc((*trash)[i].hull_size, sizeof(double));
+	carmen_test_alloc((*trash)[i].yhull);
+	memcpy((*trash)[i].yhull, response->trash[i].yhull, (*trash)[i].hull_size * sizeof(double));
+      }
     }
     else
       *trash = NULL;
+    */
   }
   if (num_trash)
     *num_trash = response->num_trash;

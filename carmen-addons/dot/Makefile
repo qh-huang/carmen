@@ -6,7 +6,7 @@ MODULE_COMMENT = Dynamic Object Tracker
 
 SOURCES = dot.c dot_interface.c
 
-CFLAGS +=
+CFLAGS += -pg
 IFLAGS 	+=
 LFLAGS 	+= 	-lparam_interface -lglobal -llocalize_interface -lgeometry \
 		-lipc -llaser_interface -llocalize_core \
