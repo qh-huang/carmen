@@ -42,63 +42,7 @@ static double max_t_vel;
 static double approach_dist;
 
 static carmen_roadmap_t *roadmap = NULL;
-
-int carmen_planner_update_goal(carmen_world_point_p new_goal, 
-			       int any_orientation)
-{
-  allow_any_orientation = any_orientation;
-  have_goal = 1;
-  goal = *new_goal;
-
-  if (map) {
-    carmen_dynamics_clear_all_blocked(roadmap);
-    carmen_roadmap_plan(roadmap, new_goal);
-  }
-
-  carmen_verbose("Set goal to %.1f %.1f, done planning\n",
-	      new_goal->pose.x, new_goal->pose.y);
-
-  return 1;
-}
-
-int carmen_planner_update_robot(carmen_traj_point_p new_position)
-{
-  robot = *new_position;
-  have_robot = 1;
-
-  return 0;
-}
-
-void carmen_planner_set_map(carmen_map_p new_map)
-{
-  map = new_map;
-
-  carmen_verbose("Initialized with map\n");
-
-  roadmap = carmen_roadmap_initialize(new_map);
-  carmen_param_set_module("robot");
-  carmen_param_get_double("max_t_vel", &max_t_vel);
-  carmen_param_get_double("min_approach_dist", &approach_dist);
-  carmen_param_subscribe_double("robot", "max_t_vel", &max_t_vel, NULL);
-  carmen_param_subscribe_double("robot", "min_approach_dist", 
-				&approach_dist, NULL);
-
-  carmen_warn("max robot speed %f\n", max_t_vel);
-
-  carmen_dynamics_initialize(new_map);
-}
-
-void carmen_planner_reset(void)
-{
-  have_goal = 0;
-  have_robot = 0;
-}
-
-void carmen_planner_update_map(carmen_robot_laser_message *laser_msg)
-{
-  laser_msg = laser_msg;
-
-}
+static carmen_list_t *path = NULL;
 
 static int compute_path_segments(carmen_world_point_t *world_robot,
 				 carmen_roadmap_t *road) 
@@ -155,13 +99,103 @@ static int check_path(carmen_roadmap_t *road)
   return length;
 }
 
+int carmen_planner_update_goal(carmen_world_point_p new_goal, 
+			       int any_orientation)
+{
+  allow_any_orientation = any_orientation;
+  have_goal = 1;
+  goal = *new_goal;
+
+  if (map) {
+    carmen_dynamics_clear_all_blocked(roadmap);
+    carmen_roadmap_plan(roadmap, new_goal);
+  }
+
+  carmen_verbose("Set goal to %.1f %.1f, done planning\n",
+	      new_goal->pose.x, new_goal->pose.y);
+
+  return 1;
+}
+
+int carmen_planner_update_robot(carmen_traj_point_p new_position)
+{
+  int path_length = 0;
+  carmen_map_point_t map_node;
+  carmen_traj_point_t traj_point;
+  carmen_world_point_t world_robot;
+  carmen_roadmap_vertex_t *node;
+
+  robot = *new_position;
+  have_robot = 1;
+
+  if (path == NULL)
+    path = carmen_list_create(sizeof(carmen_traj_point_t), 10);  
+
+  world_robot.pose.x = robot.x;
+  world_robot.pose.y = robot.y;
+  world_robot.map = map;
+
+  path_length = check_path(roadmap);
+  if (path_length == 0)
+    return 0;
+
+  path->length = 0;
+
+  traj_point.x = robot.x;
+  traj_point.y = robot.y;
+  carmen_list_add(path, &traj_point);
+
+  node = NULL;
+  map_node.map = map;
+  do {
+    if (!node)
+      node = carmen_roadmap_best_node(&world_robot, roadmap);  
+    else
+      node = carmen_roadmap_next_node(node, roadmap);
+    map_node.x = node->x;
+    map_node.y = node->y;
+    carmen_map_to_trajectory(&map_node, &traj_point);
+    carmen_list_add(path, &traj_point);
+  } while (node != NULL && node->utility > 0);
+
+  return 0;
+}
+
+void carmen_planner_set_map(carmen_map_p new_map)
+{
+  map = new_map;
+
+  carmen_verbose("Initialized with map\n");
+
+  roadmap = carmen_roadmap_initialize(new_map);
+  carmen_param_set_module("robot");
+  carmen_param_get_double("max_t_vel", &max_t_vel);
+  carmen_param_get_double("min_approach_dist", &approach_dist);
+  carmen_param_subscribe_double("robot", "max_t_vel", &max_t_vel, NULL);
+  carmen_param_subscribe_double("robot", "min_approach_dist", 
+				&approach_dist, NULL);
+
+  carmen_warn("max robot speed %f\n", max_t_vel);
+
+  carmen_dynamics_initialize(new_map);
+}
+
+void carmen_planner_reset(void)
+{
+  have_goal = 0;
+  have_robot = 0;
+}
+
+void carmen_planner_update_map(carmen_robot_laser_message *laser_msg)
+{
+  laser_msg = laser_msg;
+
+}
+
 void carmen_planner_get_status(carmen_planner_status_p status) 
 {
-  int index;
-  carmen_roadmap_vertex_t *node;
-  carmen_map_point_t map_node;
-  carmen_world_point_t world_robot, wp;
-  //  double short_length;
+  carmen_traj_point_t *traj_point;
+  int i;
 
   status->goal_set = have_goal;
 
@@ -177,36 +211,19 @@ void carmen_planner_get_status(carmen_planner_status_p status)
   if (!have_robot || !have_goal)
     return;  
 
-  world_robot.pose.x = robot.x;
-  world_robot.pose.y = robot.y;
-  world_robot.map = map;
-
-  status->path.length = check_path(roadmap);
-  if (status->path.length > 0) {
+  if (path == NULL) {
+    status->path.length = 0;
+    status->path.points = NULL;
+  } else {
+    status->path.length = path->length;
     status->path.points = (carmen_traj_point_p)
       calloc(status->path.length, sizeof(carmen_traj_point_t));
     carmen_test_alloc(status->path.points);
-    
-    status->path.points[0].x = robot.x;
-    status->path.points[0].y = robot.y;
-
-    index = 1;
-    node = NULL;
-    map_node.map = map;
-    do {
-      if (!node)
-	node = carmen_roadmap_best_node(&world_robot, roadmap);  
-      else
-	node = carmen_roadmap_next_node(node, roadmap);
-      map_node.x = node->x;
-      map_node.y = node->y;
-      carmen_map_to_world(&map_node, &wp);
-      
-      status->path.points[index].x = wp.pose.x;
-      status->path.points[index].y = wp.pose.y;
-      index++;
-    } while (node != NULL && node->utility > 0);
-  } 
+    for (i = 0; i < path->length; i++) {
+      traj_point = (carmen_traj_point_t *)carmen_list_get(path, i);
+      status->path.points[i] = *traj_point;
+    }
+  }
 
   return;
 }
@@ -214,65 +231,47 @@ void carmen_planner_get_status(carmen_planner_status_p status)
 int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
 				 carmen_navigator_config_t *nav_conf)
 {  
-  double delta_dist, delta_theta;
-  carmen_roadmap_vertex_t *node, *next_node;
-  carmen_world_point_t start, dest;
-  carmen_map_point_t dest_map;
+  carmen_traj_point_t start, way_pt, next_way_pt;
+  double dist_to_waypoint, delta_theta;
+  int node_is_too_close;
+  int i;
 
-  if (!have_goal || !map)
+  if (!have_robot || !have_goal || !map || !path)
     return -1;
 
-  start.pose.x = waypoint->x;
-  start.pose.y = waypoint->y;
-  start.pose.theta = waypoint->theta;
-  start.map = map;
-
-  node = carmen_roadmap_best_node(&start, roadmap);
-  if (node == NULL)
+  if (path->length == 0)
     return -1;
 
-  if (carmen_dynamics_test_node(node, 1)) 
-    return -1;
-
-  next_node = (carmen_roadmap_vertex_t *)
-    carmen_list_get(roadmap->nodes, roadmap->goal_id);
-  if (carmen_dynamics_test_node(next_node, 1)) 
-    return -1;
-  
-  dest_map.x = node->x;
-  dest_map.y = node->y;
-  dest_map.map = map;
-  carmen_map_to_world(&dest_map, &dest);
-  
-  delta_dist = carmen_distance_world(&start, &dest);
-  
-  while (delta_dist < 2*nav_conf->goal_size && node->utility > 0) {
-    next_node = carmen_roadmap_next_node(node, roadmap);
-    if (next_node == NULL)
-      return -1;
-    if (!carmen_roadmap_is_visible(next_node, &start, roadmap) &&
-	delta_dist < approach_dist)
-      break;
-    node = next_node;
-    dest_map.x = node->x;
-    dest_map.y = node->y;
-    dest_map.map = map;
-    carmen_map_to_world(&dest_map, &dest);
-    delta_dist = carmen_distance_world(&start, &dest);    
+  start = *waypoint;
+  i = 1;
+  node_is_too_close = 1;
+  way_pt = *((carmen_traj_point_t *)carmen_list_get(path, i));
+  while (i < path->length && node_is_too_close) {
+    dist_to_waypoint = carmen_distance_traj(&start, &way_pt);
+    if (dist_to_waypoint < approach_dist && i < path->length-1) {
+      next_way_pt = *((carmen_traj_point_t *)carmen_list_get(path, i+1));
+      if (carmen_roadmap_points_are_visible(&start, &next_way_pt, roadmap))
+	way_pt = next_way_pt;
+      else
+	node_is_too_close = 0;
+    } else {
+      node_is_too_close = 0;
+    }
+    i++;
   } 
 
-  if (delta_dist < 2*nav_conf->goal_size && node->utility == 0) {
+  if (i == path->length && dist_to_waypoint < nav_conf->goal_size) {
     *is_goal = 1;
     if (allow_any_orientation)
       return 1;
-    delta_theta = fabs(waypoint->theta - goal.pose.theta) ;
+    delta_theta = fabs(start.theta - goal.pose.theta);
     if (delta_theta < nav_conf->goal_theta_tolerance)
-      return 1;      
+      return 1;
     waypoint->theta = goal.pose.theta;
-  } else {
-    waypoint->x = dest.pose.x;
-    waypoint->y = dest.pose.y;
   }
+
+  waypoint->x = way_pt.x;
+  waypoint->y = way_pt.y;
 
   return 0;
 }

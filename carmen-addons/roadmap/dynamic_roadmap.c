@@ -248,6 +248,37 @@ int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node,
   return 1;
 }
 
+int carmen_roadmap_points_are_visible(carmen_traj_point_t *p1, 
+				      carmen_traj_point_t *p2,
+				      carmen_roadmap_t *roadmap)
+{
+  carmen_bresenham_param_t params;
+  int x, y;
+  carmen_map_point_t mp1, mp2;
+  carmen_map_p c_space;
+
+  c_space = roadmap->c_space;
+  carmen_trajectory_to_map(p1, &mp1, c_space);
+  carmen_trajectory_to_map(p2, &mp2, c_space);
+
+  carmen_get_bresenham_parameters(mp1.x, mp1.y, mp2.x, mp2.y, &params);
+  if (mp1.x < 0 || mp1.x >= c_space->config.x_size || 
+      mp1.y < 0 || mp1.y >= c_space->config.y_size)
+    return 0;
+
+  if (mp2.x < 0 || mp2.x >= c_space->config.x_size || 
+      mp2.y < 0 || mp2.y >= c_space->config.y_size)
+    return 0;
+
+  do {
+    carmen_get_current_point(&params, &x, &y);
+    if (c_space->map[x][y] > 9e5 || c_space->map[x][y] < 0) 
+      return 0;
+  } while (carmen_get_next_point(&params));
+
+  return 1;
+}
+
 static double compute_cost(int n1x, int n1y, int n2x, int n2y, 
 			   carmen_map_p c_space)
 {
@@ -570,10 +601,10 @@ static inline double get_cost(carmen_roadmap_vertex_t *node,
 
   c_space = roadmap->c_space;
 
-  edges = (carmen_roadmap_edge_t *)(parent_node->edges->list);
-  length = parent_node->edges->length;
+  edges = (carmen_roadmap_edge_t *)(node->edges->list);
+  length = node->edges->length;
   for (i = 0; i < length; i++) {
-    if (edges[i].id == node->id) {
+    if (edges[i].id == parent_node->id) {
       cost = edges[i].cost;
       break;
     }
