@@ -96,8 +96,8 @@ int main(int argc, char **argv)
 
       segway_set_velocity(&segway, command_tv, command_rv);
       current_time = carmen_get_time_ms();
-      carmen_segway_publish_odometry(&segway, current_time);
       carmen_segway_publish_pose(&segway, current_time);
+      carmen_segway_publish_odometry(&segway, current_time);
       sleep_ipc(0.001);
 
       if(current_time - last_status > 1.0) {
