@@ -1324,6 +1324,34 @@ static void roomnav_room_query_handler
 		  CARMEN_ROOMNAV_ROOM_MSG_NAME);
 }
 
+static void roomnav_room_from_point_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_roomnav_room_from_point_query query;
+  carmen_roomnav_room_msg *response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query,
+			   sizeof(carmen_roomnav_room_from_point_query));
+  IPC_freeByteArray(callData);
+  
+  response = (carmen_roomnav_room_msg *)
+    calloc(1, sizeof(carmen_roomnav_room_msg));
+  carmen_test_alloc(response);
+
+  response->room = closest_room(query.point.x, query.point.y, 10);
+
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
+
+  err = IPC_respondData(msgRef, CARMEN_ROOMNAV_ROOM_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_ROOMNAV_ROOM_MSG_NAME);
+}
+
 static void roomnav_goal_query_handler
 (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
  void *clientData __attribute__ ((unused))) {
@@ -1526,6 +1554,11 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_ROOMNAV_ROOM_QUERY_NAME);
 
+  err = IPC_defineMsg(CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME);
+
   err = IPC_defineMsg(CARMEN_ROOMNAV_GOAL_MSG_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_ROOMNAV_GOAL_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_ROOMNAV_GOAL_MSG_NAME);
@@ -1570,6 +1603,12 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not subcribe", 
 		       CARMEN_ROOMNAV_ROOM_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_ROOMNAV_ROOM_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME, 
+		      roomnav_room_from_point_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", 
+		       CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME, 100);
 
   err = IPC_subscribe(CARMEN_ROOMNAV_GOAL_QUERY_NAME, 
 		      roomnav_goal_query_handler, NULL);
