@@ -285,8 +285,6 @@ static int dot_classify(carmen_dot_filter_p f) {
 
   if (!f->allow_change)
     return f->type;
-  else
-    return CARMEN_DOT_TRASH;
 
   pf = &f->person_filter;
   tf = &f->trash_filter;
@@ -296,7 +294,7 @@ static int dot_classify(carmen_dot_filter_p f) {
   tdet = tf->px*tf->py;
   ddet = df->px*df->py - df->pxy*df->pxy;
 
-  return (pdet <= tdet ? CARMEN_DOT_PERSON : CARMEN_DOT_TRASH);
+  return (ddet <= tdet ? CARMEN_DOT_DOOR : CARMEN_DOT_TRASH);
 
   if (pdet <= tdet) {
     if (pdet <= ddet)
@@ -536,7 +534,7 @@ static void door_filter_sensor_update(carmen_dot_door_filter_p f, double x, doub
 static void add_new_dot_filter(int *cluster_map, int c, int n,
 			       double *x, double *y) {
   int i, id;
-  double ux, uy, cnt;
+  double ux, uy, vx, vy, vxy, cnt;
 
   for (id = 0; id < num_filters; id++) {
     for (i = 0; i < num_filters; i++)
@@ -569,6 +567,17 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   ux /= (double)cnt;
   uy /= (double)cnt;
 
+  vx = vy = vxy = 0.0;
+  for (i = 0; i < n; i++)
+    if (cluster_map[i] == c) {
+      vx += (x[i]-ux)*(x[i]-ux);
+      vy += (y[i]-uy)*(y[i]-uy);
+      vxy += (x[i]-ux)*(y[i]-uy);
+    }
+  vx /= (double)cnt;
+  vy /= (double)cnt;
+  vxy /= (double)cnt;
+
   filters[num_filters-1].person_filter.x = ux;
   filters[num_filters-1].person_filter.y = uy;
   filters[num_filters-1].person_filter.x0 = ux;
@@ -580,9 +589,9 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].person_filter.vpos = 0;
   filters[num_filters-1].person_filter.vlen = 0;
   filters[num_filters-1].person_filter.hidden_cnt = 0;
-  filters[num_filters-1].person_filter.px = default_person_filter_px;
-  filters[num_filters-1].person_filter.py = default_person_filter_py;
-  filters[num_filters-1].person_filter.pxy = default_person_filter_pxy;
+  filters[num_filters-1].person_filter.px = vx; //default_person_filter_px;
+  filters[num_filters-1].person_filter.py = vy; //default_person_filter_py;
+  filters[num_filters-1].person_filter.pxy = vxy; //default_person_filter_pxy;
   filters[num_filters-1].person_filter.a = default_person_filter_a;
   filters[num_filters-1].person_filter.qx = default_person_filter_qx;
   filters[num_filters-1].person_filter.qy = default_person_filter_qy;
@@ -600,8 +609,9 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   filters[num_filters-1].trash_filter.x = ux;
   filters[num_filters-1].trash_filter.y = uy;
-  filters[num_filters-1].trash_filter.px = default_trash_filter_px;
-  filters[num_filters-1].trash_filter.py = default_trash_filter_py;
+  filters[num_filters-1].trash_filter.px = vx; //default_trash_filter_px;
+  filters[num_filters-1].trash_filter.py = vy; //default_trash_filter_py;
+  filters[num_filters-1].trash_filter.py = vxy;
   filters[num_filters-1].trash_filter.a = default_trash_filter_a;
   filters[num_filters-1].trash_filter.qx = default_trash_filter_qx;
   filters[num_filters-1].trash_filter.qy = default_trash_filter_qy;
@@ -616,14 +626,14 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
 
   filters[num_filters-1].door_filter.x = ux;
   filters[num_filters-1].door_filter.y = uy;
-  filters[num_filters-1].door_filter.t =
-    bnorm_theta(filters[num_filters-1].person_filter.px,
-		filters[num_filters-1].person_filter.py,
-		filters[num_filters-1].person_filter.pxy);
-  filters[num_filters-1].door_filter.px = default_door_filter_px;
-  filters[num_filters-1].door_filter.py = default_door_filter_py;
+  filters[num_filters-1].door_filter.t = bnorm_theta(vx, vy, vxy);
+  //    bnorm_theta(filters[num_filters-1].person_filter.px,
+  //	filters[num_filters-1].person_filter.py,
+  //	filters[num_filters-1].person_filter.pxy);
+  filters[num_filters-1].door_filter.px = vx; //default_door_filter_px;
+  filters[num_filters-1].door_filter.py = vy; //default_door_filter_py;
   filters[num_filters-1].door_filter.pt = default_door_filter_pt;
-  filters[num_filters-1].door_filter.pxy = 0;  //dbug?
+  filters[num_filters-1].door_filter.pxy = vxy; //0;  //dbug?
   filters[num_filters-1].door_filter.a = default_door_filter_a;
   filters[num_filters-1].door_filter.qx = default_door_filter_qx;
   filters[num_filters-1].door_filter.qy = default_door_filter_qy;
@@ -666,7 +676,7 @@ static double map_prob(double x, double y) {
 	 localize_map.complete_prob[mp.x*static_map.config.y_size+mp.y]);
   */
 
-  return exp(localize_map.prob[mp.x][mp.y]);
+  return exp(localize_map.gprob[mp.x][mp.y]);
 }
 
 static int dot_filter(double x, double y) {
@@ -696,8 +706,8 @@ static int dot_filter(double x, double y) {
     // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
     theta = bnorm_theta(vx, vy, vxy);
     rotate2d(&dx, &dy, -theta);
-    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+    if (fabs(dx) < 4.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 4.0*sqrt(vy/fabs(sin(theta)))) {
       p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
       if (p > pmax) {
 	pmax = p;
@@ -719,8 +729,8 @@ static int dot_filter(double x, double y) {
     // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
     theta = bnorm_theta(vx, vy, vxy);
     rotate2d(&dx, &dy, -theta);
-    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+    if (fabs(dx) < 4.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 4.0*sqrt(vy/fabs(sin(theta)))) {
       p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
       if (p > pmax) {
 	pmax = p;
@@ -742,8 +752,8 @@ static int dot_filter(double x, double y) {
     // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
     theta = bnorm_theta(vx, vy, vxy);
     rotate2d(&dx, &dy, -theta);
-    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+    if (fabs(dx) < 4.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 4.0*sqrt(vy/fabs(sin(theta)))) {
       p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
       if (p > pmax) {
 	pmax = p;
@@ -814,7 +824,7 @@ static int map_filter(double x, double y, double r) {
   for (i = mp.x-md; i <= mp.x+md; i++)
     for (j = mp.y-md; j <= mp.y+md; j++)
       if (is_in_map(i, j) && dist(i-mp.x, j-mp.y) <= d &&
-	  exp(localize_map.prob[i][j]) >= map_occupied_threshold)
+	  exp(localize_map.gprob[i][j]) >= map_occupied_threshold)
 	return 1;
 
   return 0;
