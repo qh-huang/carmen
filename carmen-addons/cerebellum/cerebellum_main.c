@@ -71,8 +71,8 @@ static int thread_is_running = 0;
 #define        METERS_PER_INCH        (0.0254)
 #define        INCH_PER_METRE         (39.370)
 
-/* the internal PID loop runs every 1.55ms (we think) */
-#define        OBOT_LOOP_FREQUENCY  (1/1.55e-3)
+/* the new internal PID loop seems to run every 1.9375ms (we think) */
+#define        OBOT_LOOP_FREQUENCY  (1/1.9375e-3)
 
 #define        OBOT_WHEEL_CIRCUMFERENCE  (4.25 * METERS_PER_INCH * 3.1415926535)
 #define        OBOT_TICKS_PER_REV       (11600.0)
