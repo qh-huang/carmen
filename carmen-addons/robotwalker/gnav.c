@@ -635,15 +635,18 @@ static void get_map() {
 
 #ifndef NO_GRAPHICS
 
-static GdkColor grid_color(int cell) {
+static GdkColor grid_color(int x, int y) {
 
-  switch (cell) {
+  switch (grid[x][y]) {
   case GRID_NONE:    return carmen_white;
   case GRID_UNKNOWN: return carmen_blue;
   case GRID_WALL:    return carmen_black;
   case GRID_DOOR:    return carmen_red;
   case GRID_PROBE:   return carmen_yellow;
   }
+
+  if (closest_room(x, y, 1) == room)
+    return carmen_yellow;
 
   return carmen_green;
 }
@@ -665,7 +668,7 @@ static void grid_to_image(int x0, int y0, int width, int height) {
     for(y = cy; y < cy + ch; y++) {
       x2 = (int) ((x / (double) canvas_width) * grid_width);
       y2 = (int) ((1.0 - ((y+1) / (double) canvas_height)) * grid_height);
-      color = grid_color(grid[x2][y2]);
+      color = grid_color(x2, y2);
       gdk_gc_set_foreground(drawing_gc, &color);
       gdk_draw_point(pixmap, drawing_gc, x, y);
     }
@@ -1281,6 +1284,8 @@ void localize_handler() {
   if (new_room != room) {
     room = new_room;
     printf("room = %d\n", room);
+    grid_to_image(0, 0, grid_width, grid_height);
+    draw_grid(0, 0, grid_width, grid_height);
     publish_room_msg();
   }
 
