@@ -64,6 +64,9 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
 int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node, 
 			      carmen_world_point_t *position,
 			      carmen_roadmap_t *roadmap);
+carmen_roadmap_vertex_t *carmen_roadmap_best_node
+ (carmen_world_point_t *point, carmen_roadmap_t *roadmap);
+
 #ifdef __cplusplus
 }
 #endif

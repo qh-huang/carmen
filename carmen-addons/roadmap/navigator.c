@@ -211,28 +211,26 @@ generate_next_motion_command(void)
 
   /* goal is reached */
 
-  if (waypoint_status > 0) 
-    {
-      autonomous_status = 0;
-      carmen_navigator_publish_autonomous_stopped
-	(CARMEN_NAVIGATOR_GOAL_REACHED_v);
-			
-      carmen_verbose("Autonomous off Motion command %.2f %.2f\n", command.tv,
-		     carmen_radians_to_degrees(command.rv));
-
-      command.tv = 0;
-      command.rv = 0;
-      carmen_robot_velocity_command(command.tv, command.rv);  
-      return;
-    }
-			
-  if (waypoint_status < 0)
-    {
-      command.tv = 0;
-      command.rv = 0;
-      carmen_robot_velocity_command(command.tv, command.rv);  
-      return;
-    }
+  if (waypoint_status > 0) {
+    autonomous_status = 0;
+    carmen_navigator_publish_autonomous_stopped
+      (CARMEN_NAVIGATOR_GOAL_REACHED_v);
+    
+    carmen_verbose("Autonomous off Motion command %.2f %.2f\n", command.tv,
+		   carmen_radians_to_degrees(command.rv));
+    
+    command.tv = 0;
+    command.rv = 0;
+    carmen_robot_velocity_command(command.tv, command.rv);  
+    return;
+  }
+  
+  if (waypoint_status < 0) {
+    command.tv = 0;
+    command.rv = 0;
+    carmen_robot_velocity_command(command.tv, command.rv);  
+    return;
+  }
 
   theta = carmen_angle_between(&robot_position, &waypoint);
   theta = theta - robot_position.theta;

@@ -216,7 +216,8 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
   start.map = map;
 
 
-  node = carmen_roadmap_nearest_node(&start, roadmap);
+
+  node = carmen_roadmap_best_node(&start, roadmap);
   if (node == NULL)
     return -1;
 
@@ -289,6 +290,9 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
   switch (map_type) {
   case CARMEN_NAVIGATOR_MAP_v:
     map_ptr = map->complete_map;
+    break;
+  case CARMEN_NAVIGATOR_COST_v:
+    map_ptr = roadmap->c_space->complete_map;
     break;
   default:
     carmen_warn("Request for unsupported data type : %d.\n", map_type);
