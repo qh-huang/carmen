@@ -345,7 +345,7 @@ int canon_initialize_camera(usb_dev_handle *camera_handle)
     fprintf(stderr, "lock keys failed.\n");
   if(canon_get_power_status(camera_handle) < 0)
     fprintf(stderr, "get power status failed.\n");
-  sleep(1);
+  sleep(2);
   return 0;
 }
 
@@ -580,18 +580,27 @@ int canon_capture_image(usb_dev_handle *camera_handle,
     fprintf(stderr, "rcc release shutter failed.\n");
     return -1;
   }
-  if(global_transfer_mode & THUMB_TO_PC)
+  if(global_transfer_mode & THUMB_TO_PC) {
     if(canon_rcc_download_thumbnail(camera_handle, thumbnail, 
 				    thumbnail_length) < 0) {
       fprintf(stderr, "download thumbnail failed.\n");
       return -1;
     }
-  if(global_transfer_mode & FULL_TO_PC)
+  }
+  else {
+    *thumbnail = NULL;
+    *thumbnail_length = 0;
+  }
+  if(global_transfer_mode & FULL_TO_PC) {
     if(canon_rcc_download_full_image(camera_handle, image, image_length) < 0) {
       fprintf(stderr, "download image failed.\n");
       return -1;
     }
-
+  }
+  else {
+    *image = NULL;
+    *image_length = 0;
+  }
   global_image_count++;
   fprintf(stderr, "INCREMENTED COUNT TO %d\n", global_image_count);
   return 0;

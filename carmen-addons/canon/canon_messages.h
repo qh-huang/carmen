@@ -6,14 +6,15 @@ extern "C" {
 #endif
 
 typedef struct {
-  int get_thumbnail;
-  int get_image;
+  int thumbnail_over_ipc;
+  int image_over_ipc;
+  int image_to_drive;
   double timestamp;
   char host[10];
 } carmen_canon_image_request;
 
 #define      CARMEN_CANON_IMAGE_REQUEST_NAME   "carmen_canon_image_request"
-#define      CARMEN_CANON_IMAGE_REQUEST_FMT    "{int,int,double,[char:10]}"
+#define      CARMEN_CANON_IMAGE_REQUEST_FMT    "{int,int,int,double,[char:10]}"
 
 typedef struct {
   int thumbnail_length;
