@@ -30,6 +30,7 @@
 #include "segway_messages.h"
 
 extern segway_t segway;
+extern double command_tv, command_rv;
 
 static void segway_velocity_handler(MSG_INSTANCE msgRef, 
 				    BYTE_ARRAY callData,
@@ -43,7 +44,9 @@ static void segway_velocity_handler(MSG_INSTANCE msgRef,
   IPC_freeByteArray(callData);
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
-  segway_set_velocity(&segway, vel.tv, vel.rv);
+
+  command_tv = vel.tv;
+  command_rv = vel.rv;
 }
 
 void carmen_segway_register_messages(void)
