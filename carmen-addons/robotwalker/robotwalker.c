@@ -10,7 +10,7 @@
 #define    MAX_VELOCITY               (MAX_RPM * VEL_PER_RPM)
 #define    MAX_SPEED_PERC             75
 
-#define    DEFAULT_TIMEOUT            30000
+#define    DEFAULT_TIMEOUT            3000
 
 #define    COMMAND_ENERGIZE           0xc5
 #define    COMMAND_SETDC              0xd0
@@ -153,17 +153,19 @@ static void update_odom() {
 static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			     void *clientData __attribute__ ((unused))) {
 
-  carmen_robot_velocity_message v;
+  carmen_base_velocity_message v;
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
   double left_vel, right_vel;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &v,
-                           sizeof(carmen_robot_velocity_message));  
+                           sizeof(carmen_base_velocity_message));  
   IPC_freeByteArray(callData);
   carmen_test_ipc_return(err, "Could not unmarshall", 
                          IPC_msgInstanceName(msgRef));
+
+  printf("Received velocity message:  tv = %.2f, rv = %.2f\n", v.tv, v.rv);
 
   left_vel = right_vel = v.tv;
   //assuming v.rv is in radians per second
@@ -197,22 +199,28 @@ static void init_odom() {
 
 static void init_motors(char **argv) {
 
-  while(carmen_serial_connect(&fd1, argv[1]) < 0)
-    fprintf(stderr, "Error: could not open serial port %s.\n", argv[1]);
+  while(carmen_serial_connect(&fd1, argv[1]) < 0);
+  //fprintf(stderr, "Error: could not open serial port %s.\n", argv[1]);
   carmen_serial_configure(fd1, 38400, "N");
   fprintf(stderr, "Connected to motor 1.\n");
 
-  while(carmen_serial_connect(&fd2, argv[2]) < 0)
-    fprintf(stderr, "Error: could not open serial port %s.\n", argv[2]);
+  while(carmen_serial_connect(&fd2, argv[2]) < 0);
+    //fprintf(stderr, "Error: could not open serial port %s.\n", argv[2]);
   carmen_serial_configure(fd2, 38400, "N");
   fprintf(stderr, "Connected to motor 2.\n");
 
   signal(SIGINT, shutdown_module);
 
-  while(icon_command_energize(fd1, 1) < 0)
-    fprintf(stderr, "Error: could not energize motor 1.\n");
-  while(icon_command_energize(fd2, 1) < 0)
-    fprintf(stderr, "Error: could not energize motor 2.\n");
+  //sleep(40);
+    
+  //exit(1);
+
+  while(icon_command_energize(fd1, 1) < 0);
+  //fprintf(stderr, "Error: could not energize motor 1.\n");
+  fprintf(stderr, "Energized motor 1.\n");
+  while(icon_command_energize(fd2, 1) < 0);
+  //fprintf(stderr, "Error: could not energize motor 2.\n");
+  fprintf(stderr, "Energized motor 2.\n");
 }
 
 static void init_ipc() {
@@ -227,20 +235,21 @@ static void init_ipc() {
                       CARMEN_BASE_VELOCITY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
-  err = IPC_subscribe(CARMEN_ROBOT_VELOCITY_NAME, velocity_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_VELOCITY_NAME);
-  IPC_setMsgQueueLength(CARMEN_ROBOT_VELOCITY_NAME, 1);
+  err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
+  IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
 }
 
 static void test_motors() {
 
   if(icon_command_setdc(fd1, 1, test_speed) < 0)
     fprintf(stderr, "Error: could not set velocity on motor 1.\n");
-  sleep(2);
+  sleep(4);
   icon_command_stop(fd1, 1);
+  sleep(2);
   if(icon_command_setdc(fd2, 1, test_speed) < 0)
     fprintf(stderr, "Error: could not set velocity on motor 2.\n");
-  sleep(2);
+  sleep(4);
   icon_command_stop(fd2, 1);
   sleep(2);
   if(icon_command_setdc(fd1, 1, test_speed) < 0)
@@ -250,7 +259,7 @@ static void test_motors() {
   sleep(4);
   icon_command_stop(fd1, 1);
   icon_command_stop(fd2, 1);
-  sleep(4);  
+  sleep(2);
 }
     
 int main(int argc, char **argv)
@@ -280,9 +289,11 @@ int main(int argc, char **argv)
 
     if (carmen_get_time_ms() - last_published_update > update_delay) {
       update_odom();
+      
       err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
       carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_ODOMETRY_NAME);
       last_published_update = odometry.timestamp;
+      
     }
 
     test_motors();
