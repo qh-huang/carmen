@@ -49,6 +49,9 @@ static void segway_velocity_handler(MSG_INSTANCE msgRef,
   command_tv = vel.tv;
   command_rv = vel.rv;
   last_command = carmen_get_time_ms();
+
+  fprintf(stderr, "\rTV = %.1f     RV = %.1f   Battery = %d%%     ",
+          command_tv, command_rv, (int)segway.voltage);
 }
 
 void carmen_segway_register_messages(void)

@@ -30,12 +30,6 @@
 #define     TV      0.4
 #define     RV      0.6
 
-void odometry_handler(carmen_base_odometry_message *odometry)
-{
-  fprintf(stderr, "x,y,theta = %f, %f, %f\n", odometry->x, odometry->y,
-	  odometry->theta);
-}
-
 void carmen_initialize_keyboard(void)
 {
   struct termios term_struct;
@@ -164,9 +158,6 @@ int main(int argc __attribute__ ((unused)), char **argv)
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
   register_ipc_messages();
-  carmen_base_subscribe_odometry_message(NULL, 
-					 (carmen_handler_t)odometry_handler, 
-					 CARMEN_SUBSCRIBE_LATEST);
   carmen_initialize_keyboard();
   do {
     if(carmen_read_char(&c)) {
