@@ -116,9 +116,10 @@ void robot_frontlaser_handler(carmen_laser_laser_message *frontlaser)
 void segway_pose_handler(carmen_segway_pose_message *pose)
 {
   fprintf(stderr, "S");
-  carmen_logger_fprintf(outfile, "SEGWAY %f %f %f %f %f %f %f %f %f %f %s %f\n",
+  carmen_logger_fprintf(outfile, "SEGWAY %f %f %f %f %f %f %f %f %f %f %f %f %s %f\n",
 			pose->pitch, pose->pitch_rate, pose->roll,
 			pose->roll_rate, pose->lw_velocity, pose->rw_velocity,
+			pose->tv, pose->rv,
 			pose->x, pose->y, pose->theta, pose->timestamp,
 			pose->host, carmen_get_time_ms() - logger_starttime);
 }

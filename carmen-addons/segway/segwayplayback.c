@@ -293,10 +293,10 @@ int read_message(int message_num, int publish)
   }
   if (strcmp(message_name, "SEGWAY") == 0) {
     fprintf(stderr, "S");
-    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %s %lf\n",
+    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %s %lf\n",
 	   &segway.pitch, &segway.pitch_rate, &segway.roll,
 	   &segway.roll_rate, &segway.lw_velocity, &segway.rw_velocity,
-	   &segway.x, &segway.y, &segway.theta, &segway.timestamp,
+	   &segway.tv, &segway.rv, &segway.x, &segway.y, &segway.theta, &segway.timestamp,
 	   segway.host, &playback_timestamp);
     if (publish) {
       wait_for_timestamp(playback_timestamp);

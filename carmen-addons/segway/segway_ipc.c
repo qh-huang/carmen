@@ -118,6 +118,8 @@ void carmen_segway_publish_pose(segway_p segway, double timestamp)
   pose.roll_rate = segway->roll_rate;
   pose.lw_velocity = segway->lw_velocity;
   pose.rw_velocity = segway->rw_velocity;
+  pose.tv = (segway->lw_velocity + segway->rw_velocity) / 2.0;
+  pose.rv = segway->yaw_rate;
   pose.x = segway->x;
   pose.y = segway->y;
   pose.theta = segway->theta;
