@@ -269,7 +269,7 @@ int main(int argc, char **argv)
   double update_delay = .03;
 
   if (argc < 3) {
-    fprintf(stderr, "usage: robotwalker <left motor device> <right motor device> [test_speed]\n");
+    fprintf(stderr, "usage: walker_motors <left motor device> <right motor device> [test_speed]\n");
     exit(1);
   }
   

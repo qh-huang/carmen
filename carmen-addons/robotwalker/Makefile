@@ -5,8 +5,9 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = robotwalker.c gnav.c gnav_interface.c valet.c valet_interface.c \
-		valet_test.c walkerserial.c walkerserial_interface.c
+SOURCES = walker_motors.c gnav.c gnav_interface.c valet.c valet_interface.c \
+		valet_run.c walkerserial.c walkerserial_interface.c walker.c \
+		walker_interface.c
 
 ifndef NO_GRAPHICS
 
@@ -29,8 +30,9 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = robotwalker gnav valet valet_run walkerserial libgnav_interface.a \
-		libvalet_interface.a libwalkerserial_interface.a
+TARGETS = walker_motors gnav valet valet_run walkerserial libgnav_interface.a \
+		libvalet_interface.a libwalkerserial_interface.a walker \
+		libwalker_interface.a
 
 ifndef NO_GRAPHICS
 TARGETS += gnav_gui
@@ -45,7 +47,11 @@ endif
 
 all:
 
-robotwalker:	robotwalker.o
+walker:	walker.o gnav_interface.o
+
+libwalker_interface.a:	walker_interface.o
+
+walker_motors:	walker_motors.o
 
 gnav:	gnav.o
 
