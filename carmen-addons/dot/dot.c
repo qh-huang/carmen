@@ -222,6 +222,8 @@ static int dot_classify(carmen_dot_filter_p f) {
   tdet = tf->px*tf->py;
   ddet = df->px*df->py - df->pxy*df->pxy;
 
+  return (pdet <= tdet ? CARMEN_DOT_PERSON : CARMEN_DOT_TRASH);
+
   if (pdet <= tdet) {
     if (pdet <= ddet)
       type = CARMEN_DOT_PERSON;
@@ -255,7 +257,7 @@ static double person_filter_velocity(carmen_dot_person_filter_p f) {
   vx /= (double)i;
   vy /= (double)i;
 
-  printf("vel = %.4f\n", dist(vx, vy));
+  //printf("vel = %.4f\n", dist(vx, vy));
 
   return dist(vx, vy);
 }
@@ -311,7 +313,7 @@ static void person_filter_sensor_update(carmen_dot_person_filter_p f,
   //printf("mxx = %.4f, mxy = %.4f, myx = %.4f, myy = %.4f\n", mxx, mxy, myx, myy);
 
   if (invert2d(&mxx, &mxy, &myx, &myy) < 0) {
-    carmen_warn("Error: can't invert matrix M");
+    //carmen_warn("Error: can't invert matrix M");
     return;
   }
 
@@ -375,7 +377,7 @@ static void trash_filter_sensor_update(carmen_dot_trash_filter_p f,
   myx = pyx + f->rxy;
   myy = pyy + f->ry;
   if (invert2d(&mxx, &mxy, &myx, &myy) < 0) {
-    carmen_warn("Error: can't invert matrix M");
+    //carmen_warn("Error: can't invert matrix M");
     return;
   }
   kxx = pxx*mxx+pxy*myx;
@@ -566,6 +568,9 @@ static int dot_filter(double x, double y) {
   imax = -1;
   pmax = 0.0;
 
+  if (map_prob(x, y) >= map_occupied_threshold)
+    return 1;
+
   for (i = 0; i < num_filters; i++) {
 
     ux = filters[i].person_filter.x;
@@ -588,6 +593,9 @@ static int dot_filter(double x, double y) {
       }
     }
 
+    //printf("3 person std dev's = (%.2f, %.2f)\n",
+    //   3.0*sqrt(vx/fabs(cos(theta))), 3.0*sqrt(vx/fabs(cos(theta))));
+
     ux = filters[i].trash_filter.x;
     uy = filters[i].trash_filter.y;
     vx = filters[i].trash_filter.px;
@@ -608,6 +616,9 @@ static int dot_filter(double x, double y) {
       }
     }
     
+    //printf("3 trash std dev's = (%.2f, %.2f)\n",
+    //   3.0*sqrt(vx/fabs(cos(theta))), 3.0*sqrt(vx/fabs(cos(theta))));
+
     ux = filters[i].door_filter.x;
     uy = filters[i].door_filter.y;
     vx = filters[i].door_filter.px;
@@ -627,9 +638,19 @@ static int dot_filter(double x, double y) {
 	imax = i;
       }
     }
+    //printf("3 door std dev's = (%.2f, %.2f)\n",
+    //   3.0*sqrt(vx/fabs(cos(theta))), 3.0*sqrt(vx/fabs(cos(theta))));
   }
 
+  /*
+  if (imax >= 0)
+    printf("pmax = %.4f, map_prob = %.4f at filter %d (x=%.2f, y = %.2f)\n",
+	   pmax, map_prob(x, y), filters[imax].id, x, y);
+  */
+
   if (imax >= 0 && pmax > map_prob(x, y)) {
+    //printf("pmax = %.4f, map_prob = %.4f at filter %d (x=%.2f, y = %.2f)\n",
+    //   pmax, map_prob(x, y), imax, x, y);
     filters[imax].person_filter.hidden_cnt = 0;
     person_filter_sensor_update(&filters[imax].person_filter, x, y);
     if (filters[imax].do_motion_update) {
@@ -947,122 +968,130 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
 
 static void respond_all_people_msg(MSG_INSTANCE msgRef) {
 
-  static carmen_dot_all_people_msg msg;
-  static int first = 1;
+  carmen_dot_all_people_msg *msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
-  if (first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    msg.people = NULL;
-    first = 0;
-  }
-
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_PERSON)
       n++;
 
-  msg.num_people = n;
-  msg.people = (carmen_dot_person_p)realloc(msg.people, n*sizeof(carmen_dot_person_t));
-  carmen_test_alloc(msg.people);
+  msg = (carmen_dot_all_people_msg *)calloc(1, sizeof(carmen_dot_all_people_msg));
+  carmen_test_alloc(msg);
 
-  for (n = i = 0; i < num_filters; i++) {
-    if (filters[i].type == CARMEN_DOT_PERSON) {
-      msg.people[n].id = filters[i].id;
-      msg.people[n].x = filters[i].person_filter.x;
-      msg.people[n].y = filters[i].person_filter.y;
-      msg.people[n].vx = filters[i].person_filter.px;
-      msg.people[n].vy = filters[i].person_filter.py;
-      msg.people[n].vxy = filters[i].person_filter.pxy;
-      n++;
+  printf("break 1\n");
+
+  msg->num_people = n;
+  if (n == 0)
+    msg->people = NULL;
+  else {
+    msg->people = (carmen_dot_person_p)calloc(n, sizeof(carmen_dot_person_t));
+    carmen_test_alloc(msg->people);
+    for (n = i = 0; i < num_filters; i++) {
+      if (filters[i].type == CARMEN_DOT_PERSON) {
+	msg->people[n].id = filters[i].id;
+	msg->people[n].x = filters[i].person_filter.x;
+	msg->people[n].y = filters[i].person_filter.y;
+	msg->people[n].vx = filters[i].person_filter.px;
+	msg->people[n].vy = filters[i].person_filter.py;
+	msg->people[n].vxy = filters[i].person_filter.pxy;
+	n++;
+      }
     }
   }
 
-  msg.timestamp = carmen_get_time_ms();
+  printf("break 2\n");
 
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &msg);
+  msg->timestamp = carmen_get_time_ms();
+  strcpy(msg->host, carmen_get_tenchar_host_name());
+
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_PEOPLE_MSG_NAME, msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
+
+  printf("break 3\n");
 }
 
 static void respond_all_trash_msg(MSG_INSTANCE msgRef) {
 
-  static carmen_dot_all_trash_msg msg;
-  static int first = 1;
+  carmen_dot_all_trash_msg *msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
-  if (first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    msg.trash = NULL;
-    first = 0;
-  }
-
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_TRASH)
       n++;
 
-  msg.num_trash = n;
-  msg.trash = (carmen_dot_trash_p)realloc(msg.trash, n*sizeof(carmen_dot_trash_t));
-  carmen_test_alloc(msg.trash);
+  msg = (carmen_dot_all_trash_msg *)calloc(1, sizeof(carmen_dot_all_trash_msg));
+  carmen_test_alloc(msg);
 
-  for (n = i = 0; i < num_filters; i++) {
-    if (filters[i].type == CARMEN_DOT_TRASH) {
-      msg.trash[n].id = filters[i].id;
-      msg.trash[n].x = filters[i].trash_filter.x;
-      msg.trash[n].y = filters[i].trash_filter.y;
-      msg.trash[n].vx = filters[i].trash_filter.px;
-      msg.trash[n].vy = filters[i].trash_filter.py;
-      msg.trash[n].vxy = filters[i].trash_filter.pxy;
-      n++;
+  msg->num_trash = n;
+  if (n == 0)
+    msg->trash = NULL;
+
+  else {
+    msg->trash = (carmen_dot_trash_p)calloc(n, sizeof(carmen_dot_trash_t));
+    carmen_test_alloc(msg->trash);
+    for (n = i = 0; i < num_filters; i++) {
+      if (filters[i].type == CARMEN_DOT_TRASH) {
+	msg->trash[n].id = filters[i].id;
+	msg->trash[n].x = filters[i].trash_filter.x;
+	msg->trash[n].y = filters[i].trash_filter.y;
+	msg->trash[n].vx = filters[i].trash_filter.px;
+	msg->trash[n].vy = filters[i].trash_filter.py;
+	msg->trash[n].vxy = filters[i].trash_filter.pxy;
+	n++;
+      }
     }
   }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg->timestamp = carmen_get_time_ms();
+  strcpy(msg->host, carmen_get_tenchar_host_name());
 
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, &msg);
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_TRASH_MSG_NAME, msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_TRASH_MSG_NAME);
 }
 
 static void respond_all_doors_msg(MSG_INSTANCE msgRef) {
 
-  static carmen_dot_all_doors_msg msg;
-  static int first = 1;
+  carmen_dot_all_doors_msg *msg;
   IPC_RETURN_TYPE err;
   int i, n;
   
-  if (first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    msg.doors = NULL;
-    first = 0;
-  }
-
   for (n = i = 0; i < num_filters; i++)
     if (filters[i].type == CARMEN_DOT_DOOR)
       n++;
 
-  msg.num_doors = n;
-  msg.doors = (carmen_dot_door_p)realloc(msg.doors, n*sizeof(carmen_dot_door_t));
-  carmen_test_alloc(msg.doors);
+  msg = (carmen_dot_all_doors_msg *)calloc(1, sizeof(carmen_dot_all_doors_msg));
+  carmen_test_alloc(msg);
 
-  for (n = i = 0; i < num_filters; i++) {
-    if (filters[i].type == CARMEN_DOT_DOOR) {
-      msg.doors[n].id = filters[i].id;
-      msg.doors[n].x = filters[i].door_filter.x;
-      msg.doors[n].y = filters[i].door_filter.y;
-      msg.doors[n].theta = filters[i].door_filter.t;
-      msg.doors[n].vx = filters[i].door_filter.px;
-      msg.doors[n].vy = filters[i].door_filter.py;
-      msg.doors[n].vxy = filters[i].door_filter.pxy;
-      msg.doors[n].vtheta = filters[i].door_filter.pt;
-      n++;
+  msg->num_doors = n;
+  if (n == 0)
+    msg->doors = NULL;
+
+  else {
+    msg->doors = (carmen_dot_door_p)calloc(n, sizeof(carmen_dot_door_t));
+    carmen_test_alloc(msg->doors);
+    for (n = i = 0; i < num_filters; i++) {
+      if (filters[i].type == CARMEN_DOT_DOOR) {
+	msg->doors[n].id = filters[i].id;
+	msg->doors[n].x = filters[i].door_filter.x;
+	msg->doors[n].y = filters[i].door_filter.y;
+	msg->doors[n].theta = filters[i].door_filter.t;
+	msg->doors[n].vx = filters[i].door_filter.px;
+	msg->doors[n].vy = filters[i].door_filter.py;
+	msg->doors[n].vxy = filters[i].door_filter.pxy;
+	msg->doors[n].vtheta = filters[i].door_filter.pt;
+	n++;
+      }
     }
   }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg->timestamp = carmen_get_time_ms();
+  strcpy(msg->host, carmen_get_tenchar_host_name());
 
-  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, &msg);
+  err = IPC_respondData(msgRef, CARMEN_DOT_ALL_DOORS_MSG_NAME, msg);
   carmen_test_ipc(err, "Could not respond",
 		  CARMEN_DOT_ALL_DOORS_MSG_NAME);
 }
@@ -1080,6 +1109,8 @@ static void dot_query_handler
   IPC_freeByteArray(callData);
   carmen_test_ipc_return(err, "Could not unmarshall",
 			 IPC_msgInstanceName(msgRef));
+
+  printf("--> received query %d\n", query.type);
 
   switch(query.type) {
   case CARMEN_DOT_PERSON:
