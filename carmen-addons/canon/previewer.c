@@ -36,6 +36,7 @@
 
 #include <carmen/carmen_graphics.h>
 #include "canon_interface.h"
+#include "jpegread.h"
 
 GtkWidget *drawing_area;
 GdkGC *gc = NULL;

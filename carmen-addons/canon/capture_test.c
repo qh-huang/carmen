@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
   /* get an image from the canon server */
   if((image = carmen_canon_get_image(GET_THUMB, image_over_ipc, image_to_drive,
-				     use_flash ? FLASH_ON : FLASH_OFF))== NULL)
+				     use_flash ? 1 : 0))== NULL)
     carmen_die("Error: could not get image from server.\n");
   fprintf(stderr, "Received image.\n");
 

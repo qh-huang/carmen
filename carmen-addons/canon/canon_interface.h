@@ -37,9 +37,7 @@
 #ifndef CANON_INTERFACE_H
 #define CANON_INTERFACE_H
 
-#include "canon.h"
 #include "canon_messages.h"
-#include "jpegread.h"
 
 /* gets an image from the server.  Parameters specify where the image should
    be delivered */
