@@ -12,7 +12,7 @@ PUBLIC_INCLUDES =
 PUBLIC_LIBRARIES = 
 PUBLIC_BINARIES = 
 MAN_PAGES =
-SOURCES = canon.c canon_server.c capture_test.c parse-log.c
+SOURCES = canon.c canon_server.c canon_ipc.c capture_test.c parse-log.c
 TARGETS = libcanon.a libcanon_interface.a canon_server capture_test parse-log
 
 ifndef NO_GRAPHICS		
@@ -34,7 +34,7 @@ capture_test:	capture_test.o libcanon_interface.a
 
 previewer:	previewer.o libcanon_interface.a
 
-canon_server:	canon_server.o libcanon.a
+canon_server:	canon_server.o canon_ipc.o libcanon.a
 
 parse-log:	parse-log.o
 
