@@ -3,6 +3,69 @@
 #include "dot.h"
 
 
+#define MAX_PERSON_FILTER_VELOCITY_WINDOW 1000
+
+typedef struct dot_person_filter {
+  double vx[MAX_PERSON_FILTER_VELOCITY_WINDOW];
+  double vy[MAX_PERSON_FILTER_VELOCITY_WINDOW];
+  int vpos;
+  int vlen;
+  int hidden_cnt;
+  double x;
+  double y;
+  double px;
+  double py;
+  double pxy;
+  double a;
+  double qx;
+  double qy; 
+  double qxy;
+  double rx;
+  double ry;
+  double rxy;
+} carmen_dot_person_filter_t, *carmen_dot_person_filter_p;
+
+typedef struct dot_trash_filter {
+  double x;
+  double y;
+  double px;
+  double py;
+  double pxy;
+  double a;
+  double qx;
+  double qy;
+  double qxy;
+  double rx;
+  double ry;
+  double rxy;
+} carmen_dot_trash_filter_t, *carmen_dot_trash_filter_p;
+
+typedef struct dot_door_filter {
+  double x;
+  double y;
+  double t;  //theta
+  double px;
+  double py;
+  double pt;
+  double pxy;
+  double a;
+  double qx;
+  double qy;
+  double qxy;
+  double qt;
+} carmen_dot_door_filter_t, *carmen_dot_door_filter_p;
+
+typedef struct dot_filter {
+  carmen_dot_person_filter_t person_filter;
+  carmen_dot_trash_filter_t trash_filter;
+  carmen_dot_door_filter_t door_filter;
+  int type;
+  int allow_change;
+  int sensor_update_cnt;
+  int do_motion_update;
+} carmen_dot_filter_t, *carmen_dot_filter_p;
+
+
 static double default_person_filter_a;
 static double default_person_filter_px;
 static double default_person_filter_py;
@@ -832,13 +895,13 @@ void shutdown_module(int sig) {
   exit(0);
 }
 
-int main(int argc __attribute__ ((unused)), char *argv[]) {
+int main(int argc, char *argv[]) {
 
   //int c;
 
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
-  carmen_randomize();
+  carmen_randomize(&argc, &argv);
 
   signal(SIGINT, shutdown_module);
 
