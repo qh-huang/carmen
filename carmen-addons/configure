@@ -54,7 +54,7 @@ EOF
 
 print "\nSearching for libusb...\n";
 
-$libusb_path = "/usr/local";
+$libusb_path = "/usr";
 
 if (`ls $libusb_path/include/usb.h | wc -l` + 0 and
     `grep __USB_H__ $libusb_path/include/usb.h | wc -l` + 0 and
