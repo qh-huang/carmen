@@ -7,9 +7,9 @@ LFLAGS += -lrobot_interface -llogger_io -lcanlib -pthread -lparam_interface -lba
 MODULE_NAME = SEGWAY
 MODULE_COMMENT = Segway RMP Base Module
 
-SOURCES = segway.c keystick.c
-PUBLIC_INCLUDES = 
-PUBLIC_LIBRARIES = 
+SOURCES = segwaycore.c segway_interface.c segwaylogger.c segway_test.c segway.c keystick.c
+PUBLIC_INCLUDES = segway_messages.h segway_interface.h
+PUBLIC_LIBRARIES = libsegway_interface.a
 PUBLIC_BINARIES = segway
 MAN_PAGES =
 
