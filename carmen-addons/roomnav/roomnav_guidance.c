@@ -14,8 +14,10 @@ static int goal_set = 0; //whether goal is set or not
 static int room_set = 0; //whether room has been set or not
 static int wait_for_path = 0;
 
-const float PI_QUARTER = M_PI / 4;
-const float PI_3QUARTER = 3 * M_PI / 4;
+const double PI_HALF = M_PI / 2.0;
+const double PI_QUARTER = M_PI / 4.0;
+const double PI_3QUARTER = 3.0 * M_PI / 4;
+const double PI_TWELFTH = M_PI / 12.0;
 
 #define NONE -1
 #define FORWARD 0
@@ -29,11 +31,19 @@ const float PI_3QUARTER = 3 * M_PI / 4;
 #define ENTER_ROOM_IN_FRONT 6
 #define LEFT_CORNER 7
 #define RIGHT_CORNER 8
+#define GO_TO_END_OF_HALLWAY 9
+#define TURN_LEFT_AT_INTERSECTION 10
+#define TURN_RIGHT_AT_INTERSECTION 11
 
 //util
-#define INTERSECTION_THRESHOLD 2.0
-#define HALLWAY_ANGLE_DIFF_THRESHOLD M_PI/4.0
+#define INTERSECTION_THRESHOLD 2.0 //not currently in use
+const float HALLWAY_ANGLE_DIFF_THRESHOLD = M_PI/4.0;
 #define CORNER_DIST_THRESHOLD 3.0
+#define NEAR_DOOR 2.0 //parameter for saying "go down the hallway"
+
+const float PERPENDICULAR = M_PI / 12.0; 
+
+
 
 
 static int last_dir = -1;
@@ -114,6 +124,8 @@ static void fork_speech(char *s) {
   
   int speech_pid;
   
+  //return; //REMOVE_ME
+
   speech_pid = fork();
   if (speech_pid == 0)
     {
@@ -130,6 +142,7 @@ static void fork_speech(char *s) {
 void print_dir_for_user(int dir)
 {
   if (last_dir != dir) {
+   
     if(dir == FORWARD) {
       printf("GO FORWARD!\n");
       fork_speech("\"go forward\"");
@@ -157,8 +170,19 @@ void print_dir_for_user(int dir)
     } else if (dir == RIGHT_CORNER) {
       printf("TURN RIGHT AT THE CORNER\n");
       fork_speech("\"turn right at the corner\"");
+    } else if(dir == GO_TO_END_OF_HALLWAY) {
+      printf("GO TO THE END OF THE HALLWAY\n");
+      fork_speech("\"go to the end of the hallway\"");
+    } else if(dir == TURN_LEFT_AT_INTERSECTION) {
+      printf("TURN LEFT AT THE INTERSECTION\n");
+      fork_speech("\"turn left at the intersection\"");
+    } else if(dir == TURN_RIGHT_AT_INTERSECTION) {
+      printf("TURN RIGHT AT THE INTERSECTION\n");
+      fork_speech("\"turn right at the intersection\"");
     }
     
+
+
     last_dir = dir;
   }
 
@@ -182,6 +206,66 @@ void shutdown_module(int sig)
 
 
 
+/** 
+    Return whether roughly perpendicular or not.
+*/
+int perpendicular(double theta) {
+
+  //printf("PERPENDICULAR: theta is: %f\n", theta);
+  if(((theta > PI_HALF - PI_TWELFTH) && (theta < PI_HALF + PI_TWELFTH)) 
+     || ((theta < -1*PI_HALF + PI_TWELFTH) && (theta > -1*PI_HALF - PI_TWELFTH))) {
+    return 1;
+  }
+  return 0;
+
+}
+
+
+
+/**
+   Return whether roughly parallel or not.
+   Assumes theta is normalized. 
+*/
+int parallel(double theta) {
+
+  //printf("PARALLEL: theta is: %f\n", theta);
+  if(((theta > -1 * PI_TWELFTH) && (theta < PI_TWELFTH)) 
+     || (theta > M_PI - PI_TWELFTH)
+     || (theta < -1*M_PI + PI_TWELFTH)) {
+    return 1;
+  }
+  return 0;
+
+}
+
+
+/**
+   To call at the end of both cases:
+   HALLWAY->ROOM and HALLWAY->HALLWAY
+   @param door_struct The next door in the robot's path to goal
+   @param robot_pose  Robot's current pose
+   @param dir         Direction that the robot should be turning next to face door
+   @return decision   Command decision
+*/
+int get_state_decision_general_hallway(carmen_point_p cur_room_end,
+				       carmen_point_p next_door_pose)
+{
+  
+  //for "go to end of hallway"
+  //if the door we are going to next is within a certain distance
+  //from the endpoint of the room closer to the door,
+  //then say "go to the end of hallway"
+  if(carmen_distance(cur_room_end, next_door_pose) < NEAR_DOOR) {
+    return GO_TO_END_OF_HALLWAY;
+  }
+  
+  return -1;
+  
+
+}
+
+
+
 /**
    Retrieve the current state of things
    @param door_struct The next door in the robot's path to goal
@@ -192,19 +276,31 @@ void shutdown_module(int sig)
 int get_state_decision(carmen_point_t robot_pose, int dir) 
 {
   carmen_door_t next_door = (topology->doors[path_msg.path[0]]);
+  carmen_door_t following_door;
   double room_angle_diff, door_angle_diff;
   double door_theta;
-  double distance_from_door;
+  double distance_from_door = -1;
   double tmp;
-  carmen_point_t next_room_e1;
-  carmen_point_t next_room_e2;
+  double tmp_x, tmp_y;
+
+  //end-points of hallway to rotate, for hallway->hallway case
+  carmen_point_t room_to_rotate_e1;
+  carmen_point_t room_to_rotate_e2;  
+
   carmen_room_p cur_room = NULL;
   carmen_room_p next_room = NULL;
-  int is_side_door;
-  int corner;
+  carmen_room_p following_room = NULL;
+  int is_side_door; //identify location of door wrt corner
+  int corner; //identify left or right corner
+  carmen_point_t cur_room_end; //endpoint of cur_room closer to next_room
+  int is_hallway_bend = 1; 
+
+
   carmen_world_point_t world_point; 
   carmen_map_point_t map_point; 
   int room_actual;
+
+  double theta_robot_door; //angle between robot's pose and next_door's pose
 
   world_point.map = &map; 
   map_point.map = &map; 
@@ -227,26 +323,30 @@ int get_state_decision(carmen_point_t robot_pose, int dir)
     next_room = &(topology->rooms[next_door.room1]);
   }
   
+  distance_from_door = carmen_distance(&robot_pose, &(next_door.pose));
+  
+  theta_robot_door = carmen_normalize_theta(robot_pose.theta - next_door.pose.theta);
+  //printf("theta_robot_door: %f\n", theta_robot_door);
+  
+
   //case-by-case
   switch(cur_room->type) {
   case CARMEN_ROOM_TYPE_ROOM:
     switch(next_room->type) {
-    case CARMEN_ROOM_TYPE_ROOM: //room->room
+    case CARMEN_ROOM_TYPE_ROOM: //ROOM->ROOM
       
       //CASE: if you are 2 metres from a real door and facing it
       if(next_door.is_real_door) {
-	distance_from_door = carmen_distance(&robot_pose, &(next_door.pose));
 	if ((distance_from_door < 2.0) && (dir == FORWARD)) {
 	  return GO_THROUGH_DOORWAY;
 	}
       }
       
       break;
-    case CARMEN_ROOM_TYPE_HALLWAY:
+    case CARMEN_ROOM_TYPE_HALLWAY: //ROOM->HALLWAY
       
       //CASE: if you are 2 metres from a real door and facing it
       if(next_door.is_real_door) {
-	distance_from_door = carmen_distance(&robot_pose, &(next_door.pose));
 	if ((distance_from_door < 2.0) && (dir == FORWARD)) {
 	  return ENTER_HALLWAY;
 	}
@@ -257,84 +357,172 @@ int get_state_decision(carmen_point_t robot_pose, int dir)
     break;
     
   case CARMEN_ROOM_TYPE_HALLWAY:
+
+    //figure out which of the current_room's endpoints
+    //is the one facing the (real) next room
+    //know by figuring out which one is nearer to next_door
+    if(carmen_distance(&(cur_room->e1), &(next_door.pose)) < 
+       carmen_distance(&(cur_room->e2), &(next_door.pose))) {
+      cur_room_end = cur_room->e1;
+    } else {
+      cur_room_end = cur_room->e2;
+    }
+        
     switch(next_room->type) {
-    case CARMEN_ROOM_TYPE_ROOM:
+    case CARMEN_ROOM_TYPE_ROOM: //HALLWAY->ROOM
       
       //CASE: if you are 2 metres from a real door and facing it
       if(next_door.is_real_door) {
-	distance_from_door = carmen_distance(&robot_pose, &(next_door.pose));
 	if ((distance_from_door < 2.0) && (dir == FORWARD)) {
 	  return ENTER_ROOM_IN_FRONT;
 	}
       }
       
+      if(dir == FORWARD) {
+	return get_state_decision_general_hallway(&cur_room_end, &(next_door.pose));
+      }
+
       break;
-    case CARMEN_ROOM_TYPE_HALLWAY:
-      
-      if (carmen_distance(&robot_pose, &next_door.pose) > 5.0)
-	return -1;
+    case CARMEN_ROOM_TYPE_HALLWAY: //HALLWAY->HALLWAY
+
+      if (distance_from_door > 5.0) 
+	is_hallway_bend = 0;
+      //return -1;
+	
 
       room_angle_diff = fabs(carmen_normalize_theta(next_room->theta - cur_room->theta));
       if (room_angle_diff > M_PI/2.0)
 	room_angle_diff = M_PI - room_angle_diff;
-      if (room_angle_diff < HALLWAY_ANGLE_DIFF_THRESHOLD)  // no intersection or corner detected
-	return -1;
+      if (room_angle_diff < HALLWAY_ANGLE_DIFF_THRESHOLD)  // no intersection or corner detected ~ parallel
+	is_hallway_bend = 0;
+	//return -1;
       
       // otherwise, classify as T-intersection, corner, or X-intersection
       
-      door_angle_diff = fabs(carmen_normalize_theta(next_door.pose.theta - cur_room->theta));
-      if (door_angle_diff > M_PI/2.0)
-	door_angle_diff = M_PI - door_angle_diff;
-      is_side_door = (door_angle_diff > M_PI/4.0);
-      
-      door_theta = next_door.pose.theta;
-      if (is_side_door) {
-	next_room_e1 = cur_room->e1;
-	next_room_e2 = cur_room->e2;
-	if (room_msg.room == next_door.room1)
-	  door_theta = carmen_normalize_theta(door_theta + M_PI);
+      if(is_hallway_bend) {
+
+	//check if side door or right in front -- is_side_door
+	door_angle_diff = fabs(carmen_normalize_theta(next_door.pose.theta - cur_room->theta));
+	if (door_angle_diff > M_PI/2.0)
+	  door_angle_diff = M_PI - door_angle_diff;
+	is_side_door = (door_angle_diff > M_PI/4.0);
+	
+	door_theta = next_door.pose.theta;
+	
+	if (is_side_door) {
+	  room_to_rotate_e1 = cur_room->e1;
+	  room_to_rotate_e2 = cur_room->e2;	
+	  
+	  if (room_msg.room == next_door.room1)
+	    door_theta = carmen_normalize_theta(door_theta + M_PI);
+	}
+	else {
+	  room_to_rotate_e1 = next_room->e1;
+	  room_to_rotate_e2 = next_room->e2;
+	  if (room_msg.room == next_door.room2)
+	    door_theta = carmen_normalize_theta(door_theta + M_PI);
+	}
+	
+	room_to_rotate_e1.x -= next_door.pose.x;
+	room_to_rotate_e1.y -= next_door.pose.y;
+	room_to_rotate_e2.x -= next_door.pose.x;
+	room_to_rotate_e2.y -= next_door.pose.y;
+	
+	// rotate by -theta of next_door
+	carmen_rotate_2d(&(room_to_rotate_e1.x), &(room_to_rotate_e1.y), -door_theta);
+	carmen_rotate_2d(&(room_to_rotate_e2.x), &(room_to_rotate_e2.y), -door_theta);
+	
+	// this ensures room_to_rotate_e1.y < room_to_rotate_e2.y
+	if (room_to_rotate_e2.y < room_to_rotate_e1.y) {
+	  tmp = room_to_rotate_e2.y;
+	  room_to_rotate_e2.y = room_to_rotate_e1.y;
+	  room_to_rotate_e1.y = tmp;
+	}
+	
+	corner = 0;
+
+	//printf("rtr_e1.y: %f, rtr_e2.y: %f\n", room_to_rotate_e1.y, room_to_rotate_e2.y);
+	if (room_to_rotate_e1.y > -CORNER_DIST_THRESHOLD) {
+	  corner = 1;
+	} else if (room_to_rotate_e2.y < CORNER_DIST_THRESHOLD) {
+	  corner = 2;
+	} else { //is an intersection -- always not side door
+	  corner = 3; //intersection
+	}
+
+
+	if (is_side_door) {
+	  
+	  //if in region of cur_room that is facing next_room, give F,B,R,L 
+	  //guidance instead of with reference to corner.
+	  //double tmp2 = carmen_distance(&robot_pose, &cur_room_end);
+	  //printf("width of door is: %f, tmp2: %f\n", next_door.width, tmp2);
+	  //if((tmp2 = carmen_distance(&robot_pose, &cur_room_end)) < next_door.width) {
+	  if(carmen_distance(&robot_pose, &cur_room_end) < next_door.width) {
+	    //printf("NEAR DOOR, width of door is: %f\n", next_door.width);
+	    break;
+	  }
+	  
+	  if(perpendicular(theta_robot_door)) {
+	    if (corner == 1) {
+	      return RIGHT_CORNER;
+	    } else if (corner == 2) {
+	      return LEFT_CORNER;
+	    }
+	  }
+	}
+	else { //not side door
+	  
+	  if(parallel(theta_robot_door)) {
+	    if (corner == 1) {
+	      return LEFT_CORNER;
+	    } else if (corner == 2) {
+	      return RIGHT_CORNER;	    
+	    } else if(corner == 3) {
+	      
+	      if(path_msg.pathlen == 1) { //not doing anything bout this
+		break; 
+	      }
+
+	      following_door = (topology->doors[path_msg.path[1]]);
+	      
+	      if(next_room->num == following_door.room1) {
+		following_room = &(topology->rooms[following_door.room2]); 
+	      } else {
+		following_room = &(topology->rooms[following_door.room1]); 
+	      }
+	      
+	      tmp_x = following_room->ux;
+	      tmp_y = following_room->uy;
+	      tmp_x -= next_door.pose.x;
+	      tmp_y -= next_door.pose.y;
+	      // rotate by -theta of next_door
+	      carmen_rotate_2d(&tmp_x, &tmp_y, -door_theta);
+
+	      //printf("tmp_x: %f, tmp_y: %f\n", tmp_x, tmp_y);
+
+	      if(tmp_y > 0) {
+			return TURN_LEFT_AT_INTERSECTION;
+	      } else {
+		return TURN_RIGHT_AT_INTERSECTION;
+	      }
+
+
+	    }
+
+
+	  }
+	  
+	}
+
+	
+      } //end is_hallway_bend
+
+      if(dir == FORWARD) {
+	return get_state_decision_general_hallway(&cur_room_end, &(next_door.pose));
       }
-      else {
-	next_room_e1 = next_room->e1;
-	next_room_e2 = next_room->e2;
-	if (room_msg.room == next_door.room2)
-	  door_theta = carmen_normalize_theta(door_theta + M_PI);
-      }
-      
-      next_room_e1.x -= next_door.pose.x;
-      next_room_e1.y -= next_door.pose.y;
-      next_room_e2.x -= next_door.pose.x;
-      next_room_e2.y -= next_door.pose.y;
-      
-      // rotate by -theta of next_door
-      carmen_rotate_2d(&(next_room_e1.x), &(next_room_e1.y), -door_theta);
-      carmen_rotate_2d(&(next_room_e2.x), &(next_room_e2.y), -door_theta);
-      
-      if (next_room_e2.y < next_room_e1.y) {
-	tmp = next_room_e2.y;
-	next_room_e2.y = next_room_e1.y;
-	next_room_e1.y = tmp;
-      }
-      
-      corner = 0;
-      if (next_room_e1.y > -CORNER_DIST_THRESHOLD)
-	corner = 1;
-      else if (next_room_e2.y < CORNER_DIST_THRESHOLD)
-	corner = 2;
-      
-      if (is_side_door) {
-	if (corner == 1)
-	  return RIGHT_CORNER;
-	else if (corner == 2)
-	  return LEFT_CORNER;
-      }
-      else {
-	if (corner == 1)
-	  return LEFT_CORNER;
-	else if (corner == 2)
-	  return RIGHT_CORNER;	    
-      }
-      
+
+
       break;
       
     }
@@ -351,6 +539,9 @@ int get_state_decision(carmen_point_t robot_pose, int dir)
   
   return -1;
 }
+
+
+
 
 
 
@@ -491,8 +682,8 @@ void globalpos_msg_handler()
   
   //figure out what state of affairs we're in
   //and apply based on that
-  //int decision = get_state_decision( topology->doors[path_msg.path[0]], robot_pose, dir );
-  decision = get_state_decision( robot_pose, dir );
+  decision = get_state_decision( robot_pose, dir);
+
   if (wait_for_path == 4) {
     printf(" --> waiting for path\n");
     fflush(0);
@@ -502,6 +693,7 @@ void globalpos_msg_handler()
     wait_for_path--;
     return;
   }
+
   if(decision != -1) {
     dir = decision;
   }
