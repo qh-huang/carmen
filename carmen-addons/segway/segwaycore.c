@@ -57,9 +57,9 @@ void segway_update_status(segway_p segway)
     break;
   case SEGWAY_STATUS2_ID:
     temp = (buffer[0] << 8) | buffer[1];
-    segway->pitch = -1 * temp / 7.8 * M_PI / 180.0;
+    segway->pitch = 1 * temp / 7.8 * M_PI / 180.0;
     temp = (buffer[2] << 8) | buffer[3];
-    segway->pitch_rate = -1 * temp / 7.8 * M_PI / 180.0;
+    segway->pitch_rate = 1 * temp / 7.8 * M_PI / 180.0;
     temp = (buffer[4] << 8) | buffer[5];
     segway->roll = temp / 7.8 * M_PI / 180.0;
     temp = (buffer[6] << 8) | buffer[7];
