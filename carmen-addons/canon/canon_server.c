@@ -131,6 +131,18 @@ void initialize_ipc_messages(void)
                       CARMEN_CANON_PREVIEW_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_CANON_PREVIEW_NAME);
 
+  /* register preview message */
+  err = IPC_defineMsg(CARMEN_CANON_PREVIEW_START_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_PREVIEW_START_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_CANON_PREVIEW_START_NAME);
+
+  /* register preview message */
+  err = IPC_defineMsg(CARMEN_CANON_PREVIEW_STOP_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_PREVIEW_STOP_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_CANON_PREVIEW_STOP_NAME);
+
   /* subscribe to image requests */
   err = IPC_subscribe(CARMEN_CANON_IMAGE_REQUEST_NAME, 
 		      canon_image_query, NULL);
@@ -146,7 +158,7 @@ void initialize_ipc_messages(void)
   IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_START_NAME, 100);
 
   err = IPC_subscribe(CARMEN_CANON_PREVIEW_STOP_NAME,
-		      start_preview, NULL);
+		      stop_preview, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe to", 
                        CARMEN_CANON_PREVIEW_STOP_NAME);
   IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_STOP_NAME, 100);

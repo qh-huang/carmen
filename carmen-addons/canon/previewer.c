@@ -89,6 +89,7 @@ void shutdown_module(int x)
 {
   if(x == SIGINT) {
     carmen_canon_stop_preview_command();
+    close_ipc();
     exit(0);
   }
 }
