@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <values.h>
 #include "cerebellum_com.h"
+#include "cerebellum_interface.h"
 
 #undef _REENTRANT
 
@@ -82,6 +83,8 @@ static char *dev_name;
 static int State[4];
 static int set_velocity = 0;
 static int fire_gun = 0;
+static int tilt_gun = 0;
+static int tilt_gun_angle = 0;
 static int command_vl = 0, command_vr = 0;
 static double last_command = 0;
 static double last_update = 0;
@@ -289,11 +292,24 @@ command_robot(void)
   int acc;
   int error = 0;
 
+  char hit,where;
+
   if(fire_gun)
     {
-      //carmen_cerebellum_fire();
+      carmen_cerebellum_fire();
       fire_gun = 0;
     }
+
+  if(tilt_gun)
+    {
+      carmen_cerebellum_tilt(tilt_gun_angle);
+    }
+
+  //get the shroud every loop... will this cause problems??
+  error = carmen_cerebellum_get_shroud(&hit,&where);
+  if(error) printf("ERROR IN GET SHROUD\n");
+  else printf("Get Shroud returns hit: %d where: %d\n", (int)hit,(int)where);
+
 
   if (set_velocity)
     {
@@ -403,6 +419,7 @@ command_robot(void)
 	printf("voltage: %lf\n",voltage);
 
       voltage_time_elapsed=0;
+
     }
 
   //increment the temperature check timer, check it every 3 seconds
@@ -422,6 +439,8 @@ command_robot(void)
 	       left_temperature,right_temperature);
 
       temperature_time_elapsed=0;
+
+
     }
  
 
@@ -560,29 +579,53 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   set_velocity = 1;
 }
 
-/*
+
 static void 
 gun_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 		 void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err;
-  carmen_robot_cereb_fire_message v;
+  CerebellumFireGunMessage v;
 
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &v,
-                     sizeof(carmen_robot_cereb_fire_message));
+                     sizeof(CerebellumFireGunMessage));
   IPC_freeByteArray(callData);
 
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  printf("firing\r\n");
+  printf("got a fire gun message\r\n");
 
   fire_gun = 1;
 }
-*/
+
+static void 
+tilt_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		 void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  CerebellumTiltGunMessage v;
+
+  FORMATTER_PTR formatter;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &v,
+                     sizeof(CerebellumTiltGunMessage));
+  IPC_freeByteArray(callData);
+
+  carmen_test_ipc_return(err, "Could not unmarshall", 
+			 IPC_msgInstanceName(msgRef));
+
+  printf("got a tilt gun message t: %d\r\n", v.tilt_angle);
+
+  tilt_gun = 1;
+  tilt_gun_angle = v.tilt_angle;
+}
+
+
 int 
 carmen_cerebellum_initialize_ipc(void)
 {
@@ -597,15 +640,28 @@ carmen_cerebellum_initialize_ipc(void)
                       CARMEN_BASE_VELOCITY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
+
+  err = IPC_defineMsg(CEREBELLUM_FIRE_GUN_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CEREBELLUM_FIRE_GUN_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CEREBELLUM_FIRE_GUN_MESSAGE_NAME);
+
+  err = IPC_defineMsg(CEREBELLUM_TILT_GUN_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CEREBELLUM_TILT_GUN_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CEREBELLUM_TILT_GUN_MESSAGE_NAME);
+
   /* setup incoming message handlers */
 
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
+  
+  err = IPC_subscribe(CEREBELLUM_FIRE_GUN_MESSAGE_NAME, gun_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe",CEREBELLUM_FIRE_GUN_MESSAGE_NAME );
+  IPC_setMsgQueueLength(CEREBELLUM_FIRE_GUN_MESSAGE_NAME, 1);
 
-  //  err = IPC_subscribe(CARMEN_ROBOT_CEREB_FIRE_NAME, gun_handler, NULL);
-  //carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_CEREB_FIRE_NAME);
-  //IPC_setMsgQueueLength(CARMEN_ROBOT_CEREB_FIRE_NAME, 1);
+  err = IPC_subscribe(CEREBELLUM_TILT_GUN_MESSAGE_NAME, tilt_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe",CEREBELLUM_TILT_GUN_MESSAGE_NAME );
+  IPC_setMsgQueueLength(CEREBELLUM_TILT_GUN_MESSAGE_NAME, 1);
 
   return IPC_No_Error;
 }
