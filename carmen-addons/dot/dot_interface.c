@@ -34,6 +34,11 @@ int carmen_dot_get_all_people(carmen_dot_person_p *people) {
   carmen_dot_query query;
   carmen_dot_all_people_msg *response;
 
+  err = IPC_defineMsg(CARMEN_DOT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DOT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_DOT_QUERY_NAME);
+
   query.type = CARMEN_DOT_PERSON;
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
