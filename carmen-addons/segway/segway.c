@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     }
     segway_update_status(&segway);
   } while(!quit_signal);
-
+  fprintf(stderr, "\n");
   segway_stop(&segway);
   segway_free(&segway);
   return 0;

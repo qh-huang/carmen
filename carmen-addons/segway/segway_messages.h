@@ -57,6 +57,9 @@ typedef struct {
 #define CARMEN_SEGWAY_ALIVE_NAME "carmen_segway_alive"
 #define CARMEN_SEGWAY_ALIVE_FMT  ""
 
+#define CARMEN_SEGWAY_KILL_NAME "carmen_segway_kill"
+#define CARMEN_SEGWAY_KILL_FMT  ""
+
 #ifdef __cplusplus
 }
 #endif

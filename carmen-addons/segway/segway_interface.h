@@ -48,6 +48,8 @@ void
 carmen_segway_subscribe_alive_message(carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+void carmen_segway_kill_command(void);
+
 #ifdef __cplusplus
 }
 #endif
