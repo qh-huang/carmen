@@ -175,6 +175,14 @@ static void init_ipc() {
 
   IPC_RETURN_TYPE err;
 
+  err = IPC_defineMsg(CARMEN_BASE_ODOMETRY_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_BASE_ODOMETRY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_ODOMETRY_NAME);
+
+  err = IPC_defineMsg(CARMEN_BASE_VELOCITY_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_BASE_VELOCITY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
+
   err = IPC_subscribe(CARMEN_ROBOT_VELOCITY_NAME, velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_ROBOT_VELOCITY_NAME, 1);
@@ -191,7 +199,11 @@ int main(int argc __attribute__ ((unused)), char **argv)
   init_ipc();
 
   while(1) {
+
     sleep_ipc(0.01);
+
+    //err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
+    //carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_ODOMETRY_NAME);
 
     /*
     if(icon_command_setdc(fd1, 1, speed) < 0)
