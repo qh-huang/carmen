@@ -1265,31 +1265,58 @@ static void publish_room_msg() {
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_GNAV_ROOM_MSG_NAME);  
 }
 
-static void gnav_rooms_topology_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-					      void *clientData __attribute__ ((unused))) {
+static void gnav_rooms_topology_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
 
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
-  carmen_gnav_rooms_topology_msg response;
+  carmen_gnav_rooms_topology_msg *response;
+  int i;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   IPC_freeByteArray(callData);
   
-  response.timestamp = carmen_get_time_ms();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response = (carmen_gnav_rooms_topology_msg *)
+    calloc(1, sizeof(carmen_gnav_rooms_topology_msg));
+  carmen_test_alloc(response);
 
-  response.topology.rooms = (carmen_room_p) calloc(num_rooms, sizeof(carmen_room_t));
-  carmen_test_alloc(response.topology.rooms);
-  memcpy(response.topology.rooms, rooms, num_rooms * sizeof(carmen_room_t));
-  response.topology.num_rooms = num_rooms;
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
 
-  response.topology.doors = (carmen_door_p) calloc(num_doors, sizeof(carmen_room_t));
-  carmen_test_alloc(response.topology.doors);
-  memcpy(response.topology.doors, doors, num_doors * sizeof(carmen_door_t));
-  response.topology.num_doors = num_doors;
+  response->topology.rooms = (carmen_room_p)
+    calloc(num_rooms, sizeof(carmen_room_t));
+  carmen_test_alloc(response->topology.rooms);
+  memcpy(response->topology.rooms, rooms, num_rooms * sizeof(carmen_room_t));
+  response->topology.num_rooms = num_rooms;
 
-  err = IPC_respondData(msgRef, CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME, &response);
-  carmen_test_ipc(err, "Could not respond", CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME);
+  for (i = 0; i < num_rooms; i++) {
+    response->topology.rooms[i].name = (char *) calloc(strlen(rooms[i].name) + 1,
+						       sizeof(char));
+    carmen_test_alloc(response->topology.rooms[i].name);
+    strcpy(response->topology.rooms[i].name, rooms[i].name);
+    response->topology.rooms[i].doors = (int *) calloc(rooms[i].num_doors, sizeof(int));
+    carmen_test_alloc(response->topology.rooms[i].doors);
+    memcpy(response->topology.rooms[i].doors, rooms[i].doors,
+	   rooms[i].num_doors / sizeof(int));
+  }
+
+  response->topology.doors = (carmen_door_p) calloc(num_doors, sizeof(carmen_door_t));
+  carmen_test_alloc(response->topology.doors);
+  memcpy(response->topology.doors, doors, num_doors * sizeof(carmen_door_t));
+  response->topology.num_doors = num_doors;
+
+  for (i = 0; i < num_doors; i++) {
+    response->topology.doors[i].points.places = (carmen_place_p)
+      calloc(doors[i].points.num_places, sizeof(carmen_place_t));
+    carmen_test_alloc(response->topology.doors[i].points.places);
+    memcpy(response->topology.doors[i].points.places, doors[i].points.places,
+ 	   doors[i].points.num_places / sizeof(carmen_place_t));
+  }
+
+  err = IPC_respondData(msgRef, CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME);
 }
 
 static void gnav_set_goal_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
