@@ -102,3 +102,23 @@ carmen_canon_subscribe_preview_message(carmen_canon_preview_message *preview,
     IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_NAME, 100);
   carmen_test_ipc(err, "Could not subscribe", CARMEN_CANON_PREVIEW_NAME);
 }
+
+int carmen_canon_start_preview_command(void)
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_START_NAME, NULL);
+  carmen_test_ipc_return_int(err, "Could not publish", 
+			     CARMEN_CANON_PREVIEW_START_NAME);
+  return 0;
+}
+
+int carmen_canon_stop_preview_command(void)
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_STOP_NAME, NULL);
+  carmen_test_ipc_return_int(err, "Could not publish", 
+			     CARMEN_CANON_PREVIEW_STOP_NAME);
+  return 0;
+}

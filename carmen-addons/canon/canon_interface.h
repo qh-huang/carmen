@@ -17,4 +17,8 @@ carmen_canon_subscribe_preview_message(carmen_canon_preview_message *preview,
 				       carmen_handler_t handler,
 				       carmen_subscribe_t subscribe_how);
 
+int carmen_canon_start_preview_command(void);
+
+int carmen_canon_stop_preview_command(void);
+
 #endif

@@ -29,6 +29,12 @@ typedef struct {
 #define      CARMEN_CANON_IMAGE_NAME       "carmen_canon_image"
 #define      CARMEN_CANON_IMAGE_FMT        "{int,<char:1>,int,<char:3>,double,[char:10]}"
 
+#define      CARMEN_CANON_PREVIEW_START_NAME   "canon_preview_start"
+#define      CARMEN_CANON_PREVIEW_START_FMT    ""
+
+#define      CARMEN_CANON_PREVIEW_STOP_NAME    "canon_preview_stop"
+#define      CARMEN_CANON_PREVIEW_STOP_FMT     ""
+
 typedef struct {
   int preview_length;
   char *preview;
