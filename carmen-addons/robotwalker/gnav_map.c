@@ -9,12 +9,32 @@
 #define GRID_DOOR     -4
 #define GRID_PROBE    -5
 
-typedef carmen_map_placelist_t door_t, *door_p;
+//struct room;
 
-typedef struct {
+/*
+ * (pos.x, pos.y) is the center of the door.
+ * pos.theta is between 0 and pi and indicates the 
+ * angle of the positive (upward-pointing) vector
+ * normal to the door at the center point.
+*/
+struct door {
+  struct room *room1;
+  struct room *room2;
+  carmen_map_placelist_t points;
+  carmen_point_t pos;  // in world coordinates
+  double width;  // in meters
+  int num;
+};
+
+struct room {
+  struct door *doors;
   char *name;
-  door_p doors;
-} room_t, *room_p;
+  int num_doors;
+  int num;
+};
+
+typedef struct door door_t, *door_p;
+typedef struct room room_t, *room_p;
 
 #define DEFAULT_GRID_RESOLUTION 0.1
 
@@ -57,12 +77,14 @@ inline double dist(double x, double y) {
 
 void print_doors() {
 
-  int i, j;
+  int i;
 
   for (i = 0; i < num_doors; i++) {
-    printf("door %d:  ", i+1);
-    for (j = 0; j < doors[i].num_places; j++)
-      printf("(%.2f, %.2f) ", doors[i].places[j].x, doors[i].places[j].y);
+    printf("door %d:  ", i);
+    printf("rooms(%d, %d), ", doors[i].room1->num, doors[i].room2->num);
+    printf("pos(%.2f, %.2f, %.0f), ", doors[i].pos.x, doors[i].pos.y,
+	   carmen_radians_to_degrees(doors[i].pos.theta));
+    printf("width(%.2f)", doors[i].width);
     printf("\n");
   }
 }
@@ -106,15 +128,16 @@ void get_doors(carmen_map_placelist_p placelist) {
 
   // get door places
   for (j = 0; j < num_doors; j++) {
-    doors[j].num_places = num_doorplaces[j];
-    doors[j].places = (carmen_place_p) calloc(num_doorplaces[j], sizeof(carmen_place_t));
-    carmen_test_alloc(doors[j].places);
+    doors[j].num = j;
+    doors[j].points.num_places = num_doorplaces[j];
+    doors[j].points.places = (carmen_place_p) calloc(num_doorplaces[j], sizeof(carmen_place_t));
+    carmen_test_alloc(doors[j].points.places);
     k = 0;
     for (i = 0; i < num_places; i++) {
       placename = placelist->places[i].name;
       n = strcspn(placename, ".");
       if ((n == (int)strlen(doornames[j])) && !strncmp(doornames[j], placename, n))
-	memcpy(&doors[j].places[k++], &placelist->places[i], sizeof(carmen_place_t));
+	memcpy(&doors[j].points.places[k++], &placelist->places[i], sizeof(carmen_place_t));
     }
     free(doornames[j]);
   }
@@ -263,8 +286,8 @@ int get_farthest(int door, int place) {
   double x, y, d, d2;
   carmen_place_p p;
 
-  n = doors[door].num_places;
-  p = doors[door].places;
+  n = doors[door].points.num_places;
+  p = doors[door].points.places;
 
   x = p[place].x;
   y = p[place].y;
@@ -310,10 +333,10 @@ void get_rooms() {
     e1 = get_farthest(i, 0);
     e2 = get_farthest(i, e1);
 
-    e1x = doors[i].places[e1].x;
-    e1y = doors[i].places[e1].y;
-    e2x = doors[i].places[e2].x;
-    e2y = doors[i].places[e2].y;
+    e1x = doors[i].points.places[e1].x;
+    e1y = doors[i].points.places[e1].y;
+    e2x = doors[i].points.places[e2].x;
+    e2y = doors[i].points.places[e2].y;
 
     dx = e2x - e1x;
     dy = e2y - e1y;
@@ -338,10 +361,10 @@ void get_rooms() {
     e1 = get_farthest(i, 0);
     e2 = get_farthest(i, e1);
 
-    e1x = doors[i].places[e1].x;
-    e1y = doors[i].places[e1].y;
-    e2x = doors[i].places[e2].x;
-    e2y = doors[i].places[e2].y;
+    e1x = doors[i].points.places[e1].x;
+    e1y = doors[i].points.places[e1].y;
+    e2x = doors[i].points.places[e2].x;
+    e2y = doors[i].points.places[e2].y;
 
     mx = (e1x + e2x) / 2.0;
     my = (e1y + e2y) / 2.0;
@@ -370,6 +393,10 @@ void get_rooms() {
     carmen_world_to_map(&world_point, &map_point);
     probe(map_point.x, map_point.y);
   }
+
+  //dbug: fill in gaps in grid
+  //dbug: find which doors connect which rooms
+  //dbug: find door width and pose
 }
 
 void grid_init() {
