@@ -5,9 +5,12 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = walker_motors.c valet.c valet_interface.c valet_run.c \
-		walkerserial.c walkerserial_interface.c walker.c \
-		walker_interface.c
+#SOURCES = valet.c valet_interface.c valet_run.c walker.c \
+#		walker_interface.c cerebellum.c cerebellum_main.c \
+#		cerebellum_test.c cerebellum_com.c
+SOURCES = walker.c \
+		walker_interface.c cerebellum.c cerebellum_main.c \
+		cerebellum_test.c cerebellum_com.c
 
 CFLAGS +=
 IFLAGS 	+=
@@ -18,7 +21,7 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 
 ifndef NO_GRAPHICS
 
-SOURCES += walker_gui.c
+#SOURCES += walker_gui.c
 
 CFLAGS +=
 IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
@@ -27,13 +30,20 @@ LFLAGS 	+= 	-lgdk_imlib -lglobal_graphics `$(GTK_CONFIG) --libs gthread`
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = walker_motors valet valet_run walkerserial \
-		libvalet_interface.a libwalkerserial_interface.a walker \
-		libwalker_interface.a
+#PUBLIC_INCLUDES = walker_interface.h valet_interface.h
+PUBLIC_INCLUDES = walker_interface.h walker_messages.h
+#PUBLIC_LIBRARIES = libwalker_interface.a libvaletinterface.a
+PUBLIC_LIBRARIES = libwalker_interface.a
 
-ifndef NO_GRAPHICS
-TARGETS += walker_gui
-endif
+#TARGETS = valet valet_run libvalet_interface.a walker \
+#		libwalker_interface.a cerebellum cerebellum_test \
+#		libcerebellum_interface.a
+TARGETS = walker libwalker_interface.a cerebellum cerebellum_test \
+		libcerebellum_interface.a
+
+#ifndef NO_GRAPHICS
+#TARGETS += walker_gui
+#endif
 
 ifdef NO_ZLIB
 CFLAGS += -DNO_ZLIB
@@ -44,23 +54,23 @@ endif
 
 all:
 
-walker:	walker.o walkerserial_interface.o
+walker:	walker.o cerebellum_com.o
 
-libwalker_interface.a:	walker_interface.o
+libwalker_interface.a:	walker_interface.o cerebellum_com.o
 
-walker_motors:	walker_motors.o
+#walker_gui:	walker_gui.o walkerserial_interface.o walker_interface.o
 
-walker_gui:	walker_gui.o walkerserial_interface.o walker_interface.o
+#valet:	valet.o
 
-valet:	valet.o
+#libvalet_interface.a:	valet_interface.o
 
-libvalet_interface.a:	valet_interface.o
+#valet_run:	valet_run.o valet_interface.o
 
-valet_run:	valet_run.o valet_interface.o
+cerebellum: cerebellum.o cerebellum_main.o cerebellum_com.o walker_interface.o
 
-walkerserial:	walkerserial.o walkerserial_interface.o
+cerebellum_test: cerebellum_test.o cerebellum_com.o
 
-libwalkerserial_interface.a:	walkerserial_interface.o
+libcerebellum_interface.a: cerebellum_com.o
 
 include $(CARMEN_HOME)/src/Makefile.rules
 
