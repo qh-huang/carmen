@@ -263,7 +263,7 @@ static int cereb_send_2int_command(char command, int left, int right)
   checksum_data(buf, &index);
 
   /*
-  printf("Sending %x %x as: ",left,right);
+  printf("V: %x %x as: ",left,right);
   for(i = 0; i < index; ++i)
     {
       printf("%x ",buf[i]);
@@ -362,14 +362,14 @@ int carmen_cerebellum_ac(int acc)
       acc = 1;
     }
 
-
-  return cereb_send_2int_command(SET_ACCELERATIONS,acc,acc);
+  return(0);
+  //  return cereb_send_2int_command(SET_ACCELERATIONS,acc,acc);
 }
 
 int 
 carmen_cerebellum_set_velocity(int command_vl, int command_vr)
 {
-  //  printf("Sending l_ticks_per_loop:%d  r_ticks_per_loop:%d\r\n",command_vl, command_vr);
+  printf("Sent vl_t:%d  rl_t:%d\r\n",command_vl, command_vr);
   return cereb_send_2int_command(SET_VELOCITIES,command_vl, command_vr);
 }
 

@@ -307,7 +307,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
     transient_dropped--;
 
 
-  //  printf("x: %lf, y: %lf, theta: %lf \n", x,y,theta);
+  //  printf("x: %lf, y: %lf, th: %lf \n", x,y,theta);
 
   return 1;
 }
@@ -528,8 +528,8 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
 
-  //  printf("Velocities: trans: %f rot: %f\r\n",vel.tv,vel.rv);
-  //printf("After conv: left %f right %f\r\n",vl, vr);
+  //  printf("V: t: %f r: %f\r\n",vel.tv,vel.rv);
+  //  printf("C: l: %f r: %f\r\n",vl, vr);
 
   if(vl > MAXV)
     vl = MAXV;
