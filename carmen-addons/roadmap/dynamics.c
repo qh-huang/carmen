@@ -164,42 +164,180 @@ static int is_blocked(carmen_roadmap_vertex_t *n1, carmen_roadmap_vertex_t *n2,
 
 #endif
 
-static int is_blocked_by_trash(double n1x, double n1y, double n2x, double n2y, 
-			       double x, double y, double trash_theta, 
-			       double major, double minor)
-{
-  double numerator;
-  double denominator;
-  double i_x, i_y;
-  double dist_along_line;
-  double radius;
-  double theta;
-  
-  trash_theta = trash_theta;
-  radius = (major+minor)/2+robot_width;
+static inline int ray_intersect_arg(double rx, double ry, double rtheta,
+				    double x1, double y1, double x2, double y2) {
 
-  numerator = (n2x - n1x)*(n1y - y) - (n1x - x)*(n2y - n1y);
-  denominator = hypot(n2x-n1x, n2y-n1y);
-  
-  if (fabs(denominator) < 1e-9 || fabs(numerator)/denominator > radius) 
+  static double epsilon = 0.01;  //dbug: param?
+
+  if (fabs(rtheta) < M_PI/2.0 - epsilon) {
+    if ((x1 < x2 || x2 < rx) && x1 >= rx)
+      return 1;
+    else if (x2 >= rx)
+      return 2;
+  }
+  else if (fabs(rtheta) > M_PI/2.0 + epsilon) {
+    if ((x1 > x2 || x2 > rx) && x1 <= rx)
+      return 1;
+    else if (x2 <= rx)
+      return 2;    
+  }
+  else if (rtheta > 0.0) {
+    if ((y1 < y2 || y2 < ry) && y1 >= ry)
+      return 1;
+    else if (y2 >= ry)
+      return 2;
+  }
+  else {
+    if ((y1 > y2 || y2 > ry) && y1 <= ry)
+      return 1;
+    else if (y2 <= ry)
+      return 2;
+  }
+
+  return 0;
+}
+
+static int ray_intersect_circle(double rx, double ry, double rtheta,
+				double cx, double cy, double cr) {
+
+  double epsilon = 0.000001;
+  double a, b, c, tan_rtheta;
+  double x1, y1, x2, y2;
+
+  x1 = x2 = y1 = y2 = 0.0;
+
+  if (fabs(cos(rtheta)) < epsilon) {
+    if (cr*cr - (rx-cx)*(rx-cx) < 0.0)
+      return 0;
+    x1 = x2 = rx;
+    y1 = cy + sqrt(cr*cr-(rx-cx)*(rx-cx));
+    y2 = cy - sqrt(cr*cr-(rx-cx)*(rx-cx));
+  }
+  else {
+    tan_rtheta = tan(rtheta);
+    a = 1.0 + tan_rtheta*tan_rtheta;
+    b = 2.0*tan_rtheta*(ry - rx*tan_rtheta - cy) - 2.0*cx;
+    c = cx*cx + (ry - rx*tan_rtheta - cy)*(ry - rx*tan_rtheta - cy) - cr*cr;
+    if (b*b - 4.0*a*c < 0.0)
+      return 0;
+    x1 = (-b + sqrt(b*b - 4.0*a*c))/(2.0*a);
+    y1 = x1*tan_rtheta + ry - rx*tan_rtheta;
+    x2 = (-b - sqrt(b*b - 4.0*a*c))/(2.0*a);
+    y2 = x2*tan_rtheta + ry - rx*tan_rtheta;
+  }
+
+  if (ray_intersect_arg(rx, ry, rtheta, x1, y1, x2, y2))
+    return 1;
+
+  return 0;
+}
+
+static int segment_intersect_circle(double n1x, double n1y, double n2x, double n2y, 
+				    double x, double y, double r)
+{
+  double theta1, theta2;
+
+  theta1 = atan2(n2y - n1y, n2x - n1x);
+  theta2 = carmen_normalize_theta(theta1 + M_PI);
+
+  if (ray_intersect_circle(n1x, n1y, theta1, x, y, r) &&
+      ray_intersect_circle(n2x, n2y, theta2, x, y, r))
+    return 1;
+
+  return 0;
+}
+
+static int ray_intersect_convex_polygon(double rx, double ry, double rtheta,
+					double *xpoly, double *ypoly, int np)
+{
+  int i;
+  double x, y, theta;
+  double a, b, c, d;
+
+  a = tan(rtheta);
+  b = ry - a*rx;
+
+  for (i = 0; i < np; i++) {
+    c = (ypoly[(i+1)%np] - ypoly[i]) / (xpoly[(i+1)%np] - xpoly[i]);
+    d = ypoly[i] - c*xpoly[i];
+    x = (d - b) / (a - c);
+    y = a*x + b;
+    theta = atan2(ypoly[(i+1)%np] - ypoly[i], xpoly[(i+1)%np] - xpoly[i]);
+    if (ray_intersect_arg(xpoly[i], ypoly[i], theta, x, y, x, y) &&
+	ray_intersect_arg(xpoly[(i+1)%np], ypoly[(i+1)%np],
+			  carmen_normalize_theta(theta+M_PI), x, y, x, y) &&
+	ray_intersect_arg(rx, ry, rtheta, x, y, x, y))
+      return 1;
+  }
+
+  return 0;
+}
+
+static int segment_intersect_convex_polygon(double n1x, double n1y, double n2x, double n2y, 
+					    double *xhull, double *yhull, int hull_size)
+{
+  int i;
+  double theta1, theta2;
+  double xmin, xmax, ymin, ymax;
+
+  xmin = xmax = xhull[0];
+  ymin = ymax = yhull[0];
+  for (i = 1; i < hull_size; i++) {
+    if (xhull[i] < xmin)
+      xmin = xhull[i];
+    else if (xhull[i] > xmax)
+      xmax = xhull[i];
+    if (yhull[i] < ymin)
+      ymin = yhull[i];
+    else if (yhull[i] > ymax)
+      ymax = yhull[i];
+  }
+
+  if ((n1x < xmin && n2x < xmin) || (n1x > xmax && n2x > xmax) ||
+      (n1y < ymin && n2y < ymin) || (n1y > ymax && n2y > ymax))
     return 0;
 
-  theta = fabs(atan2(n2y-n1y, n2x - n1x));
-  if (theta > M_PI/4 && theta < 3*M_PI/4) {
-    i_y = numerator/denominator * (n2x - n1x)/denominator + y;
-    dist_along_line = (i_y - n1y) / (n2y - n1y);
-  } else {
-    i_x = numerator/denominator * (n2y - n1y)/denominator + x;
-    dist_along_line = (i_x - n1x) / (n2x - n1x);
-  }
+  theta1 = atan2(n2y - n1y, n2x - n1x);
+  theta2 = carmen_normalize_theta(theta1 + M_PI);
+  if (ray_intersect_convex_polygon(n1x, n1y, theta1, xhull, yhull, hull_size) &&
+      ray_intersect_convex_polygon(n2x, n2y, theta2, xhull, yhull, hull_size))
+    return 1;
 
-  if (dist_along_line > 1 || dist_along_line < 0) {
-    if (hypot(n2x - x, n2y - y) > radius && 
-	hypot(n1x - x, n1y - y) > radius)
-      return 0;
-  }
+  return 0;  
+}
 
-  return 1;
+static int is_blocked_by_person(double n1x, double n1y, double n2x, double n2y, 
+				double x, double y, double r)
+{
+  double theta, dx, dy;
+
+  theta = carmen_normalize_theta(atan2(n2y - n1y, n2x - n1x) + M_PI/2.0);
+  dx = (robot_width/2.0)*cos(theta);
+  dy = (robot_width/2.0)*sin(theta);
+
+  if (segment_intersect_circle(n1x+dx, n1y+dy, n2x+dx, n2y+dy, x, y, r) ||
+      segment_intersect_circle(n1x, n1y, n2x, n2y, x, y, r) ||
+      segment_intersect_circle(n1x-dx, n1y-dy, n2x-dx, n2y-dy, x, y, r))
+    return 1;
+
+  return 0;  
+}
+
+static int is_blocked_by_trash(double n1x, double n1y, double n2x, double n2y, 
+			       double *xhull, double *yhull, int hull_size)
+{
+  double theta, dx, dy;
+
+  theta = carmen_normalize_theta(atan2(n2y - n1y, n2x - n1x) + M_PI/2.0);
+  dx = (robot_width/2.0)*cos(theta);
+  dy = (robot_width/2.0)*sin(theta);
+
+  if (segment_intersect_convex_polygon(n1x+dx, n1y+dy, n2x+dx, n2y+dy, xhull, yhull, hull_size) ||
+      segment_intersect_convex_polygon(n1x, n1y, n2x, n2y, xhull, yhull, hull_size) ||
+      segment_intersect_convex_polygon(n1x-dx, n1y-dy, n2x-dx, n2y-dy, xhull, yhull, hull_size))
+    return 1;
+
+  return 0;  
 }
 
 static int is_blocked(double n1x, double n1y, double n2x, double n2y, 
@@ -262,8 +400,7 @@ static int do_blocking(double n1x, double n1y, double n2x, double n2y,
   if (avoid_people) {
     for (i = 0; i < people->length; i++) {
       person = (carmen_dot_person_t *)carmen_list_get(people, i);
-      if (is_blocked(n1x, n1y, n2x, n2y, person->x, person->y, 
-		     person->vx, person->vxy, person->vy)) {
+      if (is_blocked_by_person(n1x, n1y, n2x, n2y, person->x, person->y, person->r)) {
 	if (blocking_object) 
 	  fill_in_object(blocking_object, person, carmen_dot_person);
 	return 1;
@@ -273,9 +410,8 @@ static int do_blocking(double n1x, double n1y, double n2x, double n2y,
 
   for (i = 0; i < trash->length; i++) {
     trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, i);
-    if (is_blocked_by_trash(n1x, n1y, n2x, n2y, trash_bin->x, trash_bin->y, 
-			    trash_bin->theta, trash_bin->major, 
-			    trash_bin->minor)) {
+    if (is_blocked_by_trash(n1x, n1y, n2x, n2y, trash_bin->xhull,
+			    trash_bin->yhull, trash_bin->hull_size)) {
       if (blocking_object) 
 	fill_in_object(blocking_object, trash_bin, carmen_dot_trash);
       return 1;

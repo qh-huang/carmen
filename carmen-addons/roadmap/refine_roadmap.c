@@ -105,17 +105,17 @@ void carmen_roadmap_refine_graph(carmen_world_point_t *robot,
   if (blocking_object.dot_type == carmen_dot_person) {
     x = blocking_object.data.person.x;
     y = blocking_object.data.person.y;
-    varx = blocking_object.data.person.vx;
-    vary = blocking_object.data.person.vy;
-    varxy = blocking_object.data.person.vxy;
-
-    carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
+    radius = blocking_object.data.person.r;
     radius *= 1.1;
   } else if (blocking_object.dot_type == carmen_dot_trash) {
+    //dbug: use convex hull
     x = blocking_object.data.trash.x;
     y = blocking_object.data.trash.y;
-    radius = (blocking_object.data.trash.major + 
-	      blocking_object.data.trash.minor)/2;
+    varx = blocking_object.data.trash.vx;
+    vary = blocking_object.data.trash.vy;
+    varxy = blocking_object.data.trash.vxy;
+
+    carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
     radius *= 1.1;
 
   } else { // if (blocking_object.dot_type == carmen_dot_door) {

@@ -72,9 +72,7 @@ static void simulator_objects_handler(carmen_simulator_objects_message
     if (objects_msg->objects_list[i].t_vel < .2) {
       trash.x = objects_msg->objects_list[i].x;
       trash.y = objects_msg->objects_list[i].y;
-      trash.theta = objects_msg->objects_list[i].theta;
-      trash.major = 1;
-      trash.minor = .15;
+      //dbug: need to add convex hull code or won't work!
       trash.vx = 0.375;
       trash.vy = 0.375;
       trash.vxy = 0.125;
