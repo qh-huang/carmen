@@ -18,7 +18,7 @@ int main(int argc __attribute__ ((unused)), char **argv)
   image_to_drive = atoi(argv[3]);
 
   if((image = carmen_canon_get_image(thumb_over_ipc, image_over_ipc, 
-				     image_to_drive)) == NULL)
+				     image_to_drive, FLASH_OFF)) == NULL)
     carmen_die("Error: could not get image from server.\n");
   fprintf(stderr, "Received image.\n");
 

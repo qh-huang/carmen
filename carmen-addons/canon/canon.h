@@ -9,6 +9,10 @@
 #define    THUMB_TO_DRIVE           0x0004
 #define    FULL_TO_DRIVE            0x0008
 
+#define    FLASH_OFF                0x00
+#define    FLASH_ON                 0x01
+#define    FLASH_AUTO               0x02
+
 /* open a USB connection the camera */
 usb_dev_handle *canon_open_camera(void);
 
@@ -34,7 +38,7 @@ int canon_rcc_init(usb_dev_handle *camera_handle);
 int canon_rcc_unknown(usb_dev_handle *camera_handle, int transfer_mode);
 
 /* turn off flash */
-int canon_rcc_turnoff_flash(usb_dev_handle *camera_handle);
+int canon_rcc_set_flash(usb_dev_handle *camera_handle, int flash_mode);
 
 /* get release parameters */
 int canon_rcc_get_release_params(usb_dev_handle *camera_handle);
