@@ -21,7 +21,7 @@ PUBLIC_INCLUDES = dot_interface.h
 PUBLIC_LIBRARIES = dot_interface.a
 PUBLIC_BINARIES = dot
 
-TARGETS = dot # libdot_interface.a
+TARGETS = dot libdot_interface.a
 
 all:
 
