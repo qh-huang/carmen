@@ -35,11 +35,6 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not subcribe", 
 		       CARMEN_WALKER_SET_GOAL_MSG_NAME);
   IPC_setMsgQueueLength(CARMEN_WALKER_SET_GOAL_MSG_NAME, 100);
-
-  carmen_walkerserial_subscribe_button_message(NULL,
-					       (carmen_handler_t)
-						button_handler,
-					       CARMEN_SUBSCRIBE_ALL);
 }
 
 int main(int argc __attribute__ ((unused)), char *argv[]) {
