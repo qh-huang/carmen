@@ -17,7 +17,7 @@ static double compute_path_time(carmen_roadmap_t *roadmap)
   start = (carmen_traj_point_t *)carmen_list_get(roadmap->path, 0);
   for (i = 1; i < roadmap->path->length; i++) {
     dest = (carmen_traj_point_t *)carmen_list_get(roadmap->path, i);
-    total += carmen_distance_traj(start, dest)/roadmap->robot_speed;
+    total += carmen_distance_traj(start, dest)/roadmap->max_t_vel;
     if (0)
       carmen_warn("%f : %f %f -> %f %f\n", total, start->x, start->y,
 		  dest->x, dest->y);
@@ -127,7 +127,8 @@ carmen_roadmap_mdp_t *carmen_roadmap_mdp_initialize(carmen_map_t *map)
   roadmap->roadmap_without_people->avoid_people = 0;
 
   roadmap->c_space = roadmap->roadmap->c_space;
-  roadmap->robot_speed = roadmap->roadmap->robot_speed;
+  roadmap->max_t_vel = roadmap->roadmap->max_t_vel;
+  roadmap->max_r_vel = roadmap->roadmap->max_r_vel;
   roadmap->nodes = roadmap->roadmap->nodes;
 
   roadmap->path = NULL;

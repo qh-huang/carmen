@@ -35,6 +35,7 @@ extern "C" {
 typedef struct {
   int id;
   int x, y;
+  double theta;
   int label;
   carmen_list_t *edges;
   double utility;
@@ -53,7 +54,8 @@ typedef struct {
   carmen_map_p c_space;
   carmen_list_t *path;
   int avoid_people;
-  double robot_speed;
+  double max_t_vel;
+  double max_r_vel;
 } carmen_roadmap_t;
 
 carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p map);
