@@ -192,6 +192,17 @@ static double bnorm_theta(double vx, double vy, double vxy) {
   return theta;
 }
 
+static double bnorm_f(double x, double y, double ux, double uy,
+		      double vx, double vy, double vxy) {
+
+  double z, p;
+
+  p = vxy/sqrt(vx*vy);
+  z = (x - ux)*(x - ux)/vx - 2.0*p*(x - ux)*(y - uy)/vxy + (y - uy)*(y - uy)/vy;
+
+  return exp(-z/(2.0*(1 - p*p)))/(2.0*M_PI*sqrt(vx*vy*(1 - p*p)));
+}
+
 static int dot_classify(carmen_dot_filter_p f) {
 
   carmen_dot_person_filter_p pf;
@@ -210,8 +221,6 @@ static int dot_classify(carmen_dot_filter_p f) {
   pdet = pf->px*pf->py - pf->pxy*pf->pxy;
   tdet = tf->px*tf->py;
   ddet = df->px*df->py - df->pxy*df->pxy;
-
-  return (pdet <= tdet ? CARMEN_DOT_PERSON : CARMEN_DOT_TRASH);  //dbug
 
   if (pdet <= tdet) {
     if (pdet <= ddet)
@@ -532,106 +541,113 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   filters[num_filters-1].last_type = filters[num_filters-1].type;
 }
 
+static double map_prob(double x, double y) {
+
+  carmen_world_point_t wp;
+  carmen_map_point_t mp;
+
+  wp.map = &static_map;
+  wp.pose.x = x;
+  wp.pose.y = y;
+
+  carmen_world_to_map(&wp, &mp);
+
+  return static_map.map[mp.x][mp.y];
+}
+
 static int dot_filter(double x, double y) {
 
-  int i, imin;
-  double dmin;
-  double dx, dy, d;
+  int i, imax;
+  double pmax, p;
+  double ux, uy, dx, dy;
   double vx, vy, vxy;
   double theta;
 
-  imin = -1;
-  dmin = 100000.0;
+  imax = -1;
+  pmax = 0.0;
 
   for (i = 0; i < num_filters; i++) {
-    //if (filters[i].type == CARMEN_DOT_PERSON) {
-      dx = filters[i].person_filter.x;
-      dy = filters[i].person_filter.y;
-      vx = filters[i].person_filter.px;
-      vy = filters[i].person_filter.py;
-      vxy = filters[i].person_filter.pxy;
-      //}
-    dx = x - dx;
-    dy = y - dy;
-    d = dist(dx, dy);
 
-    if (d < dmin) {
-      // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
-      // dbug: probably should use eigen transformation instead of rotation
-      theta = bnorm_theta(vx, vy, vxy);
-      rotate2d(&dx, &dy, -theta);
-      if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	  fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
-	dmin = d;
-	imin = i;
+    ux = filters[i].person_filter.x;
+    uy = filters[i].person_filter.y;
+    vx = filters[i].person_filter.px;
+    vy = filters[i].person_filter.py;
+    vxy = filters[i].person_filter.pxy;
+    dx = x - ux;
+    dy = y - uy;
+
+    // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
+    theta = bnorm_theta(vx, vy, vxy);
+    rotate2d(&dx, &dy, -theta);
+    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+      p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
+      if (p > pmax) {
+	pmax = p;
+	imax = i;
       }
     }
-      //else if (filters[i].type == CARMEN_DOT_TRASH) {
-      dx = filters[i].trash_filter.x;
-      dy = filters[i].trash_filter.y;
-      vx = filters[i].trash_filter.px;
-      vy = filters[i].trash_filter.py;
-      vxy = filters[i].trash_filter.pxy;
-      //}
-    dx = x - dx;
-    dy = y - dy;
-    d = dist(dx, dy);
 
-    if (d < dmin) {
-      // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
-      // dbug: probably should use eigen transformation instead of rotation
-      theta = bnorm_theta(vx, vy, vxy);
-      rotate2d(&dx, &dy, -theta);
-      if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	  fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
-	dmin = d;
-	imin = i;
+    ux = filters[i].trash_filter.x;
+    uy = filters[i].trash_filter.y;
+    vx = filters[i].trash_filter.px;
+    vy = filters[i].trash_filter.py;
+    vxy = filters[i].trash_filter.pxy;
+    dx = x - ux;
+    dy = y - uy;
+
+    // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
+    theta = bnorm_theta(vx, vy, vxy);
+    rotate2d(&dx, &dy, -theta);
+    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+      p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
+      if (p > pmax) {
+	pmax = p;
+	imax = i;
       }
     }
-      //else { // if (filters[i].type == CARMEN_DOT_DOOR)
-      dx = filters[i].door_filter.x;
-      dy = filters[i].door_filter.y;
-      vx = filters[i].door_filter.px;
-      vy = filters[i].door_filter.py;
-      vxy = filters[i].door_filter.pxy;
-      //}
+    
+    ux = filters[i].door_filter.x;
+    uy = filters[i].door_filter.y;
+    vx = filters[i].door_filter.px;
+    vy = filters[i].door_filter.py;
+    vxy = filters[i].door_filter.pxy;
+    dx = x - ux;
+    dy = y - uy;
 
-    dx = x - dx;
-    dy = y - dy;
-    d = dist(dx, dy);
-
-    if (d < dmin) {
-      // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
-      // dbug: probably should use eigen transformation instead of rotation
-      theta = bnorm_theta(vx, vy, vxy);
-      rotate2d(&dx, &dy, -theta);
-      if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
-	  fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
-	dmin = d;
-	imin = i;
+    // check if (x,y) is roughly within 3 stdev's of (E[x],E[y])
+    theta = bnorm_theta(vx, vy, vxy);
+    rotate2d(&dx, &dy, -theta);
+    if (fabs(dx) < 3.0*sqrt(vx/fabs(cos(theta))) && 
+	fabs(dy) < 3.0*sqrt(vy/fabs(sin(theta)))) {
+      p = bnorm_f(x, y, ux, uy, vx, vy, vxy);
+      if (p > pmax) {
+	pmax = p;
+	imax = i;
       }
     }
   }
 
-  if (imin >= 0) {
-    filters[imin].person_filter.hidden_cnt = 0;
-    person_filter_sensor_update(&filters[imin].person_filter, x, y);
-    if (filters[imin].do_motion_update) {
-      filters[imin].do_motion_update = 0;
-      trash_filter_motion_update(&filters[imin].trash_filter);
-      door_filter_motion_update(&filters[imin].door_filter);
-      filters[imin].updated = 1;
+  if (imax >= 0 && pmax > map_prob(x, y)) {
+    filters[imax].person_filter.hidden_cnt = 0;
+    person_filter_sensor_update(&filters[imax].person_filter, x, y);
+    if (filters[imax].do_motion_update) {
+      filters[imax].do_motion_update = 0;
+      trash_filter_motion_update(&filters[imax].trash_filter);
+      door_filter_motion_update(&filters[imax].door_filter);
+      filters[imax].updated = 1;
     }
-    if (do_sensor_update || filters[imin].sensor_update_cnt < sensor_update_cnt) {
-      filters[imin].sensor_update_cnt++;
-      trash_filter_sensor_update(&filters[imin].trash_filter, x, y);
-      door_filter_sensor_update(&filters[imin].door_filter, x, y);
-      filters[imin].updated = 1;
+    if (do_sensor_update || filters[imax].sensor_update_cnt < sensor_update_cnt) {
+      filters[imax].sensor_update_cnt++;
+      trash_filter_sensor_update(&filters[imax].trash_filter, x, y);
+      door_filter_sensor_update(&filters[imax].door_filter, x, y);
+      filters[imax].updated = 1;
     }
-    filters[imin].type = dot_classify(&filters[imin]);
+    filters[imax].type = dot_classify(&filters[imax]);
 
-    if (filters[imin].type == CARMEN_DOT_PERSON)
-      filters[imin].updated = 1;
+    if (filters[imax].type == CARMEN_DOT_PERSON)
+      filters[imax].updated = 1;
     
     return 1;
   }
@@ -787,7 +803,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
     if (laser->range[i] < laser_max_range) {
       x[i] = laser->x + cos(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
       y[i] = laser->y + sin(laser->theta + (i-90)*M_PI/180.0) * laser->range[i];
-      if (!map_filter(x[i], y[i]) && !dot_filter(x[i], y[i]))
+      if (!dot_filter(x[i], y[i]) && !map_filter(x[i], y[i]))
 	cluster_cnt = cluster(cluster_map, cluster_cnt, i, x, y);
       else
 	cluster_map[i] = 0;
