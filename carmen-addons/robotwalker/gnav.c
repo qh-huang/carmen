@@ -9,6 +9,7 @@
 #include <carmen/map_io.h>
 
 #include "gnav_messages.h"
+#include "walker_interface.h"
 
 
 #define GRID_NONE     -1
@@ -69,6 +70,7 @@ static int canvas_width = 300, canvas_height = 300;
 
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
+static int closest_room(int x, int y, int max_shell);
 
 #endif
 
@@ -116,6 +118,10 @@ static void get_doors(carmen_map_placelist_p placelist) {
   // get doornames & num_doors
   for (i = 0; i < num_places; i++) {
     placename = placelist->places[i].name;
+    if (placename[0] != 'b')
+      continue;
+    if (placename[strspn(placename+1, "0123456789") + 1] != '.')
+      continue;
     n = strcspn(placename, ".");
     for (j = 0; j < num_doornames; j++)
       if ((n == (int)strlen(doornames[j])) &&
@@ -358,7 +364,38 @@ static int get_farthest(int door, int place) {
   return f;
 }
 
-static void get_rooms() {
+static void get_room_names(carmen_map_placelist_p placelist) {
+
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+  char *placename;
+  int i, r;
+
+  world_point.map = &map;
+  map_point.map = &map;
+
+  for (i = 0; i < placelist->num_places; i++) {
+    placename = placelist->places[i].name;
+    if (placename[0] != 'r')
+      continue;
+    if (placename[strspn(placename+1, "0123456789") + 1] != ' ')
+      continue;
+    placename++;
+    placename += strspn(placename, "0123456789");
+    placename += strspn(placename, " \t");
+    world_point.pose.x = placelist->places[i].x;
+    world_point.pose.y = placelist->places[i].y;
+    carmen_world_to_map(&world_point, &map_point);
+    r = closest_room(map_point.x, map_point.y, 10);
+    if (r == -1)
+      continue;
+    rooms[r].name = (char *) calloc(strlen(placename) + 1, sizeof(char));
+    carmen_test_alloc(rooms[r].name);
+    strcpy(rooms[r].name, placename);
+  }
+}
+
+static void get_rooms(carmen_map_placelist_p placelist) {
 
   int i, j, n, e1, e2;
   double x, y;
@@ -448,9 +485,6 @@ static void get_rooms() {
       rooms[n].doors = (int *) calloc(num_doors, sizeof(int));
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
-      rooms[n].name = (char *) calloc(10, sizeof(char));
-      carmen_test_alloc(rooms[n].name);
-      sprintf(rooms[n].name, "room %d", n);
       num_rooms++;
     }
 
@@ -473,9 +507,6 @@ static void get_rooms() {
       rooms[n].doors = (int *) calloc(num_doors, sizeof(int));
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
-      rooms[n].name = (char *) calloc(10, sizeof(char));
-      carmen_test_alloc(rooms[n].name);
-      sprintf(rooms[n].name, "room %d", n);
       num_rooms++;
     }
 
@@ -486,6 +517,8 @@ static void get_rooms() {
     if (j == rooms[n].num_doors)
       rooms[n].doors[rooms[n].num_doors++] = i;
   }
+
+  get_room_names(placelist);
 }
 
 static void grid_init() {
@@ -621,7 +654,7 @@ static void get_map() {
 
   grid_init();
   get_doors(&placelist);
-  get_rooms();
+  get_rooms(&placelist);
   print_doors();
 
   cleanup_map();
@@ -880,8 +913,7 @@ static gint button_press_event(GtkWidget *widget __attribute__ ((unused)),
   x = (int) ((event->x / (double) canvas_width) * grid_width);
   y = (int) ((1.0 - ((event->y+1) / (double) canvas_height)) * grid_height);
   
-  goal = closest_room(x,y,10);
-  printf("goal = %d\n", goal);
+  carmen_walker_set_goal(closest_room(x,y,10));
   
   return TRUE;
 }
