@@ -47,15 +47,16 @@ endif
 
 all:
 
-walker:	walker.o gnav_interface.o
+walker:	walker.o gnav_interface.o walkerserial_interface.o
 
 libwalker_interface.a:	walker_interface.o
 
 walker_motors:	walker_motors.o
 
-gnav:	gnav.o
+gnav:	gnav.o walker_interface.o
 
-gnav_gui:	gnav_gui.o gnav_interface.o
+gnav_gui:	gnav_gui.o gnav_interface.o walkerserial_interface.o \
+		walker_interface.o
 
 libgnav_interface.a:	gnav_interface.o
 
