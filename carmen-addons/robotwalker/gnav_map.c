@@ -16,8 +16,6 @@
 #define GRID_DOOR     -4
 #define GRID_PROBE    -5
 
-//struct room;
-
 /*
  * (pos.x, pos.y) is the center of the door.
  * pos.theta is between 0 and pi and indicates the 
@@ -73,6 +71,9 @@ static int num_rooms;
 static door_p doors;
 static int num_doors;
 
+carmen_localize_globalpos_message global_pos;
+static int room = -1;
+
 #ifndef NO_GRAPHICS
 
 static GdkGC *drawing_gc = NULL;
@@ -80,13 +81,14 @@ static GdkPixmap *pixmap = NULL;
 static GtkWidget *window, *canvas;
 static int canvas_width = 300, canvas_height = 300;
 
-static int fast = 0;
-
-int get_farthest(int door, int place);
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
 
 #endif
+
+static int fast = 0;
+
+int get_farthest(int door, int place);
 
 
 inline double dist(double x, double y) {
@@ -707,6 +709,7 @@ static void draw_grid(int x, int y, int width, int height) {
     gtk_main_iteration_do(TRUE);
 }
 
+/*
 static gint motion_notify_event(GtkWidget *widget __attribute__ ((unused)),
 				GdkEventMotion *event) {
 
@@ -728,6 +731,7 @@ static gint motion_notify_event(GtkWidget *widget __attribute__ ((unused)),
 
   return TRUE;
 }
+*/
 
 static gint canvas_configure(GtkWidget *widget,
 			     gpointer p __attribute__ ((unused))) {
@@ -796,12 +800,13 @@ static void gui_init() {
 
   gtk_signal_connect(GTK_OBJECT(canvas), "configure_event",
 		     GTK_SIGNAL_FUNC(canvas_configure), NULL);
-
+  /*
   gtk_signal_connect(GTK_OBJECT(canvas), "motion_notify_event",
 		     GTK_SIGNAL_FUNC(motion_notify_event), NULL);
 
   gtk_widget_add_events(canvas, GDK_POINTER_MOTION_MASK |
 			GDK_POINTER_MOTION_HINT_MASK);
+  */
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -827,6 +832,32 @@ static void params_init(int argc __attribute__ ((unused)),
   grid_resolution = DEFAULT_GRID_RESOLUTION;
 }
 
+void localize_handler() {
+
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+  int new_room;
+
+  world_point.map = map_point.map = &map;
+  world_point.pose.x = global_pos.globalpos.x;
+  world_point.pose.y = global_pos.globalpos.y;
+  carmen_world_to_map(&world_point, &map_point);
+
+  new_room = closest_room(map_point.x, map_point.y, 10);
+  
+  if (new_room != room) {
+    room = new_room;
+    printf("room = %d\n", room);
+  }
+}
+
+static void messages_init() {
+
+  carmen_localize_subscribe_globalpos_message(&global_pos,
+					      localize_handler,
+					      CARMEN_SUBSCRIBE_LATEST);
+}
+
 int main(int argc, char *argv[]) {
 
   int i;
@@ -850,6 +881,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   get_map();
+  messages_init();
 
 #ifndef NO_GRAPHICS
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
