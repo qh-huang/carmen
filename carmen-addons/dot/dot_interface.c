@@ -28,7 +28,7 @@ void carmen_dot_reset() {
 			 CARMEN_DOT_RESET_MSG_NAME);
 }
 
-int carmen_dot_get_all_people(carmen_dot_person_p people) {
+int carmen_dot_get_all_people(carmen_dot_person_p *people) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
@@ -57,13 +57,13 @@ int carmen_dot_get_all_people(carmen_dot_person_p people) {
   return response->num_people;
 }
 
-int carmen_dot_get_all_trash(carmen_dot_person_p trash) {
+int carmen_dot_get_all_trash(carmen_dot_trash_p *trash) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
   carmen_dot_all_trash_msg *response;
 
-  query.type = CARMEN_DOT_PERSON;
+  query.type = CARMEN_DOT_TRASH;
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
 
@@ -74,10 +74,10 @@ int carmen_dot_get_all_trash(carmen_dot_person_p trash) {
 
   if (trash) {
     if (response->trash) {
-      *trash = (carmen_dot_person_p)
-	realloc(*trash, response->num_trash*sizeof(carmen_dot_person_t));
+      *trash = (carmen_dot_trash_p)
+	realloc(*trash, response->num_trash*sizeof(carmen_dot_trash_t));
       carmen_test_alloc(trash);
-      memcpy(*trash, response->trash, response->num_trash*sizeof(carmen_dot_person_t));
+      memcpy(*trash, response->trash, response->num_trash*sizeof(carmen_dot_trash_t));
     }
     else
       *trash = NULL;
@@ -86,13 +86,13 @@ int carmen_dot_get_all_trash(carmen_dot_person_p trash) {
   return response->num_trash;
 }
 
-int carmen_dot_get_all_doors(carmen_dot_person_p doors) {
+int carmen_dot_get_all_doors(carmen_dot_door_p *doors) {
 
   IPC_RETURN_TYPE err;
   carmen_dot_query query;
   carmen_dot_all_doors_msg *response;
 
-  query.type = CARMEN_DOT_PERSON;
+  query.type = CARMEN_DOT_DOOR;
   query.timestamp = carmen_get_time_ms();
   strcpy(query.host, carmen_get_tenchar_host_name());
 
@@ -103,10 +103,10 @@ int carmen_dot_get_all_doors(carmen_dot_person_p doors) {
 
   if (doors) {
     if (response->doors) {
-      *doors = (carmen_dot_person_p)
-	realloc(*doors, response->num_doors*sizeof(carmen_dot_person_t));
+      *doors = (carmen_dot_door_p)
+	realloc(*doors, response->num_doors*sizeof(carmen_dot_door_t));
       carmen_test_alloc(doors);
-      memcpy(*doors, response->doors, response->num_doors*sizeof(carmen_dot_person_t));
+      memcpy(*doors, response->doors, response->num_doors*sizeof(carmen_dot_door_t));
     }
     else
       *doors = NULL;
