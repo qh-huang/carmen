@@ -53,7 +53,6 @@ int carmen_planner_update_goal(carmen_world_point_p new_goal,
   goal = *new_goal;
 
   if (map) {
-    carmen_mdp_dynamics_clear_all_blocked(roadmap);
     carmen_roadmap_mdp_plan(roadmap, new_goal);
   }
 
