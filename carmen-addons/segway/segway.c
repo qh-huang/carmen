@@ -34,6 +34,7 @@ segway_t segway;
 double accel_factor, torque_factor;
 int gain_schedule;
 double command_tv = 0, command_rv = 0;
+double last_command = 0, last_status = 0;
 
 void shutdown_handler(int sig)
 {
@@ -62,7 +63,6 @@ void read_parameters(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  int count = 0;
   double current_time;
 
   /* connect to IPC network */
@@ -84,17 +84,25 @@ int main(int argc, char **argv)
 
   do {
     if(segway.status_ready) {
+      current_time = carmen_get_time_ms();
+      if(current_time - last_command > 1.0) {
+	command_tv = 0.0;
+	command_rv = 0.0;
+	last_command = current_time;
+      }
+
       segway_set_velocity(&segway, command_tv, command_rv);
       current_time = carmen_get_time_ms();
       carmen_segway_publish_odometry(&segway, current_time);
       carmen_segway_publish_pose(&segway, current_time);
       sleep_ipc(0.001);
 
-      count++;
-      if(count == 10) {
-	count = 0;
-	fprintf(stderr, "%d%% ", (int)segway.voltage);
+      if(current_time - last_status > 1.0) {
+	fprintf(stderr, "TV = %.1f     RV = %.1f   Battery = %d%%\r\n",
+		command_tv, command_rv, (int)segway.voltage);
+	last_status = current_time;
       }
+
       segway_clear_status(&segway);
     }
     segway_update_status(&segway);

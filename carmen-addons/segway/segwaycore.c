@@ -196,11 +196,15 @@ void segway_command(segway_p segway, double tv, double rv,
 void segway_set_velocity(segway_p segway, double tv, double rv)
 {
   static double last_tv = 0.0, last_rv = 0.0;
+  static double last_timestamp = 0.0;
+  double ts;
 
-  if(tv != last_tv || rv != last_rv) {
+  ts = carmen_get_time_ms();
+  if(tv != last_tv || rv != last_rv || ts - last_timestamp > 1.0) {
     segway_command(segway, tv, rv, 0, 0);
     last_tv = tv;
     last_rv = rv;
+    last_timestamp = ts;
   }
 }
 
