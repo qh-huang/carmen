@@ -1,12 +1,14 @@
 #ifndef CANON_INTERFACE_H
 #define CANON_INTERFACE_H
 
+#include "canon.h"
 #include "canon_messages.h"
 #include "jpegread.h"
 
 carmen_canon_image_message *carmen_canon_get_image(int thumbnail_over_ipc,
 						   int image_over_ipc,
-						   int image_to_disk);
+						   int image_to_disk,
+						   int flash_mode);
 
 void carmen_canon_free_image(carmen_canon_image_message **message);
 

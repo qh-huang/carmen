@@ -1,6 +1,6 @@
 #include <carmen/carmen.h>
+#include "canon.h"
 #include "canon_messages.h"
-
 #include "canon_interface.h"
 
 static unsigned int timeout = 15000;
@@ -10,7 +10,8 @@ static carmen_handler_t preview_message_handler_external = NULL;
 
 carmen_canon_image_message *carmen_canon_get_image(int thumbnail_over_ipc,
 						   int image_over_ipc,
-						   int image_to_drive)
+						   int image_to_drive,
+						   int flash_mode)
 {
   IPC_RETURN_TYPE err;
   carmen_canon_image_message *response;
@@ -25,6 +26,7 @@ carmen_canon_image_message *carmen_canon_get_image(int thumbnail_over_ipc,
   query.thumbnail_over_ipc = thumbnail_over_ipc;
   query.image_over_ipc = image_over_ipc;
   query.image_to_drive = image_to_drive;
+  query.flash_mode = flash_mode;
   err = IPC_queryResponseData(CARMEN_CANON_IMAGE_REQUEST_NAME, &query,
                               (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query image",

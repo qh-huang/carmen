@@ -38,7 +38,9 @@ void canon_image_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     transfer_mode |= FULL_TO_PC;
   if(query.image_to_drive)
     transfer_mode |= FULL_TO_DRIVE;
-
+  
+  if(canon_rcc_set_flash(camera_handle, query.flash_mode) < 0)
+    carmen_warn("Warning: Could not set flash mode.\n");
   if(canon_rcc_set_transfer_mode(camera_handle, transfer_mode) < 0)
     carmen_warn("Warning: Could not set transfer mode.\n");
   
@@ -152,7 +154,7 @@ int main(int argc, char **argv)
 
   fprintf(stderr, "Camera is ready to capture.\n");
   
-  IPC_addTimer(30, TRIGGER_FOREVER, publish_preview, NULL);
+  IPC_addTimer(60, TRIGGER_FOREVER, publish_preview, NULL);
 
   /* run the main loop */
   IPC_dispatch();
