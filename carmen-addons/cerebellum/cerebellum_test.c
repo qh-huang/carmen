@@ -1,6 +1,8 @@
 #include <carmen/carmen.h>
 #include <limits.h>
 
+#define DEBUG 1
+
 #include "cerebellum_com.h"
 
 
@@ -92,11 +94,11 @@ void drive(float distance)
 }
 
 int 
-main(int argc __attribute__ ((unused)), 
-     char **argv __attribute__ ((unused))) 
+main(int argc, 
+     char **argv) 
 {
   double wheel_diameter;
-  char dev_name[100];
+  //char dev_name[100];
   double vl, vr;
   int k;
   double tv, rv;
@@ -104,6 +106,9 @@ main(int argc __attribute__ ((unused)),
   int error;
   int voltage;
   //double start_time;
+
+
+  fprintf(stderr,"starting cerebellum test\n");
   
   tv = rv = a = b = c = d = error = 0;
 
@@ -112,11 +117,16 @@ main(int argc __attribute__ ((unused)),
 
   carmen_terminal_cbreak(0);
 
-  strcpy(dev_name, "/dev/ttyS24");
   wheel_diameter = 0.165;
 
-  if (carmen_cerebellum_connect_robot(dev_name) < 0) 
-    return -1;
+  if(argc < 2)
+    {
+      
+      fprintf(stderr,"usage: cerebellum_test cerebellum_serial_port_device\n");
+    
+      return -1;
+    }
+  carmen_cerebellum_connect_robot(argv[1]);
 
   /*
   printf("Constants: \r\nCEREBELLUM_LOOP_FREQUENCY  %f\r\nMACH5_WHEEL_CIRCUMFERENCE  %f\r\nMACH5_TICKS_REV %f\r\nMETRES_PER_CEREBELLUM %f\r\nMETRES_PER_CEREBELLUM_VELOCITY %f\r\nWHEELBASE %f\r\nROT_VEL_FACT_RAD %f\r\nMAXV %f\r\n",CEREBELLUM_LOOP_FREQUENCY,MACH5_WHEEL_CIRCUMFERENCE,MACH5_TICKS_REV,METRES_PER_CEREBELLUM,METRES_PER_CEREBELLUM_VELOCITY,WHEELBASE,ROT_VEL_FACT_RAD,MAXV);
@@ -124,6 +134,7 @@ main(int argc __attribute__ ((unused)),
   carmen_cerebellum_ac(25);
 
   tv = rv = 0;
+
 
   while(1) {
 
@@ -135,7 +146,9 @@ main(int argc __attribute__ ((unused)),
     
     carmen_cerebellum_get_state(&a, &b, &c, &d);
 
+    //printf("getting char\r\n");
     k = getchar();
+    //printf("got char\r\n");
 
     if (k != EOF) {
       switch(k) {
@@ -149,7 +162,9 @@ main(int argc __attribute__ ((unused)),
 	error = carmen_cerebellum_get_voltage(&voltage);
 	fprintf(stderr, "Voltage: %d  %d\r\n",voltage,error);
 	break;
-      case 'a': carmen_cerebellum_reconnect_robot(); break;
+      case 'a': error = carmen_cerebellum_reconnect_robot(); 
+	printf("got: %d\r\n",error); 
+	break;
       case 'd': carmen_cerebellum_limp(); break;
       case 'r': carmen_cerebellum_engage(); break;
       case 'q': shutdown_cerebellum(5);
@@ -172,7 +187,7 @@ main(int argc __attribute__ ((unused)),
 	vl -= 0.5 * rv * ROT_VEL_FACT_RAD;
 	vr += 0.5 * rv * ROT_VEL_FACT_RAD;
 	fprintf(stderr, "tv:%f rv:%f Velocities: %f %f\n",tv,rv,vl,vr);
-	carmen_cerebellum_set_velocity((int)vl, (int)vr);
+	error = carmen_cerebellum_set_velocity((int)vl, (int)vr);
       }
     }
   }
