@@ -43,6 +43,7 @@ static unsigned int timeout = 15000;
 
 static carmen_canon_preview_message *preview_message_pointer_external = NULL;
 static carmen_handler_t preview_message_handler_external = NULL;
+static carmen_handler_t alive_message_handler_external = NULL;
 
 carmen_canon_image_message *carmen_canon_get_image(int thumbnail_over_ipc,
 						   int image_over_ipc,
@@ -158,4 +159,39 @@ int carmen_canon_stop_preview_command(void)
   carmen_test_ipc_return_int(err, "Could not publish", 
 			     CARMEN_CANON_PREVIEW_STOP_NAME);
   return 0;
+}
+
+static void 
+alive_interface_handler(MSG_INSTANCE msgRef __attribute__ ((unused)),
+                         BYTE_ARRAY callData __attribute__ ((unused)),
+                         void *clientData __attribute__ ((unused)))
+{
+  if(alive_message_handler_external)
+    alive_message_handler_external(NULL);
+}
+
+void
+carmen_canon_subscribe_alive_message(carmen_handler_t handler,
+                                     carmen_subscribe_t subscribe_how)
+{
+  IPC_RETURN_TYPE err = IPC_OK;
+  
+  err = IPC_defineMsg(CARMEN_CANON_ALIVE_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_ALIVE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+                       CARMEN_CANON_ALIVE_NAME);
+  if(subscribe_how == CARMEN_UNSUBSCRIBE) {
+    IPC_unsubscribe(CARMEN_CANON_ALIVE_NAME, 
+                    alive_interface_handler);
+    return;
+  }
+  
+  alive_message_handler_external = handler;
+  err = IPC_subscribe(CARMEN_CANON_ALIVE_NAME, 
+                      alive_interface_handler, NULL);
+  if (subscribe_how == CARMEN_SUBSCRIBE_LATEST)
+    IPC_setMsgQueueLength(CARMEN_CANON_ALIVE_NAME, 1);
+  else
+    IPC_setMsgQueueLength(CARMEN_CANON_ALIVE_NAME, 100);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_CANON_ALIVE_NAME);
 }
