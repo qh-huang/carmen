@@ -66,4 +66,10 @@ int carmen_canon_start_preview_command(void);
 
 int carmen_canon_stop_preview_command(void);
 
+/* subscribe to the heartbeat message */
+
+void
+carmen_canon_subscribe_alive_message(carmen_handler_t handler,
+                                     carmen_subscribe_t subscribe_how);
+
 #endif

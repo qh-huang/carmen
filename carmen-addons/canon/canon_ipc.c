@@ -162,6 +162,12 @@ void initialize_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_CANON_PREVIEW_STOP_NAME);
 
+  /* heartbeat message */
+  err = IPC_defineMsg(CARMEN_CANON_ALIVE_NAME, IPC_VARIABLE_LENGTH, 
+                      CARMEN_CANON_ALIVE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_CANON_ALIVE_NAME);
+
   /* subscribe to image requests */
   err = IPC_subscribe(CARMEN_CANON_IMAGE_REQUEST_NAME, 
 		      canon_image_query, NULL);

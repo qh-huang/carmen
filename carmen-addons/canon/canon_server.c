@@ -52,6 +52,17 @@ void shutdown_module(int x)
   }
 }
 
+void alive_timer(void *clientdata __attribute__ ((unused)),
+                 unsigned long t1 __attribute__ ((unused)),
+                 unsigned long t2 __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  
+  err = IPC_publishData(CARMEN_CANON_ALIVE_NAME, NULL);
+  carmen_test_ipc_exit(err, "Could not publish", 
+                       CARMEN_CANON_ALIVE_NAME);
+}
+
 int main(int argc __attribute__ ((unused)), char **argv)
 {
   /* initialize IPC */
@@ -74,6 +85,8 @@ int main(int argc __attribute__ ((unused)), char **argv)
 
   /* run the main loop */
   fprintf(stderr, "Camera is ready to capture.\n");
+
+  IPC_addTimer(1000, TRIGGER_FOREVER, alive_timer, NULL);
   IPC_dispatch();
   return 0;
 }

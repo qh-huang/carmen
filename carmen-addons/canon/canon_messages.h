@@ -81,6 +81,9 @@ typedef struct {
 #define      CARMEN_CANON_PREVIEW_NAME     "carmen_canon_preview"
 #define      CARMEN_CANON_PREVIEW_FMT      "{int,<char:1>,double,[char:10]}"
 
+#define      CARMEN_CANON_ALIVE_NAME       "carmen_canon_alive"
+#define      CARMEN_CANON_ALIVE_FMT        ""
+
 #ifdef __cplusplus
 }
 #endif
