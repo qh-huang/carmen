@@ -1,6 +1,5 @@
 #include <carmen/carmen_graphics.h>
 #include "canon_interface.h"
-//#include "jpegread.h"
 
 GtkWidget *drawing_area;
 GdkGC *gc = NULL;
@@ -86,6 +85,14 @@ void initialize_graphics(int *argc, char ***argv)
                      (GtkSignalFunc)expose_event, NULL);
 }
 
+void shutdown_module(int x)
+{
+  if(x == SIGINT) {
+    carmen_canon_stop_preview_command();
+    exit(0);
+  }
+}
+
 int main(int argc __attribute__ ((unused)), char **argv)
 {
   carmen_initialize_ipc(argv[0]);
@@ -94,7 +101,8 @@ int main(int argc __attribute__ ((unused)), char **argv)
   carmen_canon_subscribe_preview_message(&preview, (carmen_handler_t)
 					 canon_preview_handler,
 					 CARMEN_SUBSCRIBE_LATEST);
-
+  carmen_canon_start_preview_command();
+  signal(SIGINT, shutdown_module);
   initialize_graphics(&argc, &argv);
   gtk_main();
   return 0;

@@ -4,6 +4,7 @@
 
 usb_dev_handle *camera_handle;
 int use_flash;
+int publishing_preview = 0;
 
 void shutdown_module(int x)
 {
@@ -13,6 +14,48 @@ void shutdown_module(int x)
     close_ipc();
     fprintf(stderr, "Closed connection to camera.\n");
     exit(-1);
+  }
+}
+
+void publish_preview(void *clientdata __attribute__ ((unused)), 
+		     unsigned long t1 __attribute__ ((unused)), 
+		     unsigned long t2 __attribute__ ((unused)))
+{
+  carmen_canon_preview_message preview;
+  IPC_RETURN_TYPE err;
+
+  if(canon_rcc_download_preview(camera_handle,
+				(unsigned char **)&preview.preview, 
+				&preview.preview_length) < 0) {
+    fprintf(stderr, "Error: could not download a preview.\n");
+    return;
+  }
+  fprintf(stderr, "Preview size 0x%x bytes\n", preview.preview_length);
+
+  err = IPC_publishData(CARMEN_CANON_PREVIEW_NAME, &preview);
+  carmen_test_ipc_exit(err, "Could not publish", 
+		       CARMEN_CANON_PREVIEW_NAME);
+
+  free(preview.preview);
+}
+
+void start_preview(MSG_INSTANCE msgRef __attribute__ ((unused)),
+		   BYTE_ARRAY callData __attribute__ ((unused)),
+		   void *clientData __attribute__ ((unused)))
+{
+  if(!publishing_preview) {
+    IPC_addTimer(60, TRIGGER_FOREVER, publish_preview, NULL);
+    publishing_preview = 1;
+  }
+}
+
+void stop_preview(MSG_INSTANCE msgRef __attribute__ ((unused)),
+		  BYTE_ARRAY callData __attribute__ ((unused)),
+		  void *clientData __attribute__ ((unused)))
+{
+  if(publishing_preview) {
+    IPC_removeTimer(publish_preview);
+    publishing_preview = 0;
   }
 }
 
@@ -94,6 +137,19 @@ void initialize_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not subscribe to", 
                        CARMEN_CANON_IMAGE_REQUEST_NAME);
   IPC_setMsgQueueLength(CARMEN_CANON_IMAGE_REQUEST_NAME, 100);
+
+  /* subscribe to preview starts and stops */
+  err = IPC_subscribe(CARMEN_CANON_PREVIEW_START_NAME,
+		      start_preview, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+                       CARMEN_CANON_PREVIEW_START_NAME);
+  IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_START_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_CANON_PREVIEW_STOP_NAME,
+		      start_preview, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+                       CARMEN_CANON_PREVIEW_STOP_NAME);
+  IPC_setMsgQueueLength(CARMEN_CANON_PREVIEW_STOP_NAME, 100);
 }
 
 void read_parameters(int argc, char **argv)
@@ -105,28 +161,6 @@ void read_parameters(int argc, char **argv)
   carmen_param_install_params(argc, argv, camera_params,
                               sizeof(camera_params) / 
 			      sizeof(camera_params[0]));
-}
-
-void publish_preview(void *clientdata __attribute__ ((unused)), 
-		     unsigned long t1 __attribute__ ((unused)), 
-		     unsigned long t2 __attribute__ ((unused)))
-{
-  carmen_canon_preview_message preview;
-  IPC_RETURN_TYPE err;
-
-  if(canon_rcc_download_preview(camera_handle,
-				(unsigned char **)&preview.preview, 
-				&preview.preview_length) < 0) {
-    fprintf(stderr, "Error: could not download a preview.\n");
-    return;
-  }
-  fprintf(stderr, "Preview size 0x%x bytes\n", preview.preview_length);
-
-  err = IPC_publishData(CARMEN_CANON_PREVIEW_NAME, &preview);
-  carmen_test_ipc_exit(err, "Could not publish", 
-		       CARMEN_CANON_PREVIEW_NAME);
-
-  free(preview.preview);
 }
 
 int main(int argc, char **argv)
@@ -154,8 +188,6 @@ int main(int argc, char **argv)
 
   fprintf(stderr, "Camera is ready to capture.\n");
   
-  IPC_addTimer(60, TRIGGER_FOREVER, publish_preview, NULL);
-
   /* run the main loop */
   IPC_dispatch();
   return 0;
