@@ -93,6 +93,9 @@ int main(int argc, char **argv)
 			      &command_tv, &command_rv, &tilt,&fire);
       carmen_robot_velocity_command(command_tv, command_rv);
       carmen_cerebellum_tilt_command(tilt);
+      if(fire)
+	carmen_cerebellum_fire_command(fire);
+
       f_timestamp = carmen_get_time_ms();
     }
     else if(carmen_read_char(&c)) {
