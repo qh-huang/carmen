@@ -264,6 +264,8 @@ int main(int argc, char *argv[])
     //    goal.pose.y = 19.5;
     goal.pose.x = 25.4;
     goal.pose.y = 9.4;
+    //    goal.pose.x = 33.4;
+    //    goal.pose.y = 16.7;
     goal.map = map;
     
     dot_person.id = 0;
