@@ -28,7 +28,9 @@
 #include "cerebellum_com.h"
 #include "cerebellum_defs.h"
 
-// #define DEBUG 1
+//#define DEBUG 1
+
+#define SLIVER 5
 
 #define CEREB_BAUDRATE 115200
 #define PIC_WRITE_DELAY      10 // serial xfer delay, in us
@@ -42,7 +44,6 @@ static int dev_fd;
 int
 cereb_send_string(char * ptr, int length)
 {
-
   int i;
   
   for(i = 0; i < length; ++i)
@@ -50,18 +51,20 @@ cereb_send_string(char * ptr, int length)
       carmen_serial_writen(dev_fd, ptr+i, 1);
       // keeps the PIC from getting overwhelmed
       usleep(PIC_WRITE_DELAY);
-
+      
 #ifdef DEBUG
       printf("%x ",ptr[i]);
 #endif
     }
-
+  
   return 0;
+  
 }
 
 int
 cereb_read_string(char * ptr, int length)
 {
+  /*
   int x;
   int i;
 
@@ -87,6 +90,8 @@ cereb_read_string(char * ptr, int length)
 #endif
 
   return x;
+  */
+  return carmen_serial_readn(dev_fd, ptr, length);
 }
 
 // puts 32-bit ints into buffer in little-endian order for PIC to accept
@@ -116,19 +121,6 @@ int unpack_buffer(unsigned char *ptr, int * index)
   data |= (((int)char1) << 8)  & 0x0000FF00;
   data |= (((int)char2) << 16) & 0x00FF0000;
   data |= (((int)char3) << 24) & 0xFF000000;
-
-  /*
-  for(i = 0; i < 25;)
-    {
-      data |= (((int)(ptr[(*index)++])) & 0xFF) << i;
-
-      i += 8;
-    }
-  */
-  /*
-  data = (int)ptr[(*index)];
-  *index += 4;
-  */
 
   return data;
 }
@@ -232,7 +224,7 @@ static int cereb_send_2int_command(char command, int left, int right)
   int index = 0;
 
   buf[index++] = command;
-  stuff_buffer(buf, &index, -left);
+  stuff_buffer(buf, &index, left);
   stuff_buffer(buf, &index, right);
   checksum_data(buf, &index);
   cereb_send_string(buf, index);
@@ -260,6 +252,11 @@ carmen_cerebellum_connect_robot(char *dev)
   return cereb_init();
 }
 
+int carmen_cerebellum_reconnect_robot()
+{
+  return cereb_init();
+}
+
 int carmen_cerebellum_ac(int acc)
 {
   return cereb_send_2int_command(SET_ACCELERATIONS,acc,acc);
@@ -268,7 +265,13 @@ int carmen_cerebellum_ac(int acc)
 int 
 carmen_cerebellum_set_velocity(int command_vl, int command_vr)
 {
+  printf("%d  %d\r\n",command_vl, command_vr);
+
+#ifdef SLIVER
+  return cereb_send_2int_command(SET_VELOCITIES,command_vr, command_vl);
+#else 
   return cereb_send_2int_command(SET_VELOCITIES,command_vl, command_vr);
+#endif
 }
 
 int
@@ -299,26 +302,56 @@ carmen_cerebellum_get_state(int *left_tics, int *right_tics,
 {
   unsigned char buf[20];
   int index = 0;
+  //double start_time;
 
+  //  fprintf(stderr, "O");
   if(cereb_send_command(GET_ODOMETRY) < 0)
     return -1;
 
   // wait a bit for response to come
   usleep(PIC_READ_DELAY);
 
-  // read 4 int32's, and 1 checksum
-  if(cereb_read_string(buf, 17) < 0)
-    return -1;
+  usleep(10000);
 
-  if(verify_checksum(buf, 16) < 0)
-    return -1;
+  // read 4 int32's, 1 error byte, and 1 checksum
 
+  //start_time = carmen_get_time_ms();
+  if(cereb_read_string(buf, 18) < 0)
+    return -1;
+  //fprintf(stderr, "serial read = %f\n", (carmen_get_time_ms() - start_time)*1000);
+
+  //start_time = carmen_get_time_ms();
+  if(verify_checksum(buf, 17) < 0)
+    return -1;
+  //fprintf(stderr, "checksum verify = %f\n", (carmen_get_time_ms() - start_time)*1000);
+
+  //start_time = carmen_get_time_ms();
+  // if Cerebellum had comm error with encoder board
+  if(buf[16] == 1)
+    return -1;
+  //fprintf(stderr, "is error? %f\n", (carmen_get_time_ms() - start_time)*1000);
+
+  //start_time = carmen_get_time_ms();
+#ifdef SLIVER
+  *right_tics = unpack_buffer(buf, &index);
+  *left_tics = unpack_buffer(buf, &index);
+  *right_vel = unpack_buffer(buf, &index);
+  *left_vel = unpack_buffer(buf, &index);
+#else
   *left_tics = unpack_buffer(buf, &index);
   *right_tics = unpack_buffer(buf, &index);
   *left_vel = unpack_buffer(buf, &index);
   *right_vel = unpack_buffer(buf, &index);
-  
+#endif
+  //fprintf(stderr, "buffer unpacking = %f\n", (carmen_get_time_ms() - start_time)*1000);  
+
   return 0;
+}
+
+int 
+carmen_cerebellum_fire(void)
+{
+  return cereb_send_command(FIRE);
 }
 
 int 

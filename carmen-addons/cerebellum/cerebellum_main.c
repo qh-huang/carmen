@@ -39,21 +39,40 @@ static pthread_t main_thread;
 static int thread_is_running = 0;
 #endif
 
-#define        CEREBELLUM_TIMEOUT          2.0
+#define SLIVER 'y'
 
-#define        METRES_PER_INCH        0.0254
+#define        CEREBELLUM_TIMEOUT          (2.0)
 
-#define        METRES_PER_CEREBELLUM_VELOCITY (METRES_PER_INCH/10.0)
-#define        METRES_PER_CEREBELLUM (METRES_PER_INCH/10.0)
+#define        METRES_PER_INCH        (0.0254)
+#define        INCH_PER_METRE         (39.370)
 
-#define        WHEELBASE        (13.4 * METRES_PER_INCH)
-#define        ROT_VEL_FACT_RAD (WHEELBASE/METRES_PER_CEREBELLUM_VELOCITY)
+#define        CEREBELLUM_LOOP_FREQUENCY  (300.0)
 
-#define        MAXV                   (1.0/METRES_PER_CEREBELLUM_VELOCITY)
+#ifdef SLIVER // which robot on cerebellum?
+
+#define        MACH5_WHEEL_CIRCUMFERENCE  (4.25 * METRES_PER_INCH * 3.1415926535)
+#define        MACH5_TICKS_REV       (5800.0)
+#define        WHEELBASE        (.317)
+
+#else // MACH5
+
+#define        MACH5_WHEEL_CIRCUMFERENCE  (3.5 * METRES_PER_INCH * 3.1415926535)
+#define        MACH5_TICKS_REV       (5800.0)
+#define        WHEELBASE        (9.875 * METRES_PER_INCH)
+
+#endif
+
+#define        METRES_PER_CEREBELLUM (1.0/(MACH5_TICKS_REV / MACH5_WHEEL_CIRCUMFERENCE))
+#define        METRES_PER_CEREBELLUM_VELOCITY (1.0/(METRES_PER_CEREBELLUM * CEREBELLUM_LOOP_FREQUENCY))
+
+#define        ROT_VEL_FACT_RAD (WHEELBASE*METRES_PER_CEREBELLUM_VELOCITY/2)
+
+#define        MAXV             (4.5*METRES_PER_CEREBELLUM_VELOCITY)
 
 static char *dev_name;
 static int State[4];
 static int set_velocity = 0;
+static int fire_gun = 0;
 static int command_vl = 0, command_vr = 0;
 static double last_command = 0;
 static double last_update = 0;
@@ -77,8 +96,10 @@ initialize_robot(char *dev)
   if(result != 0)
     return -1;
 
-  acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
-  result = carmen_cerebellum_ac(acc);
+  acc = robot_config.acceleration*METRES_PER_CEREBELLUM_VELOCITY;
+
+  // SNEAKY HACK
+  result = carmen_cerebellum_ac(25);
   current_acceleration = robot_config.acceleration;
 
   if(result != 0)
@@ -127,7 +148,7 @@ update_status(void)  /* This function takes approximately 60 ms to run */
   vr = ((double)State[3]) * METRES_PER_CEREBELLUM_VELOCITY;
 
   odometry.tv = 0.5 * (vl + vr);
-  odometry.rv = (vl - vr) / ROT_VEL_FACT_RAD;
+  odometry.rv = (vl - vr) * ROT_VEL_FACT_RAD;
   
   if (!initialized)
     {
@@ -214,6 +235,12 @@ command_robot(void)
   int acc;
   int error = 0;
 
+  if(fire_gun)
+    {
+      carmen_cerebellum_fire();
+      fire_gun = 0;
+    }
+
   if (set_velocity)
     {
       if(command_vl == 0 && command_vr == 0) 
@@ -225,7 +252,7 @@ command_robot(void)
 	{
 	  if (!moving)
 	    {
-	      acc = robot_config.acceleration/METRES_PER_CEREBELLUM_VELOCITY;
+	      acc = robot_config.acceleration*METRES_PER_CEREBELLUM_VELOCITY;
 	      do 
 		{
 		  error = carmen_cerebellum_ac(acc);
@@ -268,7 +295,7 @@ command_robot(void)
     }  
   else if (moving && current_acceleration == robot_config.acceleration)
     {
-      acc = stopping_acceleration/METRES_PER_CEREBELLUM_VELOCITY;
+      acc = stopping_acceleration*METRES_PER_CEREBELLUM_VELOCITY;
       do 
 	{
 	  carmen_cerebellum_ac(acc);
@@ -351,11 +378,14 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  vl = vel.tv / METRES_PER_CEREBELLUM_VELOCITY;
-  vr = vel.tv / METRES_PER_CEREBELLUM_VELOCITY;  
+  vl = vel.tv * METRES_PER_CEREBELLUM_VELOCITY;
+  vr = vel.tv * METRES_PER_CEREBELLUM_VELOCITY;  
 
   vl -= 0.5 * vel.rv * ROT_VEL_FACT_RAD;
   vr += 0.5 * vel.rv * ROT_VEL_FACT_RAD;
+
+  printf("Velocities: %f %f\r\n",vel.tv,vel.rv);
+  printf("After conv: %f %f\r\n",vl, vr);
 
   if(vl > MAXV)
     vl = MAXV;
@@ -366,10 +396,36 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   else if(vr < -MAXV)
     vr = -MAXV;
 
+  printf("After maxing: %f %f\r\n",vl,vr);
+
   command_vl = (int)vl;
   command_vr = (int)vr;
 
+  printf("To_int: %d %d\r\n",command_vl, command_vr);
+
   set_velocity = 1;
+}
+
+static void 
+gun_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		 void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_robot_cereb_fire_message v;
+
+  FORMATTER_PTR formatter;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &v,
+                     sizeof(carmen_robot_cereb_fire_message));
+  IPC_freeByteArray(callData);
+
+  carmen_test_ipc_return(err, "Could not unmarshall", 
+			 IPC_msgInstanceName(msgRef));
+
+  printf("firing\r\n");
+
+  fire_gun = 1;
 }
 
 int 
@@ -391,6 +447,10 @@ carmen_cerebellum_initialize_ipc(void)
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_BASE_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_VELOCITY_NAME, 1);
+
+  err = IPC_subscribe(CARMEN_ROBOT_CEREB_FIRE_NAME, gun_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_CEREB_FIRE_NAME);
+  IPC_setMsgQueueLength(CARMEN_ROBOT_CEREB_FIRE_NAME, 1);
 
   return IPC_No_Error;
 }
