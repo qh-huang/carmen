@@ -6,15 +6,15 @@ IFLAGS +=
 LFLAGS += -lparam_interface -lglobal -lipc -lusb
 
 MODULE_NAME = CANON
-MODULE_COMMENT = Canon Powershot Camera Driver
+MODULE_COMMENT = Canon Powershot Camera Driver for CARMEN
 
-SOURCES = canon.c
+SOURCES = canon.c canon_server.c capture_test.c preview_test.c parse-log.c
 PUBLIC_INCLUDES = 
 PUBLIC_LIBRARIES = 
 PUBLIC_BINARIES = 
 MAN_PAGES =
 
-TARGETS = libcanon.a libcanon_interface.a canon_server canon_test preview_test camera_test parse-log
+TARGETS = libcanon.a libcanon_interface.a canon_server capture_test preview_test parse-log
 
 # rules
 
@@ -24,15 +24,11 @@ libcanon.a:	canon.o
 
 libcanon_interface.a:	canon_interface.o
 
-canon_test:	canon_test.o libcanon_interface.a
+capture_test:	capture_test.o libcanon_interface.a
 
 preview_test:	preview_test.o libcanon_interface.a
 
-camera_test:	camera_test.o libcanon.a
-
 canon_server:	canon_server.o libcanon.a
-
-interface_test:	interface_test.o libcanon_interface.a
 
 parse-log:	parse-log.o
 
