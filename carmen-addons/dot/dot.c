@@ -126,6 +126,7 @@ static int num_filters = 0;
 
 
 static void publish_dot_msg(carmen_dot_filter_p f, int delete);
+static void publish_all_dot_msgs();
 
 static void print_filters() {
 
@@ -817,7 +818,7 @@ static void delete_filter(int i) {
 
   printf("D%d\n", filters[i].id);
 
-  publish_dot_msg(&filters[i], 1);
+  //publish_dot_msg(&filters[i], 1);
 
   if (i < num_filters-1)
     memmove(&filters[i], &filters[i+1], (num_filters-i-1)*sizeof(carmen_dot_filter_t));
@@ -937,7 +938,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
     if (filters[i].type != filters[i].last_type) {
       n = filters[i].type;
       filters[i].type = filters[i].last_type;
-      publish_dot_msg(&filters[i], 1);
+      //publish_dot_msg(&filters[i], 1);
       filters[i].type = n;
       /*
       switch (filters[i].type) {
@@ -953,8 +954,8 @@ static void laser_handler(carmen_robot_laser_message *laser) {
       }
       */
     }
-    if (filters[i].updated)
-      publish_dot_msg(&filters[i], 0);
+    //if (filters[i].updated)
+    //publish_dot_msg(&filters[i], 0);
   }
 
   /*
@@ -980,6 +981,8 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   }
   printf("\n");
   */
+
+  publish_all_dot_msgs();
 }
 
 static void publish_person_msg(carmen_dot_filter_p f, int delete) {
@@ -1075,6 +1078,110 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
     publish_door_msg(f, delete);
     break;
   }
+}
+
+static void publish_all_dot_msgs() {
+
+  static carmen_dot_all_people_msg all_people_msg;
+  static carmen_dot_all_trash_msg all_trash_msg;
+  static carmen_dot_all_doors_msg all_doors_msg;
+  static int first = 1;
+  IPC_RETURN_TYPE err;
+  int i, n;
+  
+  if (first) {
+    all_people_msg.people = NULL;
+    strcpy(all_people_msg.host, carmen_get_tenchar_host_name());
+    all_trash_msg.trash = NULL;
+    strcpy(all_trash_msg.host, carmen_get_tenchar_host_name());
+    all_doors_msg.doors = NULL;
+    strcpy(all_doors_msg.host, carmen_get_tenchar_host_name());
+    first = 0;
+  }
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_PERSON)
+      n++;
+
+  all_people_msg.num_people = n;
+  if (n == 0)
+    all_people_msg.people = NULL;
+  else {
+    all_people_msg.people = (carmen_dot_person_p)
+      realloc(all_people_msg.people, n*sizeof(carmen_dot_person_t));
+  
+    for (n = i = 0; i < num_filters; i++)
+      if (filters[i].type == CARMEN_DOT_PERSON) {
+	all_people_msg.people[n].id = filters[i].id;
+	all_people_msg.people[n].x = filters[i].person_filter.x;
+	all_people_msg.people[n].y = filters[i].person_filter.y;
+	all_people_msg.people[n].vx = filters[i].person_filter.px;
+	all_people_msg.people[n].vy = filters[i].person_filter.py;
+	all_people_msg.people[n].vxy = filters[i].person_filter.pxy;
+	n++;
+      }
+  }
+
+  all_people_msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_ALL_PEOPLE_MSG_NAME, &all_people_msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_PEOPLE_MSG_NAME);
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_TRASH)
+      n++;
+
+  all_trash_msg.num_trash = n;
+  if (n == 0)
+    all_trash_msg.trash = NULL;
+  else {
+    all_trash_msg.trash = (carmen_dot_trash_p)
+      realloc(all_trash_msg.trash, n*sizeof(carmen_dot_trash_t));
+  
+    for (n = i = 0; i < num_filters; i++)
+      if (filters[i].type == CARMEN_DOT_TRASH) {
+	all_trash_msg.trash[n].id = filters[i].id;
+	all_trash_msg.trash[n].x = filters[i].trash_filter.x;
+	all_trash_msg.trash[n].y = filters[i].trash_filter.y;
+	all_trash_msg.trash[n].vx = filters[i].trash_filter.px;
+	all_trash_msg.trash[n].vy = filters[i].trash_filter.py;
+	all_trash_msg.trash[n].vxy = filters[i].trash_filter.pxy;
+	n++;
+      }
+  }
+
+  all_trash_msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_ALL_TRASH_MSG_NAME, &all_trash_msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_TRASH_MSG_NAME);
+
+  for (n = i = 0; i < num_filters; i++)
+    if (filters[i].type == CARMEN_DOT_DOOR)
+      n++;
+
+  all_doors_msg.num_doors = n;
+  if (n == 0)
+    all_doors_msg.doors = NULL;
+  else {
+    all_doors_msg.doors = (carmen_dot_door_p)
+      realloc(all_doors_msg.doors, n*sizeof(carmen_dot_door_t));
+  
+    for (n = i = 0; i < num_filters; i++)
+      if (filters[i].type == CARMEN_DOT_DOOR) {
+	all_doors_msg.doors[n].id = filters[i].id;
+	all_doors_msg.doors[n].x = filters[i].door_filter.x;
+	all_doors_msg.doors[n].y = filters[i].door_filter.y;
+	all_doors_msg.doors[n].vx = filters[i].door_filter.px;
+	all_doors_msg.doors[n].vy = filters[i].door_filter.py;
+	all_doors_msg.doors[n].vxy = filters[i].door_filter.pxy;
+	n++;
+      }
+  }
+
+  all_doors_msg.timestamp = carmen_get_time_ms();
+
+  err = IPC_publishData(CARMEN_DOT_ALL_DOORS_MSG_NAME, &all_doors_msg);
+  carmen_test_ipc_exit(err, "Could not publish", CARMEN_DOT_ALL_DOORS_MSG_NAME);
 }
 
 static void respond_all_people_msg(MSG_INSTANCE msgRef) {
