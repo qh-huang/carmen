@@ -2,6 +2,7 @@
 #define CANON_INTERFACE_H
 
 #include "canon_messages.h"
+#include "jpegread.h"
 
 carmen_canon_image_message *carmen_canon_get_image(int thumbnail_over_ipc,
 						   int image_over_ipc,
