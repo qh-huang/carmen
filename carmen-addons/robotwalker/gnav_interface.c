@@ -63,7 +63,19 @@ void carmen_gnav_subscribe_room_message(carmen_gnav_room_msg *room_msg,
 
 carmen_rooms_topology_p carmen_gnav_get_rooms_topology() {
 
-  return;
+  IPC_RETURN_TYPE err;
+  carmen_gnav_query query;
+  carmen_gnav_rooms_topology_msg *response;
+
+  query.timestamp = carmen_get_time_ms();
+  strcpy(query.host, carmen_get_tenchar_host_name());
+
+  err = IPC_queryResponseData(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, &query, 
+			      (void **) &response, 5000);
+  carmen_test_ipc_return_null(err, "Could not query rooms topology",
+			      CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
+
+  return (carmen_rooms_topology_p) response;
 }
 
 static void path_msg_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -116,7 +128,16 @@ void carmen_gnav_subscribe_path_message(carmen_gnav_path_msg *path_msg,
   carmen_test_ipc(err, "Could not subscribe", CARMEN_GNAV_PATH_NAME);
 }
 
-void carmen_gnav_set_goal(int room) {
+void carmen_gnav_set_goal(int goal) {
 
-  return;
+  IPC_RETURN_TYPE err = IPC_OK;
+  carmen_gnav_set_goal_msg msg;
+
+  msg.timestamp = carmen_get_time_ms();
+  strcpy(msg.host, carmen_get_tenchar_host_name());
+
+  msg.goal = goal;
+
+  err = IPC_publishData(CARMEN_GNAV_SET_GOAL_MSG_NAME, &msg);
+  carmen_test_ipc(err, "Could not publish", CARMEN_GNAV_SET_GOAL_MSG_NAME);
 }
