@@ -9,11 +9,13 @@
 #include "roomnav_messages.h"
 
 
-#define GRID_NONE     -1
-#define GRID_UNKNOWN  -2
-#define GRID_WALL     -3
-#define GRID_DOOR     -4
-#define GRID_PROBE    -5
+#define GRID_NONE      -1
+#define GRID_UNKNOWN   -2
+#define GRID_WALL      -3
+#define GRID_DOOR      -4
+#define GRID_PROBE     -5
+#define GRID_VORONOI   -6
+#define GRID_CRITICAL  -7
 
 #define DEFAULT_GRID_RESOLUTION 0.1
 
@@ -59,6 +61,17 @@ static int num_rooms = 0;
 static carmen_door_p doors = NULL;
 static int num_doors = 0;
 
+static double voronoi_dist_tolerance = 1.5;
+static double voronoi_min_theta = 9.0*M_PI/18.0;
+static double voronoi_min_dist = 4.0;
+static double voronoi_local_min_filter_dist = 1.0;
+static int voronoi_local_min_filter_inner_radius = 2;
+static int voronoi_local_min_filter_outer_radius = 5;
+static double voronoi_critical_point_min_theta = 16.0*M_PI/18.0;
+//static int voronoi_critical_point_min_dist = 5.0;
+
+static double hallway_eccentricity_threshold = 9.0;
+
 static int loading_map = 0;
 
 carmen_localize_globalpos_message global_pos;
@@ -76,8 +89,11 @@ static GdkPixmap *pixmap = NULL;
 static GtkWidget *window, *canvas;
 static int canvas_width = 300, canvas_height = 300;
 
+static void draw_canvas(int x0, int y0, int width, int height);
 static void draw_grid(int x0, int y0, int width, int height);
 static void grid_to_image(int x, int y, int width, int height);
+static void draw_arrow(int x, int y, double theta, int width, int height,
+		       GdkColor color);
 
 #endif
 
@@ -88,9 +104,32 @@ static int fast = 0;
 static int get_farthest(int door, int place);
 static void set_goal(int new_goal);
 
+//#define MIN(x,y) ((x) < (y) ? (x) : (y))
+//#define MAX(x,y) ((x) > (y) ? (x) : (y))
+//#define ABS(x) ((x) < 0 ? -(x) : (x))
+
 static inline double dist(double x, double y) {
 
   return sqrt(x*x + y*y);
+}
+
+static inline double idist(int x, int y) {
+
+  return sqrt((double)(x*x + y*y));
+}
+
+static inline int round_to_int(double x) {
+
+  int xi, negative = 0;
+
+  if (x < 0) {
+    x = -x;
+    negative = 1;
+  }
+
+  xi = ((int)x) + (x - (int)x > 0.5);
+
+  return (negative ? -xi : xi);
 }
 
 static void print_doors() {
@@ -108,7 +147,7 @@ static void print_doors() {
   }
 }
 
-// fmt of place names: "b<door>.<place>" 
+// fmt of place names: "[b|d]<door>.<place>" 
 static int get_doors(carmen_map_placelist_p placelist) {
 
   int num_doornames, num_places, *num_doorplaces;
@@ -131,7 +170,7 @@ static int get_doors(carmen_map_placelist_p placelist) {
   // get doornames & num_doors
   for (i = 0; i < num_places; i++) {
     placename = placelist->places[i].name;
-    if (placename[0] != 'b')
+    if (placename[0] != 'b' && placename[0] != 'd')
       continue;
     if (placename[strspn(placename+1, "0123456789") + 1] != '.')
       continue;
@@ -164,6 +203,7 @@ static int get_doors(carmen_map_placelist_p placelist) {
   for (j = num_doors; j < num_doors + num_doornames; j++) {
     printf("break 3.%d.1\n", j);
     doors[j].num = j;
+    doors[j].is_real_door = (doornames[j-num_doors][0] == 'd');
     doors[j].points.num_places = num_doorplaces[j-num_doors];
     doors[j].points.places =
       (carmen_place_p) calloc(num_doorplaces[j-num_doors], sizeof(carmen_place_t));
@@ -425,10 +465,184 @@ static void get_room_names(carmen_map_placelist_p placelist) {
   }
 }
 
+/*
+ * computes the orientation of the bivariate normal with variances
+ * vx, vy, and covariance vxy.  returns an angle in [-pi/2, pi/2].
+ */
+static double bnorm_theta(double vx, double vy, double vxy) {
+
+  double theta;
+  double e;  // major eigenvalue
+  double ex, ey;  // major eigenvector
+
+  e = (vx + vy)/2.0 + sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
+  ex = vxy;
+  ey = e - vx;
+
+  theta = atan2(ey, ex);
+
+  return theta;
+}
+
+#ifndef NO_GRAPHICS
+static void draw_hallway_endpoints() {
+
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+  int r;
+
+  world_point.map = map_point.map = &map;
+
+  for (r = 0; r < num_rooms; r++) {
+    world_point.pose.x = rooms[r].e1.x;
+    world_point.pose.y = rooms[r].e1.y;
+    carmen_world_to_map(&world_point, &map_point);
+    draw_arrow(map_point.x, map_point.y, rooms[r].theta - M_PI, 20, 10, carmen_white);
+    world_point.pose.x = rooms[r].e2.x;
+    world_point.pose.y = rooms[r].e2.y;
+    carmen_world_to_map(&world_point, &map_point);
+    draw_arrow(map_point.x, map_point.y, rooms[r].theta, 20, 10, carmen_white);
+  }
+}
+#endif
+
+static void get_room_types(int num_new_rooms) {
+
+  int i, j, r;
+  double x, y, x2, y2, vx, vy, vxy;
+
+  for (r = num_rooms - num_new_rooms; r < num_rooms; r++) {
+    rooms[r].num_cells = 0;
+    rooms[r].ux = rooms[r].uy = rooms[r].vx = rooms[r].vy = rooms[r].vxy = 0;
+    rooms[r].e1.y = rooms[r].e2.y = 0.0;
+    rooms[r].e1.theta = rooms[r].e2.theta = -1.0;
+  }
+
+  // get room centroids and extremities
+  for (i = 0; i < grid_width; i++) {
+    for (j = 0; j < grid_height; j++) {
+      r = grid[i][j];
+      if (r >= num_rooms - num_new_rooms) {
+	x = i * map.config.resolution;
+	y = j * map.config.resolution;
+	rooms[r].ux += x;
+	rooms[r].uy += y;
+	rooms[r].num_cells++;
+      }
+    }
+  }
+  for (r = num_rooms - num_new_rooms; r < num_rooms; r++) {
+    rooms[r].ux /= (double) rooms[r].num_cells;
+    rooms[r].uy /= (double) rooms[r].num_cells;
+  }
+
+  // get covariances
+  for (i = 0; i < grid_width; i++) {
+    for (j = 0; j < grid_height; j++) {
+      r = grid[i][j];
+      if (r >= num_rooms - num_new_rooms) {
+	x = i * map.config.resolution;
+	y = j * map.config.resolution;
+	rooms[r].vx += (x - rooms[r].ux)*(x - rooms[r].ux);
+	rooms[r].vy += (y - rooms[r].uy)*(y - rooms[r].uy);
+	rooms[r].vxy += (x - rooms[r].ux)*(y - rooms[r].uy);
+      }
+    }
+  }
+  for (r = num_rooms - num_new_rooms; r < num_rooms; r++) {
+    rooms[r].vx /= (double) rooms[r].num_cells;
+    rooms[r].vy /= (double) rooms[r].num_cells;
+    rooms[r].vxy /= (double) rooms[r].num_cells;
+    vx = rooms[r].vx;
+    vy = rooms[r].vy;
+    vxy = rooms[r].vxy;
+    rooms[r].theta = bnorm_theta(vx, vy, vxy);
+    rooms[r].w1 = (vx + vy)/2.0 + sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
+    rooms[r].w2 = (vx + vy)/2.0 - sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
+    if (rooms[r].w1 / rooms[r].w2 > hallway_eccentricity_threshold)
+      rooms[r].type = CARMEN_ROOM_TYPE_HALLWAY;
+    else
+      rooms[r].type = CARMEN_ROOM_TYPE_ROOM;
+  }
+
+  // get hallway endpoints in local coordinates
+  for (i = 0; i < grid_width; i++) {
+    for (j = 0; j < grid_height; j++) {
+      r = grid[i][j];
+      if (rooms[r].type == CARMEN_ROOM_TYPE_HALLWAY) {
+	if (r >= num_rooms - num_new_rooms) {
+	  x = i * map.config.resolution;
+	  y = j * map.config.resolution;
+	  x2 = x - rooms[r].ux;
+	  y2 = y - rooms[r].uy;
+	  carmen_rotate_2d(&x2, &y2, -rooms[r].theta);
+	  if (rooms[r].e1.theta < 0.0 || x2 < rooms[r].e1.x) {
+	    rooms[r].e1.x = x2;
+	    rooms[r].e1.theta = 0.0;
+	  }
+	  if (rooms[r].e2.theta < 0.0 || x2 > rooms[r].e2.x) {
+	    rooms[r].e2.x = x2;
+	    rooms[r].e2.theta = 0.0;
+	  }
+	}
+      }
+    }  
+  }
+
+  // transform hallway endpoints to global coordinates
+  for (r = num_rooms - num_new_rooms; r < num_rooms; r++) {
+    if (rooms[r].type == CARMEN_ROOM_TYPE_HALLWAY) {
+      carmen_rotate_2d(&rooms[r].e1.x, &rooms[r].e1.y, rooms[r].theta);
+      rooms[r].e1.x += rooms[r].ux;
+      rooms[r].e1.y += rooms[r].uy;
+      carmen_rotate_2d(&rooms[r].e2.x, &rooms[r].e2.y, rooms[r].theta);
+      rooms[r].e2.x += rooms[r].ux;
+      rooms[r].e2.y += rooms[r].uy;
+    }
+  }
+}
+
+static void grid_draw_world_line(double x1, double y1, double x2, double y2, int cell_type) {
+
+  double x, y, dx, dy, d;
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+
+  world_point.map = &map;
+  map_point.map = &map;
+
+  dx = x2 - x1;
+  dy = y2 - y1;
+  d = dist(dx, dy);
+
+  for (x = x1, y = y1;
+       (dx < 0 ? x >= x2 : x <= x2) && (dy < 0 ? y >= y2 : y <= y2);
+       x += dx*grid_resolution/d, y += dy*grid_resolution/d) {
+    world_point.pose.x = x;
+    world_point.pose.y = y;
+    carmen_world_to_map(&world_point, &map_point);
+    grid[map_point.x][map_point.y] = cell_type;
+  }
+}
+
+static void grid_draw_map_line(int x1, int y1, int x2, int y2, int cell_type) {
+
+  double x, y, dx, dy, d;
+
+  dx = x2 - x1;
+  dy = y2 - y1;
+  d = idist(dx, dy);
+
+  for (x = x1, y = y1;
+       (dx < 0 ? x >= x2 : x <= x2) && (dy < 0 ? y >= y2 : y <= y2);
+       x += dx*grid_resolution/d, y += dy*grid_resolution/d) {
+    grid[round_to_int(x)][round_to_int(y)] = cell_type;
+  }
+}
+
 static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
 
   int i, j, n, e1, e2;
-  double x, y;
   double dx, dy, d;
   double e1x, e1y;  // endpoint 1
   double e2x, e2y;  // endpoint 2
@@ -437,6 +651,7 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
   double p2x, p2y;  // probe 2
   carmen_world_point_t world_point;
   carmen_map_point_t map_point;
+  int num_new_rooms = 0;
 
   rooms = (carmen_room_p) realloc(rooms, (num_rooms + num_new_doors + 1) * sizeof(carmen_room_t));
   carmen_test_alloc(rooms);
@@ -455,18 +670,7 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
     e2x = doors[i].points.places[e2].x;
     e2y = doors[i].points.places[e2].y;
 
-    dx = e2x - e1x;
-    dy = e2y - e1y;
-    d = dist(dx, dy);
-
-    for (x = e1x, y = e1y;
-	 (dx < 0 ? x >= e2x : x <= e2x) && (dy < 0 ? y >= e2y : y <= e2y);
-	 x += dx*grid_resolution/d, y += dy*grid_resolution/d) {
-      world_point.pose.x = x;
-      world_point.pose.y = y;
-      carmen_world_to_map(&world_point, &map_point);
-      grid[map_point.x][map_point.y] = GRID_DOOR;
-    }
+    grid_draw_world_line(e1x, e1y, e2x, e2y, GRID_DOOR);
   }
 
 #ifndef NO_GRAPHICS
@@ -519,6 +723,7 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
       num_rooms++;
+      num_new_rooms++;
     }
 
     for (j = 0; j < rooms[n].num_doors; j++)
@@ -545,6 +750,7 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
       carmen_test_alloc(rooms[n].doors);
       rooms[n].num_doors = 0;
       num_rooms++;
+      num_new_rooms++;
     }
 
     for (j = 0; j < rooms[n].num_doors; j++)
@@ -557,23 +763,13 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
   }
 
   get_room_names(placelist);
+  get_room_types(num_new_rooms);
 }
 
-static void map_switch(int map_num) {
-
 #ifndef NO_GRAPHICS
+static void canvas_resize() {
+
   double ratio;
-#endif
-
-  map = maps[map_num];
-  grid = grids[map_num];
-
-  grid_resolution = map.config.resolution; //dbug
-
-  grid_width = (int) map.config.x_size;
-  grid_height = (int) map.config.y_size;
-
-#ifndef NO_GRAPHICS
 
   ratio = sqrt(canvas_width * canvas_height / ((double) grid_width * grid_height));
   canvas_width = grid_width;
@@ -588,16 +784,27 @@ static void map_switch(int map_num) {
 
   grid_to_image(0, 0, grid_width, grid_height);
   draw_grid(0, 0, grid_width, grid_height);
+}
+#endif
 
+static void map_switch(int map_num) {
+
+  map = maps[map_num];
+  grid = grids[map_num];
+
+  grid_resolution = map.config.resolution; //dbug
+
+  grid_width = (int) map.config.x_size;
+  grid_height = (int) map.config.y_size;
+  
+#ifndef NO_GRAPHICS
+  canvas_resize();
 #endif
 }
 
 static void grid_init() {
 
   int i, j;
-#ifndef NO_GRAPHICS
-  int ratio;
-#endif
 
   grid_resolution = map.config.resolution; //dbug
 
@@ -637,19 +844,13 @@ static void grid_init() {
   }
 
 #ifndef NO_GRAPHICS
-
-  ratio = sqrt(canvas_width * canvas_height / ((double) grid_width * grid_height));
-  canvas_width = grid_width;
-  canvas_height = grid_height;
-  canvas_width *= ratio;
-  canvas_height *= ratio;
-
-  gtk_drawing_area_size(GTK_DRAWING_AREA(canvas), canvas_width, canvas_height);
-
-  while(gtk_events_pending())
-    gtk_main_iteration_do(TRUE);
-
+  canvas_resize();
 #endif
+}
+
+static inline int grid_oob(int x, int y) {
+
+  return (x < 0 || x >= grid_width || y < 0 || y >= grid_height);
 }
 
 static int closest_room(int x, int y, int max_shell) {
@@ -747,6 +948,349 @@ static void cleanup_map() {
 
 //static void dbug_func() { return; }
 
+static double dist_to_wall(int x, int y) {
+
+  int i, xi, yi, w, wx, wy, shell;
+
+  w = 0;
+  wx = wy = -1;
+  for (shell = 1; ; shell++) {  // find min dist
+    // Quadrant I
+    for (i = 0; i < shell; i++) {
+      xi = x+shell-i;
+      yi = y+i;
+      if (xi >= grid_width || yi >= grid_height)
+	continue;
+      if (grid[xi][yi] == GRID_WALL) {
+	if (!w) {
+	  w = shell;
+	  wx = xi;
+	  wy = yi;
+	}
+	else if (idist(xi-x, yi-y) < idist(wx-x, wy-y)) {
+	  wx = xi;
+	  wy = yi;
+	}
+      }
+    }
+    // Quadrant II
+    for (i = 0; i < shell; i++) {
+      xi = x-i;
+      yi = y+shell-i;
+      if (xi < 0 || yi >= grid_height)
+	continue;
+      if (grid[xi][yi] == GRID_WALL) {
+	if (!w) {
+	  w = shell;
+	  wx = xi;
+	  wy = yi;
+	}
+	else if (idist(xi-x, yi-y) < idist(wx-x, wy-y)) {
+	  wx = xi;
+	  wy = yi;
+	}
+      }
+    }
+    // Quadrant III
+    for (i = 0; i < shell; i++) {
+      xi= x-shell+i;
+      yi = y-i;
+      if (xi < 0 || yi < 0)
+	continue;
+      if (grid[xi][yi] == GRID_WALL) {
+	if (!w) {
+	  w = shell;
+	  wx = xi;
+	  wy = yi;
+	}
+	else if (idist(xi-x, yi-y) < idist(wx-x, wy-y)) {
+	  wx = xi;
+	  wy = yi;
+	}
+      }
+    }
+    // Quadrant IV
+    for (i = 0; i < shell; i++) {
+      xi = x+i;
+      yi = y-shell+i;
+      if (xi >= grid_width || yi < 0)
+	continue;
+      if (grid[xi][yi] == GRID_WALL) {
+	if (!w) {
+	  w = shell;
+	  wx = xi;
+	  wy = yi;
+	}
+	else if (idist(xi-x, yi-y) < idist(wx-x, wy-y)) {
+	  wx = xi;
+	  wy = yi;
+	}
+      }
+    }
+    if (w && 2*shell > 3*w)
+      break;
+  }
+  
+  return idist(wx-x, wy-y);
+}
+
+static void get_voronoi() {
+
+  int x, y, xi, yi, w, w2, wx, wy, shell, oob, i;
+  double wdist = 0.0;
+
+  printf("\n");
+  for (x = 0; x < grid_width; x++) {
+    printf("\rGetting Voronoi Diagram: %2d%% complete", (int) (100 * (x / (double) grid_width)));
+    fflush(0);
+    grid_to_image(x, 0, x+1, grid_height);
+    draw_grid(x, 0, x+1, grid_height);
+    for (y = 0; y < grid_height; y++) {
+      if (grid[x][y] != GRID_WALL && grid[x][y] != GRID_UNKNOWN) {
+	wdist = dist_to_wall(x, y);
+	if (wdist < voronoi_min_dist)
+	  continue;
+	w = w2 = 0;
+	wx = wy = -1;
+	for (shell = 1; !w2; shell++) {  // find # walls at min dist
+	  oob = 0;
+	  // Quadrant I
+	  for (i = 0; !w2 && i < shell; i++) {
+	    xi = x+shell-i;
+	    yi = y+i;
+	    if (xi >= grid_width || yi >= grid_height)
+	      oob = 1;
+	    else if (grid[xi][yi] == GRID_WALL) {
+	      if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+		if (!w) {
+		  w = shell;
+		  wx = xi;
+		  wy = yi;
+		}
+		else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta)
+		  w2 = 1;
+	      }
+	    }
+	  }
+	  // Quadrant II
+	  for (i = 0; !w2 && i < shell; i++) {
+	    xi = x-i;
+	    yi = y+shell-i;
+	    if (xi < 0 || yi >= grid_height)
+	      oob = 1;
+	    else if (grid[xi][yi] == GRID_WALL) {
+	      if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+		if (!w) {
+		  w = shell;
+		  wx = xi;
+		  wy = yi;
+		}
+		else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta)
+		  w2 = 1;
+	      }
+	    }
+	  }
+	  // Quadrant III
+	  for (i = 0; !w2 &&i < shell; i++) {
+	    xi= x-shell+i;
+	    yi = y-i;
+	    if (xi < 0 || yi < 0)
+	      oob = 1;
+	    else if (grid[xi][yi] == GRID_WALL) {
+	      if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+		if (!w) {
+		  w = shell;
+		  wx = xi;
+		  wy = yi;
+		}
+		else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta)
+		  w2 = 1;
+	      }
+	    }
+	  }
+	  // Quadrant IV
+	  for (i = 0; !w2 && i < shell; i++) {
+	    xi = x+i;
+	    yi = y-shell+i;
+	    if (xi >= grid_width || yi < 0)
+	      oob = 1;
+	    else if (grid[xi][yi] == GRID_WALL) {
+	      if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+		if (!w) {
+		  w = shell;
+		  wx = xi;
+		  wy = yi;
+		}
+		else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta)
+		  w2 = 1;
+	      }
+	    }
+	  }
+	  if (w2)
+	    grid[x][y] = GRID_VORONOI;
+	  else if (oob || (w && 2*shell > 3*w))
+	    break;
+	}
+      }
+    }
+  }
+  printf("\rGetting Voronoi Diagram: 100%% complete\n");
+}
+
+static void draw_critical_line(int x, int y, double wdist) {
+  
+  int xi, yi, w, w2, wx, wy, w2x, w2y, shell, oob, i;
+
+  w = w2 = 0;
+  wx = wy = w2x = w2y = -1;
+  oob = 0;
+  for (shell = 1; !w2 && !oob && !(w && 2*shell > 3*w); shell++) {
+    // Quadrant I
+    for (i = 0; !w2 && i < shell; i++) {
+      xi = x+shell-i;
+      yi = y+i;
+      if (xi >= grid_width || yi >= grid_height)
+	oob = 1;
+      else if (grid[xi][yi] == GRID_WALL) {
+	if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+	  if (!w) {
+	    w = shell;
+	    wx = xi;
+	    wy = yi;
+	  }
+	  else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta) {
+	    w2 = 1;
+	    w2x = xi;
+	    w2y = yi;
+	  }
+	}
+      }
+    }
+    // Quadrant II
+    for (i = 0; !w2 && i < shell; i++) {
+      xi = x-i;
+      yi = y+shell-i;
+      if (xi < 0 || yi >= grid_height)
+	oob = 1;
+      else if (grid[xi][yi] == GRID_WALL) {
+	if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+	  if (!w) {
+	    w = shell;
+	    wx = xi;
+	    wy = yi;
+	  }
+	  else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta) {
+	    w2 = 1;
+	    w2x = xi;
+	    w2y = yi;
+	  }
+	}
+      }
+    }
+    // Quadrant III
+    for (i = 0; !w2 &&i < shell; i++) {
+      xi= x-shell+i;
+      yi = y-i;
+      if (xi < 0 || yi < 0)
+	oob = 1;
+      else if (grid[xi][yi] == GRID_WALL) {
+	if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+	  if (!w) {
+	    w = shell;
+	    wx = xi;
+	    wy = yi;
+	  }
+	  else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta) {
+	    w2 = 1;
+	    w2x = xi;
+	    w2y = yi;
+	  }
+	}
+      }
+    }
+    // Quadrant IV
+    for (i = 0; !w2 && i < shell; i++) {
+      xi = x+i;
+      yi = y-shell+i;
+      if (xi >= grid_width || yi < 0)
+	oob = 1;
+      else if (grid[xi][yi] == GRID_WALL) {
+	if (idist(xi-x, yi-y) - wdist < voronoi_dist_tolerance) {
+	  if (!w) {
+	    w = shell;
+	    wx = xi;
+	    wy = yi;
+	  }
+	  else if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(yi-y, xi-x))) > voronoi_min_theta) {
+	    w2 = 1;
+	    w2x = xi;
+	    w2y = yi;
+	  }
+	}
+      }
+    }
+  }
+
+  if (w2) {
+    if (fabs(carmen_normalize_theta(atan2(wy-y, wx-x) - atan2(w2y-y, w2x-x))) > voronoi_critical_point_min_theta) {
+      grid_draw_map_line(wx, wy, w2x, w2y, GRID_CRITICAL);
+      grid_to_image(MIN(wx,w2x), MIN(wy,w2y), ABS(w2x-wx) + 1, ABS(w2y-wy) + 1);
+      draw_grid(MIN(wx,w2x), MIN(wy,w2y), ABS(w2x-wx) + 1, ABS(w2y-wy) + 1);
+    }
+  }
+}
+
+static void get_critical_points() {
+
+  int x, y, xi, yi, stop;
+  double d, d2;
+
+  printf("\n");
+  for (x = 0; x < grid_width; x++) {
+    printf("\rGetting critical points: %2d%% complete", (int) (100 * (x / (double) grid_width)));
+    grid_to_image(x, 0, x+1, grid_height);
+    draw_grid(x, 0, x+1, grid_height);
+    for (y = 0; y < grid_height; y++) {
+      if (grid[x][y] == GRID_VORONOI) {
+	d = dist_to_wall(x, y);
+	stop = 0;
+	xi = yi = 0;
+	for (xi = x - voronoi_local_min_filter_inner_radius;
+	     !stop && xi <= x + voronoi_local_min_filter_inner_radius; xi++) {
+	  for (yi = y - voronoi_local_min_filter_inner_radius;
+	       !stop && yi <= y + voronoi_local_min_filter_inner_radius; yi++) {
+	    if (!grid_oob(xi, yi)){
+	      if (grid[xi][yi] == GRID_VORONOI) {
+		d2 = dist_to_wall(xi, yi);
+		if (d2 < d)
+		  stop = 1;
+	      }
+	    }
+	  }
+	}
+	if (stop)
+	  continue;
+	for (xi = x - voronoi_local_min_filter_outer_radius;
+	     !stop && xi <= x + voronoi_local_min_filter_outer_radius; xi++) {
+	  for (yi = y - voronoi_local_min_filter_outer_radius;
+	       !stop && yi <= y + voronoi_local_min_filter_inner_radius; yi++) {
+	    if (!grid_oob(xi, yi)){
+	      if (grid[xi][yi] == GRID_VORONOI) {
+		d2 = dist_to_wall(xi, yi);
+		if (d2 - d > voronoi_local_min_filter_dist)
+		  stop = 1;
+	      }
+	    }	    
+	  }
+	}
+	if (stop)
+	  draw_critical_line(x, y, d);
+      }
+    }
+  }
+  printf("\rGetting critical points: 100%% complete\n");
+}
+
 static void get_map_by_name(char *name) {
 
   carmen_map_placelist_t placelist;
@@ -776,6 +1320,9 @@ static void get_map_by_name(char *name) {
   print_doors();
 
   //cleanup_map();
+
+  //get_voronoi();
+  //get_critical_points();
 
   //dbug_func();
 
@@ -909,15 +1456,20 @@ static void get_maps() {
 static GdkColor grid_color(int x, int y) {
 
   switch (grid[x][y]) {
-  case GRID_NONE:    return carmen_white;
-  case GRID_UNKNOWN: return carmen_blue;
-  case GRID_WALL:    return carmen_black;
-  case GRID_DOOR:    return carmen_red;
-  case GRID_PROBE:   return carmen_yellow;
+  case GRID_NONE:      return carmen_white;
+  case GRID_UNKNOWN:   return carmen_blue;
+  case GRID_WALL:      return carmen_black;
+  case GRID_DOOR:      return carmen_red;
+  case GRID_PROBE:     return carmen_yellow;
+  case GRID_VORONOI:   return carmen_orange;
+  case GRID_CRITICAL:  return carmen_blue;
   }
 
   if (closest_room(x, y, 1) == room)
     return carmen_yellow;
+  
+  if (rooms[closest_room(x,y,1)].type == CARMEN_ROOM_TYPE_HALLWAY)
+    return carmen_orange;
 
   return carmen_green;
 }
@@ -946,6 +1498,16 @@ static void grid_to_image(int x0, int y0, int width, int height) {
   }
 }
 
+static void draw_canvas(int x, int y, int width, int height) {
+
+  gdk_draw_pixmap(canvas->window,
+		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
+		  pixmap, x, y, x, y, width, height);
+
+  while(gtk_events_pending())
+    gtk_main_iteration_do(TRUE);
+}
+
 static void draw_grid(int x, int y, int width, int height) {
 
   int cx, cy, cw, ch;
@@ -958,12 +1520,7 @@ static void draw_grid(int x, int y, int width, int height) {
   cw = (int) ((width / (double) grid_width) * canvas_width);
   ch = (int) ((height / (double) grid_height) * canvas_height);
 
-  gdk_draw_pixmap(canvas->window,
-		  canvas->style->fg_gc[GTK_WIDGET_STATE(canvas)],
-		  pixmap, cx, cy, cx, cy, cw, ch);
-
-  while(gtk_events_pending())
-    gtk_main_iteration_do(TRUE);
+  draw_canvas(cx, cy, cw, ch);
 }
 
 static void vector2d_shift(GdkPoint *dst, GdkPoint *src, int n, int x, int y) {
@@ -1022,7 +1579,8 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
   
   vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
-  vector2d_shift(arrow, arrow, 7, x, grid_height - y);
+  vector2d_shift(arrow, arrow, 7, (x / (double)grid_width) * canvas_width,
+		 (1.0 - y / (double)grid_height) * canvas_height);
 
   gdk_gc_set_foreground(drawing_gc, &color);
   gdk_draw_polygon(pixmap, drawing_gc, 1, arrow, 7);
@@ -1047,8 +1605,7 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
 	 arrow[3].x, arrow[3].y, arrow[4].x, arrow[4].y, arrow[5].x, arrow[5].y,
 	 arrow[6].x, arrow[6].y);
 
-  draw_grid(dim_x1 - 1, grid_height - dim_y2 - 1,
-	    dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
+  draw_canvas(dim_x1 - 1, dim_y1 - 1, dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
 }
 
 static void erase_arrow(int x, int y, double theta, int width, int height) {
@@ -1058,12 +1615,14 @@ static void erase_arrow(int x, int y, double theta, int width, int height) {
 					  {-100, 10}, {-30, 10}, {-40, 50}};
   GdkPoint arrow[7];
   int dim_x1, dim_y1, dim_x2, dim_y2, i;
+  int gx, gy, gw, gh;
 
   //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
   
   vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
-  vector2d_shift(arrow, arrow, 7, x, grid_height - y);
+  vector2d_shift(arrow, arrow, 7, (x / (double)grid_width) * canvas_width,
+		 (1.0 - y / (double)grid_height) * canvas_height);
 
   dim_x1 = dim_x2 = arrow[0].x;
   dim_y1 = dim_y2 = arrow[0].y;
@@ -1079,10 +1638,13 @@ static void erase_arrow(int x, int y, double theta, int width, int height) {
       dim_y2 = arrow[i].y;
   }
 
-  grid_to_image(dim_x1 - 1, grid_height - dim_y2 - 1,
-		dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
-  draw_grid(dim_x1 - 1, grid_height - dim_y2 - 1,
-	    dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
+  gx = (dim_x1 / (double) canvas_width) * grid_width;
+  gy = (1.0 - dim_y2 / (double) canvas_height) * grid_height;
+  gw = ((dim_x2 - dim_x1) / (double) canvas_width) * grid_width;
+  gh = ((dim_y2 - dim_y1) / (double) canvas_height) * grid_height;
+
+  grid_to_image(gx-1, gy-1, gw+2, gh+2);
+  draw_grid(gx-1, gy-1, gw+2, gh+2);
 }
 
 static void draw_path() {
@@ -1173,6 +1735,7 @@ static gint canvas_configure(GtkWidget *widget,
   if (display) {
     grid_to_image(0, 0, grid_width, grid_height);
     draw_grid(0, 0, grid_width, grid_height);
+    draw_hallway_endpoints();
   }
 
   return TRUE;
@@ -1238,6 +1801,22 @@ static void gui_init() {
 }
 
 #endif
+
+static inline int same_room(int room1, int room2) {
+
+  /*
+  printf("same_room(%d, %d):\n", room1, room2);
+  if (room1 != -1)
+    printf(" - room1 name = %s\n", rooms[room1].name);
+  if (room2 != -1)
+    printf(" - room2 name = %s\n", rooms[room2].name);
+  if (room1 != -1 && room2 != -1 && !strcmp(rooms[room1].name, rooms[room2].name))
+    printf(" --> SAME_ROOM\n");
+  else
+    printf(" --> DIFFERENT ROOM\n");
+  */
+  return (room1 != -1 && room2 != -1 && !strcmp(rooms[room1].name, rooms[room2].name));
+}
 
 /*
 static void floor_diff_x(int room1, int room2, int *rf) {
@@ -1370,19 +1949,25 @@ static int get_room_ceiling(int r) {
 
 static double dist_to_goal(double x, double y) {
 
-  int rd, d;
+  int r, rd, d;
   double h, h2;
 
   h = dist(doors[rooms[goal].doors[0]].pose.x - x,
 	   doors[rooms[goal].doors[0]].pose.y - y);
 
-  for (rd = 1; rd < rooms[goal].num_doors; rd++) {
-    d = rooms[goal].doors[rd];
-    if (doors[d].points.num_places == 0)
-      continue;
-    h2 = dist(doors[d].pose.x - x, doors[d].pose.y - y);
-    if (h2 < h)
-      h = h2;
+  for (r = 0; r < num_rooms; r++) {
+    if (same_room(r, goal)) {
+      for (rd = 0; rd < rooms[r].num_doors; rd++) {
+	d = rooms[r].doors[rd];
+	if (!same_room(doors[d].room1, doors[d].room2)) {
+	  if (doors[d].points.num_places == 0)
+	    continue;
+	  h2 = dist(doors[d].pose.x - x, doors[d].pose.y - y);
+	  if (h2 < h)
+	    h = h2;
+	}
+      }
+    }
   }
 
   return h;
@@ -1589,8 +2174,8 @@ static path_node_p pq_expand(path_node_p pq) {
 
 static inline int is_goal(path_node_p p) {
 
-  return (doors[p->path[p->pathlen-1]].room1 == goal ||
-	  doors[p->path[p->pathlen-1]].room2 == goal);
+  return (same_room(doors[p->path[p->pathlen-1]].room1, goal) ||
+	  same_room(doors[p->path[p->pathlen-1]].room2, goal));
 }
 
 static void pq_free(path_node_p pq) {
@@ -1686,7 +2271,7 @@ static int get_path() {
   path_node_p pq;  //path queue
   int changed = 0;
 
-  if (goal == room) {
+  if (same_room(goal, room) || room == -1) {
     changed = !path_eq(path, pathlen, NULL, 0);
 #ifndef NO_GRAPHICS
     if (changed)
@@ -1745,7 +2330,7 @@ static void publish_path_msg() {
   static int first = 1;
   IPC_RETURN_TYPE err;
 
-  fprintf(stderr, "publish_path_msg()\n");
+  //fprintf(stderr, "publish_path_msg()\n");
 
   if (first) {
     strcpy(path_msg.host, carmen_get_tenchar_host_name());
@@ -1773,12 +2358,12 @@ static void publish_path_msg() {
   err = IPC_publishData(CARMEN_ROOMNAV_PATH_MSG_NAME, &path_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROOMNAV_PATH_MSG_NAME);  
 
-  printf("end publish_path_msg()\n");
+  //printf("end publish_path_msg()\n");
 }
 
 static void update_path() {
 
-  printf("update_path()\n");
+  //printf("update_path()\n");
 
   if (goal < 0)
     return;
@@ -1786,7 +2371,7 @@ static void update_path() {
   if (get_path())
     publish_path_msg();
 
-  printf("end update_path()\n");
+  //printf("end update_path()\n");
 }
 
 static void publish_room_msg() {
@@ -1795,7 +2380,7 @@ static void publish_room_msg() {
   static int first = 1;
   IPC_RETURN_TYPE err;
   
-  printf("publish_room_msg()\n");
+  //printf("publish_room_msg()\n");
 
   if (first) {
     strcpy(room_msg.host, carmen_get_tenchar_host_name());
@@ -1808,7 +2393,7 @@ static void publish_room_msg() {
   err = IPC_publishData(CARMEN_ROOMNAV_ROOM_MSG_NAME, &room_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROOMNAV_ROOM_MSG_NAME);  
 
-  printf("end publish_room_msg()\n");
+  //printf("end publish_room_msg()\n");
 }
 
 static void roomnav_room_query_handler
@@ -1987,6 +2572,8 @@ static void publish_goal_changed_message() {
 
 static void set_goal(int new_goal) {
 
+  printf("new goal: (%d) - %s\n", new_goal, rooms[new_goal].name);
+
   goal = new_goal;
   publish_goal_changed_message();
   update_path();
@@ -2051,7 +2638,7 @@ void localize_handler() {
   carmen_map_point_t map_point;
   int new_room;
 
-  printf("localize_handler()\n");
+  //printf("localize_handler()\n");
 
   world_point.map = map_point.map = &map;
   world_point.pose.x = global_pos.globalpos.x;
@@ -2075,7 +2662,7 @@ void localize_handler() {
 
   update_path();
 
-  printf("end localize_handler()\n");
+  //printf("end localize_handler()\n");
 }
 
 static void ipc_init() {

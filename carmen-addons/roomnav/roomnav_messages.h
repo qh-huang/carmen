@@ -53,7 +53,7 @@ typedef struct {
 } carmen_roomnav_rooms_topology_msg;
 
 #define CARMEN_ROOMNAV_ROOMS_TOPOLOGY_MSG_NAME "carmen_roomnav_rooms_topology_msg"
-#define CARMEN_ROOMNAV_ROOMS_TOPOLOGY_MSG_FMT "{{<{int, string, <int:4>, int}:2>, int, <{int, int, {<{int,int,[char:22],double,double,double,double,double,double}:2>,int},{double,double,double},double,int}:4>, int}, double, [char:10]}"
+#define CARMEN_ROOMNAV_ROOMS_TOPOLOGY_MSG_FMT "{{<{int, string, <int:4>, int, int, int, double, double, double, double, double, double, double, double, {double, double, double}, {double, double, double}}:2>, int, <{int, int, {<{int,int,[char:22],double,double,double,double,double,double}:2>,int},{double,double,double},double,int,int}:4>, int}, double, [char:10]}"
 
 typedef struct {
   int goal;
