@@ -1288,7 +1288,7 @@ static gsl_matrix *person_filter_measurement_jacobian(carmen_dot_person_filter_p
 }
 
 static int person_filter_max_likelihood_measurement(carmen_dot_person_filter_p f, double lx, double ly,
-						     double ltheta, double *hx, double *hy) {
+						    double ltheta, double *hx, double *hy) {
 
   double x0, y0, x1, y1, y2, r;
   double cos_ltheta, sin_ltheta;
@@ -1744,6 +1744,7 @@ static void add_new_dot_filter(int *cluster_map, int c, int n,
   //print_filters();
 }
 
+#if 0
 static double map_prob(double x, double y) {
 
   carmen_world_point_t wp;
@@ -1767,7 +1768,6 @@ static double map_prob(double x, double y) {
   return exp(localize_map.gprob[mp.x][mp.y]);
 }
 
-#if 0
 static int list_contains(carmen_list_t *list, int entry) {
 
   int i;
@@ -1887,6 +1887,37 @@ static int delete_lonely_centroids(int *cluster_map, int num_points, double *xce
   return num_clusters;
 }
 
+static double dist_to_cluster(double x, double y, double xcentroid, double ycentroid, int filter_index) {
+
+  int i;
+  double d, dmin, dx, dy;
+
+  d = 0.0;
+
+  if (filter_index < 0)
+    d = dist(x - xcentroid, y - ycentroid);
+  else if (filters[filter_index].type == CARMEN_DOT_PERSON)
+    d = fabs(dist(x - filters[filter_index].person_filter.x,
+		  y - filters[filter_index].person_filter.y) -
+	     exp(filters[filter_index].person_filter.logr));
+  else if (filters[filter_index].type == CARMEN_DOT_TRASH) {
+    // approx. for dist from a point to a convex polygon
+    dx = x - filters[filter_index].trash_filter.xhull[0];
+    dy = y - filters[filter_index].trash_filter.yhull[0];
+    dmin = dist(dx, dy);
+    for (i = 1; i < filters[filter_index].trash_filter.hull_size; i++) {
+      dx = x - filters[filter_index].trash_filter.xhull[i];
+      dy = y - filters[filter_index].trash_filter.yhull[i];
+      d = dist(dx, dy);
+      if (d < dmin)
+	dmin = d;
+    }
+    d = dmin;
+  }
+
+  return d;
+}
+
 // return num. clusters
 static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, int num_points,
 			  double *xcentroids, double *ycentroids, int *filter_map, int num_clusters) {
@@ -1910,6 +1941,8 @@ static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, in
     n = 0;
     while (n < num_actual_points) {
       i = carmen_int_random(num_actual_points);
+      if (cluster_map[laser_map[i]] >= 0)
+	continue;
       xcentroids[num_clusters] = xpoints[laser_map[i]];
       ycentroids[num_clusters] = ypoints[laser_map[i]];
       filter_map[num_clusters] = FILTER_MAP_ADD_CLUSTER;
@@ -1939,27 +1972,45 @@ static int cluster_kmeans(double *xpoints, double *ypoints, int *cluster_map, in
     for (i = 0; i < num_points; i++) {
       if (!laser_mask[i])
 	continue;
-      dx = xpoints[i] - xcentroids[0];
-      dy = ypoints[i] - ycentroids[0];
-      dmin = dist(dx, dy);
+      //dx = xpoints[i] - xcentroids[0];
+      //dy = ypoints[i] - ycentroids[0];
+      //dmin = dist(dx, dy);
+      dmin = dist_to_cluster(xpoints[i], ypoints[i], xcentroids[0], ycentroids[0], filter_map[0]);
       imin = 0;
-      for (j = 0; j < num_clusters; j++) {
-	dx = xpoints[i] - xcentroids[j];
-	dy = ypoints[i] - ycentroids[j];
-	d = dist(dx, dy);
+      for (j = 1; j < num_clusters; j++) {
+	//dx = xpoints[i] - xcentroids[j];
+	//dy = ypoints[i] - ycentroids[j];
+	//d = dist(dx, dy);
+	d = dist_to_cluster(xpoints[i], ypoints[i], xcentroids[j], ycentroids[j], filter_map[j]);
 	if (d < dmin) {
 	  dmin = d;
 	  imin = j;
 	}
       }
-      cluster_map[i] = imin;
+      if (dmin >= CLUSTER_DIST) {
+	xcentroids[num_clusters] = xpoints[i];
+	ycentroids[num_clusters] = ypoints[i];
+	filter_map[num_clusters] = FILTER_MAP_ADD_CLUSTER;
+	cluster_map[i] = num_clusters;
+	num_clusters++;
+	centroids_changed = 1;
+	break;
+      }
+      else
+	cluster_map[i] = imin;
       //printf("(%.2f, %.2f) -> %d, ", xpoints[i], ypoints[i], cluster_map[i]);
     }
     //printf("\n");
+
+    if (centroids_changed)
+      continue;
+
     // step 3: re-calculate positions of centroids
     //printf("re-calculating positions of centroids\n");
     for (i = 0; i < num_clusters; i++) {
       //printf(" - cluster %d: ", i);
+      if (filter_map[i] >= 0)
+	continue;
       x = y = 0.0;
       n = 0;
       for (j = 0; j < num_points; j++) {
@@ -2134,6 +2185,7 @@ static void cluster(carmen_robot_laser_message *laser) {
   last_bic = 1000000000.0; //dbug
   while (1) {
     num_clusters = cluster_kmeans(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
+    break;
     //print_clusters(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, filter_map, num_clusters);
     mark_lonely_centroids(cluster_map, num_points, num_clusters);
     bic = compute_bic(xpoints, ypoints, cluster_map, num_points, xcentroids, ycentroids, num_clusters);
