@@ -65,8 +65,8 @@ static void init_ipc() {
 
 int main(int argc, char *argv[]) {
 
-  int i;
-  unsigned char buf[256], *p;
+  int i, j;
+  unsigned char buf[2];
 
   if (argc < 2)
     carmen_die("usage: walkerserial <serial device>\n");
@@ -84,29 +84,28 @@ int main(int argc, char *argv[]) {
 
   while (1) {
     sleep_ipc(0.01);
+    usleep(10000);
     i = carmen_serial_numChars(fd);
-    if (i >= 3) {
-      i = carmen_serial_readn(fd, buf, 3);
-      printf("%d\n", i);
-      printf("0x%x, 0x%x, 0x%x\n", buf[0], buf[1], buf[2]);
-      for (p = buf; *p != 0xff && p-buf < i; p++);
-      p++;
-      printf("%d\n", p-buf);
-      if (p-buf >= i)
+    if (i > 0) {
+      i = carmen_serial_readn(fd, buf, i);
+      if (i <= 0)
 	continue;
-      printf("0x%x\n", *p);
-      if (*p & 0x1)
-	publish_button_msg(1);
-      if (*p & 0x2)
-	publish_button_msg(2);
-      if (*p & 0x4)
-	publish_button_msg(3);
-      if (*p & 0x8)
-	publish_button_msg(4);
-      if (*p & 0x10)
-	publish_button_msg(5);
-      if (*p & 0x20)
-	publish_button_msg(6);
+      for (j = 0; j < i; j++) {
+	if (buf[j] >= 0x40)
+	  continue;
+	if (buf[j] & 0x1)
+	  publish_button_msg(1);
+	if (buf[j] & 0x2)
+	  publish_button_msg(2);
+	if (buf[j] & 0x4)
+	  publish_button_msg(3);
+	if (buf[j] & 0x8)
+	  publish_button_msg(4);
+	if (buf[j] & 0x10)
+	  publish_button_msg(5);
+	if (buf[j] & 0x20)
+	  publish_button_msg(6);
+      }
     }
   }
 }
