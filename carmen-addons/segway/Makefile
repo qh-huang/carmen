@@ -2,7 +2,7 @@ include ../Makefile.conf
 
 CFLAGS += -D_REENTRANT
 IFLAGS += 
-LFLAGS += -lrobot_interface -llogger_io -lcanlib -pthread -lparam_interface -lbase_interface -lglobal -lipc -llaser_interface -lamtec_interface -lz -lm
+LFLAGS += -lrobot_interface -llogger_io -lcanlib -pthread -lparam_interface -lbase_interface -lglobal -lipc -llaser_interface -lamtec_interface -limu_interface -lz -lm
 
 MODULE_NAME = SEGWAY
 MODULE_COMMENT = Segway RMP Base Module

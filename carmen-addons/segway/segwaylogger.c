@@ -31,6 +31,8 @@
 #include "segway_interface.h"
 #include <carmen/amtec_messages.h>
 #include <carmen/amtec_interface.h>
+#include <carmen/imu_messages.h>
+#include <carmen/imu_interface.h>
 #include <ctype.h>
 
 int carmen_logger_nogz;
@@ -40,6 +42,7 @@ carmen_logger_file_p outfile = NULL;
 double logger_starttime;
 carmen_segway_pose_message pose;
 carmen_amtec_status_message amtec_status;
+carmen_imu_pose_message imu;
 
 void get_all_params(void)
 {
@@ -132,6 +135,14 @@ void amtec_status_handler(carmen_amtec_status_message *amtec_status)
 			amtec_status->pan_vel, amtec_status->tilt_vel,
 			amtec_status->timestamp, amtec_status->host,
 			carmen_get_time_ms() - logger_starttime);
+}
+
+void imu_status_handler(carmen_imu_pose_message *imu)
+{
+  fprintf(stderr, "I");
+  carmen_logger_fprintf(outfile, "IMU %f %f %f %f %f %f %f %s %f\n",
+			imu->x, imu->y, imu->z, imu->roll, imu->pitch, imu->yaw,
+			imu->timestamp, imu->host, carmen_get_time_ms() - logger_starttime);
 }
 
 static void sync_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -234,6 +245,7 @@ int main(int argc, char **argv)
 					    CARMEN_SUBSCRIBE_ALL);
   carmen_segway_subscribe_pose_message(&pose, (carmen_handler_t)segway_pose_handler, CARMEN_SUBSCRIBE_ALL);
   carmen_amtec_subscribe_status_message(&amtec_status, (carmen_handler_t)amtec_status_handler, CARMEN_SUBSCRIBE_ALL);
+  carmen_imu_subscribe_pose_message(&imu, (carmen_handler_t)imu_status_handler, CARMEN_SUBSCRIBE_ALL);
 
   logger_starttime = carmen_get_time_ms();
 
