@@ -22,8 +22,12 @@
 
 //#define    VERBOSE
 
+
 int fd1;
 int fd2;
+
+static carmen_base_odometry_message odometry;
+
 
 int icon_wait_for_response(int fd, int timeout)
 {
@@ -119,6 +123,29 @@ void shutdown_module(int x)
   }
 }
 
+static inline void rotate(double *x, double *y, double theta) {
+
+  *x = (*x) * cos(theta) - (*y) * sin(theta);
+  *y = (*x) * sin(theta) + (*y) * cos(theta);
+}
+
+static void update_odom() {
+
+  double dt, dx, dy, dtheta;
+
+  dt = carmen_get_time_ms() - odometry.timestamp;
+
+  dtheta = odometry.rv * dt;
+  dx = cos(odometry.theta) * odometry.tv * dt;
+  dy = sin(odometry.theta) * odometry.tv * dt;
+  rotate(&dx, &dy, dtheta);
+
+  odometry.x += dx;
+  odometry.y += dy;
+  odometry.theta += dtheta;
+  odometry.timestamp = carmen_get_time_ms();
+}
+
 static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			     void *clientData __attribute__ ((unused))) {
 
@@ -134,8 +161,6 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
                          IPC_msgInstanceName(msgRef));
 
-  //time_of_last_command = carmen_get_time_ms();
-
   left_vel = right_vel = v.tv;
   //assuming v.rv is in radians per second
   left_vel -= 0.5 * v.rv * ROT_VEL_FACT_RAD;
@@ -149,6 +174,21 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     carmen_die("Error: could not set velocity on motor 1.\n");
   if(icon_command_setdc(fd2, 1, 100.0 * right_vel / MAX_VELOCITY) < 0)
     carmen_die("Error: could not set velocity on motor 2.\n");
+
+  update_odom();
+  odometry.tv = v.tv;
+  odometry.rv = v.rv;
+}
+
+static void init_odom() {
+
+  odometry.x = 0.0;
+  odometry.y = 0.0;
+  odometry.theta = 0.0;
+  odometry.tv = 0.0;
+  odometry.rv = 0.0;
+  odometry.timestamp = 0.0;
+  strcpy(odometry.host, carmen_get_tenchar_host_name());
 }
 
 static void init_motors() {
@@ -187,34 +227,46 @@ static void init_ipc() {
   carmen_test_ipc_exit(err, "Could not subscribe", CARMEN_ROBOT_VELOCITY_NAME);
   IPC_setMsgQueueLength(CARMEN_ROBOT_VELOCITY_NAME, 1);
 }
+
+static void test_motors() {
+
+  int speed = 50;  //percent
+
+  if(icon_command_setdc(fd1, 1, speed) < 0)
+    carmen_die("Error: could not set velocity on motor 1.\n");
+  if(icon_command_setdc(fd2, 1, speed) < 0)
+    carmen_die("Error: could not set velocity on motor 2.\n");
+  sleep(4);
+  icon_command_stop(fd1, 1);
+  icon_command_stop(fd2, 1);
+  sleep(4);  
+}
     
 int main(int argc __attribute__ ((unused)), char **argv)
 {
-  //int speed = 50;  //percent
+  IPC_RETURN_TYPE err;
+  double last_published_update = 0.0;
+  double update_delay = .03;
 
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
   init_motors();
   init_ipc();
+  init_odom();
 
   while(1) {
 
     sleep_ipc(0.01);
 
-    //err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
-    //carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_ODOMETRY_NAME);
+    if (carmen_get_time_ms() - last_published_update > update_delay) {
+      update_odom();
+      err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
+      carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_ODOMETRY_NAME);
+      last_published_update = odometry.timestamp;
+    }
 
-    /*
-    if(icon_command_setdc(fd1, 1, speed) < 0)
-      carmen_die("Error: could not set velocity on motor 1.\n");
-    if(icon_command_setdc(fd2, 1, speed) < 0)
-      carmen_die("Error: could not set velocity on motor 2.\n");
-    sleep(4);
-    icon_command_stop(fd1, 1);
-    icon_command_stop(fd2, 1);
-    sleep(4);
-    */
+    //test_motors();
   }
 
   return 0;
