@@ -1311,7 +1311,7 @@ void localize_handler() {
   update_path();
 }
 
-static void messages_init() {
+static void ipc_init() {
 
   IPC_RETURN_TYPE err;
 
@@ -1321,12 +1321,12 @@ static void messages_init() {
 
   err = IPC_defineMsg(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
+  carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
 
   err = IPC_defineMsg(CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_FMT);
-  carmen_test_ipc_exit(err, "Could not define message",
+  carmen_test_ipc_exit(err, "Could not define",
 		       CARMEN_GNAV_ROOMS_TOPOLOGY_MSG_NAME);
 
   err = IPC_defineMsg(CARMEN_GNAV_SET_GOAL_MSG_NAME, IPC_VARIABLE_LENGTH, 
@@ -1342,12 +1342,12 @@ static void messages_init() {
 
   err = IPC_subscribe(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, 
 		      gnav_rooms_topology_query_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subcribe message", 
+  carmen_test_ipc_exit(err, "Could not subcribe", 
 		       CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_GNAV_ROOMS_TOPOLOGY_QUERY_NAME, 100);
 
   err = IPC_subscribe(CARMEN_GNAV_SET_GOAL_MSG_NAME, gnav_set_goal_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subcribe message", CARMEN_GNAV_SET_GOAL_MSG_NAME);
+  carmen_test_ipc_exit(err, "Could not subcribe", CARMEN_GNAV_SET_GOAL_MSG_NAME);
   IPC_setMsgQueueLength(CARMEN_GNAV_SET_GOAL_MSG_NAME, 100);
 }
 
@@ -1392,7 +1392,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   get_map();
-  messages_init();
+  ipc_init();
 
 #ifndef NO_GRAPHICS
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);

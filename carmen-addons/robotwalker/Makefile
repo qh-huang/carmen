@@ -5,7 +5,7 @@ include ../Makefile.conf
 MODULE_NAME = ROBOTWALKER
 MODULE_COMMENT = Robotic Walker
 
-SOURCES = robotwalker.c gnav.c gnav_interface.c
+SOURCES = robotwalker.c gnav.c gnav_interface.c valet.c valet_interface.c
 
 ifndef NO_GRAPHICS
 
@@ -24,7 +24,7 @@ LFLAGS 	+= 	-lmap_io -lmap_interface -lparam_interface -lglobal \
 endif
 
 PUBLIC_BINARIES = 
-TARGETS = robotwalker gnav
+TARGETS = robotwalker gnav autovalet
 
 ifdef NO_ZLIB
 CFLAGS += -DNO_ZLIB
@@ -41,7 +41,10 @@ gnav:	gnav.o
 
 libgnav_interface.a:	gnav_interface.o
 
-# rules
+valet:	valet.o
+
+libvalet_interface.a:	valet_interface.o
+
 
 include $(CARMEN_HOME)/src/Makefile.rules
 
