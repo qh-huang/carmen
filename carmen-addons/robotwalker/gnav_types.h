@@ -41,6 +41,12 @@ typedef struct {
   int num_doors;
 } carmen_rooms_topology_t, *carmen_rooms_topology_p;
 
+#define GRID_NONE     -1
+#define GRID_UNKNOWN  -2
+#define GRID_WALL     -3
+#define GRID_DOOR     -4
+#define GRID_PROBE    -5
+
 
 #ifdef __cplusplus
 }

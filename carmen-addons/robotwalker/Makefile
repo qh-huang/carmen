@@ -55,7 +55,7 @@ walker_motors:	walker_motors.o
 
 gnav:	gnav.o
 
-gnav_gui:	gnav_gui.o
+gnav_gui:	gnav_gui.o gnav_interface.o
 
 libgnav_interface.a:	gnav_interface.o
 
