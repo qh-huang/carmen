@@ -744,10 +744,8 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
   // default arrow shape with x = y = theta = 0, width = 100, & height = 100
   static const GdkPoint arrow_shape[7] = {{0,0}, {-40, -50}, {-30, -10}, {-100, -10},
 					  {-100, 10}, {-30, 10}, {-40, 50}};
-  static const GdkPoint dim_shape[2] = {{-100, -50}, {0, 50}};
   GdkPoint arrow[7];
-  GdkPoint dim[2];
-  int dim_x, dim_y, dim_width, dim_height;
+  int dim_x1, dim_y1, dim_x2, dim_y2, i;
 
   //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
   
@@ -755,42 +753,65 @@ static void draw_arrow(int x, int y, double theta, int width, int height,
   vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
   vector2d_shift(arrow, arrow, 7, x, grid_height - y);
 
-  vector2d_scale(dim, (GdkPoint *) dim_shape, 2, 0, 0, width, height);
-  vector2d_rotate(dim, dim, 2, 0, 0, theta);
-  vector2d_shift(dim, dim, 2, x, y);
-
   gdk_gc_set_foreground(drawing_gc, &color);
   gdk_draw_polygon(pixmap, drawing_gc, 1, arrow, 7);
 
-  dim_x = (dim[0].x < dim[1].x ? dim[0].x : dim[1].x);
-  dim_y = (dim[0].y < dim[1].y ? dim[0].y : dim[1].y);
-  dim_width = (dim[0].x < dim[1].x ? dim[1].x - dim[0].x : dim[0].x - dim[1].x);
-  dim_height = (dim[0].y < dim[1].y ? dim[1].y - dim[0].y : dim[0].y - dim[1].y);
+  dim_x1 = dim_x2 = arrow[0].x;
+  dim_y1 = dim_y2 = arrow[0].y;
 
-  //printf("dim = [(%d, %d), (%d, %d)]\n", dim[0].x, dim[0].y, dim[1].x, dim[1].y);
-  //printf("dim_x = %d, dim_y = %d, dim_width = %d, dim_height = %d\n",
-  //	 dim_x, dim_y, dim_width, dim_height);
+  for (i = 1; i < 7; i++) {
+    if (arrow[i].x < dim_x1)
+      dim_x1 = arrow[i].x;
+    else if (arrow[i].x > dim_x2)
+      dim_x2 = arrow[i].x;
+    if (arrow[i].y < dim_y1)
+      dim_y1 = arrow[i].y;
+    else if (arrow[i].y > dim_y2)
+      dim_y2 = arrow[i].y;
+  }
 
-  draw_grid(dim_x, dim_y, dim_width, dim_height);
+  printf("dim = (%d, %d), (%d, %d)\n", dim_x1, dim_y1, dim_x2, dim_y2);
+  printf("arrow = (%d, %d), (%d, %d), (%d, %d), (%d, %d), (%d, %d), (%d, %d), (%d, %d)\n",
+	 arrow[0].x, arrow[0].y, arrow[1].x, arrow[1].y, arrow[2].x, arrow[2].y,
+	 arrow[3].x, arrow[3].y, arrow[4].x, arrow[4].y, arrow[5].x, arrow[5].y,
+	 arrow[6].x, arrow[6].y);
+
+  draw_grid(dim_x1 - 1, grid_height - dim_y2 - 1,
+	    dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
 }
 
 static void erase_arrow(int x, int y, double theta, int width, int height) {
 
-  static const GdkPoint dim_shape[2] = {{-100, -50}, {0, 50}};
-  GdkPoint dim[2];
-  int dim_x, dim_y, dim_width, dim_height;
+  // default arrow shape with x = y = theta = 0, width = 100, & height = 100
+  static const GdkPoint arrow_shape[7] = {{0,0}, {-40, -50}, {-30, -10}, {-100, -10},
+					  {-100, 10}, {-30, 10}, {-40, 50}};
+  GdkPoint arrow[7];
+  int dim_x1, dim_y1, dim_x2, dim_y2, i;
+
+  //printf("draw_arrow(%d, %d, %.2f, %d, %d, ...)\n", x, y, theta, width, height);
   
-  vector2d_scale(dim, (GdkPoint *) dim_shape, 2, 0, 0, width, height);
-  vector2d_rotate(dim, dim, 2, 0, 0, theta);
-  vector2d_shift(dim, dim, 2, x, y);
+  vector2d_scale(arrow, (GdkPoint *) arrow_shape, 7, 0, 0, width, height);
+  vector2d_rotate(arrow, arrow, 7, 0, 0, -theta);
+  vector2d_shift(arrow, arrow, 7, x, grid_height - y);
 
-  dim_x = (dim[0].x < dim[1].x ? dim[0].x : dim[1].x);
-  dim_y = (dim[0].y < dim[1].y ? dim[0].y : dim[1].y);
-  dim_width = (dim[0].x < dim[1].x ? dim[1].x - dim[0].x : dim[0].x - dim[1].x);
-  dim_height = (dim[0].y < dim[1].y ? dim[1].y - dim[0].y : dim[0].y - dim[1].y);
+  dim_x1 = dim_x2 = arrow[0].x;
+  dim_y1 = dim_y2 = arrow[0].y;
 
-  grid_to_image(dim_x, dim_y, dim_width, dim_height);
-  draw_grid(dim_x, dim_y, dim_width, dim_height);
+  for (i = 1; i < 7; i++) {
+    if (arrow[i].x < dim_x1)
+      dim_x1 = arrow[i].x;
+    else if (arrow[i].x > dim_x2)
+      dim_x2 = arrow[i].x;
+    if (arrow[i].y < dim_y1)
+      dim_y1 = arrow[i].y;
+    else if (arrow[i].y > dim_y2)
+      dim_y2 = arrow[i].y;
+  }
+
+  grid_to_image(dim_x1 - 1, grid_height - dim_y2 - 1,
+		dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
+  draw_grid(dim_x1 - 1, grid_height - dim_y2 - 1,
+	    dim_x2 - dim_x1 + 2, dim_y2 - dim_y1 + 2);
 }
 
 static void draw_path() {

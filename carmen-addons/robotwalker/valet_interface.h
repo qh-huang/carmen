@@ -2,6 +2,7 @@
 #ifndef VALET_INTERFACE_H
 #define VALET_INTERFACE_H
 
+#include <carmen/carmen.h>
 #include "valet_messages.h"
 
 #ifdef __cplusplus
