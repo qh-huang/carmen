@@ -30,7 +30,8 @@
 
 void segway_pose_handler(carmen_segway_pose_message *pose)
 {
-  fprintf(stderr, "P %f %f %f\n", pose->x, pose->y, pose->theta);
+  fprintf(stderr, "P %f %f\n", pose->roll * 180.0 / M_PI,
+	  pose->pitch * 180 / M_PI);
 }
 
 int main(int argc __attribute__ ((unused)), char **argv)
