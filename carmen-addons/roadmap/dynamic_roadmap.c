@@ -180,7 +180,7 @@ static void add_node(carmen_list_t *node_list, int x, int y)
   vertex.x = x;
   vertex.y = y;
   vertex.label = -1;
-  vertex.utility = 0;
+  vertex.utility = MAXFLOAT;
   vertex.bad = 0;
   vertex.edges = carmen_list_create(sizeof(carmen_roadmap_edge_t), 10);
   carmen_list_add(node_list, &vertex);
@@ -213,14 +213,12 @@ static void add_edge(carmen_roadmap_vertex_t *node,
 
 int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node, 
 			      carmen_world_point_t *position,
-			      carmen_roadmap_t *roadmap)
+			      carmen_map_t *c_space)
 {
   carmen_bresenham_param_t params;
   int x, y;
   carmen_map_point_t map_pt;
-  carmen_map_p c_space;
 
-  c_space = roadmap->c_space;
   carmen_world_to_map(position, &map_pt);
 
   carmen_get_bresenham_parameters(node->x, node->y, map_pt.x, 
@@ -528,7 +526,8 @@ carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p new_map)
   roadmap->path = NULL;
   roadmap->avoid_people = 1;
 
-  if (carmen_param_get_double("robot_max_t_vel",&(roadmap->robot_speed)) < 0) {
+  carmen_param_set_module("robot");
+  if (carmen_param_get_double("max_t_vel",&(roadmap->robot_speed)) < 0) {
     roadmap->robot_speed = .8;
     carmen_warn("Could not set robot speed. Setting to default %f\n",
 		roadmap->robot_speed);
@@ -698,7 +697,7 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
 
   utility_ptr = utility;
   for (index = 0; index < roadmap->nodes->length; index++) 
-    *(utility_ptr++) = -1;
+    *(utility_ptr++) = MAXFLOAT;
 
   state_queue = make_queue();
 
@@ -729,10 +728,9 @@ static void dynamic_program(carmen_roadmap_t *roadmap)
 
 void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
 {
-  double best_dist;
   carmen_map_point_t map_goal;
-  carmen_roadmap_vertex_t *closest_node;
   carmen_roadmap_vertex_t *node_list;
+  int i;
 
   if (roadmap->nodes->length == 0)
     return;
@@ -745,19 +743,19 @@ void carmen_roadmap_plan(carmen_roadmap_t *roadmap, carmen_world_point_t *goal)
       map_goal.y < 0 || map_goal.y >= goal->map->config.y_size ||
       roadmap->c_space->map[map_goal.x][map_goal.y] > 1)
     return;
-  
+
   node_list = (carmen_roadmap_vertex_t *)(roadmap->nodes->list);
+  for (i = 0; i < roadmap->nodes->length; i++) {
+    if (map_goal.x == node_list[i].x && map_goal.y == node_list[i].y)
+      break;
+  }
 
-  closest_node = carmen_roadmap_nearest_node(goal, roadmap);
-  best_dist = hypot(node_list[closest_node->id].x-map_goal.x,
-		    node_list[closest_node->id].y-map_goal.y);
-
-  if (best_dist >= 1) {
+  if (i == roadmap->nodes->length) {
     add_node(roadmap->nodes, map_goal.x, map_goal.y);
     roadmap->goal_id = roadmap->nodes->length-1;
     construct_edges(roadmap, roadmap->goal_id);
   } else 
-    roadmap->goal_id = closest_node->id;
+    roadmap->goal_id = i;
 
   dynamic_program(roadmap);
 }
@@ -779,7 +777,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
     dist = hypot(node_list[i].x-pt.x, node_list[i].y-pt.y);
     if (dist < best_dist && node_list[i].utility >= 0 &&
 	node_list[i].utility < MAXFLOAT/2 && 
-	carmen_roadmap_is_visible(node_list+i, point, roadmap) &&
+	carmen_roadmap_is_visible(node_list+i, point, roadmap->c_space) &&
 	!carmen_dynamics_test_point_for_block
 	(node_list+i, point, roadmap->avoid_people)) {
       best_dist = dist;
@@ -811,7 +809,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_best_node
     cost = carmen_roadmap_get_cost(point, node_list+i, roadmap);
     utility = node_list[i].utility + cost;
     if (utility < best_utility && 
-	carmen_roadmap_is_visible(node_list+i, point, roadmap) &&
+	carmen_roadmap_is_visible(node_list+i, point, roadmap->c_space) &&
 	!carmen_dynamics_test_point_for_block
 	(node_list+i, point, roadmap->avoid_people)) {
       best_utility = utility;
@@ -937,6 +935,7 @@ static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
 
   goal_node = (carmen_roadmap_vertex_t *)
     carmen_list_get(road->nodes, road->goal_id);
+
   if (carmen_dynamics_test_node(goal_node, 1))
     return 0;
 
@@ -954,6 +953,7 @@ static int check_path(carmen_traj_point_t *robot, carmen_roadmap_t *road)
 
   if (length < 0) {
     carmen_dynamics_clear_all_blocked(road);
+    carmen_warn("Goal: %f %f\n", goal.pose.x, goal.pose.y);
     carmen_roadmap_plan(road, &goal);
     length = compute_path_segments(&world_robot, road);
     if (length < 0)

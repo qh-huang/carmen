@@ -66,7 +66,7 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
 (carmen_roadmap_vertex_t *node, carmen_roadmap_t *roadmap);
 int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node, 
 			      carmen_world_point_t *position,
-			      carmen_roadmap_t *roadmap);
+			      carmen_map_t *c_space);
 int carmen_roadmap_points_are_visible(carmen_traj_point_t *p1, 
 				      carmen_traj_point_t *p2,
 				      carmen_map_t *c_space);

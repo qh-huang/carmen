@@ -53,11 +53,7 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
   int path_ok, path_without_people_ok;
   double time, time_without_people;
 
-  //  carmen_warn("Synchronizing lists\n");
-
-  synchronize_node_lists(roadmap->roadmap, roadmap->roadmap_without_people);
-
-  //  carmen_warn("Synchronizing lists done\n");
+#error Fix me: We should only compare path times when we replan.
 
   //  carmen_warn("About to generate path with people\n");
 
@@ -71,6 +67,12 @@ carmen_list_t *carmen_roadmap_mdp_generate_path(carmen_traj_point_t *robot,
   } else 
     time = MAXFLOAT;
   
+  //  carmen_warn("Synchronizing lists\n");
+
+  synchronize_node_lists(roadmap->roadmap, roadmap->roadmap_without_people);
+
+  //  carmen_warn("Synchronizing lists done\n");
+
   //  carmen_warn("About to generate path without people\n");
 
   path_without_people_ok = carmen_roadmap_generate_path

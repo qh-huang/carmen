@@ -196,6 +196,7 @@ static int release_handler(GtkMapViewer *the_map_view,
     dot_person.vxy = 0.125;
     carmen_dynamics_update_person(&dot_person);
   } else {
+    carmen_warn("Set goal: %f %f\n", goal.pose.x, goal.pose.y);
     goal = *world_point;    
     carmen_roadmap_mdp_plan(roadmap, &goal);
   }
