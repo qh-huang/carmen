@@ -125,7 +125,7 @@ static carmen_dot_filter_p filters = NULL;
 static int num_filters = 0;
 
 
-static void publish_dot_msg(carmen_dot_filter_p f, int delete);
+//static void publish_dot_msg(carmen_dot_filter_p f, int delete);
 static void publish_all_dot_msgs();
 
 static void print_filters() {
@@ -985,6 +985,7 @@ static void laser_handler(carmen_robot_laser_message *laser) {
   publish_all_dot_msgs();
 }
 
+/*******************************************
 static void publish_person_msg(carmen_dot_filter_p f, int delete) {
 
   static carmen_dot_person_msg msg;
@@ -1079,6 +1080,7 @@ static void publish_dot_msg(carmen_dot_filter_p f, int delete) {
     break;
   }
 }
+***************************************************/
 
 static void publish_all_dot_msgs() {
 
