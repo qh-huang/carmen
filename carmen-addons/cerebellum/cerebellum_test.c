@@ -105,6 +105,7 @@ main(int argc,
   int a,b,c,d;
   int error;
   double voltage;
+  int fault,ltemp,rtemp;
   //double start_time;
 
 
@@ -175,7 +176,10 @@ main(int argc,
       case 'l': rv += 3; break;
       case ',': tv -= 0.1; break;
       case 'f': error = carmen_cerebellum_fire(); printf("got: %d\r\n",error); break;
-
+      case 'c':
+	error = carmen_cerebellum_get_temperatures(&fault,&ltemp,&rtemp);
+	fprintf(stderr, "temps: err: %d fault: %d ltemp: %d rtemp: %d\r\n",error,fault,ltemp,rtemp);
+	break;
       default:  tv = 0.0; rv = 0; break;
       }
 

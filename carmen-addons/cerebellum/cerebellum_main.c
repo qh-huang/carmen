@@ -316,6 +316,7 @@ static void
 command_robot(void)
 {
   double time_elapsed = carmen_get_time_ms() - last_command;
+  double update_time_elapsed = carmen_get_time_ms() - last_update;
   double current_time; 
   int acc;
   int error = 0;
@@ -420,8 +421,9 @@ command_robot(void)
   while (error < 0);
 
   //increment the voltage check timer, check it every 3 seconds
-  voltage_time_elapsed += time_elapsed;
-  if( voltage_time_elapsed > 3000)
+  voltage_time_elapsed += update_time_elapsed;
+  //  printf("time_elapsed: %lf\n",update_time_elapsed);
+  if( voltage_time_elapsed > .3)
     {
       printf("V: ");
       error = carmen_cerebellum_get_voltage(&voltage);
@@ -436,13 +438,13 @@ command_robot(void)
     }
 
   //increment the temperature check timer, check it every 3 seconds
-  temperature_time_elapsed += time_elapsed;
-  if( temperature_time_elapsed > 6000)
+  temperature_time_elapsed += update_time_elapsed;
+  if( temperature_time_elapsed > .6)
     {
-      printf("C: ");
+            printf("C: ");
       error = carmen_cerebellum_get_temperatures(&temperature_fault,
-						&left_temperature,
-						&right_temperature);
+      						&left_temperature,
+      						&right_temperature);
       if( error < 0)
 	{
 	  printf("error, temperature command didn't work\n");
