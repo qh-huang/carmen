@@ -14,7 +14,7 @@ PUBLIC_LIBRARIES =
 PUBLIC_BINARIES = 
 MAN_PAGES =
 
-TARGETS = libcanon.a libcanon_interface.a canon_server canon_test camera_test parse-log
+TARGETS = libcanon.a libcanon_interface.a canon_server canon_test preview_test camera_test parse-log
 
 # rules
 
@@ -25,6 +25,8 @@ libcanon.a:	canon.o
 libcanon_interface.a:	canon_interface.o
 
 canon_test:	canon_test.o libcanon_interface.a
+
+preview_test:	preview_test.o libcanon_interface.a
 
 camera_test:	camera_test.o libcanon.a
 

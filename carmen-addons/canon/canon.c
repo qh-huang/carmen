@@ -502,7 +502,62 @@ int canon_rcc_turnoff_flash(usb_dev_handle *camera_handle)
   if(canon_query_response(camera_handle, 0x201, 0x13, 0x12, 0x10, 
 			  payload, 0x38, response, 0x5c) < 0) {
     fprintf(stderr, "Error: rcc turn off flash failed.\n");
+    return -1;
+  }
+  return 0;
+}
+
+int canon_rcc_start_viewfinder(usb_dev_handle *camera_handle)
+{
+  unsigned char *payload, response[0x5c];
+
+  payload = canon_fill_payload(0x08, 2, 0, 0, 0);
+  if(canon_query_response(camera_handle, 0x201, 0x13, 0x12, 0x10, 
+			  payload, 0x08, response, 0x5c) < 0) {
+    fprintf(stderr, "Error: rcc start viewfinder failed.\n");
     free(payload);
+    return -1;
+  }
+  free(payload);
+  return 0;
+}
+
+int canon_rcc_select_camera_output(usb_dev_handle *camera_handle)
+{
+  unsigned char payload[9] = 
+    {0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03};
+  unsigned char response[0x5c];
+
+  if(canon_query_response(camera_handle, 0x201, 0x13, 0x12, 0x10, 
+			  payload, 0x09, response, 0x5c) < 0) {
+    fprintf(stderr, "Error: rcc select camera output failed.\n");
+    return -1;
+  }
+  return 0;
+}
+
+int canon_rcc_download_preview(usb_dev_handle *camera_handle,
+			       unsigned char **preview,
+			       int *preview_length)
+{
+  unsigned char *payload, response[0x40];
+  int l;
+  
+  payload = canon_fill_payload(0x08, 0, 0x50 << 8, 0, 0);
+  if(canon_query_response(camera_handle, 0x202, 0x18, 0x12, 0x10, 
+			  payload, 0x10, response, 0x40) < 0) {
+    fprintf(stderr, "Error: rcc download preview command failed.\n");
+    free(payload);
+    return -1;
+  }
+  free(payload);
+
+  *preview_length = (response[6] | (response[7] << 8) |
+		     (response[8] << 16) | (response[9] << 24));
+  *preview = (unsigned char *)calloc(*preview_length, 1);
+  l = camera_bulk_read(camera_handle, *preview, *preview_length);
+  if(l != *preview_length) {
+    free(*preview);
     return -1;
   }
   return 0;
@@ -520,6 +575,19 @@ int canon_rcc_exit(usb_dev_handle *camera_handle)
     return -1;
   }
   free(payload);
+  return 0;
+}
+
+int canon_initialize_preview(usb_dev_handle *camera_handle)
+{
+  if(canon_rcc_start_viewfinder(camera_handle) < 0) {
+    fprintf(stderr, "rcc start viewfinder failed.\n");
+    return -1;
+  }
+  if(canon_rcc_select_camera_output(camera_handle) < 0) {
+    fprintf(stderr, "rcc select camera output failed.\n");
+    return -1;
+  }
   return 0;
 }
 
