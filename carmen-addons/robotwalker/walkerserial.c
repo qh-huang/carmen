@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
     carmen_die("Error: could not open serial port %s.\n", argv[1]);
 
   while (1) {
+    sleep_ipc(0.01);
     i = carmen_serial_numChars(fd);
     if (i >= 3) {
       i = carmen_serial_readn(fd, buf, 3);
