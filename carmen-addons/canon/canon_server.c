@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 
   fprintf(stderr, "Camera is ready to capture.\n");
   
-  IPC_addTimer(5000, TRIGGER_FOREVER, publish_preview, NULL);
+  IPC_addTimer(30, TRIGGER_FOREVER, publish_preview, NULL);
 
   /* run the main loop */
   IPC_dispatch();
