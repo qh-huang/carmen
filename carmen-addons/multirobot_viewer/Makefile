@@ -2,7 +2,7 @@ include $(CARMEN_HOME)/src/Makefile.conf
 
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lsimulator_interface -lmap_interface -lnavigator_interface -llocalize_interface -lparam_interface -lglobal -lipc -lz -lMagick
+LFLAGS += -lsimulator_interface -lmap_interface -lnavigator_interface -llocalize_interface -lparam_interface -lglobal -lipc -lz
 
 MODULE_NAME = MULTIROBOT_VIEWER
 MODULE_COMMENT = Interface for viewing and controlling multiple robots
