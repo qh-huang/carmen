@@ -38,7 +38,7 @@ libcanon_interface.a:	canon_interface.o libjpegread.a
 
 capture_test:	capture_test.o libcanon_interface.a
 
-previewer:	previewer.o libcanon_interface.a
+previewer:	previewer.o libjpegread.a libcanon_interface.a
 
 canon_server:	canon_server.o canon_ipc.o libcanon.a
 
