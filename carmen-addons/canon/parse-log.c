@@ -42,6 +42,10 @@
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
+#define      USE_CANON          0
+#define      USE_RIO            1
+
+
 #define      MAX_URBS           10000
 
 #define      OUT                1
@@ -238,6 +242,7 @@ void process_configuration_urb(urb_p urb)
 void process_control_urb(urb_p urb)
 {
   int temp, current_line, count;
+  char *mark;
 
   urb->urb_type = CONTROL;
   
@@ -255,19 +260,33 @@ void process_control_urb(urb_p urb)
   count = 0;
   urb->buffer = (char *)calloc(1, urb->length);
   if(urb->direction == IN) {
+
     current_line = 8;
+    mark = nth_word(urb->in.lines[current_line], 3);
+    count = 0;
+
     while(count < urb->length) {
-      sscanf(nth_word(urb->in.lines[current_line], 3), "%x", &temp);
-      urb->buffer[count] = (unsigned char)temp;
-      count++;
-      current_line++;
-      if(current_line >= urb->in.num_lines) {
+      if(mark == NULL) {
 	urb->incomplete = 1;
 	break;
       }
-      if(count > 0 && count % 16 == 0)
-	current_line++;
+      
+      sscanf(mark, "%x", &temp);
+      urb->buffer[count] = (unsigned char)temp;
+
+      count++;
+      if(count % 16 == 0) {
+	current_line += 2;
+	if(current_line >= urb->in.num_lines) {
+	  urb->incomplete = 1;
+	  break;
+	}
+	mark = nth_word(urb->in.lines[current_line], 3);
+      }
+      else
+	mark = next_word(mark);
     }
+
     /* get request, value, & index */
     sscanf(nth_word(urb->out.lines[8], 5), "%x", &urb->request);
     sscanf(nth_word(urb->out.lines[9], 5), "%x", &urb->value);
@@ -324,6 +343,51 @@ void process_int_urb(urb_p urb)
   }
 }
 
+void process_bulk_urb(urb_p urb)
+{
+  unsigned int hand;
+  int current_line, count, temp;
+  char *mark;
+  
+  sscanf(nth_word(urb->in.lines[2], 5), "%x", &hand);
+  if(hand == bulk_in_hand) {
+    urb->urb_type = BULK;
+    urb->direction = IN;
+    /* get message length */
+    sscanf(nth_word(urb->in.lines[4], 5), "%x", &(urb->length));
+    urb->buffer = (char *)calloc(1, urb->length);
+
+    current_line = 8;
+    mark = nth_word(urb->in.lines[current_line], 3);
+    count = 0;
+    while(count < urb->length) {
+      if(mark == NULL) {
+	urb->incomplete = 1;
+	break;
+      }
+
+      sscanf(mark, "%x", &temp);
+      urb->buffer[count] = (unsigned char)temp;
+
+      count++;
+      if(count % 16 == 0) {
+	current_line += 2;
+	if(current_line >= urb->in.num_lines) {
+	  urb->incomplete = 1;
+	  break;
+	}
+	mark = nth_word(urb->in.lines[current_line], 3);
+      }
+      else
+	mark = next_word(mark);
+    }
+  }
+  else if(hand == bulk_out_hand) {
+    urb->urb_type = BULK;
+    urb->direction = OUT;
+  }
+}
+
 void process_urbs(void)
 {
   int i;
@@ -341,27 +405,19 @@ void process_urbs(void)
       if(strncmp(nth_word(urb[i].in.lines[1], 4),
 		 "URB_FUNCTION_SELECT_CONFIGURATION", 33) == 0)
 	process_configuration_urb(&(urb[i]));
-      else if(strncmp(nth_word(urb[i].in.lines[1], 3),
-		 "-- URB_FUNCTION_CONTROL", 23) == 0 &&
-	 strncmp(nth_word(urb[i].out.lines[1], 3),
-		 "-- URB_FUNCTION_VENDOR", 22) == 0)
+      else if(strncmp(nth_word(urb[i].in.lines[1], 4),
+		 "URB_FUNCTION_CONTROL", 20) == 0 &&
+	 strncmp(nth_word(urb[i].out.lines[1], 4),
+		 "URB_FUNCTION_VENDOR", 19) == 0)
 	process_control_urb(&(urb[i]));
       /* process bulk and interrupt messages */
       else if(strncmp(nth_word(urb[i].in.lines[1], 4),
 		      "URB_FUNCTION_BULK", 17) == 0) {
 	sscanf(nth_word(urb[i].in.lines[2], 5), "%x", &hand);
-	if(hand == bulk_in_hand) {
-	  urb[i].urb_type = BULK;
-	  urb[i].direction = IN;
-	  /* get message length */
-	  sscanf(nth_word(urb[i].in.lines[4], 5), "%x", &(urb[i].length));
-	}
-	else if(hand == bulk_out_hand) {
-	  urb[i].urb_type = BULK;
-	  urb[i].direction = OUT;
-	}
-	else if(hand == int_in_hand)
+	if(hand == int_in_hand)
 	  process_int_urb(&(urb[i]));
+	else 
+	  process_bulk_urb(&(urb[i]));
       }
       else if(strncmp(nth_word(urb[i].in.lines[1], 4),
 		      "URB_FUNCTION_CONTROL", 20) == 0 ||
@@ -374,6 +430,7 @@ void process_urbs(void)
     else if(urb[i].out.num_lines != 0 || urb[i].in.num_lines != 0)
       urb[i].incomplete = 1;
   }
+  fprintf(stderr, "\n");
 }
 
 void print_buffer(unsigned char *buffer, int length)
@@ -396,6 +453,32 @@ void print_buffer(unsigned char *buffer, int length)
       if(i < new_length - 1)
 	printf("\n");
     }
+  }
+}
+
+char *interpret_rio_control_msg(int request, 
+				int value __attribute__ ((unused)), 
+				int index __attribute__ ((unused)), 
+				unsigned char *buffer __attribute__ ((unused)),
+				int length __attribute__ ((unused)))
+{
+  switch(request) {
+  case 0x60:
+    return "RIO MESSAGE : PACKET START";
+  case 0x61:
+    return "RIO MESSAGE : HEARTBEAT";
+  case 0x62:
+    return "RIO MESSAGE : DEVICE INFO PACKET";
+  case 0x65:
+    return "RIO MESSAGE : MESSAGE START";
+  case 0x66:
+    return "RIO MESSAGE : MESSAGE TERMINATOR";
+  case 0x68:
+    return "RIO MESSAGE : MEMORY INFO PACKET";
+  case 0x69:
+    return "RIO MESSAGE : SONG INFO PACKET";
+  default:
+    return "UNINTERPRETED";
   }
 }
 
@@ -531,16 +614,25 @@ void print_processed_urbs(urb_p urb)
 	if(urb[i].buffer != NULL)
 	  print_buffer(urb[i].buffer, urb[i].length);
 	printf("\n");
-	if(urb[i].direction == OUT)
+	if(urb[i].direction == OUT && USE_CANON)
 	  printf("%s\n", interpret_canon_msg(urb[i].buffer, urb[i].length));
+	else if(urb[i].direction == IN && USE_RIO)
+	  printf("%s\n", interpret_rio_control_msg(urb[i].request, 
+						   urb[i].value, urb[i].index,
+						   urb[i].buffer, 
+						   urb[i].length));
 	printf("\n");
 	break;
       case BULK:
 	if(urb[i].direction == IN)
-	  printf("URB %5d : %.3f : BULK IN  len = 0x%04x\n\n",
+	  printf("URB %5d : %.3f : BULK IN  len = 0x%04x\n",
 		 i, urb[i].timestamp, urb[i].length);
 	else
-	  printf("URB %5d : %.3f : BULK OUT ???\n\n", i, urb[i].timestamp);
+	  printf("URB %5d : %.3f : BULK OUT ???\n", i, urb[i].timestamp);
+	if(urb[i].buffer != NULL)
+	  print_buffer(urb[i].buffer, urb[i].length);
+	printf("\n");
+	printf("\n");
 	break;
       case INT:
 	if(urb[i].length != 0) {
