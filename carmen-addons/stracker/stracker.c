@@ -16,7 +16,6 @@ double dist = -1.0;
 double theta = -1.0;
 
 
-
 static void publish_pos_msg() {
 
   static carmen_stracker_pos_msg msg;
@@ -30,7 +29,7 @@ static void publish_pos_msg() {
 
   msg.timestamp = carmen_get_time_ms();
   msg.dist = dist;
-  msg.theta = theta * M_PI / 180.0;
+  msg.theta = (theta != -1.0 ? theta * M_PI / 180.0 : -1.0);
 
   err = IPC_publishData(CARMEN_STRACKER_POS_MSG_NAME, &msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_STRACKER_POS_MSG_NAME);
