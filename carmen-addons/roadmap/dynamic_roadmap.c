@@ -240,14 +240,12 @@ int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node,
 
 int carmen_roadmap_points_are_visible(carmen_traj_point_t *p1, 
 				      carmen_traj_point_t *p2,
-				      carmen_roadmap_t *roadmap)
+				      carmen_map_t *c_space)
 {
   carmen_bresenham_param_t params;
   int x, y;
   carmen_map_point_t mp1, mp2;
-  carmen_map_p c_space;
 
-  c_space = roadmap->c_space;
   carmen_trajectory_to_map(p1, &mp1, c_space);
   carmen_trajectory_to_map(p2, &mp2, c_space);
 
@@ -527,15 +525,43 @@ carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p new_map)
   roadmap->nodes = node_list;
   roadmap->goal_id = -1;
   roadmap->c_space = c_space;
+  roadmap->path = NULL;
   roadmap->avoid_people = 1;
 
-  for (i = 0; i < node_list->length; i++) {
-    num_edges = construct_edges(roadmap, i);
-    if (num_edges == 0) 
-      carmen_list_delete(node_list, i);
+  if (carmen_param_get_double("robot_max_t_vel",&(roadmap->robot_speed)) < 0) {
+    roadmap->robot_speed = .8;
+    carmen_warn("Could not set robot speed. Setting to default %f\n",
+		roadmap->robot_speed);
   }
 
+  for (i = 0; i < node_list->length; i++) 
+    num_edges = construct_edges(roadmap, i);
+
   return roadmap;
+}
+
+carmen_roadmap_t *carmen_roadmap_copy(carmen_roadmap_t *roadmap)
+{
+  carmen_roadmap_t *new_roadmap;
+  carmen_roadmap_vertex_t *node;
+  int num_edges;
+  int i;
+
+  new_roadmap = (carmen_roadmap_t *)calloc(1, sizeof(carmen_roadmap_t));
+  carmen_test_alloc(new_roadmap);
+
+  *new_roadmap = *roadmap;
+  new_roadmap->nodes = carmen_list_duplicate(roadmap->nodes);
+
+  for (i = 0; i < new_roadmap->nodes->length; i++) {
+    node = (carmen_roadmap_vertex_t *)carmen_list_get(new_roadmap->nodes, i);
+    node->edges = carmen_list_create(sizeof(carmen_roadmap_edge_t), 10);
+    num_edges = construct_edges(new_roadmap, i);
+  }
+
+  new_roadmap->path = NULL;
+
+  return new_roadmap;
 }
 
 static inline state_ptr 
@@ -850,6 +876,10 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
 
   if (best_utility > MAXFLOAT/2)
     return NULL;
+
+  assert (!carmen_dynamics_test_for_block(node, node_list+edges[best_neighbour].id,
+					  roadmap->avoid_people));
+    
   
   if (node_list[edges[best_neighbour].id].utility >= node->utility) {
     carmen_warn("bad utility %d %d : %f -> %d %d %f\n", 
@@ -861,6 +891,8 @@ carmen_roadmap_vertex_t *carmen_roadmap_next_node
   }
 
   assert (node_list[edges[best_neighbour].id].utility < node->utility);
+
+  assert (edges[best_neighbour].id < roadmap->nodes->length);
 
   return node_list+edges[best_neighbour].id;
 }
@@ -973,6 +1005,8 @@ int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
 
   if (!node)
     return 0;
+
+  carmen_warn("Path length: %d\n", roadmap->path->length);
 
   return 1;
 }

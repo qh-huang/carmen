@@ -7,8 +7,10 @@
 
 #include "roadmap.h"
 #include "dynamics.h"
+#include "pomdp_roadmap.h"
 
 static carmen_roadmap_t *roadmap;
+static carmen_roadmap_t *roadmap_without_people;
 static carmen_world_point_t start;
 static carmen_world_point_t person;
 static carmen_world_point_t goal;
@@ -48,8 +50,10 @@ static void draw_graph(GtkMapViewer *the_map_view)
   GdkGCValues gcvalues;
   carmen_roadmap_vertex_t *node_list;
   double max_util, min_util, scale;
-  int path_ok;
+  carmen_list_t *path;
   carmen_traj_point_t traj_point;
+
+  //  carmen_warn("%f %f\n", start.pose.x, start.pose.y);
 
   node_list = (carmen_roadmap_vertex_t *)roadmap->nodes->list;
   max_util = -MAXFLOAT;
@@ -101,7 +105,7 @@ static void draw_graph(GtkMapViewer *the_map_view)
   if (person.map != NULL) {
     double radius;
 
-    get_radius(.375, .375, .125, &radius);
+    carmen_roadmap_refine_get_radius(.375, .375, .125, &radius);
     carmen_map_graphics_draw_circle(the_map_view, &carmen_black, 0, &person, radius);
 
     //    carmen_map_graphics_draw_ellipse(the_map_view, &carmen_black, &person,
@@ -127,11 +131,12 @@ static void draw_graph(GtkMapViewer *the_map_view)
 
   traj_point.x = start.pose.x;
   traj_point.y = start.pose.y;
-  path_ok = carmen_roadmap_generate_path(&traj_point, roadmap);
 
-  if (!path_ok)
+  path = carmen_roadmap_pomdp_generate_path(&traj_point, roadmap,
+					    roadmap_without_people);
+
+  if (!path)
     return;
-
 
   gdk_gc_get_values (the_map_view->drawing_gc, &gcvalues);
 
@@ -139,13 +144,13 @@ static void draw_graph(GtkMapViewer *the_map_view)
 			     gcvalues.line_style, gcvalues.cap_style,
 			     gcvalues.join_style);
 
-  traj_point = *(carmen_traj_point_t *)carmen_list_get(roadmap->path, 0);
+  traj_point = *(carmen_traj_point_t *)carmen_list_get(path, 0);
   world_pt.pose.x = traj_point.x;
   world_pt.pose.y = traj_point.y;
   world_pt.map = roadmap->c_space;
 
-  for (i = 1; i < roadmap->path->length; i++) {
-    traj_point = *(carmen_traj_point_t *)carmen_list_get(roadmap->path, i);
+  for (i = 1; i < path->length; i++) {
+    traj_point = *(carmen_traj_point_t *)carmen_list_get(path, i);
     next.pose.x = traj_point.x;
     next.pose.y = traj_point.y;
     next.map = roadmap->c_space;
@@ -265,6 +270,8 @@ int main(int argc, char *argv[])
   carmen_map_get_gridmap(map);
 
   roadmap = carmen_roadmap_initialize(map);
+  roadmap_without_people = carmen_roadmap_copy(roadmap);
+  roadmap_without_people->avoid_people = 0;
   carmen_dynamics_initialize_no_ipc(map);
 
   if (1) {
@@ -291,12 +298,13 @@ int main(int argc, char *argv[])
     carmen_dynamics_update_person(&dot_person);
 
     carmen_roadmap_plan(roadmap, &goal);
+    carmen_roadmap_plan(roadmap_without_people, &goal);
     
     memset(&start, 0, sizeof(carmen_world_point_t));
     
     if (1) {
-      start.pose.x = 25;
-      start.pose.y = 17;
+      start.pose.x = 12;
+      start.pose.y = 25;
 
       //      start.pose.x = 10.3;
       //      start.pose.y = 26.6;

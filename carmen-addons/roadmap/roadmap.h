@@ -53,9 +53,11 @@ typedef struct {
   carmen_map_p c_space;
   carmen_list_t *path;
   int avoid_people;
+  double robot_speed;
 } carmen_roadmap_t;
 
 carmen_roadmap_t *carmen_roadmap_initialize(carmen_map_p map);
+carmen_roadmap_t *carmen_roadmap_copy(carmen_roadmap_t *roadmap);
 void carmen_roadmap_plan(carmen_roadmap_t *roadmap, 
 			 carmen_world_point_t *goal);
 carmen_roadmap_vertex_t *carmen_roadmap_nearest_node
@@ -67,7 +69,7 @@ int carmen_roadmap_is_visible(carmen_roadmap_vertex_t *node,
 			      carmen_roadmap_t *roadmap);
 int carmen_roadmap_points_are_visible(carmen_traj_point_t *p1, 
 				      carmen_traj_point_t *p2,
-				      carmen_roadmap_t *roadmap);
+				      carmen_map_t *c_space);
 carmen_roadmap_vertex_t *carmen_roadmap_best_node
  (carmen_world_point_t *point, carmen_roadmap_t *roadmap);
 double carmen_roadmap_get_cost(carmen_world_point_t *point, 
@@ -78,7 +80,11 @@ int carmen_roadmap_generate_path(carmen_traj_point_t *robot,
 void carmen_roadmap_refine_graph(carmen_world_point_t *robot, 
 				 carmen_roadmap_t *road);
 void carmen_roadmap_add_node(carmen_roadmap_t *roadmap, int x, int y);
-void carmen_roadmap_repair(carmen_list_t *new_nodes, carmen_roadmap_t *roadmap);
+void carmen_roadmap_repair(carmen_list_t *new_nodes, 
+			   carmen_roadmap_t *roadmap);
+
+void carmen_roadmap_refine_get_radius(double vx, double vy, double vxy, 
+				      double *radius);
 
 #ifdef __cplusplus
 }

@@ -29,6 +29,7 @@
 #include <assert.h>
 #include "roadmap.h"
 #include "dynamics.h"
+#include "pomdp_roadmap.h"
 #include "planner_interface.h"
 #include "navigator.h"
 
@@ -42,6 +43,8 @@ static double max_t_vel;
 static double approach_dist;
 
 static carmen_roadmap_t *roadmap = NULL;
+static carmen_roadmap_t *roadmap_without_people = NULL;
+static carmen_list_t *path = NULL;
 
 int carmen_planner_update_goal(carmen_world_point_p new_goal, 
 			       int any_orientation)
@@ -52,7 +55,9 @@ int carmen_planner_update_goal(carmen_world_point_p new_goal,
 
   if (map) {
     carmen_dynamics_clear_all_blocked(roadmap);
+    carmen_dynamics_clear_all_blocked(roadmap_without_people);
     carmen_roadmap_plan(roadmap, new_goal);
+    carmen_roadmap_plan(roadmap_without_people, new_goal);
   }
 
   carmen_verbose("Set goal to %.1f %.1f, done planning\n",
@@ -66,7 +71,8 @@ int carmen_planner_update_robot(carmen_traj_point_p new_position)
   robot = *new_position;
   have_robot = 1;
 
-  carmen_roadmap_generate_path(&robot, roadmap);
+  path = carmen_roadmap_pomdp_generate_path(&robot, roadmap, 
+					    roadmap_without_people);
 
   return 0;
 }
@@ -78,6 +84,8 @@ void carmen_planner_set_map(carmen_map_p new_map)
   carmen_verbose("Initialized with map\n");
 
   roadmap = carmen_roadmap_initialize(new_map);
+  roadmap_without_people = carmen_roadmap_copy(roadmap);
+  roadmap_without_people->avoid_people = 0;
   carmen_param_set_module("robot");
   carmen_param_get_double("max_t_vel", &max_t_vel);
   carmen_param_get_double("min_approach_dist", &approach_dist);
@@ -121,16 +129,16 @@ void carmen_planner_get_status(carmen_planner_status_p status)
   if (!have_robot || !have_goal)
     return;  
 
-  if (roadmap->path == NULL) {
+  if (path == NULL) {
     status->path.length = 0;
     status->path.points = NULL;
   } else {
-    status->path.length = roadmap->path->length;
+    status->path.length = path->length;
     status->path.points = (carmen_traj_point_p)
       calloc(status->path.length, sizeof(carmen_traj_point_t));
     carmen_test_alloc(status->path.points);
-    for (i = 0; i < roadmap->path->length; i++) {
-      traj_point = (carmen_traj_point_t *)carmen_list_get(roadmap->path, i);
+    for (i = 0; i < path->length; i++) {
+      traj_point = (carmen_traj_point_t *)carmen_list_get(path, i);
       status->path.points[i] = *traj_point;
     }
   }
@@ -145,27 +153,28 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
   double dist_to_waypoint, delta_theta;
   int node_is_too_close;
   int i;
-  int path_ok;
 
-  if (!have_robot || !have_goal || !map || !roadmap->path)
+  if (!have_robot || !have_goal || !map || !path)
     return -1;
 
-  path_ok = carmen_roadmap_generate_path(&robot, roadmap);
+  path = carmen_roadmap_pomdp_generate_path(&robot, roadmap, 
+					    roadmap_without_people);
 
-  if (path_ok == 0)
+  if (path == NULL)
     return -1;
 
   start = *waypoint;
   i = 1;
   node_is_too_close = 1;
-  way_pt = *((carmen_traj_point_t *)carmen_list_get(roadmap->path, i));
+  way_pt = *((carmen_traj_point_t *)carmen_list_get(path, i));
   dist_to_waypoint = carmen_distance_traj(&start, &way_pt);
-  while (i < roadmap->path->length && node_is_too_close) {
+  while (i < path->length && node_is_too_close) {
     dist_to_waypoint = carmen_distance_traj(&start, &way_pt);
-    if (dist_to_waypoint < approach_dist && i < roadmap->path->length-1) {
+    if (dist_to_waypoint < approach_dist && i < path->length-1) {
       next_way_pt = *((carmen_traj_point_t *)
-		      carmen_list_get(roadmap->path, i+1));
-      if (carmen_roadmap_points_are_visible(&start, &next_way_pt, roadmap))
+		      carmen_list_get(path, i+1));
+      if (carmen_roadmap_points_are_visible(&start, &next_way_pt, 
+					    roadmap->c_space))
 	way_pt = next_way_pt;
       else
 	node_is_too_close = 0;
@@ -175,7 +184,7 @@ int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
     i++;
   } 
 
-  if (i == roadmap->path->length && dist_to_waypoint < nav_conf->goal_size) {
+  if (i == path->length && dist_to_waypoint < nav_conf->goal_size) {
     *is_goal = 1;
     if (allow_any_orientation)
       return 1;

@@ -65,7 +65,8 @@ static void get_blocking_object(carmen_dot_t *blocking_object,
   return;
 }
 
-void get_radius(double vx, double vy, double vxy, double *radius)
+void carmen_roadmap_refine_get_radius(double vx, double vy, double vxy, 
+				      double *radius)
 {
   double e1, e2;
 
@@ -83,7 +84,8 @@ void get_radius(double vx, double vy, double vxy, double *radius)
   *radius = (e1 + e2) / 2;
 }
 
-void carmen_roadmap_refine_graph(carmen_world_point_t *robot, carmen_roadmap_t *road)
+void carmen_roadmap_refine_graph(carmen_world_point_t *robot, 
+				 carmen_roadmap_t *road)
 {
   carmen_dot_t blocking_object;
   double varx, vary, varxy;
@@ -120,7 +122,7 @@ void carmen_roadmap_refine_graph(carmen_world_point_t *robot, carmen_roadmap_t *
     varxy = blocking_object.data.door.vxy;
   }
 
-  get_radius(varx, vary, varxy, &radius);
+  carmen_roadmap_refine_get_radius(varx, vary, varxy, &radius);
   radius *= 1.1;
 
   node_list = (carmen_roadmap_vertex_t *)road->nodes->list;
