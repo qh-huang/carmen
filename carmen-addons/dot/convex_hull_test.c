@@ -93,119 +93,7 @@ static void transpose(double **d, int n) {
     for (j = i+1; j < n; j++)
       swap(&d[i][j], &d[j][i]);
 }
-*/
 
-#if 0
-static void cluster() {
-
-  int i, j, k, m, imax, *idk;
-  double **dk, ds, dsmax, dmax;
-
-  cluster_mask = (int *)realloc(cluster_mask, num_points*sizeof(double));
-  carmen_test_alloc(cluster_mask);
-
-  for (i = 0; i < num_points; i++)
-    cluster_mask[i] = 0;
-
-  if (num_points < 3)
-    return;
-
-  dk = (double **)malloc(num_points*sizeof(double *));
-  carmen_test_alloc(dk);
-  for (i = 0; i < num_points; i++) {
-    dk[i] = (double *)malloc(num_points*sizeof(double));
-    carmen_test_alloc(dk[i]);
-    for (j = 0; j < num_points; j++) {
-      dk[i][j] = dist(xpoints[i]-xpoints[j], ypoints[i]-ypoints[j]);
-    }
-    bsort(dk[i], NULL, num_points);
-  }
-
-  transpose(dk, num_points);
-
-  dsmax = stdev(dk[1], num_points, mean(dk[1], num_points)) -
-    stdev(dk[0], num_points, mean(dk[0], num_points));
-  imax = 1;
-  for (i = 2; i < num_points; i++) {
-    ds = stdev(dk[i], num_points, mean(dk[i], num_points)) -
-      stdev(dk[i-1], num_points, mean(dk[i-1], num_points));
-    if (ds > dsmax) {
-      dsmax = ds;
-      imax = i;
-    }
-  }
-
-  k = imax;
-
-  printf("k = %d\n", k);
-
-  idk = (int *)malloc(num_points*sizeof(int));
-  carmen_test_alloc(idk);
-  for (i = 0; i < num_points; i++)
-    idk[i] = i;
-
-  dmax = dk[k][0];
-  imax = 0;
-  for (i = 1; i < num_points; i++) {
-    if (dk[k][i] > dmax) {
-      dmax = dk[k][i];
-      imax = i;
-    }
-  }
-
-  for (j = 0; j < num_points; j++)
-    dk[imax][j] = dist(xpoints[imax]-xpoints[j], ypoints[imax]-ypoints[j]);
-
-  printf("imax = %d\n", imax);
-
-  printf("dk[imax] =");
-  for (i = 0; i < num_points; i++)
-    printf(" %.2f", dk[imax][i]);
-  printf("\n");
-
-  bsort(dk[imax], idk, num_points);
-
-  printf("idk =");
-  for (i = 0; i < num_points; i++)
-    printf(" %d", idk[i]);
-  printf("\n");
-
-
-  /*  
-  dsmax = stdev(dk[k], num_points, mean(dk[k], num_points)) -
-    stdev(dk[k], num_points-1, mean(dk[k], num_points-1));
-  imax = 1;
-  for (i = 2; i < num_points; i++) {
-    ds = stdev(dk[k], num_points-i+1, mean(dk[k], num_points-i+1)) -
-      stdev(dk[k], num_points-i, mean(dk[k], num_points-i));
-    if (ds > dsmax) {
-      dsmax = ds;
-      imax = i;
-    }
-  }
-
-  m = imax;
-
-  printf("m = %d\n", m);
-  */
-
-  m = k;
-
-  printf("cluster =");
-  for (i = 0; i < m; i++) {
-    cluster_mask[idk[i]] = 1;
-    printf(" %d", idk[i]);
-  }
-  printf("\n");
-
-  for (i = 0; i < num_points; i++)
-    free(dk[i]);
-  free(dk);
-  free(idk);
-}
-#endif
-
-/*
 static double min(double *data, int n) {
 
   int i;
@@ -250,9 +138,7 @@ static double max(double *data, int n) {
 
   return x;
 }
-*/
 
-/*
 static double argmax(double *data, int n) {
 
   int i, imax;
@@ -269,9 +155,7 @@ static double argmax(double *data, int n) {
 
   return imax;
 }
-*/
 
-/*
 static void cluster_kmeans() {
 
 #define CLUSTER_DIST 50
