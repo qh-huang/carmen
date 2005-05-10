@@ -9,13 +9,14 @@
 #include "roomnav_messages.h"
 
 
-#define GRID_NONE      -1
-#define GRID_UNKNOWN   -2
-#define GRID_WALL      -3
-#define GRID_DOOR      -4
-#define GRID_PROBE     -5
-#define GRID_VORONOI   -6
-#define GRID_CRITICAL  -7
+#define GRID_NONE       -1
+#define GRID_UNKNOWN    -2
+#define GRID_WALL       -3
+#define GRID_DOOR       -4
+#define GRID_PROBE      -5
+#define GRID_VORONOI    -6
+#define GRID_CRITICAL   -7
+#define GRID_OFFLIMITS  -8
 
 #define DEFAULT_GRID_RESOLUTION 0.1
 
@@ -61,6 +62,7 @@ static int num_rooms = 0;
 static carmen_door_p doors = NULL;
 static int num_doors = 0;
 
+#if 0
 static double voronoi_dist_tolerance = 1.5;
 static double voronoi_min_theta = 9.0*M_PI/18.0;
 static double voronoi_min_dist = 4.0;
@@ -69,6 +71,7 @@ static int voronoi_local_min_filter_inner_radius = 2;
 static int voronoi_local_min_filter_outer_radius = 5;
 static double voronoi_critical_point_min_theta = 16.0*M_PI/18.0;
 //static int voronoi_critical_point_min_dist = 5.0;
+#endif
 
 static double hallway_eccentricity_threshold = 9.0;
 
@@ -439,25 +442,41 @@ static void get_room_names(carmen_map_placelist_p placelist) {
   carmen_world_point_t world_point;
   carmen_map_point_t map_point;
   char *placename;
-  int i, r;
+  int i, r, type;
+
+  type = 0;
 
   world_point.map = &map;
   map_point.map = &map;
 
+  for (r = 0; r < num_rooms; r++)
+    rooms[r].type = CARMEN_ROOM_TYPE_UNKNOWN;
+
   for (i = 0; i < placelist->num_places; i++) {
     placename = placelist->places[i].name;
-    if (placename[0] != 'r')
-      continue;
-    if (placename[strspn(placename+1, "0123456789") + 1] != ' ')
+    if (placename[0] == 'R')
+      type = CARMEN_ROOM_TYPE_ROOM;
+    else if (placename[0] == 'H')
+      type = CARMEN_ROOM_TYPE_HALLWAY;
+    else if (placename[0] == 'r')
+      type = CARMEN_ROOM_TYPE_UNKNOWN;
+    else
       continue;
     placename++;
+    if (*placename == '\0')
+      continue;
     placename += strspn(placename, "0123456789");
-    placename += strspn(placename, " \t");
+    if (*placename != '\0' && *placename != ' ' && *placename != '\t')
+      continue;
     world_point.pose.x = placelist->places[i].x;
     world_point.pose.y = placelist->places[i].y;
     carmen_world_to_map(&world_point, &map_point);
     r = closest_room(map_point.x, map_point.y, 10);
     if (r == -1)
+      continue;
+    rooms[r].type = type;
+    placename += strspn(placename, " \t");
+    if (*placename == '\0')
       continue;
     rooms[r].name = (char *) realloc(rooms[r].name, (strlen(placename) + 1) * sizeof(char));
     carmen_test_alloc(rooms[r].name);
@@ -559,10 +578,12 @@ static void get_room_types(int num_new_rooms) {
     rooms[r].theta = bnorm_theta(vx, vy, vxy);
     rooms[r].w1 = (vx + vy)/2.0 + sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
     rooms[r].w2 = (vx + vy)/2.0 - sqrt(vxy*vxy + (vx-vy)*(vx-vy)/4.0);
-    if (rooms[r].w1 / rooms[r].w2 > hallway_eccentricity_threshold)
-      rooms[r].type = CARMEN_ROOM_TYPE_HALLWAY;
-    else
-      rooms[r].type = CARMEN_ROOM_TYPE_ROOM;
+    if (rooms[r].type == CARMEN_ROOM_TYPE_UNKNOWN) {
+      if (rooms[r].w1 / rooms[r].w2 > hallway_eccentricity_threshold)
+	rooms[r].type = CARMEN_ROOM_TYPE_HALLWAY;
+      else
+	rooms[r].type = CARMEN_ROOM_TYPE_ROOM;
+    }
   }
 
   // get hallway endpoints in local coordinates
@@ -640,6 +661,29 @@ static void grid_draw_map_line(int x1, int y1, int x2, int y2, int cell_type) {
   }
 }
 
+static void mark_offlimits() {
+
+  int i, n;
+  carmen_offlimits_p offlimits;
+  
+  printf("marking offlimits...");
+
+  if (carmen_map_get_offlimits(&offlimits, &n) < 0) {
+    printf("none\n");
+    return;
+  }
+
+  for (i = 0; i < n; i++) {
+    if (offlimits[i].type == CARMEN_OFFLIMITS_LINE_ID) {
+      grid_draw_map_line(offlimits[i].x1, offlimits[i].y1,
+			 offlimits[i].x2, offlimits[i].y2, GRID_OFFLIMITS);
+      printf("%d", i);
+    }
+  }
+
+  printf("\n");
+}
+
 static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
 
   int i, j, n, e1, e2;
@@ -652,6 +696,8 @@ static void get_rooms(carmen_map_placelist_p placelist, int num_new_doors) {
   carmen_world_point_t world_point;
   carmen_map_point_t map_point;
   int num_new_rooms = 0;
+
+  mark_offlimits();
 
   rooms = (carmen_room_p) realloc(rooms, (num_rooms + num_new_doors + 1) * sizeof(carmen_room_t));
   carmen_test_alloc(rooms);
@@ -948,6 +994,7 @@ static void cleanup_map() {
 
 //static void dbug_func() { return; }
 
+#if 0
 static double dist_to_wall(int x, int y) {
 
   int i, xi, yi, w, wx, wy, shell;
@@ -1290,6 +1337,7 @@ static void get_critical_points() {
   }
   printf("\rGetting critical points: 100%% complete\n");
 }
+#endif
 
 static void get_map_by_name(char *name) {
 
@@ -1459,6 +1507,7 @@ static GdkColor grid_color(int x, int y) {
   case GRID_NONE:      return carmen_white;
   case GRID_UNKNOWN:   return carmen_blue;
   case GRID_WALL:      return carmen_black;
+  case GRID_OFFLIMITS:
   case GRID_DOOR:      return carmen_red;
   case GRID_PROBE:     return carmen_yellow;
   case GRID_VORONOI:   return carmen_orange;
@@ -2229,6 +2278,7 @@ static void print_path(int *p, int plen) {
   printf("\n");
 }
 
+#if 0
 static void pq_print(path_node_p pq) {
 
   path_node_p tmp;
@@ -2241,6 +2291,7 @@ static void pq_print(path_node_p pq) {
   }
   printf("\n");
 }
+#endif
 
 static int path_eq(int *path1, int pathlen1, int *path2, int pathlen2) {
 
@@ -2449,6 +2500,41 @@ static void roomnav_room_from_point_query_handler
 		  CARMEN_ROOMNAV_ROOM_MSG_NAME);
 }
 
+static void roomnav_room_from_world_point_query_handler
+(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+ void *clientData __attribute__ ((unused))) {
+
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err;
+  carmen_roomnav_room_from_world_point_query query;
+  carmen_roomnav_room_msg *response;
+  carmen_world_point_t world_point;
+  carmen_map_point_t map_point;
+
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query,
+			   sizeof(carmen_roomnav_room_from_world_point_query));
+  IPC_freeByteArray(callData);
+  
+  response = (carmen_roomnav_room_msg *)
+    calloc(1, sizeof(carmen_roomnav_room_msg));
+  carmen_test_alloc(response);
+
+  world_point.map = map_point.map = &map;
+  world_point.pose.x = query.point.x;
+  world_point.pose.y = query.point.y;
+  carmen_world_to_map(&world_point, &map_point);
+  response->room = closest_room(map_point.x, map_point.y, 10);
+
+  response->timestamp = carmen_get_time_ms();
+  strcpy(response->host, carmen_get_tenchar_host_name());
+
+  err = IPC_respondData(msgRef, CARMEN_ROOMNAV_ROOM_MSG_NAME, response);
+  carmen_test_ipc(err, "Could not respond",
+		  CARMEN_ROOMNAV_ROOM_MSG_NAME);
+}
+
 static void roomnav_goal_query_handler
 (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
  void *clientData __attribute__ ((unused))) {
@@ -2535,7 +2621,7 @@ static void roomnav_rooms_topology_query_handler
     response->topology.rooms[i].doors = (int *) calloc(rooms[i].num_doors, sizeof(int));
     carmen_test_alloc(response->topology.rooms[i].doors);
     memcpy(response->topology.rooms[i].doors, rooms[i].doors,
-	   rooms[i].num_doors / sizeof(int));
+	   rooms[i].num_doors * sizeof(int));
   }
 
   response->topology.doors = (carmen_door_p) calloc(num_doors, sizeof(carmen_door_t));
@@ -2548,7 +2634,7 @@ static void roomnav_rooms_topology_query_handler
       calloc(doors[i].points.num_places, sizeof(carmen_place_t));
     carmen_test_alloc(response->topology.doors[i].points.places);
     memcpy(response->topology.doors[i].points.places, doors[i].points.places,
- 	   doors[i].points.num_places / sizeof(carmen_place_t));
+ 	   doors[i].points.num_places * sizeof(carmen_place_t));
   }
 
   err = IPC_respondData(msgRef, CARMEN_ROOMNAV_ROOMS_TOPOLOGY_MSG_NAME, response);
@@ -2683,6 +2769,11 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME);
 
+  err = IPC_defineMsg(CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_NAME);
+
   err = IPC_defineMsg(CARMEN_ROOMNAV_GOAL_MSG_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_ROOMNAV_GOAL_MSG_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_ROOMNAV_GOAL_MSG_NAME);
@@ -2733,6 +2824,12 @@ static void ipc_init() {
   carmen_test_ipc_exit(err, "Could not subcribe", 
 		       CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_ROOMNAV_ROOM_FROM_POINT_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_NAME, 
+		      roomnav_room_from_world_point_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subcribe", 
+		       CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_ROOMNAV_ROOM_FROM_WORLD_POINT_QUERY_NAME, 100);
 
   err = IPC_subscribe(CARMEN_ROOMNAV_GOAL_QUERY_NAME, 
 		      roomnav_goal_query_handler, NULL);

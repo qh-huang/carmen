@@ -65,6 +65,7 @@ typedef struct {
 #define GRID_DOOR     -4
 #define GRID_PROBE    -5
 
+#define CARMEN_ROOM_TYPE_UNKNOWN -1
 #define CARMEN_ROOM_TYPE_ROOM     0
 #define CARMEN_ROOM_TYPE_HALLWAY  1
 
