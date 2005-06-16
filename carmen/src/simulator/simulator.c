@@ -147,14 +147,33 @@ void
 map_update_handler(carmen_map_t *new_map) 
 {
   carmen_map_p map_ptr;
-
+  int map_x, map_y;
   carmen_point_t zero = {0, 0, 0};
 
   map_ptr = carmen_map_copy(new_map);
   simulator_config->map = *map_ptr;
   free(map_ptr);
-  simulator_config->odom_pose = zero;
-  simulator_config->true_pose = zero;
+
+  /* Reset odometry and true pose only of the robot's pose     */
+  /* is not valid given the new map. Otherwise keep old poses. */
+  /* This enables to activate a new map without messing up     */
+  /* the odometry. */
+
+  map_x = simulator_config->true_pose.x / 
+    simulator_config->map.config.resolution;
+  map_y = simulator_config->true_pose.y / 
+    simulator_config->map.config.resolution;
+
+  if(map_x < 0 || map_x >= simulator_config->map.config.x_size || 
+     map_y < 0 || map_y >= simulator_config->map.config.y_size ||
+     simulator_config->map.map[map_x][map_y] > .15 ||
+     carmen_simulator_object_too_close(simulator_config->true_pose.x, 
+				       simulator_config->true_pose.y, -1))
+    {
+      simulator_config->odom_pose = zero;
+      simulator_config->true_pose = zero;
+    }
+  
 }
 
 static void
@@ -372,6 +391,7 @@ publish_readings(void)
   odometry.acceleration = simulator_config->acceleration;
 
   odometry.timestamp = carmen_get_time_ms();
+
   err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
   carmen_test_ipc(err, "Could not publish base_odometry_message", 
 		  CARMEN_BASE_ODOMETRY_NAME);

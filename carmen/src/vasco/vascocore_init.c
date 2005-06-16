@@ -193,6 +193,14 @@ vascocore_init( int argc, char **argv )
 }
 
 void
+vascocore_init_no_ipc(carmen_vascocore_param_t *new_settings)
+{
+  carmen_vascocore_settings = *new_settings;
+  vascocore_initialize_maps( &carmen_vascocore_map );
+  vascocore_alloc_history( &carmen_vascocore_history );
+}
+
+void
 vascocore_reset()
 {
   carmen_vascocore_history.ptr = 0;

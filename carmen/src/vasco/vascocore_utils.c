@@ -186,6 +186,12 @@ carmen_laser_point( carmen_point_t rpos, double val, double angle )
 double
 carmen_gauss( double x, double mu, double sigma )
 {
+  if (sigma < 1e-9) {
+    if (fabs(x-mu) < 1e-9)
+      return 1.0;
+    else
+      return 0.0;
+  }
  return( (1/sqrt(2.0*M_PI*sigma*sigma)) *
 	 exp(-(((x-mu)*(x-mu))/(2*sigma*sigma))) );  
 }

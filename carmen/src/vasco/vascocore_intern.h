@@ -10,38 +10,6 @@
 #define UPDT_X                           1
 #define UPDT_Y                           2
 
-typedef struct {
-
-  int                                    verbose;
-  
-  double                                 max_usable_laser_range;
-  
-  double                                 local_map_max_range;
-  double                                 local_map_resolution;
-  int                                    local_map_kernel_len;
-  int                                    local_map_use_odometry;
-  int                                    local_map_num_convolve;
-  double                                 local_map_std_val;
-  int                                    local_map_history_length;
-  int                                    local_map_max_used_history;
-  double                                 local_map_min_bbox_distance;
-  double                                 local_map_object_prob;
-  int                                    local_map_use_last_scans;
-
-  double                                 bounding_box_max_range;
-  double                                 bounding_box_border;
-
-  double                                 motion_model_forward;
-  double                                 motion_model_sideward;
-  double                                 motion_model_rotation;
-  
-  double                                 pos_corr_step_size_forward;
-  double                                 pos_corr_step_size_sideward;
-  double                                 pos_corr_step_size_rotation;
-  int                                    pos_corr_step_size_loop;
-  
-} carmen_vascocore_param_t, *carmen_vascocore_param_p;
-
 typedef struct carmen_vascocore_quad_tree_t {
   
   struct carmen_vascocore_quad_tree_t  * elem[4];

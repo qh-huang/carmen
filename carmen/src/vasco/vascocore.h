@@ -72,6 +72,39 @@ typedef struct {
 } carmen_bbox_t;
 
 
+typedef struct {
+
+  int                                    verbose;
+  
+  double                                 max_usable_laser_range;
+  
+  double                                 local_map_max_range;
+  double                                 local_map_resolution;
+  int                                    local_map_kernel_len;
+  int                                    local_map_use_odometry;
+  int                                    local_map_num_convolve;
+  double                                 local_map_std_val;
+  int                                    local_map_history_length;
+  int                                    local_map_max_used_history;
+  double                                 local_map_min_bbox_distance;
+  double                                 local_map_object_prob;
+  int                                    local_map_use_last_scans;
+
+  double                                 bounding_box_max_range;
+  double                                 bounding_box_border;
+
+  double                                 motion_model_forward;
+  double                                 motion_model_sideward;
+  double                                 motion_model_rotation;
+  
+  double                                 pos_corr_step_size_forward;
+  double                                 pos_corr_step_size_sideward;
+  double                                 pos_corr_step_size_rotation;
+  int                                    pos_corr_step_size_loop;
+  
+} carmen_vascocore_param_t, *carmen_vascocore_param_p;
+
+
 void *         carmen_mdalloc(int ndim, int width, ...);
 
 void           camen_mdfree(void *tip, int ndim);
@@ -107,6 +140,7 @@ carmen_move_t  carmen_move_between_points( carmen_point_t start,
 					   carmen_point_t end );
 
 void           vascocore_init( int argc, char **argv );
+void vascocore_init_no_ipc(carmen_vascocore_param_t *new_settings);
 
 void           vascocore_reset();
 

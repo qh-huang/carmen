@@ -22,7 +22,7 @@ PUBLIC_INCLUDES = ipc.h
 PUBLIC_LIBRARIES = libipc.a 
 PUBLIC_BINARIES = central
 
-TARGETS = central libipc.a test_generate test_receive ipc-endian-test
+TARGETS = central libipc.a test_generate test_receive ipc-endian-test ipc-die-test
 
 # rules
 
@@ -41,6 +41,8 @@ test_generate: test_generate.o libipc.a
 test_receive: test_receive.o libipc.a
 
 ipc-endian-test: ipc-endian-test.o libipc.a
+
+ipc-die-test: ipc-die-test.o libipc.a
 
 include ../Makefile.rules
 
