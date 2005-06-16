@@ -1,0 +1,9 @@
+*.map
+*.planmap
+param_daemon
+param_test
+param_set
+Makefile.depend
+wean.map
+param_edit
+install_params

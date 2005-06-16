@@ -1,6 +1,6 @@
 include Makefile.conf
 
-PACKAGES = ipc global paramServer base laser \
+PACKAGES = ipc global param_daemon base laser \
 	   robot simulator robotgraph joystick logger mapserver vasco \
 	   localize navigator
 

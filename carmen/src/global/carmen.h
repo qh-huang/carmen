@@ -70,9 +70,6 @@ extern "C" {
 
 #include <carmen/pswrap.h>
 
-#include <carmen/ant.h>              
-#include <carmen/sockutils.h>
-
 #include <carmen/base_interface.h>
 
 #include <carmen/param_interface.h>

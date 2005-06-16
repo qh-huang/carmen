@@ -1,0 +1,1337 @@
+/*********************************************************
+ *
+ * This source code is part of the Carnegie Mellon Robot
+ * Navigation Toolkit (CARMEN)
+ *
+ * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * Roy, and Sebastian Thrun
+ *
+ * CARMEN is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public 
+ * License as published by the Free Software Foundation; 
+ * either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * CARMEN is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied 
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more 
+ * details.
+ *
+ * You should have received a copy of the GNU General 
+ * Public License along with CARMEN; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, 
+ * Suite 330, Boston, MA  02111-1307 USA
+ *
+ ********************************************************/
+
+#include <carmen/carmen.h>
+#include <carmen/map_io.h>
+
+#include <ctype.h>
+#include <getopt.h>
+#include <sys/stat.h>
+
+#define MAX_VARIABLE_LENGTH 2048
+#define MAX_NUM_MODULES 128
+#define MAX_ROBOTS 100
+
+#define MAX_ROBOT_NAME_LENGTH 50 
+
+
+typedef struct {
+  char *module_name;
+  char *variable_name;
+  char *lvalue;
+  char *rvalue;
+} carmen_ini_param_t, *carmen_ini_param_p;
+
+static pid_t central_pid = -1;
+static int auto_start_central = 1; 
+
+static char *modules[MAX_NUM_MODULES];
+static int num_modules = 0;
+
+static char *default_list[] = {"carmen.ini", "../carmen.ini",
+			       "../src/carmen.ini", 0};
+
+static carmen_ini_param_p param_list = NULL;
+static int num_params = 0;
+static int param_table_capacity = 0;
+static char *map_filename = NULL;
+static char *selected_robot;
+static char *param_filename = NULL;
+
+static int alphabetize = 0;
+
+static void publish_new_param(int index);
+static int read_parameters_from_file(void);
+
+void 
+carmen_param_get_param_list(carmen_ini_param_p *list, int *list_size)
+{
+  if (list == NULL || list_size == NULL)
+    return;
+  *list = param_list;
+  *list_size = num_params;
+}
+
+static void 
+shutdown_param_server(int signo)
+{
+  if (signo == SIGINT) {
+    close_ipc();
+    if (central_pid > 0)
+      kill(central_pid, SIGINT);
+    exit(1);
+  }
+}
+
+static int
+lookup_name(char *full_name) 
+{
+  int index;
+  unsigned int name_length;
+
+  name_length = strlen(full_name);
+  for (index = 0; index < num_params; index++)
+    {
+      if (carmen_strcasecmp(param_list[index].lvalue, full_name) == 0)
+	return index;
+    }
+
+  return -1;
+}
+
+static int
+lookup_parameter(char *module_name, char *parameter_name) 
+{
+  char buffer[1024];
+
+  if (module_name != NULL)
+    {
+      sprintf(buffer, "%s_%s", module_name, parameter_name);
+
+      return lookup_name(buffer);
+    }
+  else
+    return lookup_name(parameter_name);
+}
+
+static int
+lookup_module(char *module_name)
+{
+  int i;
+
+  for (i = 0; i < num_modules; i++)
+    if (!strcmp(modules[i], module_name))
+      return i;
+
+  return -1;
+}
+
+static void
+add_module(char *module_name)
+{
+  if (num_modules == MAX_NUM_MODULES) 
+    carmen_die("You have added %d modules already, and you just tried to \n"
+	       "add one more. %d is the maximum number of modules carmen\n"
+	       "currently supports.\n", MAX_NUM_MODULES, MAX_NUM_MODULES);
+  modules[num_modules] = (char *) calloc(strlen(module_name)+1, sizeof(char));
+  carmen_test_alloc(modules[num_modules]);
+  strncpy(modules[num_modules], module_name, strlen(module_name)+1);
+  num_modules++;
+}
+
+static int 
+query_num_params(char *module_name) {
+  int count;
+  int index;
+  
+  count = 0;
+  for (index = 0; index < num_params; index++)
+    if (carmen_strcasecmp(param_list[index].module_name, module_name) == 0)
+      count++;
+    
+  return count;
+}
+
+static void 
+check_param_space()
+{
+  if (param_list == NULL) 
+    {
+      param_table_capacity = 30;
+      param_list = (carmen_ini_param_p)
+	calloc(param_table_capacity, sizeof(carmen_ini_param_t));
+      carmen_test_alloc(param_list);
+    }
+
+  if (num_params == param_table_capacity)
+    {
+      param_table_capacity *= 2;
+      param_list = 
+	realloc(param_list, param_table_capacity*sizeof(carmen_ini_param_t));
+      carmen_test_alloc(param_list);
+    }
+}
+
+static void
+set_param(char *lvalue, char *rvalue)
+{
+  int param_index;
+  char module[255], variable[255];
+  int num_items;
+
+  param_index = lookup_name(lvalue);
+  if (param_index == -1)
+    {
+      num_items = sscanf(lvalue, "%[^_]_%s", module, variable);
+      if (num_items != 2) {
+	carmen_warn("Ill-formed parameter name %s%s%s. Could not find "
+		    "module and variable name.\n"
+		    "Not setting this parameter.\n", carmen_red_code, 
+		    lvalue, carmen_normal_code);
+	return;
+      }
+
+      check_param_space();
+      param_index = num_params;
+      num_params++;
+      param_list[param_index].lvalue = (char *)calloc
+	(strlen(lvalue)+1, sizeof(char));
+      carmen_test_alloc(param_list[param_index].lvalue);
+      strcpy(param_list[param_index].lvalue, lvalue);
+            
+      param_list[param_index].module_name = (char *)calloc
+	(strlen(module)+1, sizeof(char));
+      carmen_test_alloc(param_list[param_index].module_name);
+      strcpy(param_list[param_index].module_name, module);
+
+      if (lookup_module(module) == -1)
+	add_module(module);
+
+      param_list[param_index].variable_name = (char *)calloc
+	(strlen(variable)+1, sizeof(char));
+      carmen_test_alloc(param_list[param_index].variable_name);
+      strcpy(param_list[param_index].variable_name, variable);
+    }
+  else 
+    {
+      free(param_list[param_index].rvalue);
+    }
+
+  param_list[param_index].rvalue = (char *)calloc
+    (strlen(rvalue)+1, sizeof(char));
+  carmen_test_alloc(param_list[param_index].rvalue);
+
+  strcpy(param_list[param_index].rvalue, rvalue);	    
+  carmen_verbose("Added %s %s : %s = %s\n", 
+		 param_list[param_index].module_name,
+		 param_list[param_index].variable_name, 
+		 param_list[param_index].lvalue, 
+		 param_list[param_index].rvalue); 
+
+  publish_new_param(param_index);
+}
+
+static int
+find_valid_robots(char **robot_names, int *num_robots, int max_robots)
+{
+  FILE *fp = NULL;
+  char *err, *line, *mark;
+  char *left, *right;
+  int count = 0;
+
+  fp = fopen(param_filename, "r");      
+  if(fp == NULL)
+    return -1;
+
+  line = (char *)calloc(MAX_VARIABLE_LENGTH, sizeof(char));
+  carmen_test_alloc(line);
+
+  do {
+    err = fgets(line, MAX_VARIABLE_LENGTH-1, fp);
+    line[MAX_VARIABLE_LENGTH-1] = '\0';
+    if(strlen(line) == MAX_VARIABLE_LENGTH-1) 
+      carmen_die("Line %d of file %s is too long.\n"
+		 "Maximum line length is %d. Please correct this line.\n\n"
+		 "It is also possible that this file has become corrupted.\n"
+		 "Make sure you have an up-to-date version of carmen, and\n"
+		 "consult the param_server documentation to make sure the\n"
+		 "file format is valid.\n", count, param_filename, 
+		 MAX_VARIABLE_LENGTH-1);
+      count++;
+      if(err != NULL) {
+      mark = strchr(line, '#');    /* strip comments and trailing returns */
+      if(mark != NULL)
+	mark[0] = '\0';
+      mark = strchr(line, '\n');
+      if(mark != NULL)
+	mark[0] = '\0';
+
+      left = strchr(line, '[');
+      right = strchr(line, ']');
+      if(left != NULL && right != NULL && left < right && 
+	 left[1] != '*') {
+	(*num_robots)++;
+
+	if(*num_robots > max_robots)
+	  carmen_die("Error: exceeded maximum number of robots in parameter file (%d).\n", max_robots);
+	
+	robot_names[*num_robots - 1] = 
+	  (char *)calloc(right - left, 1);
+	carmen_test_alloc(robot_names[*num_robots - 1]);
+	strncpy(robot_names[*num_robots - 1], left + 1, right - left - 1);
+	robot_names[*num_robots - 1][right - left - 1] = '\0';
+      }
+    }
+  } while(err != NULL);
+  free(line);
+  return 0;
+}
+
+static int
+read_parameters_from_file(void)
+{
+  FILE *fp = NULL;
+  char *line;
+  char *mark, *token;
+  int token_num;
+  char lvalue[255], rvalue[MAX_VARIABLE_LENGTH];
+  int found_desired_robot = 0;
+  int line_length;
+  int count;
+
+  fp = fopen(param_filename, "r");      
+  if(fp == NULL)
+    return -1;
+
+  line = (char *)calloc(MAX_VARIABLE_LENGTH, sizeof(char));
+  carmen_test_alloc(line);
+
+  count = 0;
+  while (!feof(fp)) 
+    {
+      fgets(line, MAX_VARIABLE_LENGTH-1, fp);
+      line[MAX_VARIABLE_LENGTH-1] = '\0';
+      if (strlen(line) == MAX_VARIABLE_LENGTH-1) 
+	carmen_die("Line %d of file %s is too long.\n"
+		   "Maximum line length is %d. Please correct this line.\n\n"
+		   "It is also possible that this file has become corrupted.\n"
+		   "Make sure you have an up-to-date version of carmen, and\n"
+		   "consult the param_server documentation to make sure the\n"
+		   "file format is valid.\n", count, param_filename, 
+		   MAX_VARIABLE_LENGTH-1);
+      count++;
+      if (feof(fp))
+	break;
+      mark = strchr(line, '#');    /* strip comments and trailing returns */
+      if (mark != NULL)
+	mark[0] = '\0';
+      mark = strchr(line, '\n');
+      if (mark != NULL)
+	mark[0] = '\0';
+
+      // Trim off trailing white space 
+
+      line_length = strlen(line) - 1;
+      while (line_length >= 0 && 
+	     (line[line_length] == ' ' || line[line_length] == '\t' ))
+	{
+	  line[line_length--] = '\0';
+	}
+      line_length++;
+      
+      if (line_length == 0)
+	continue;
+      
+      // Skip over initial blank space
+      
+      mark = line + strspn(line, " \t");
+      if (strlen(mark) == 0) 
+	carmen_die("You have encountered a bug in carmen. Please report it\n"
+		   "to the carmen maintainers. \n"
+		   "Line %d, function %s, file %s\n", __LINE__, __FUNCTION__,
+		   __FILE__);
+      
+      token_num = 0;
+      
+      /* tokenize line */
+      token = mark;
+      
+      // Move mark to the first whitespace character.
+      mark = strpbrk(mark, " \t");
+      // If we found a whitespace character, then turn it into a NULL
+      // and move mark to the next non-whitespace.
+      if (mark) 
+	{
+	  mark[0] = '\0';
+	  mark++;
+	  mark += strspn(mark, " \t");
+	}
+
+      if (strlen(token) > 254) 
+	{
+	  carmen_warn("Bad file format of %s on line %d.\n"
+		      "The parameter name %s is too long (%d characters).\n"
+		      "A parameter name can be no longer than 254 "
+		      "characters.\nSkipping this line.\n", param_filename, 
+		      count, token, strlen(token));
+	  continue;
+	}
+      
+      strcpy(lvalue, token);
+      token_num++;
+
+      // If mark points to a non-whitespace character, then we have a
+      // two-token line
+      if (mark)
+	{
+	  if (strlen(mark) > MAX_VARIABLE_LENGTH-1) 
+	    {
+	      carmen_warn("Bad file format of %s on line %d.\n"
+			  "The parameter value %s is too long (%d "
+			  "characters).\nA parameter value can be no longer "
+			  "than %d characters.\nSkipping this line.\n", 
+			  param_filename, count, mark, strlen(mark),
+			  MAX_VARIABLE_LENGTH-1);
+	      continue;
+	    }
+	  strcpy(rvalue, mark);
+	  token_num++;
+	}
+      
+      if (lvalue[0] == '[') 
+	{
+	  if (lvalue[1] == '*')
+	    found_desired_robot = 1;
+	  else if (strlen(lvalue) < strlen(selected_robot) + 2)
+	    found_desired_robot = 0;
+	  else if (lvalue[strlen(selected_robot)+1] != ']')
+	    found_desired_robot = 0;
+	  else if (carmen_strncasecmp
+		   (lvalue+1, selected_robot, strlen(selected_robot)) == 0)
+	    found_desired_robot = 1;
+	  else
+	    found_desired_robot = 0;
+	}
+      else if(token_num == 2 && found_desired_robot == 1) 
+	set_param(lvalue, rvalue);
+    } /* End of while (!feof(fp)) */
+  
+  fclose(fp);
+  return 0;
+}
+
+#define MAX_LINE_LENGTH 4096
+
+static int contains_binary_chars(char *filename)
+{
+  FILE  * fp;
+  int     c;
+
+  fp = fopen(filename, "r");
+  if (fp == NULL)
+    return -1;
+  while ((c=fgetc(fp)) != EOF) {
+    if (!isascii(c))
+      return 1;
+  } 
+  fclose(fp);
+  return 0;
+}
+
+static void usage(char *progname, char *fmt, ...)
+{
+  va_list args;
+
+  if (fmt != NULL)
+    {
+      fprintf(stderr, "\n[31;1m");
+      va_start(args, fmt);
+      vfprintf(stderr, fmt, args);
+      va_end(args);
+      fprintf(stderr, "[0m\n\n");
+    }
+  else
+    {
+      fprintf(stderr, "\n");
+    }
+
+  if (strrchr(progname, '/') != NULL)
+    {
+      progname = strrchr(progname, '/');
+      progname++;
+    }
+
+  fprintf(stderr, "usage: %s [-achnpr] [map_filename] [ini filename] \n\n", 
+	  progname);
+
+  exit(-1);
+}
+
+static void help(char *progname)
+{
+  if (strrchr(progname, '/') != NULL)
+    {
+      progname = strrchr(progname, '/');
+      progname++;
+    }
+
+  fprintf(stderr, "usage: %s "
+	  //"[-achnpr] "
+	  "[map_filename] [ini filename] \n\n", 
+	  progname);
+  fprintf
+    (stderr, " --alphabetize\talphabetize parameters when listing\n"
+     " --central\tdo not autostart central\n"
+     " --robot=ROBOT\tuse parameters for ROBOT\n"     
+     "\n\n"
+     "[map_filename] and [ini filename] are both optional arguments. \n"
+     "If you do not provide [map_filename], then no map will be served by \n"
+     "the %s. If you do not provide an [ini filename], then \n"
+     "%s will look for carmen.ini in the current directory, \n"
+     "and then look for ../carmen.ini, and then ../src/carmen.ini. \n"
+     "If you provide no ini filename, and %s cannot find\n"
+     "the carmen.ini, then you will get this error message. \n"
+     "\n"
+     "If you only provide one file name, then %s will try to infer\n"
+     "whether it is a map or not and process it accordingly. \n"
+     "\n"
+     "The ini file must provide a section of parameters that matches the \n"
+     "robot name.  \n\n", progname, progname, progname, progname);
+
+  exit(-1);
+}
+
+static int
+read_commandline(int argc, char **argv)
+{
+  int index, i;
+  int cur_arg;
+  char **robot_names = NULL;
+  int num_robots = 0;
+  int binary;
+
+  //  extern char *optarg;
+  //  extern int optind;
+  //  extern int optopt;
+
+  static struct option long_options[] = {
+    {"help", 0, 0, 0},
+    {"robot", 1, NULL, 0},
+    {"nocentral", 0, &auto_start_central, 0},
+    {"alphabetize", 0, &alphabetize, 1},
+    {0, 0, 0, 0}
+  };
+
+  int option_index = 0;
+  int c;
+  char arg_buffer[255];
+
+  opterr = 0;
+  while (1) {
+    c = getopt_long (argc, argv, "achnp:r:",
+		     long_options, &option_index);
+    if (c == -1)
+      break;
+    
+    if (c == 0) {
+      sprintf(arg_buffer, "--%s", long_options[option_index].name);
+      if (carmen_strcasecmp(long_options[option_index].name, "help") == 0)
+	c = 'h';
+      else if (carmen_strcasecmp(long_options[option_index].name,"port") == 0)
+	c = 'p';
+      else if (carmen_strcasecmp(long_options[option_index].name,"robot") == 0)
+	c = 'r';
+    } else {
+      sprintf(arg_buffer, "-%c", c);
+    }
+
+    switch (c) {
+    case 'r': 
+      if (optarg == NULL) 
+	usage(argv[0], "%s requires an argument", arg_buffer);
+      if (strlen(optarg) > MAX_ROBOT_NAME_LENGTH)
+	usage(argv[0], "argument to %s: %s is invalid (too long).", 
+	      arg_buffer, optarg);      
+      selected_robot = (char *)calloc(strlen(optarg)+1, sizeof(char));
+      carmen_test_alloc(selected_robot);
+      strcpy(selected_robot, optarg);
+      break;
+    case 'a':
+      alphabetize = 1;
+      break;
+    case 'c':
+      auto_start_central = 0;
+      break;
+    case 'h':
+      help(argv[0]);
+      break;
+    case ':':
+      usage(argv[0], "-%c requires an argument", optopt);
+      break;
+    case '?':
+      //      usage(argv[0], "unknown option character %c", optopt);      
+      break;
+    }
+  }
+
+  /* look for a map file */
+  map_filename = NULL;
+  for (cur_arg = optind; cur_arg < argc; cur_arg++) {
+    if (carmen_map_file(argv[cur_arg]) && map_filename)
+      usage(argv[0], "too many map files given: %s and %s", map_filename,
+	    argv[cur_arg]);
+    carmen_warn("Testing %s: %d\n", argv[cur_arg], 
+		carmen_map_file(argv[cur_arg]));
+    if (carmen_map_file(argv[cur_arg])) {
+      map_filename = (char *)calloc(strlen(argv[cur_arg])+1, sizeof(char));
+      carmen_test_alloc(map_filename);
+      strcpy(map_filename, argv[cur_arg]);
+      if (cur_arg < argc-1) 
+	memcpy(argv+cur_arg, argv+cur_arg+1, (argc-cur_arg-1)*sizeof(char *));
+    }
+  }
+    
+  param_filename = NULL;
+  for (cur_arg = optind; cur_arg < argc; cur_arg++) {
+    if (map_filename && strcmp(map_filename, argv[cur_arg]) == 0) 
+      continue;
+    if (param_filename && carmen_file_exists(argv[cur_arg])) {
+      usage(argv[0], "Too many ini files given: %s and %s",
+	    param_filename, argv[cur_arg]);
+    }
+    if (!carmen_file_exists(argv[cur_arg])) 	
+      usage(argv[0], "No such file: %s", argv[cur_arg]);
+
+    binary = contains_binary_chars(argv[cur_arg]);
+    if (binary < 0)
+      usage(argv[0], "Couldn't read from %s: %s", argv[cur_arg],
+	    strerror(errno));
+    if (binary > 0)
+      usage(argv[0], "Invalid ini file %s: (not a valid map file either)", 
+	    argv[cur_arg]);
+    param_filename = (char *)calloc(strlen(argv[cur_arg])+1, sizeof(char));
+    carmen_test_alloc(param_filename);
+    strcpy(param_filename, argv[cur_arg]);
+  }    
+
+  if (!param_filename) {
+    for (index = 0; default_list[index]; index++) {
+      if (carmen_file_exists(default_list[index]))
+	param_filename = default_list[index];
+    }
+  }
+
+  robot_names = (char **)calloc(MAX_ROBOTS, sizeof(char *));
+  carmen_test_alloc(robot_names);
+  find_valid_robots(robot_names, &num_robots, MAX_ROBOTS);
+  robot_names = (char **)realloc(robot_names, num_robots * sizeof(char *));
+  carmen_test_alloc(robot_names);
+
+  if (num_robots == 0)
+    usage(argv[0], "ini file %s contains no robot names.");  
+
+  if (selected_robot == NULL && num_robots > 1) {
+    for (cur_arg = 1; cur_arg < optind; cur_arg++) {
+      for (i = 0; i < num_robots; i++)
+        if(strcmp(robot_names[i], argv[cur_arg] + 1) == 0) {
+          selected_robot = argv[cur_arg] + 1;
+          break;
+        }
+    }
+  }
+
+  if (selected_robot == NULL && num_robots > 1)
+    usage(argv[0], "The ini_file %s contains %d robot definitions.\n"
+	  "You must specify a robot name on the command line using --robot.",
+	  param_filename, num_robots);
+
+  for(i = 0; i < num_robots; i++)
+    free(robot_names[i]);
+  free(robot_names);
+
+  carmen_warn("Loading parameters for robot %s using param file %s\n", 
+	      selected_robot, param_filename);  
+
+  return 0;
+}
+
+static
+int lookup_ipc_query(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		     void *clientData __attribute__ ((unused)), 
+		     carmen_param_query_message *query)
+{
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, query, 
+                           sizeof(carmen_param_query_message));
+  IPC_freeByteArray(callData);
+
+  carmen_test_ipc_return_int(err, "Could not unmarshall", 
+			     IPC_msgInstanceName(msgRef));  
+
+  return lookup_parameter(query->module_name, query->variable_name);
+}
+
+static void
+get_robot(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+	  void *clientData __attribute__ ((unused)))
+{
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK; 
+  carmen_param_query_message query;
+  carmen_param_response_robot_message response;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query, 
+                           sizeof(carmen_param_query_message));
+  IPC_freeByteArray(callData);
+  
+  carmen_test_ipc_return(err, "Could not unmarshall",
+			 IPC_msgInstanceName(msgRef));  
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  response.robot = (char *) calloc(strlen(selected_robot) + 1, sizeof(char));
+  carmen_test_alloc(response.robot);
+  strcpy(response.robot, selected_robot);
+
+  response.status = CARMEN_PARAM_OK;
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ROBOT_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ROBOT_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);  
+}
+
+static void
+get_modules(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+	    void *clientData __attribute__ ((unused)))
+{
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK; 
+  carmen_param_query_message query;
+  carmen_param_response_modules_message response;
+  int m;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query, 
+                           sizeof(carmen_param_query_message));
+  IPC_freeByteArray(callData);
+  
+  carmen_test_ipc_return(err, "Could not unmarshall",
+			 IPC_msgInstanceName(msgRef));  
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  response.modules = (char **) calloc(num_modules, sizeof(char *));
+  carmen_test_alloc(response.modules);
+  response.num_modules = num_modules;
+  for (m = 0; m < num_modules; m++) {
+    response.modules[m] = (char *) calloc(strlen(modules[m])+1, sizeof(char));
+    carmen_test_alloc(response.modules[m]);
+    strcpy(response.modules[m], modules[m]);
+  }
+
+  response.status = CARMEN_PARAM_OK;
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_MODULES_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", 
+		  CARMEN_PARAM_RESPONSE_MODULES_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);  
+}
+
+static int strqcmp(const void *A, const void *B)
+{
+  return strcmp(*((char **)A), *((char **)B));
+}
+
+static void
+get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+	      void *clientData __attribute__ ((unused)))
+{
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK; 
+  carmen_param_query_message query;
+  carmen_param_response_all_message response; 
+  int param_index;
+  int num_variables;
+  int variable_count;
+  size_t length;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query, 
+                           sizeof(carmen_param_query_message));
+  IPC_freeByteArray(callData);
+  
+  carmen_test_ipc_return(err, "Could not unmarshall", 
+			 IPC_msgInstanceName(msgRef));  
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  response.module_name = query.module_name;
+  response.status = CARMEN_PARAM_OK;    
+
+  num_variables = query_num_params(query.module_name);
+  response.list_length = num_variables;
+  variable_count = 0;
+  if (num_variables > 0)
+    {
+      response.variables = calloc(num_variables, sizeof(char *));
+      carmen_test_alloc(response.variables);
+      response.values = (char **)calloc(num_variables, sizeof(char *));
+      carmen_test_alloc(response.variables);
+      for (param_index = 0; param_index < num_params; param_index++)
+	{
+	  if (carmen_strcasecmp(param_list[param_index].module_name, 
+				query.module_name) == 0)
+	    {
+	      length = strlen(param_list[param_index].variable_name)+1;
+	      response.variables[variable_count] = (char *)
+		calloc(length, sizeof(char));
+	      carmen_test_alloc(response.variables[variable_count]);
+	      strcpy(response.variables[variable_count], 
+		     param_list[param_index].variable_name);
+	      variable_count++;
+	      if (variable_count == num_variables)
+		break;
+	    } /* End of if (carmen_strcasecmp
+		 (param_list[param_index].module_name...) */
+	} /* End of for (param_index = 0; param_index < num_params ...) */
+
+      if (alphabetize)
+	qsort(response.variables, num_variables, 
+	      sizeof(char *), strqcmp);          
+      for (variable_count = 0; variable_count < num_variables; 
+	   variable_count++)
+	{
+	  param_index = 
+	    lookup_parameter(query.module_name, 
+			     response.variables[variable_count]);
+	  length = strlen(param_list[param_index].rvalue)+1;
+	  response.values[variable_count] = (char *)
+	    calloc(length, sizeof(char));
+	  carmen_test_alloc(response.values[variable_count]);
+	  strcpy(response.values[variable_count], 
+		 param_list[param_index].rvalue);
+	}
+    } /* End of if (num_variables < 0) */
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ALL_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ALL_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+
+static void
+get_param_int(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+	      void *clientData)
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_query_message query;
+  carmen_param_response_int_message response;
+
+  int param_index;
+  char *endptr;
+
+  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+  
+  if (param_index < 0)
+    response.status = CARMEN_PARAM_NOT_FOUND;
+  else {
+    response.value = strtol(param_list[param_index].rvalue, &endptr, 0);
+    if (endptr == param_list[param_index].rvalue) 
+      response.status = CARMEN_PARAM_NOT_INT;
+  }
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_INT_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_INT_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+static void
+get_param_double(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		 void *clientData)
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_query_message query;
+  carmen_param_response_double_message response;
+
+  int param_index;
+  char *endptr;
+
+  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+
+  if (param_index < 0)
+    response.status = CARMEN_PARAM_NOT_FOUND;
+  else 
+    {
+      response.value = (double)strtod(param_list[param_index].rvalue, &endptr);
+      if (endptr == param_list[param_index].rvalue) 
+	response.status = CARMEN_PARAM_NOT_DOUBLE;
+    }
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_DOUBLE_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_DOUBLE_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+static void
+get_param_onoff(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		void *clientData)
+{
+  IPC_RETURN_TYPE err;
+  char buffer[255];
+
+  carmen_param_query_message query;
+  carmen_param_response_onoff_message response;
+
+  int param_index;
+
+  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+
+  if (param_index < 0)
+    response.status = CARMEN_PARAM_NOT_FOUND;
+  else 
+    {
+      if (strlen(param_list[param_index].rvalue) > 254)
+	response.status = CARMEN_PARAM_NOT_ONOFF;
+      else 
+	{
+	  strcpy(buffer, param_list[param_index].rvalue);
+	  if (carmen_strncasecmp(buffer, "ON", 2) == 0)
+	    response.value = 1;
+	  else if (carmen_strncasecmp(buffer, "OFF", 3) == 0)
+	    response.value = 0;
+	  else 
+	    response.status = CARMEN_PARAM_NOT_ONOFF;
+	}
+    }
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ONOFF_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ONOFF_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+static void
+get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		 void *clientData)
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_query_message query;
+  carmen_param_response_string_message response;
+
+  int param_index;
+
+  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+
+  if (param_index < 0)
+    {
+      response.status = CARMEN_PARAM_NOT_FOUND;
+      response.value = NULL;
+    }
+  else
+    response.value = param_list[param_index].rvalue;
+  
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+static void
+get_param_filename(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+		   void *clientData)
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_query_message query;
+  carmen_param_response_filename_message response;
+
+  int param_index;
+  struct stat buf;
+
+  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+
+  if (param_index < 0)
+    {     
+      response.status = CARMEN_PARAM_NOT_FOUND;
+      response.filename = NULL;
+    }
+  else
+    {
+      response.filename = param_list[param_index].rvalue;
+
+      if (stat(response.filename, &buf) < 0) 
+	{    
+	  carmen_warn("Option '%s', file %s not available: %s\n", 
+		      param_list[param_index].lvalue, 
+		      param_list[param_index].rvalue, strerror(errno));
+	  response.status = CARMEN_PARAM_FILE_ERR;
+	}
+      else 
+	{
+	  if (!S_ISREG(buf.st_mode)) 
+	    response.status = CARMEN_PARAM_NOT_FILE;
+	}
+    }
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_FILENAME_NAME, 
+			&response);
+  carmen_test_ipc(err, "Could not respond", 
+		  CARMEN_PARAM_RESPONSE_FILENAME_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+}
+
+static void 
+set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+	      void *clientData __attribute__ ((unused)))
+{
+  FORMATTER_PTR formatter;
+  IPC_RETURN_TYPE err = IPC_OK;
+  carmen_param_set_message query;
+  char buffer[1024];
+  carmen_param_response_string_message response;
+  int param_index = -1;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &query, 
+                           sizeof(carmen_param_set_message));
+  IPC_freeByteArray(callData);
+
+  carmen_test_ipc_return(err, "Could not unmarshall", 
+			 IPC_msgInstanceName(msgRef));  
+
+  if (query.module_name != NULL && query.module_name[0] != '\0')
+    {
+      sprintf(buffer, "%s_%s", query.module_name, query.variable_name);
+      if (query.value != NULL && query.value[0] != '\0')	       
+	set_param(buffer, query.value);
+      param_index = lookup_name(buffer);  
+    } 
+  else 
+    {
+      set_param(query.variable_name, query.value);
+      param_index = lookup_name(query.variable_name);  
+    }
+  /* Respond with the new value */
+
+  
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = query.module_name;
+  response.variable_name = query.variable_name;
+  response.status = CARMEN_PARAM_OK;
+
+  if (param_index < 0)
+    {
+      response.status = CARMEN_PARAM_NOT_FOUND;
+      carmen_die("Major error: inside set_param_ipc, tried to recover value "
+		 "of parameter\nthat was just set, and failed.\n");
+    }
+  else
+    response.value = param_list[param_index].rvalue;
+  
+  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);
+
+  free(query.module_name);
+  free(query.variable_name);
+  free(query.value);
+}
+
+static void
+publish_new_param(int index)
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_response_string_message response;
+
+  if (index < 0)
+    return;
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.module_name = param_list[index].module_name;
+  response.variable_name = param_list[index].variable_name;
+  response.value = param_list[index].rvalue;
+  response.status = CARMEN_PARAM_OK;
+  
+  err = IPC_publishData(CARMEN_PARAM_VARIABLE_CHANGE_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VARIABLE_CHANGE_NAME);
+}
+
+static void
+get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
+	    void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_param_version_message response;
+
+  response.major = CARMEN_MAJOR_VERSION;
+  response.minor = CARMEN_MINOR_VERSION;
+  response.revision = CARMEN_REVISION;
+
+  response.timestamp = carmen_get_time_ms();
+  strcpy(response.host, carmen_get_tenchar_host_name());
+
+  err = IPC_respondData(msgRef, CARMEN_PARAM_VERSION_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VERSION_NAME);
+}
+
+static int 
+initialize_param_ipc(void) 
+{
+  IPC_RETURN_TYPE err;
+
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_ROBOT_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+		       CARMEN_PARAM_QUERY_ROBOT_NAME);
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_ROBOT_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_PARAM_RESPONSE_ROBOT_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+		       CARMEN_PARAM_RESPONSE_ROBOT_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_MODULES_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+		       CARMEN_PARAM_QUERY_MODULES_NAME);
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_MODULES_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_PARAM_RESPONSE_MODULES_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+		       CARMEN_PARAM_RESPONSE_MODULES_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_ALL_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_ALL_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_ALL_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_RESPONSE_ALL_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_ALL_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_INT_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_INT_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_INT_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_RESPONSE_INT_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_INT_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_DOUBLE_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_DOUBLE_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_DOUBLE_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_RESPONSE_DOUBLE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_DOUBLE_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_ONOFF_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_ONOFF_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_ONOFF_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_RESPONSE_ONOFF_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_ONOFF_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_STRING_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_STRING_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_STRING_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_RESPONSE_STRING_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_STRING_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_QUERY_FILENAME_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_QUERY_FILENAME_NAME);
+  
+  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_FILENAME_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_PARAM_RESPONSE_FILENAME_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_RESPONSE_FILENAME_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_SET_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_SET_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", CARMEN_PARAM_SET_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_VARIABLE_CHANGE_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_VARIABLE_CHANGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_VARIABLE_CHANGE_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_VERSION_QUERY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_VERSION_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_VERSION_QUERY_NAME);
+
+  err = IPC_defineMsg(CARMEN_PARAM_VERSION_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_VERSION_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_VERSION_NAME);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_ROBOT_NAME, get_robot, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to",
+		       CARMEN_PARAM_QUERY_ROBOT_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_ROBOT_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_MODULES_NAME, get_modules, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to",
+		       CARMEN_PARAM_QUERY_MODULES_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_MODULES_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_ALL_NAME, get_param_all, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_ALL_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_ALL_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_INT_NAME, get_param_int, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_INT_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_INT_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_DOUBLE_NAME, get_param_double, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_DOUBLE_NAME);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_ONOFF_NAME, get_param_onoff, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_ONOFF_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_ONOFF_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_STRING_NAME, get_param_string, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_STRING_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_STRING_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_QUERY_FILENAME_NAME, 
+		      get_param_filename, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_QUERY_FILENAME_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_FILENAME_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_VERSION_QUERY_NAME, get_version, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_VERSION_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_VERSION_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_SET_NAME, set_param_ipc, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", CARMEN_PARAM_SET_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_SET_NAME, 100);
+
+  return 0;
+}
+
+static void
+fork_central(void)
+{
+  carmen_warn("Starting central...\n");
+  central_pid = fork();
+  if (central_pid == 0)
+    {
+      execlp("central", NULL);
+      carmen_die_syserror("Could not exec central");
+    }
+  if (central_pid == -1)
+    carmen_die_syserror("Could not fork to start central");
+}
+
+int 
+main(int argc, char **argv)
+{
+  signal(SIGINT, shutdown_param_server);
+
+  if (read_commandline(argc, argv) < 0)
+    carmen_die_syserror("Could not read from ini file");
+  
+  carmen_verbose("Read %d parameters\n", num_params);
+
+  if (auto_start_central)
+    fork_central();
+  
+  carmen_initialize_ipc(argv[0]);
+
+  if(initialize_param_ipc() < 0) 
+    carmen_die("Error: could not connect to IPC Server\n");
+
+  read_parameters_from_file();
+
+
+  if (map_filename) {
+    if (carmen_map_initialize_ipc() < 0)
+      carmen_die("Error: could initialize map IPC calls.\n");
+    carmen_map_set_filename(map_filename);
+  }
+
+  IPC_dispatch();
+
+  return 0;
+}
+
