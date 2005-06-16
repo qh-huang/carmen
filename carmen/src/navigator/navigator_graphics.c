@@ -34,7 +34,9 @@
 #include "navigator_panel.h"
 #include "navigator_graphics.h"
 
-#ifdef USE_DOT
+#undef USE_DOT
+
+#ifdef USE_DOT 
 
 #include <carmen/dot.h>
 #include <carmen/dot_messages.h>
@@ -796,6 +798,7 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
   carmen_dot_person_t *person;
   carmen_dot_trash_t *trash_bin;
   carmen_dot_door_t *door;
+  //  double vx, vxy, vy;
 #endif
 
   if (the_map_view->internal_map == NULL)
@@ -849,11 +852,11 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 	    sin(angle);
 	  if(sensor_msg.mask[index]) 
 	    carmen_map_graphics_draw_circle(the_map_view, 
-					    &carmen_blue, TRUE, 
+					    &carmen_green, TRUE, 
 					    &particle, dot_size);
 	  else
 	    carmen_map_graphics_draw_circle(the_map_view, 
-					    &carmen_red, TRUE, 
+					    &carmen_yellow, TRUE, 
 					    &particle, dot_size);
 	}
 				
@@ -990,13 +993,11 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
       trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, index);
       object_pt.pose.x = trash_bin->x;
       object_pt.pose.y = trash_bin->y;
-      if (1)
-	carmen_map_graphics_draw_ellipse(the_map_view, &trash_colour, 
-					 &object_pt, trash_bin->vx,
-					 trash_bin->vxy, trash_bin->vy, 3);
-      else
-	carmen_map_graphics_draw_circle(the_map_view, &trash_colour, FALSE, 
-					&object_pt, 1);
+      //      carmen_eigs_to_covariance(trash_bin->theta, trash_bin->major/2, 
+      //				trash_bin->minor, &vx, &vxy, &vy);
+      carmen_map_graphics_draw_ellipse(the_map_view, &trash_colour, 
+				       &object_pt, trash_bin->vx, 
+				       trash_bin->vxy, trash_bin->vy, 1);
     }
     for (index = 0; doors && index < doors->length; index++) {
       door = (carmen_dot_door_t *)carmen_list_get(doors, index);

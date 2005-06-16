@@ -169,6 +169,12 @@ void robot_rearlaser_handler(carmen_robot_laser_message *rearlaser)
 				carmen_get_time_ms() - logger_starttime);
 }
 
+void localize_handler(carmen_localize_globalpos_message *msg)
+{
+  fprintf(stderr, "L");
+  carmen_logger_write_localize(msg, outfile, carmen_get_time_ms() - logger_starttime);
+}
+
 static void sync_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			 void *clientData __attribute__ ((unused)))
 {
@@ -282,6 +288,9 @@ int main(int argc, char **argv)
   carmen_laser_subscribe_laser4_message(NULL, 
 					(carmen_handler_t)laser_laser4_handler, 
 					CARMEN_SUBSCRIBE_ALL);
+
+  carmen_localize_subscribe_globalpos_message(NULL, (carmen_handler_t) localize_handler,
+					      CARMEN_SUBSCRIBE_ALL);
 
 /* Truepos message support added by Cyrill Stachniss, 10/9/2003 */
 

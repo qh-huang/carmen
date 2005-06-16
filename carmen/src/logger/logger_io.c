@@ -205,6 +205,14 @@ carmen_logger_write_sync(carmen_logger_sync_message *sync_message,
 			carmen_get_time_ms());
 }
 
+void carmen_logger_write_localize(carmen_localize_globalpos_message *msg, 
+				  carmen_logger_file_p outfile, double timestamp)
+{
+  carmen_logger_fprintf(outfile, "TRUEPOS %f %f %f %f %f %f %f %s %f\n",
+			msg->globalpos.x, msg->globalpos.y, msg->globalpos.theta,
+			msg->odometrypos.x, msg->odometrypos.y, msg->odometrypos.theta,
+			msg->timestamp, msg->host, timestamp);
+}
 
 #ifndef NO_ZLIB
 

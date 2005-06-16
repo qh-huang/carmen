@@ -116,6 +116,10 @@ void carmen_logger_write_sync(carmen_logger_sync_message *sync_message,
 			      carmen_logger_file_p outfile);
 void carmen_logger_write_truepos(carmen_simulator_truepos_message *truepos, 
 				 carmen_logger_file_p outfile, double timestamp);  
+
+void carmen_logger_write_localize(carmen_localize_globalpos_message *msg, 
+				  carmen_logger_file_p outfile, double timestamp);
+
 // *** REI - START *** //
 void carmen_logger_write_frontlaser_remission(carmen_laser_remission_message *rem, 
 					      carmen_logger_file_p outfile, double timestamp);

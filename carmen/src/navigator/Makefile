@@ -10,7 +10,7 @@ DOT_FILES := $(wildcard $(INC_DIR)/carmen/dot*.h)
 
 IFLAGS +=
 LFLAGS += $(INTERFACE_LIBS) -lglobal -lipc -lbase_interface \
-	-llocalize_interface -lant_lite -lgeometry -lmap_interface \
+	-llocalize_interface -lgeometry -lmap_interface \
 	-lparam_interface -lsimulator_interface
 
 ifdef DOT_FILES
@@ -23,14 +23,14 @@ MODULE_COMMENT = The motion planner!
 
 SOURCES = navigator.c conventional.c planner.c navigator_ipc.c \
 	navigator_interface.c trajectory.c map_modify.c \
-	navigator_test.c 
+	navigator_test.c random_nav.c
 
 PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h
 PUBLIC_LIBRARIES = libnavigator_interface.a libconventional.a
 
 PUBLIC_BINARIES = navigator
 
-TARGETS = libnavigator_interface.a navigator navigator_test 
+TARGETS = libnavigator_interface.a navigator navigator_test random_nav
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
@@ -57,8 +57,6 @@ TARGETS += navigator_panel test_map_modify test_panel_config
 endif
 
 
-all:
-
 navigator: navigator.o navigator_ipc.o conventional.o planner.o \
 	trajectory.o map_modify.o
 
@@ -74,5 +72,7 @@ test_map_modify: test_map_modify.o map_modify.o
 test_panel_config: test_panel_config.o
 
 navigator_test: navigator_test.o navigator_interface.o
+
+random_nav: random_nav.o libnavigator_interface.a
 
 include ../Makefile.rules

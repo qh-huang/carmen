@@ -1499,3 +1499,16 @@ void carmen_list_set(carmen_list_t *list, int entry_num, void *entry)
     list->length = entry_num+1;
 }
 
+void carmen_eigs_to_covariance(double theta, double major, double minor,
+			       double *vx, double *vxy, double *vy)
+{
+  double cos_theta, sin_theta;
+
+  cos_theta = cos(theta);
+  sin_theta = sin(theta);
+
+  *vx = major*cos_theta*cos_theta + minor*sin_theta*sin_theta;
+  *vy = major*sin_theta*sin_theta + minor*cos_theta*cos_theta;
+
+  *vxy = -major*sin_theta*cos_theta + minor*sin_theta*cos_theta;
+}
