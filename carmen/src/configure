@@ -1,0 +1,848 @@
+#!/usr/bin/perl
+
+use strict;
+use English;
+use FileHandle;
+
+srand (time ^ $$ ^ unpack "%L*", `ps axww | gzip`);
+
+eval {
+  require File::Temp;
+  import File::Temp qw/ tempfile /;
+};
+
+if ($EVAL_ERROR) {
+  print<<EOF;
+
+I could not find File::Temp module. I will try unsafe methods for generating
+temporary file names.
+
+EOF
+}
+
+my ($red, $normal) = ("[31;1m", "[0m");
+
+my ($xr4000Kernel) = "2.0.20";
+
+my @min_gtk_version = (1, 2);
+
+my ($nographics, $nojoystick, $notcpd, $nojpeg, $nozlib,
+    $noreadline, $nolibart, $install_path);
+
+$nolibart = 1;
+
+my @user_libs;
+
+foreach (@ARGV) {
+  if (/help/ or /\-h/) {
+    my ($prog_name) = $PROGRAM_NAME =~ /([^\/]+)$/;
+    die<<EOF;
+Usage: $prog_name [--help] [--prefix=<install path>] [options]
+Options: [--nographics]  : compile without graphics
+	 [--nojoystick]  : compile without joystick support
+	 [--notcpd]      : compile without using TCPD wrappers
+	 [--nojpeg]      : compile without JPEG support
+	 [--nozlib]      : compile without ZLib support
+	 [-L<libpath>]   : compile with additional library paths
+                           (can have multiple -L option switchs)
+EOF
+  }
+
+  if (/^-L/) {
+    push @user_libs, $_;
+  }
+  if (/nographics/) {
+    $nographics = 1;
+  }
+  if (/nojoystick/) {
+    $nojoystick = 1;
+  }
+  if (/nojpeg/) {
+    $nojpeg = 1;
+  }
+  if (/notcpd/) {
+    $notcpd = 1;
+  }
+  if (/nozlib/) {
+    $nozlib = 1;
+  }
+  if (/noreadline/) {
+    $noreadline = 1;
+  }
+  if (/nolibart/) {
+    $nolibart = 1;
+  }
+  if (/prefix/) {
+    ($install_path) = /prefix=(.*)/;
+  }
+}
+
+my ($GCC);
+$GCC = $ENV{'CC'} or $GCC = "gcc";
+
+print "Using \$CC as $GCC...\n";
+
+my @min_gcc_no_strict_aliasing_version = (3, 3);
+my $no_strict_aliasing = check_gcc_version();
+
+my ($os_type, $kernel) = verify_kernel();
+
+my ($suse) = verify_suse();
+my ($canlib) = verify_canlib();
+
+my $gtk_config = verify_graphics() unless ($nographics);
+if (!$gtk_config) {
+  print "No graphics means we don't need GTK support.\n";
+}
+my $joystick = verify_joystick() unless ($nojoystick);
+my $tcpd = verify_tcpd(\@user_libs) unless ($notcpd);
+my $jpeg = verify_libjpeg(\@user_libs) unless ($nojpeg);
+my $zlib = verify_zlib(\@user_libs) unless ($nozlib);
+my $readline = verify_readline(\@user_libs) unless ($noreadline);
+my $libart = verify_libart(\@user_libs) unless ($nolibart);
+my $install_path = get_install_path() unless ($install_path);
+my @robots = get_robot_types($os_type, $kernel, $canlib);
+
+open OUTPUT, "> Makefile.vars";
+
+print OUTPUT<<EOF;
+# This is an automatically generated file.
+# DO NOT MODIFY!
+
+EOF
+
+my $pwd = $ENV{'PWD'};
+$pwd = `pwd` if (!defined($pwd));
+my ($cur_dir) = $pwd =~ m!(.*)/[^/]+!;
+print OUTPUT "CARMEN_HOME = $cur_dir\n";
+if ($gtk_config) {
+  print OUTPUT "GTK_CONFIG = $gtk_config\n";
+} else {
+  print OUTPUT "NO_GRAPHICS = 1\n";
+}
+if (!$joystick) {
+  print OUTPUT "NO_JOYSTICK = 1\n";
+} elsif ($joystick ne "system") {
+  print OUTPUT "JOYSTICK_INCLUDE = -I$joystick\n";
+}
+print OUTPUT "NO_TCPD = 1\n" unless ($tcpd);
+print OUTPUT "NO_LIBJPEG = 1\n" unless ($jpeg);
+print OUTPUT "NO_ZLIB = 1\n" unless ($zlib);
+print OUTPUT "NO_LIBART = 1\n" unless ($libart);
+print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
+print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
+if ($readline) {
+  print OUTPUT "READLINE = $readline\n";
+} else {
+  print OUTPUT "NO_READLINE = 1\n";
+}
+print OUTPUT "INSTALL_PATH = $install_path\n";
+print OUTPUT "ROBOT_TYPES = ".(join ' ', @robots)."\n";
+print OUTPUT "USER_LIBS = ".(join ' ', @user_libs)."\n";
+if ($no_strict_aliasing) {
+    print OUTPUT "NO_STRICT_ALIASING = 1\n";
+}
+print OUTPUT "CYGWIN = 1\n" if ($os_type eq "cygwin");
+close OUTPUT;
+
+write_out_config($gtk_config, $jpeg, $zlib, $libart);
+
+sub check_gcc_version {
+
+    my $gcc_return = `$GCC --version`;
+
+    chomp $gcc_return;
+    
+    my ($gcc_major, $gcc_minor) = $gcc_return =~ /(\d+)\.(\d+)/;
+    
+    if ($gcc_major > $min_gcc_no_strict_aliasing_version[0] ||
+	($gcc_major == $min_gcc_no_strict_aliasing_version[0] &&
+	 $gcc_minor >= $min_gcc_no_strict_aliasing_version[1])) {
+	return 1;
+    }
+    return undef;
+}
+
+sub verify_graphics {
+  print "Searching for GTK... ";
+  my $gtk_path = "gtk-config";
+  my $gtk_return = `$gtk_path --version`;
+  while (!defined $gtk_return) {
+    print <<EOF;
+
+
+Could not find GTK. I tried to execute $gtk_path
+but got this error:
+
+$!
+
+If GTK is installed, please type the full path of gtk-config, or hit enter to
+compile without graphics support. If you do not have graphics, CARMEN\'s
+display modules will not compile, but all other modules should compile without
+problem.
+
+EOF
+    print "gtk-config path [none]: ";
+    $gtk_path = <STDIN>;
+    chomp $gtk_path;
+    if (length($gtk_path) == 0) {
+      print "Very well, I will compile without graphics.\n";
+      return undef;
+    }
+    $gtk_return = `$gtk_path --version`;
+  }
+
+  chomp $gtk_return;
+
+  my ($gtk_major, $gtk_minor, $revision) = $gtk_return =~ /(\d+)\.(\d+).(\d+)/;
+
+  if ($gtk_major < $min_gtk_version[0] ||
+      ($gtk_major == $min_gtk_version[0] && 
+       $gtk_minor < $min_gtk_version[1])) {
+    print <<EOF;
+
+
+Specified GTK version is $gtk_return, but minimum required version is
+$min_gtk_version[0].$min_gtk_version[1]. Please install a newer version of gtk, or re-run $PROGRAM_NAME
+with --nographics.
+EOF
+    die "\n";
+  }
+  print "Found gtk-config, version $gtk_major.$gtk_minor.$revision\n";
+  return $gtk_path;
+}
+
+sub verify_joystick {
+  my $joystick_path = "/usr/include/linux/joystick.h";
+  print "Searching for joystick... ";
+  while (! -e $joystick_path) {
+    print <<EOF;
+
+
+Could not find joystick header file. I looked for
+$joystick_path
+but it does not seem to exist.
+
+If you have the joystick libraries installed, please enter the
+full path of joystick.h. As always, you can hit enter to compile CARMEN
+without joystick support. The only programs that offer joystick control
+are robotgraph and joyrobot. Without joystick control, robotgraph also
+offers robot control via the keyboard and also the mouse.
+
+EOF
+    print "joystick.h path [none]: ";
+    $joystick_path = <STDIN>;
+    chomp $joystick_path;
+    if (length($joystick_path) == 0) {
+      print "Very well, I will compile without a joystick.\n";
+      return undef;
+    }
+  }
+  print "Found joystick header at\n$joystick_path\n";
+
+  if ($joystick_path =~ m!^/usr/include!)  {
+    print<<EOF;
+
+It looks like this is a system include, so I won\'t add it to the standard
+include path. Adding partial system include paths is usually a recipe for
+disaster. If this is the wrong thing to do, you could add the following
+line to Makefile.vars:
+JOYSTICK_INCLUDE = -I$joystick_path
+
+EOF
+    return "system";
+  }
+  ($joystick_path) = $joystick_path =~ m!(.*)/[^/]+!;
+  return $joystick_path;
+}
+
+sub verify_canlib {
+  my $canlib_path = "/usr/include/canlib.h";
+  print "Searching for canlib... ";
+  if (! -e $canlib_path) {
+      print <<EOF;
+
+Could not find Kvaser canlib header file. I looked for
+$canlib_path
+but it does not seem to exist.
+
+EOF
+      return undef;
+  }
+  else {
+      print "Found canlib header at $canlib_path\n";
+      return "system";
+  }
+}
+
+sub get_install_path {
+  print<<EOF;
+
+Type the install prefix to use for public installs, or hit enter to keep the
+default as /usr/local. (This prefix is not currently used by any rules.)
+
+EOF
+  print "Install path [/usr/local/]: ";
+  $install_path = <STDIN>;
+  chomp $install_path;
+  $install_path = "/usr/local" if (length($install_path) == 0);
+  return $install_path;
+}
+
+sub get_robot_types {
+  my ($os_type, $kernel, $canlib) = @_;
+
+  if (!($os_type eq "linux" and $kernel eq $xr4000Kernel)) {
+print<<EOF;
+
+You must have Linux kernel $xr4000Kernel to compile:
+Nomadic Technologies XR4000
+EOF
+  }
+  if(!$canlib) {
+print<<EOF;
+
+You must have the Kvaser LAPCAN driver and library (libcanlib.a) to
+compile:
+Segway RMP
+EOF
+
+  }
+
+  print<<EOF;
+
+These are the robot types CARMEN currently supports:
+1. ActiveMedia Pioneer I
+2. ActiveMedia Pioneer II
+3. iRobot ATRV
+4. iRobot ATRV-JR
+5. iRobot B21R
+6. Nomadic Technologies Scout
+EOF
+
+  my $max = 7;
+  my ($allow_xr4000);
+
+  if ($os_type eq "linux" and $kernel eq $xr4000Kernel) {
+    print "$max. Nomadic Technologies XR4000\n";
+    $allow_xr4000 = $max++;
+  }
+
+  my ($allow_segway);
+
+  if($canlib) {
+      print "$max. Segway RMP\n";
+      $allow_segway = $max++;
+  }
+  print "$max. *\n";
+
+print<<EOF;
+
+Please select which robots you wish to compile base modules for.
+e.g., 1, 2, 6 would compile support for both Pioneer types and a Scout.
+Hit enter to compile them all, or type "none" to compile no base module
+support, for example, if you will be working exclusively in simulation.
+
+EOF
+  print "Robot numbers [*]: ";
+  my $type_string = <STDIN>;
+  chomp $type_string;
+  if (length($type_string) == 0 or $type_string eq "*" or 
+      $type_string eq "$max") {
+    print "Very well, compiling support for all base types.\n";
+    my (@robots) = ("rflex", "pioneer", "scout");
+    push @robots, "xr4000" if ($allow_xr4000);
+    push @robots, "segway" if ($allow_segway);
+    return @robots;
+  } elsif ($type_string eq "none") {
+    print "Very well, not compiling base support for any base types.\n";
+    return undef;
+  }
+  my @type_nums = split /[\s,]*/, $type_string;
+  my @types;
+  foreach (@type_nums) {
+    if ($_ eq "3" or $_ eq "4" or $_ eq "5") {
+      if ((grep {/rflex/} @types) == 0) {
+	push @types, "rflex";
+      }
+    } 
+    elsif ($_ eq "1" or $_ eq "2") {
+      if ((grep {/pioneer/} @types) == 0) {
+	push @types, "pioneer";
+      }
+    } 
+    elsif ($_ eq "6") {
+      if ((grep {/scout/} @types) == 0) {
+	push @types, "scout";
+      }
+    }
+    elsif ($allow_xr4000 and $_ eq "$allow_xr4000") {
+      if ((grep {/xr4000/} @types) == 0) {
+	push @types, "xr4000";
+      }
+    } 
+    elsif ($allow_segway and $_ eq "$allow_segway") {
+      if ((grep {/segway/} @types) == 0) {
+	push @types, "segway";
+      }
+    } 
+    else {
+      print "Unrecognized number: $_. Skipping...\n";
+    }
+  }
+  print "\nCompiling base support for: ";
+  foreach (@types) {
+    print "$_ ";
+  }
+  print "\n";
+  return @types;
+}
+
+sub verify_tcpd {
+  my $lib_ref = shift;
+  print "Searching for tcpd.h... ";
+
+  my ($fh, $filename);
+
+  if (defined (&tempfile)) {
+    ($fh, $filename) = tempfile("tcpd_testXXXX");
+  } else {
+    $filename = "tcpd_test".int(rand(100));
+    $fh = new FileHandle("> $filename");
+  }
+
+  $filename = "./$filename" unless $filename =~ m!^/!;
+
+  print $fh <<EOF;
+#include <tcpd.h>
+int allow_severity;
+int deny_severity;
+
+int main(int argc, char *argv[]) {
+
+  if (hosts_ctl(0, 0, 0, 0) == 0)
+    exit(0);
+  else
+    exit(-1);
+}
+EOF
+
+  $fh->close();
+  rename "$filename", "${filename}.c";
+
+  my $libs = join " ", @$lib_ref;
+  system ("$GCC ${filename}.c -o $filename $libs -lwrap -lnsl > /dev/null 2>&1");
+
+  if (-e $filename) {
+    print "found\n";
+    print "Looks like your system supports access control. Very good.\n";
+    unlink $filename;
+    unlink "${filename}.exe";
+    unlink "${filename}.c";
+    return 1;
+  }
+  print "${red}not found${normal}\n";
+  print "Looks like your system does not support access control.\n";
+  print "Sorry about adding security holes.\n";
+  unlink "${filename}.c";
+  return undef;
+}
+
+sub verify_libjpeg {
+  my $lib_ref = shift;
+  print "Searching for jpeglib.h... ";
+
+  my ($fh, $filename);
+  if (defined (&tempfile)) {
+    ($fh, $filename) = tempfile("jpeglib_testXXXX");
+  } else {
+    $filename = "jpeglib_test".int(rand(100));
+    $fh = new FileHandle("> $filename");
+  }
+
+  $filename = "./$filename" unless $filename =~ m!^/!;
+
+  print $fh <<EOF;
+#include <stdio.h>
+#include <sys/types.h>
+#include <jpeglib.h>
+int main(int argc, char *argv[]) {
+  jpeg_create_compress(0);
+  jpeg_stdio_dest(0, 0);
+  jpeg_set_defaults(0);
+  jpeg_start_compress(0, 0);
+  jpeg_write_scanlines(0, 0, 1);
+  jpeg_finish_compress(0);
+  jpeg_destroy_compress(0);
+}
+EOF
+
+  $fh->close();
+  rename "$filename", "${filename}.c";
+
+  my $libs = join " ", @$lib_ref;
+  system ("$GCC ${filename}.c -o $filename $libs -ljpeg > /dev/null 2>&1");
+
+  if (-e $filename) {
+    print "found\n";
+    unlink $filename;
+    unlink "${filename}.exe";
+    unlink "${filename}.c";
+    return 1;
+  }
+  print "${red}not found${normal}\n";
+  unlink "${filename}.c";
+  return undef;
+}
+
+sub verify_zlib {
+  my $lib_ref = shift;
+  print "Searching for zlib.h... ";
+
+  my ($fh, $filename);
+  if (defined (&tempfile)) {
+    ($fh, $filename) = tempfile("zlib_testXXXX");
+  } else {
+    $filename = "zlib_test".int(rand(100));
+    $fh = new FileHandle("> $filename");
+  }
+
+  $filename = "./$filename" unless $filename =~ m!^/!;
+
+  print $fh <<EOF;
+#include <stdio.h>
+#include <zlib.h>
+int main(int argc, char *argv[]) {
+  gzFile fp;
+
+  fp = gzopen("/dev/null", "r");
+
+  gzclose(fp);
+}
+EOF
+
+  $fh->close();
+  rename "$filename", "${filename}.c";
+
+  my $libs = join " ", @$lib_ref;
+
+  system ("$GCC ${filename}.c -o $filename $libs -lz > /dev/null 2>&1");
+
+  if (-e $filename) {
+    print "found\n";
+    unlink $filename;
+    unlink "${filename}.exe";
+    unlink "${filename}.c";
+    return 1;
+  }
+  print "${red}not found${normal}\n";
+  unlink "${filename}.c";
+  return undef;
+}
+
+sub verify_readline {
+  my $lib_ref = shift;
+
+  print "Searching for readline.h... ";
+
+  my ($fh, $filename);
+  if (defined (&tempfile)) {
+    ($fh, $filename) = tempfile("readline_testXXXX");
+  } else {
+    $filename = "readline_test".int(rand(100));
+    $fh = new FileHandle("> $filename");
+  }
+
+  $filename = "./$filename" unless $filename =~ m!^/!;
+
+  print $fh <<EOF;
+  #include <stdio.h>
+  #include <unistd.h>
+  #include <readline/readline.h>
+  #include <readline/history.h>
+  static void
+  handle_stdin(char *line)
+  {
+    printf("Received %s\\n", line);
+    add_history(line);
+  }
+
+  int
+  main(int argc, char *argv[]) {
+    printf("%s\\n", rl_library_version);
+  //    rl_callback_handler_install(STDIN_FILENO, (VFunction *)handle_stdin);
+  //    using_history();
+  }
+EOF
+
+  $fh->close();
+  rename "$filename", "${filename}.c";
+
+  my $libs = join " ", @$lib_ref;
+  if ($suse) {
+    system("$GCC ${filename}.c -o $filename $libs -lreadline > /dev/null 2>&1");
+  } else {
+    system("$GCC ${filename}.c -o $filename $libs -lreadline -ltermcap > /dev/null 2>&1");
+ }
+  if (! -e $filename) {
+    print "${red}not found${normal}\n";
+    unlink "${filename}.c";
+    return undef;
+  }
+
+  my $version = `$filename`;
+  chomp $version;
+
+  unlink $filename;
+  unlink "${filename}.exe";
+  unlink "${filename}.c";
+
+  print " readline $version found\n" if (defined($version));
+
+  my ($major, $minor) = $version =~ /(\d+)\.(\d+)/;
+
+  if (!defined($version) || int($major) < 4 ||
+      (int($major) < 4 && int($minor) < 1)) {
+    print "\nYou must have readline version 4.1 or later to add readline\n".
+      "support to CARMEN. Compiling without readline...\n";
+    return undef;
+  }
+
+  return "PRE_42" if (int($major) == 4 and int($minor) < 2);
+
+  return "42_OR_LATER";
+}
+
+sub verify_libart {
+  my $lib_ref = shift;
+  print "Searching for libart... ";
+
+  my ($fh, $filename);
+  if (defined (&tempfile)) {
+    ($fh, $filename) = tempfile("libart_testXXXX");
+  } else {
+    $filename = "libart_test".int(rand(100));
+    $fh = new FileHandle("> $filename");
+  }
+
+  print $fh <<EOF;
+#include <stdio.h>
+#include <sys/types.h>
+#include <libart_lgpl/art_misc.h>
+#include <libart_lgpl/art_vpath.h>
+int main(int argc, char *argv[]) {
+  ArtVpath *vec;
+}
+EOF
+
+  $fh->close();
+  rename "$filename", "${filename}.c";
+
+  my $libs = join " ", @$lib_ref;
+  system ("$GCC ${filename}.c -o $filename $libs -lart_lgpl -lm > /dev/null 2>&1");
+
+  if (-e $filename) {
+    print "found\n";
+    unlink $filename;
+    unlink "${filename}.exe";
+    unlink "${filename}.c";
+    return 1;
+  }
+  print "not found\n";
+  unlink "${filename}.c";
+
+  return undef;
+}
+
+sub verify_kernel {
+  if ($OSNAME ne "linux") {
+    print "You are running $OSNAME, which isn't Linux.\n".
+      "All bets are off from here on.\n";
+    return ($OSNAME, undef);
+  }
+  print "Congratulations. You are running Linux.\n";
+
+  my $system = `uname -a`;
+  if ($? >> 8 != 0) {
+    print "\nI can't find uname, or at least, I can't run it.\n";
+    print "Please enter the kernel version you are running: ";
+    my $kernel = <STDIN>;
+    chomp $kernel;
+    return ($OSNAME, $kernel);
+  }
+  my ($kernel) = $system =~ /\S+\s+\S+\s+(\S+)/;
+  print "Found kernel $kernel.\n";
+  return ($OSNAME, $kernel);
+}
+
+sub write_out_config {
+  my ($gtk_config, $jpeg, $zlib, $libart) = @_;
+
+  open CONFIG, "> global/carmen-config.c" or die 
+    "Could not open global/carmen-config.c: $!\n";
+
+  my $graphics_cflags = `$gtk_config --cflags`;
+  chomp $graphics_cflags;
+  my $graphics_libs = `$gtk_config --libs`;
+  chomp $graphics_libs;
+
+  print CONFIG<<EOF;
+#include <carmen/carmen.h>
+
+static char *home = NULL;
+
+static void
+usage(int argc __attribute__ ((unused)), char *argv[]) 
+{
+  fprintf(stderr, "Usage: %s [OPTIONS] [MODES]\\n", argv[0]);
+  fprintf(stderr, "Options:\\n");
+  fprintf(stderr, "\\t[--version]\\n");
+  fprintf(stderr, "\\t[--libs]\\n");
+  fprintf(stderr, "\\t[--cflags]\\n");
+  fprintf(stderr, "\\t[--graphics]\\n");
+  fprintf(stderr, "Modes:\\n");
+  fprintf(stderr, "\\tbasic\\n");
+  fprintf(stderr, "\\tmotion\\n");  
+  fprintf(stderr, "\\tnavigation\\n");  
+  
+  exit(-1);
+}
+
+static void 
+print_cflags(int mode __attribute__ ((unused)), int graphics)
+{  
+  printf("-I%s/include ", home);
+  if (graphics)
+EOF
+  print CONFIG "    printf(\"$graphics_cflags \");\n";
+  print CONFIG<<EOF;
+
+  printf("\\n");
+}
+
+static void 
+print_libs(int mode __attribute__ ((unused)), int graphics)
+{
+  printf("-L%s/lib ", home);
+
+  if (mode & 1) {
+    if (!graphics) 
+      printf("-lglobal -lipc -lparam_interface ");
+    else 
+      printf("-lglobal -lipc -lglobal_graphics -lparam_interface ");
+  }
+
+  if (mode & 2) {
+    printf("-lgeometry -lbase_interface -lrobot_interface ");
+  }
+
+  if (mode & 4) {
+    printf("-lmap_interface -lmap_io -lmap_util -llocalize_interface "
+	   "-lnavigator_interface ");
+EOF
+
+  print CONFIG "    printf(\"-lz \");\n" if ($zlib);
+  print CONFIG "  }\n\n";
+  print CONFIG "  if (graphics) {\n";
+  print CONFIG "    printf(\"$graphics_libs \");\n";
+  print CONFIG "    printf(\"-ljpeg \");\n" if ($gtk_config and $jpeg);
+  print CONFIG<<EOF;
+    if (mode & 4)
+      printf("-lmap_graphics -lgdk_imlib ");
+  }
+  printf("\\n");
+}
+
+int main(int argc, char *argv[]) 
+{
+  int cflags = 0;
+  int libs = 0;
+  int graphics = 0;
+  int index;
+  int mode = 0;
+  char path_buffer[1024], buffer[1024];
+  char *dir;
+
+  if (argc == 1)
+    usage(argc, argv);
+
+  if (getenv("CARMEN_HOME")) 
+    home = getenv("CARMEN_HOME");
+  else 
+    {
+      sprintf(path_buffer, "/proc/%d/exe", getpid());
+      memset(buffer, 0, 1024);
+      readlink(path_buffer, buffer, 1024);
+      home = buffer;
+
+      dir = strrchr(buffer, '/');
+      if (dir != NULL)
+	{
+	  dir[0] = '\\0';
+	  if (strrchr(buffer, '/'))
+	    dir = strrchr(buffer, '/');
+	  if (strlen(dir) >= 4 && strncmp(dir+1, "bin", 3) == 0)
+	    dir[0] = '\\0';
+	  else if (dir - buffer >= 4 && strlen(dir) > 6 &&
+		   strncmp(dir-4, "/src/global", 10) == 0)
+	    dir[-4] = '\\0';
+	}
+    }
+
+  for (index = 1; index < argc; index++) 
+    {
+      if (strcmp(argv[index], "--version") == 0) 
+	printf("%d.%d.%d\\n", CARMEN_MAJOR_VERSION, CARMEN_MINOR_VERSION,
+	       CARMEN_REVISION);
+      else if (strcmp(argv[index], "--cflags") == 0) 
+	cflags = 1;
+      else if (strcmp(argv[index], "--libs") == 0) 
+	libs = 1; 
+      else if (strcmp(argv[index], "--graphics") == 0) 
+	{
+EOF
+
+  if (!defined($gtk_config)) {
+    print CONFIG<<EOF;
+	  carmen_die("This version of carmen was compiled without "
+		     "graphics support.\\n");
+EOF
+  } else {
+    print CONFIG "        graphics = 1;\n";
+  }
+  print CONFIG<<EOF;
+	}
+      else if (strcmp(argv[index], "basic") == 0) 
+	mode |= 1;  
+      else if (strcmp(argv[index], "motion") == 0) 
+	mode |= 3;  
+      else if (strcmp(argv[index], "navigation") == 0) 
+	mode |= 7;      
+      else
+	usage(argc, argv);
+    }
+
+  if (cflags)
+    print_cflags(mode, graphics);
+  if (libs)
+    print_libs(mode, graphics);
+
+  return 0;
+}
+EOF
+  close CONFIG;
+}
+
+##############################################################################
+# Specifically added because SuSE has a broken gnome, which means that
+# map_editor won't compile with -DENABLE_NLS
+##############################################################################
+
+sub verify_suse {
+  unless (-r "/etc/SuSE-release") {
+    print "Even better -- this isn't SuSE!\n";
+    return undef;
+  };
+  print "This looks like SuSE. Sorry.\n";
+  return 1;
+}
