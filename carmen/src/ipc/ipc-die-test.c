@@ -1,14 +1,39 @@
-#include <carmen/carmen.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include "ipc.h"
 
+#define CARMEN_TEST_IPC_NAME "carmen_test_ipc"
+#define CARMEN_TEST_IPC_FMT  "{double,[char:1024]}"
 
-void x_ipcRegisterExitProc(void (*proc)(void));
-void reconnect(void);
+typedef struct {
+  double timestamp;
+  char text[1024];
+} carmen_test_ipc_message;
+
+IPC_CONTEXT_PTR *context;
+int num_contexts = 0;
+int cur_context = 0;
 
 char *module_name;
 
-void handle_laser(carmen_robot_laser_message *laser)
+void x_ipcRegisterExitProc(void (*)(void));
+void reconnect(void);
+IPC_RETURN_TYPE connect_ipc(void);
+
+static void msgHandler (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			void *clientData)
 {
-  carmen_warn(".");
+  IPC_RETURN_TYPE err = IPC_OK;
+  FORMATTER_PTR formatter;
+  carmen_test_ipc_message msg;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &msg, 
+                           sizeof(carmen_test_ipc_message));
+  IPC_freeByteArray(callData);
+  
+  fprintf(stderr, "Got message from client %d : time %f\n",
+	  (int)clientData, msg.timestamp);
 }
 
 IPC_RETURN_TYPE connect_ipc(void)
@@ -22,10 +47,10 @@ IPC_RETURN_TYPE connect_ipc(void)
     return err;
 
   x_ipcRegisterExitProc(reconnect);
-  
-  carmen_robot_subscribe_frontlaser_message
-    (NULL, (carmen_handler_t)handle_laser, CARMEN_SUBSCRIBE_LATEST);
 
+  IPC_subscribe(CARMEN_TEST_IPC_NAME, msgHandler, NULL);
+  IPC_setMsgQueueLength(CARMEN_TEST_IPC_NAME, 1); 
+  
   return err;
 }
 
@@ -34,12 +59,12 @@ void reconnect(void)
   IPC_RETURN_TYPE err;
 
   do {
-    carmen_warn("IPC died. Reconnecting...\n");
+    fprintf(stderr, "IPC died. Reconnecting...\n");
     if (IPC_isConnected())
       IPC_disconnect();
     err = connect_ipc();
     if (err == IPC_OK)
-      carmen_warn("Reconnected...\n");
+      fprintf(stderr, "Reconnected...\n");
   } while (err == IPC_Error);
 }
 
@@ -49,10 +74,7 @@ int main (int argc, char *argv[])
 
   connect_ipc();
 
-  x_ipcRegisterExitProc(reconnect);
-  
-  carmen_robot_subscribe_frontlaser_message
-    (NULL, (carmen_handler_t)handle_laser, CARMEN_SUBSCRIBE_LATEST);
- 
   IPC_dispatch();
+
+  return 0;
 }
