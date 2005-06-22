@@ -96,7 +96,7 @@ if (!$gtk_config) {
 }
 my $joystick = verify_joystick() unless ($nojoystick);
 my $tcpd = verify_tcpd(\@user_libs) unless ($notcpd);
-my $jpeg = verify_libjpeg(\@user_libs) unless ($nojpeg);
+my $jpeg = verify_libjpeg(\@user_libs) unless ($nojpeg or !$gtk_config);
 my $zlib = verify_zlib(\@user_libs) unless ($nozlib);
 my $readline = verify_readline(\@user_libs) unless ($noreadline);
 my $libart = verify_libart(\@user_libs) unless ($nolibart);
