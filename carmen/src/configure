@@ -681,13 +681,37 @@ sub write_out_config {
   open CONFIG, "> global/carmen-config.c" or die 
     "Could not open global/carmen-config.c: $!\n";
 
-  my $graphics_cflags = `$gtk_config --cflags`;
-  chomp $graphics_cflags;
-  my $graphics_libs = `$gtk_config --libs`;
-  chomp $graphics_libs;
+  my ($graphics_cflags, $graphics_libs);
+  if (defined($gtk_config)) {
+    $graphics_cflags = `$gtk_config --cflags`;
+    chomp $graphics_cflags;
+    $graphics_libs = `$gtk_config --libs`;
+    chomp $graphics_libs;
+  }
 
   print CONFIG<<EOF;
-#include <carmen/carmen.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+EOF
+
+  open GLOBAL_INCLUDE, "< global/global.h" or die 
+    "Couldn't open global/global.h for reading: $!\n";
+  my @global_headers = <GLOBAL_INCLUDE>;
+
+  my @major = grep {/CARMEN_MAJOR_VERSION/} @global_headers;
+  print CONFIG $major[0];
+
+  my @minor = grep {/CARMEN_MINOR_VERSION/} @global_headers;
+  print CONFIG $minor[0];
+
+  my @revision = grep {/CARMEN_REVISION/} @global_headers;
+  print CONFIG $revision[0];
+
+  print CONFIG<<EOF;
 
 static char *home = NULL;
 
@@ -699,7 +723,12 @@ usage(int argc __attribute__ ((unused)), char *argv[])
   fprintf(stderr, "\\t[--version]\\n");
   fprintf(stderr, "\\t[--libs]\\n");
   fprintf(stderr, "\\t[--cflags]\\n");
-  fprintf(stderr, "\\t[--graphics]\\n");
+EOF
+
+  print CONFIG "  fprintf(stderr, \"\\t[--graphics]\\n\");\n"
+    if (defined($gtk_config));
+
+  print CONFIG<<EOF;
   fprintf(stderr, "Modes:\\n");
   fprintf(stderr, "\\tbasic\\n");
   fprintf(stderr, "\\tmotion\\n");  
@@ -768,59 +797,56 @@ int main(int argc, char *argv[])
 
   if (getenv("CARMEN_HOME")) 
     home = getenv("CARMEN_HOME");
-  else 
-    {
-      sprintf(path_buffer, "/proc/%d/exe", getpid());
-      memset(buffer, 0, 1024);
-      readlink(path_buffer, buffer, 1024);
-      home = buffer;
+  else {
+    sprintf(path_buffer, "/proc/%d/exe", getpid());
+    memset(buffer, 0, 1024);
+    readlink(path_buffer, buffer, 1024);
+    home = buffer;
 
-      dir = strrchr(buffer, '/');
-      if (dir != NULL)
-	{
-	  dir[0] = '\\0';
-	  if (strrchr(buffer, '/'))
-	    dir = strrchr(buffer, '/');
-	  if (strlen(dir) >= 4 && strncmp(dir+1, "bin", 3) == 0)
-	    dir[0] = '\\0';
-	  else if (dir - buffer >= 4 && strlen(dir) > 6 &&
-		   strncmp(dir-4, "/src/global", 10) == 0)
-	    dir[-4] = '\\0';
-	}
+    dir = strrchr(buffer, '/');
+    if (dir != NULL) {
+      dir[0] = '\\0';
+      if (strrchr(buffer, '/'))
+	dir = strrchr(buffer, '/');
+      if (strlen(dir) >= 4 && strncmp(dir+1, "bin", 3) == 0)
+	dir[0] = '\\0';
+      else if (dir - buffer >= 4 && strlen(dir) > 6 &&
+	strncmp(dir-4, "/src/global", 10) == 0)
+	dir[-4] = '\\0';
+      }
     }
 
-  for (index = 1; index < argc; index++) 
-    {
-      if (strcmp(argv[index], "--version") == 0) 
-	printf("%d.%d.%d\\n", CARMEN_MAJOR_VERSION, CARMEN_MINOR_VERSION,
-	       CARMEN_REVISION);
-      else if (strcmp(argv[index], "--cflags") == 0) 
-	cflags = 1;
-      else if (strcmp(argv[index], "--libs") == 0) 
-	libs = 1; 
-      else if (strcmp(argv[index], "--graphics") == 0) 
-	{
+  for (index = 1; index < argc; index++) {
+    if (strcmp(argv[index], "--version") == 0) 
+      printf("%d.%d.%d\\n", CARMEN_MAJOR_VERSION, CARMEN_MINOR_VERSION,
+	     CARMEN_REVISION);
+    else if (strcmp(argv[index], "--cflags") == 0) 
+      cflags = 1;
+    else if (strcmp(argv[index], "--libs") == 0) 
+      libs = 1;
+    else if (strcmp(argv[index], "--graphics") == 0) {
 EOF
 
   if (!defined($gtk_config)) {
     print CONFIG<<EOF;
-	  carmen_die("This version of carmen was compiled without "
-		     "graphics support.\\n");
+      fprintf(stderr, "This version of carmen was compiled without "
+	      "graphics support.\\n");
+      exit(-1);
 EOF
   } else {
-    print CONFIG "        graphics = 1;\n";
+    print CONFIG "      graphics = 1;\n";
   }
   print CONFIG<<EOF;
-	}
-      else if (strcmp(argv[index], "basic") == 0) 
-	mode |= 1;  
-      else if (strcmp(argv[index], "motion") == 0) 
-	mode |= 3;  
-      else if (strcmp(argv[index], "navigation") == 0) 
-	mode |= 7;      
-      else
-	usage(argc, argv);
     }
+    else if (strcmp(argv[index], "basic") == 0) 
+      mode |= 1;  
+    else if (strcmp(argv[index], "motion") == 0) 
+      mode |= 3;  
+    else if (strcmp(argv[index], "navigation") == 0) 
+      mode |= 7;      
+    else
+      usage(argc, argv);
+  }
 
   if (cflags)
     print_cflags(mode, graphics);
