@@ -25,10 +25,9 @@
  *
  ********************************************************/
 
-#ifndef NAVIGATOR_RTC_H
-#define NAVIGATOR_RTC_H
+#ifndef NAVIGATOR_IPC_H
+#define NAVIGATOR_IPC_H
 
-#include <carmen/ant.h>
 #include "navigator_messages.h"
 
 #ifdef __cplusplus
