@@ -36,8 +36,7 @@
 #define MAX_NUM_MODULES 128
 #define MAX_ROBOTS 100
 
-#define MAX_ROBOT_NAME_LENGTH 50 
-
+#define MAX_ROBOT_NAME_LENGTH 50
 
 typedef struct {
   char *module_name;
@@ -48,6 +47,8 @@ typedef struct {
 
 static pid_t central_pid = -1;
 static int auto_start_central = 1; 
+
+static int connected = 0;
 
 static char *modules[MAX_NUM_MODULES];
 static int num_modules = 0;
@@ -299,6 +300,7 @@ read_parameters_from_file(void)
   char *mark, *token;
   int token_num;
   char lvalue[255], rvalue[MAX_VARIABLE_LENGTH];
+  int found_matching_robot = 0;
   int found_desired_robot = 0;
   int line_length;
   int count;
@@ -311,116 +313,117 @@ read_parameters_from_file(void)
   carmen_test_alloc(line);
 
   count = 0;
-  while (!feof(fp)) 
-    {
-      fgets(line, MAX_VARIABLE_LENGTH-1, fp);
-      line[MAX_VARIABLE_LENGTH-1] = '\0';
-      if (strlen(line) == MAX_VARIABLE_LENGTH-1) 
-	carmen_die("Line %d of file %s is too long.\n"
-		   "Maximum line length is %d. Please correct this line.\n\n"
-		   "It is also possible that this file has become corrupted.\n"
-		   "Make sure you have an up-to-date version of carmen, and\n"
-		   "consult the param_server documentation to make sure the\n"
-		   "file format is valid.\n", count, param_filename, 
-		   MAX_VARIABLE_LENGTH-1);
-      count++;
-      if (feof(fp))
-	break;
-      mark = strchr(line, '#');    /* strip comments and trailing returns */
-      if (mark != NULL)
-	mark[0] = '\0';
-      mark = strchr(line, '\n');
-      if (mark != NULL)
-	mark[0] = '\0';
-
-      // Trim off trailing white space 
-
-      line_length = strlen(line) - 1;
-      while (line_length >= 0 && 
-	     (line[line_length] == ' ' || line[line_length] == '\t' ))
-	{
-	  line[line_length--] = '\0';
-	}
-      line_length++;
-      
-      if (line_length == 0)
+  while (!feof(fp)) {
+    fgets(line, MAX_VARIABLE_LENGTH-1, fp);
+    line[MAX_VARIABLE_LENGTH-1] = '\0';
+    if (strlen(line) == MAX_VARIABLE_LENGTH-1) 
+      carmen_die("Line %d of file %s is too long.\n"
+		 "Maximum line length is %d. Please correct this line.\n\n"
+		 "It is also possible that this file has become corrupted.\n"
+		 "Make sure you have an up-to-date version of carmen, and\n"
+		 "consult the param_server documentation to make sure the\n"
+		 "file format is valid.\n", count, param_filename, 
+		 MAX_VARIABLE_LENGTH-1);
+    count++;
+    if (feof(fp))
+      break;
+    mark = strchr(line, '#');    /* strip comments and trailing returns */
+    if (mark != NULL)
+      mark[0] = '\0';
+    mark = strchr(line, '\n');
+    if (mark != NULL)
+      mark[0] = '\0';
+    
+    // Trim off trailing white space 
+    
+    line_length = strlen(line) - 1;
+    while (line_length >= 0 && 
+	   (line[line_length] == ' ' || line[line_length] == '\t' )) {
+      line[line_length--] = '\0';
+    }
+    line_length++;
+    
+    if (line_length == 0)
+      continue;
+    
+    // Skip over initial blank space
+    
+    mark = line + strspn(line, " \t");
+    if (strlen(mark) == 0) 
+      carmen_die("You have encountered a bug in carmen. Please report it\n"
+		 "to the carmen maintainers. \n"
+		 "Line %d, function %s, file %s\n", __LINE__, __FUNCTION__,
+		 __FILE__);
+    
+    token_num = 0;
+    
+    /* tokenize line */
+    token = mark;
+    
+    // Move mark to the first whitespace character.
+    mark = strpbrk(mark, " \t");
+    // If we found a whitespace character, then turn it into a NULL
+    // and move mark to the next non-whitespace.
+    if (mark) {
+      mark[0] = '\0';
+      mark++;
+      mark += strspn(mark, " \t");
+    }
+    
+    if (strlen(token) > 254) {
+      carmen_warn("Bad file format of %s on line %d.\n"
+		  "The parameter name %s is too long (%d characters).\n"
+		  "A parameter name can be no longer than 254 "
+		  "characters.\nSkipping this line.\n", param_filename, 
+		  count, token, strlen(token));
+      continue;
+    }
+    
+    strcpy(lvalue, token);
+    token_num++;
+    
+    // If mark points to a non-whitespace character, then we have a
+    // two-token line
+    if (mark) {
+      if (strlen(mark) > MAX_VARIABLE_LENGTH-1) {
+	carmen_warn("Bad file format of %s on line %d.\n"
+		    "The parameter value %s is too long (%d "
+		    "characters).\nA parameter value can be no longer "
+		    "than %d characters.\nSkipping this line.\n", 
+		    param_filename, count, mark, strlen(mark),
+		    MAX_VARIABLE_LENGTH-1);
 	continue;
-      
-      // Skip over initial blank space
-      
-      mark = line + strspn(line, " \t");
-      if (strlen(mark) == 0) 
-	carmen_die("You have encountered a bug in carmen. Please report it\n"
-		   "to the carmen maintainers. \n"
-		   "Line %d, function %s, file %s\n", __LINE__, __FUNCTION__,
-		   __FILE__);
-      
-      token_num = 0;
-      
-      /* tokenize line */
-      token = mark;
-      
-      // Move mark to the first whitespace character.
-      mark = strpbrk(mark, " \t");
-      // If we found a whitespace character, then turn it into a NULL
-      // and move mark to the next non-whitespace.
-      if (mark) 
-	{
-	  mark[0] = '\0';
-	  mark++;
-	  mark += strspn(mark, " \t");
-	}
-
-      if (strlen(token) > 254) 
-	{
-	  carmen_warn("Bad file format of %s on line %d.\n"
-		      "The parameter name %s is too long (%d characters).\n"
-		      "A parameter name can be no longer than 254 "
-		      "characters.\nSkipping this line.\n", param_filename, 
-		      count, token, strlen(token));
-	  continue;
-	}
-      
-      strcpy(lvalue, token);
+      }
+      strcpy(rvalue, mark);
       token_num++;
-
-      // If mark points to a non-whitespace character, then we have a
-      // two-token line
-      if (mark)
-	{
-	  if (strlen(mark) > MAX_VARIABLE_LENGTH-1) 
-	    {
-	      carmen_warn("Bad file format of %s on line %d.\n"
-			  "The parameter value %s is too long (%d "
-			  "characters).\nA parameter value can be no longer "
-			  "than %d characters.\nSkipping this line.\n", 
-			  param_filename, count, mark, strlen(mark),
-			  MAX_VARIABLE_LENGTH-1);
-	      continue;
-	    }
-	  strcpy(rvalue, mark);
-	  token_num++;
-	}
-      
-      if (lvalue[0] == '[') 
-	{
-	  if (lvalue[1] == '*')
-	    found_desired_robot = 1;
-	  else if (strlen(lvalue) < strlen(selected_robot) + 2)
-	    found_desired_robot = 0;
-	  else if (lvalue[strlen(selected_robot)+1] != ']')
-	    found_desired_robot = 0;
-	  else if (carmen_strncasecmp
-		   (lvalue+1, selected_robot, strlen(selected_robot)) == 0)
-	    found_desired_robot = 1;
-	  else
-	    found_desired_robot = 0;
-	}
-      else if(token_num == 2 && found_desired_robot == 1) 
-	set_param(lvalue, rvalue);
-    } /* End of while (!feof(fp)) */
+    }
+    
+    if (lvalue[0] == '[') {
+      if (lvalue[1] == '*')
+	found_matching_robot = 1;
+      else if (strlen(lvalue) < strlen(selected_robot) + 2)
+	found_matching_robot = 0;
+      else if (lvalue[strlen(selected_robot)+1] != ']') 
+	found_matching_robot = 0;
+      else if (carmen_strncasecmp
+	       (lvalue+1, selected_robot, strlen(selected_robot)) == 0) {
+	found_matching_robot = 1;
+	found_desired_robot = 1;
+      } else
+	found_matching_robot = 0;
+    }
+    else if(token_num == 2 && found_matching_robot == 1) 
+      set_param(lvalue, rvalue);
+  } /* End of while (!feof(fp)) */
   
   fclose(fp);
+
+  if (!found_desired_robot) {
+    carmen_die("Did not find a match for robot %s. Do you have the right\n"
+	       "init file? (Reading parameters from %s)\n", selected_robot,
+	       param_filename);
+  }
+  
   return 0;
 }
 
@@ -521,7 +524,7 @@ read_commandline(int argc, char **argv)
   static struct option long_options[] = {
     {"help", 0, 0, 0},
     {"robot", 1, NULL, 0},
-    {"nocentral", 0, &auto_start_central, 0},
+    {"no_autostart_central", 0, &auto_start_central, 0},
     {"alphabetize", 0, &alphabetize, 1},
     {0, 0, 0, 0}
   };
@@ -541,8 +544,6 @@ read_commandline(int argc, char **argv)
       sprintf(arg_buffer, "--%s", long_options[option_index].name);
       if (carmen_strcasecmp(long_options[option_index].name, "help") == 0)
 	c = 'h';
-      else if (carmen_strcasecmp(long_options[option_index].name,"port") == 0)
-	c = 'p';
       else if (carmen_strcasecmp(long_options[option_index].name,"robot") == 0)
 	c = 'r';
     } else {
@@ -653,8 +654,8 @@ read_commandline(int argc, char **argv)
     free(robot_names[i]);
   free(robot_names);
 
-  carmen_warn("Loading parameters for robot %s using param file %s\n", 
-	      selected_robot, param_filename);  
+  carmen_warn("Loading parameters for robot [31;1m%s[0m using param file "
+	      "[31;1m%s[0m\n", selected_robot, param_filename);  
 
   return 0;
 }
@@ -1039,9 +1040,8 @@ get_param_filename(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   free(query.variable_name);
 }
 
-static void 
-set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-	      void *clientData __attribute__ ((unused)))
+static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			  void *clientData __attribute__ ((unused)))
 {
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err = IPC_OK;
@@ -1079,13 +1079,11 @@ set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   response.variable_name = query.variable_name;
   response.status = CARMEN_PARAM_OK;
 
-  if (param_index < 0)
-    {
-      response.status = CARMEN_PARAM_NOT_FOUND;
-      carmen_die("Major error: inside set_param_ipc, tried to recover value "
-		 "of parameter\nthat was just set, and failed.\n");
-    }
-  else
+  if (param_index < 0) {
+    response.status = CARMEN_PARAM_NOT_FOUND;
+    carmen_die("Major error: inside set_param_ipc, tried to recover value "
+	       "of parameter\nthat was just set, and failed.\n");
+  } else
     response.value = param_list[param_index].rvalue;
   
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
@@ -1102,6 +1100,9 @@ publish_new_param(int index)
   IPC_RETURN_TYPE err;
 
   carmen_param_response_string_message response;
+
+  if (!connected)
+    return;
 
   if (index < 0)
     return;
@@ -1292,13 +1293,37 @@ initialize_param_ipc(void)
 static void
 fork_central(void)
 {
+  char *path;
+  int path_length = 0;
+  
+  if (getenv("PATH") != NULL)
+    path_length = strlen(getenv("PATH"));
+  path_length += strlen(":./:../../bin/");
+  if (getenv("CARMEN_HOME") != NULL) {
+    path_length += strlen(getenv("CARMEN_HOME"));
+    path_length += strlen("/bin:");
+  }
+  path_length += 1;
+
+  path = (char *)calloc(path_length+1, sizeof(char));
+
+  if (getenv("PATH") != NULL)
+    strcat(path, getenv("PATH"));
+  strcat(path, ":./:../../bin/");
+  if (getenv("CARMEN_HOME") != NULL) {
+    strcat(path, ":");
+    strcat(path, getenv("CARMEN_HOME"));
+    strcat(path, "/bin");
+  }
+  
   carmen_warn("Starting central...\n");
   central_pid = fork();
-  if (central_pid == 0)
-    {
-      execlp("central", NULL);
-      carmen_die_syserror("Could not exec central");
-    }
+  if (central_pid == 0) {
+    setenv("PATH", path, 1);
+    execlp("central", NULL);
+    carmen_die_syserror("Could not exec central: %s", path);
+  }
+  sleep(1);
   if (central_pid == -1)
     carmen_die_syserror("Could not fork to start central");
 }
@@ -1313,16 +1338,17 @@ main(int argc, char **argv)
   
   carmen_verbose("Read %d parameters\n", num_params);
 
+  read_parameters_from_file();
+
   if (auto_start_central)
     fork_central();
   
   carmen_initialize_ipc(argv[0]);
 
+  connected = 1;
+
   if(initialize_param_ipc() < 0) 
     carmen_die("Error: could not connect to IPC Server\n");
-
-  read_parameters_from_file();
-
 
   if (map_filename) {
     if (carmen_map_initialize_ipc() < 0)
