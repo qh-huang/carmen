@@ -101,7 +101,7 @@ void publish_params_from_paramfile(FILE *fp, char *param_label, char *filename)
 		    "The parameter name %s is too long (%d characters).\n"
 		    "A parameter name can be no longer than 254 "
 		    "characters.\nSkipping this line.\n", filename, 
-		    count, token, strlen(token));
+		    count, token, (int) strlen(token));
 	continue;
       }
     
@@ -118,7 +118,7 @@ void publish_params_from_paramfile(FILE *fp, char *param_label, char *filename)
 			"The parameter value %s is too long (%d "
 			"characters).\nA parameter value can be no longer "
 			"than %d characters.\nSkipping this line.\n", 
-			filename, count, mark, strlen(mark),
+			filename, count, mark, (int) strlen(mark),
 			1999);
 	    continue;
 	  }

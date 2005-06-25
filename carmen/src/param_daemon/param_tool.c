@@ -117,7 +117,8 @@ main(int argc, char** argv)
       printf("%s\n", buffer);
       for (index = 0; index < list_length; index++)
 	{
-	  printf("%s[%dC%s\n", variables[index], max_variable_width - strlen(variables[index]),
+	  printf("%s[%dC%s\n", variables[index],
+		 max_variable_width - (int) strlen(variables[index]),
 		 values[index]);
 	  free(variables[index]);
 	  free(values[index]);

@@ -375,7 +375,7 @@ read_parameters_from_file(void)
 		  "The parameter name %s is too long (%d characters).\n"
 		  "A parameter name can be no longer than 254 "
 		  "characters.\nSkipping this line.\n", param_filename, 
-		  count, token, strlen(token));
+		  count, token, (int) strlen(token));
       continue;
     }
     
@@ -390,7 +390,7 @@ read_parameters_from_file(void)
 		    "The parameter value %s is too long (%d "
 		    "characters).\nA parameter value can be no longer "
 		    "than %d characters.\nSkipping this line.\n", 
-		    param_filename, count, mark, strlen(mark),
+		    param_filename, count, mark, (int) strlen(mark),
 		    MAX_VARIABLE_LENGTH-1);
 	continue;
       }
