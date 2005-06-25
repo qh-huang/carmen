@@ -51,8 +51,8 @@ void carmen_initialize_keyboard(void)
   int flags;
   tcflag_t oflags;
 
-  flags = fcntl((int)stdin, F_GETFL);           /* initialize asyncronous */
-  fcntl((int)stdin, F_SETFL, flags | O_NONBLOCK);    /* keyboard input */
+  flags = fcntl(STDIN_FILENO, F_GETFL);           /* initialize asyncronous */
+  fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);    /* keyboard input */
   tcgetattr(0, &term_struct);
   oflags = term_struct.c_oflag;
   cfmakeraw(&term_struct);
