@@ -30,6 +30,11 @@
 
 #define MAX_VARIABLE_LENGTH 2048
 
+typedef struct {
+  int m;
+  int p;
+} carmen_param_id;
+
 static const int DEFAULT_WINDOW_HEIGHT = 500;
 static const int TABLE_COLUMN_SPACINGS = 5;
 
@@ -512,13 +517,15 @@ static GtkWidget *menubar_init(GtkWidget *window) {
   return menubar;
 }
 
-static void entry_changed(GtkWidget *w, gpointer data) {
-
+static void entry_changed(GtkWidget *w, gpointer data) 
+{
   int m, p;
   char *value;
 
-  m = ((int) data) >> 10;
-  p = ((int) data) & 0x3ff;
+  carmen_param_id *id_ptr = (carmen_param_id *)data;
+
+  m = id_ptr->m;
+  p = id_ptr->p;
 
   value = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
   free(values[m][p]);
@@ -534,15 +541,16 @@ static void entry_changed(GtkWidget *w, gpointer data) {
     gtk_label_set_pattern(GTK_LABEL(labels[m][p]), "");
 }
 
-static void radio_button_toggled(GtkWidget *radio_button, gpointer data) {
-
+static void radio_button_toggled(GtkWidget *radio_button, gpointer data) 
+{
   int m, p;
+  carmen_param_id *id_ptr = (carmen_param_id *)data;
+
+  m = id_ptr->m;
+  p = id_ptr->p;
 
   if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_button)))
     return;
-
-  m = ((int) data) >> 10;
-  p = ((int) data) & 0x3ff;
 
   if (update_param_mask[m][p] < 0) {
     update_param_mask[m][p] = 0;
@@ -569,6 +577,7 @@ static GtkWidget *notebook_init() {
 
   GtkWidget *notebook, *scrolled_window, *vbox, *hbox, *hbox2, *table, *tab;
   int m, p;
+  carmen_param_id *param_id;
 
   notebook = gtk_notebook_new();
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
@@ -620,12 +629,16 @@ static GtkWidget *notebook_init() {
 	gtk_box_pack_start(GTK_BOX(hbox2), radio_buttons[m][p][1],
 			   FALSE, FALSE, 10);
 	gtk_table_attach_defaults(GTK_TABLE(table), hbox2, 1, 2, p, p + 1);
+	param_id = (carmen_param_id *)calloc(1, sizeof(carmen_param_id));
+	carmen_test_alloc(param_id);
+	param_id->m = m;
+	param_id->p = p;
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][0]), "clicked",
 			   GTK_SIGNAL_FUNC(radio_button_toggled),
-			   (gpointer) ((m << 10) | p));
+			   (gpointer) param_id);
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][1]), "clicked",
 			   GTK_SIGNAL_FUNC(radio_button_toggled),
-			   (gpointer) ((m << 10) | p));
+			   (gpointer) param_id);
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][0]),
 			   "key_press_event", GTK_SIGNAL_FUNC(params_save),
 			   NULL);
