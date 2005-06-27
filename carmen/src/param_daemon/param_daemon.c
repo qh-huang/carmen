@@ -372,10 +372,10 @@ read_parameters_from_file(void)
     
     if (strlen(token) > 254) {
       carmen_warn("Bad file format of %s on line %d.\n"
-		  "The parameter name %s is too long (%d characters).\n"
+		  "The parameter name %s is too long (%ld characters).\n"
 		  "A parameter name can be no longer than 254 "
 		  "characters.\nSkipping this line.\n", param_filename, 
-		  count, token, (int) strlen(token));
+		  count, token, strlen(token));
       continue;
     }
     
@@ -387,10 +387,10 @@ read_parameters_from_file(void)
     if (mark) {
       if (strlen(mark) > MAX_VARIABLE_LENGTH-1) {
 	carmen_warn("Bad file format of %s on line %d.\n"
-		    "The parameter value %s is too long (%d "
+		    "The parameter value %s is too long (%ld "
 		    "characters).\nA parameter value can be no longer "
-		    "than %d characters.\nSkipping this line.\n", 
-		    param_filename, count, mark, (int) strlen(mark),
+		    "than %u characters.\nSkipping this line.\n", 
+		    param_filename, count, mark, strlen(mark),
 		    MAX_VARIABLE_LENGTH-1);
 	continue;
       }

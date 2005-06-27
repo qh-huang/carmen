@@ -98,10 +98,10 @@ void publish_params_from_paramfile(FILE *fp, char *param_label, char *filename)
     if (strlen(token) > 254) 
       {
 	carmen_warn("Bad file format of %s on line %d.\n"
-		    "The parameter name %s is too long (%d characters).\n"
+		    "The parameter name %s is too long (%ld characters).\n"
 		    "A parameter name can be no longer than 254 "
 		    "characters.\nSkipping this line.\n", filename, 
-		    count, token, (int) strlen(token));
+		    count, token, strlen(token));
 	continue;
       }
     
