@@ -651,9 +651,13 @@ static GtkWidget *notebook_init() {
 	gtk_entry_set_text(GTK_ENTRY(entries[m][p]), values[m][p]);
 	gtk_table_attach_defaults(GTK_TABLE(table), entries[m][p],
 				  1, 2, p, p + 1);
+	param_id = (carmen_param_id *)calloc(1, sizeof(carmen_param_id));
+	carmen_test_alloc(param_id);
+	param_id->m = m;
+	param_id->p = p;
 	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "changed",
 			   GTK_SIGNAL_FUNC(entry_changed),
-			   (gpointer) ((m << 10) | p));
+			   (gpointer) param_id);
 	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "key_press_event",
 			   GTK_SIGNAL_FUNC(params_save), NULL);
       }
