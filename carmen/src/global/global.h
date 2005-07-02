@@ -326,6 +326,7 @@ void carmen_list_destroy(carmen_list_t **list);
 void carmen_eigs_to_covariance(double theta, double major, double minor,
 			       double *vx, double *vxy, double *vy);
 
+
 #ifdef __cplusplus
 }
 #endif

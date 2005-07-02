@@ -57,7 +57,12 @@ extern "C" {
 #include <sys/time.h>
 #include <errno.h>
 #include <float.h>
+#ifndef MAXDOUBLE
 #define MAXDOUBLE DBL_MAX
+#endif
+#ifndef MAXFLOAT
+#define MAXFLOAT FLT_MAX
+#endif
 
 #ifdef EXTERNAL_IPC
 #include <ipc.h>

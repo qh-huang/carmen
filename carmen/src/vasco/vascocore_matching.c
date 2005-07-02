@@ -1,6 +1,4 @@
 #include <sys/types.h>
-#include <values.h>
-
 #include <carmen/carmen.h>
 
 #include "vascocore.h"
