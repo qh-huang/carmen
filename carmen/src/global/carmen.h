@@ -56,6 +56,7 @@ extern "C" {
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <limits.h>
 #include <float.h>
 #ifndef MAXDOUBLE
 #define MAXDOUBLE DBL_MAX
