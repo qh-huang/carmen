@@ -317,6 +317,7 @@ carmen_list_t *carmen_list_create_from_data(int entry_size, int num_elements,
 					    void *data);
 carmen_list_t *carmen_list_duplicate(carmen_list_t *list);
 void carmen_list_add(carmen_list_t *list, void *entry);
+void carmen_list_insert(carmen_list_t *list, void *entry, int i);
 void carmen_list_delete(carmen_list_t *list, int entry_num);
 void *carmen_list_get(carmen_list_t *list, int entry_num);
 void carmen_list_set(carmen_list_t *list, int entry_num, void *entry);

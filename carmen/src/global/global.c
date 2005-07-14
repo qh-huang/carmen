@@ -1457,6 +1457,29 @@ void carmen_list_add(carmen_list_t *list, void *entry)
   list->length++;
 }
 
+void carmen_list_insert(carmen_list_t *list, void *entry, int i)
+{
+  if (i >= list->length) {
+    carmen_warn("carmen_list_insert called with argument %d greater than "
+		"length: %d\n This is a bug in the calling function.\n"
+		"List not changed.\n", i, list->length);
+    return;
+  }
+
+  if (list->length == list->capacity) {
+    list->capacity = list->capacity+10;
+    list->list = realloc(list->list, list->capacity*list->entry_size);
+    carmen_test_alloc(list->list);
+    memset(list->list+list->length*list->entry_size, 0, 
+	   (list->capacity-list->length)*list->entry_size);
+  }
+
+  memmove(list->list+(i+1)*list->entry_size, list->list+i*list->entry_size,
+	  (list->length-i)*list->entry_size);
+  memcpy(list->list+i*list->entry_size, entry, list->entry_size);
+  list->length++;
+}
+
 int carmen_list_length(carmen_list_t *list) 
 {
   return list->length;
