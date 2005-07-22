@@ -43,6 +43,10 @@ extern "C" {
 #define FALSE 0
 #endif
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846  /* pi */
+#endif
+
 /* Useful macros */
 
 typedef enum {CARMEN_UNSUBSCRIBE, CARMEN_SUBSCRIBE_LATEST, CARMEN_SUBSCRIBE_ALL} carmen_subscribe_t;
