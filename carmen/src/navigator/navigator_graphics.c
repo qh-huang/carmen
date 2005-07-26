@@ -777,18 +777,204 @@ do_redraw(void)
     }
 }
 
+static int received_robot_pose(void)
+{
+  return (robot.pose.x > 0 && robot.pose.y > 0 && robot.map != NULL);
+}
+
+static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
+{
+  int index;
+  carmen_map_point_t map_particle;
+  carmen_world_point_t particle;
+
+  if (!nav_panel_config->show_particles || particle_msg.particles == NULL)
+    return;
+
+  map_particle.map = the_map_view->internal_map;
+  
+  for(index = 0; index < particle_msg.num_particles; index++) {
+    particle.pose.x = particle_msg.particles[index].x;
+    particle.pose.y = particle_msg.particles[index].y;
+    particle.map = the_map_view->internal_map;
+    carmen_map_graphics_draw_circle(the_map_view, &robot_colour, TRUE, 
+				    &particle, pixel_size);
+  }
+
+}
+
+static void draw_gaussians(GtkMapViewer *the_map_view, double pixel_size)
+{
+  carmen_world_point_t mean;
+
+  if (!nav_panel_config->show_gaussians || particle_msg.particles == NULL)
+    return;
+    
+  mean = robot;
+  mean.pose.x = globalpos->globalpos.x;
+  mean.pose.y = globalpos->globalpos.y;
+  mean.pose.theta = globalpos->globalpos.theta;
+  
+  carmen_map_graphics_draw_ellipse
+    (the_map_view, &carmen_black, &mean, 
+     carmen_square(globalpos->globalpos_std.x), 
+     globalpos->globalpos_xy_cov, 
+     carmen_square(globalpos->globalpos_std.y), 4);    
+}
+
+static void draw_lasers(GtkMapViewer *the_map_view, double pixel_size)
+{
+  int dot_size;
+  int index;
+  carmen_world_point_t particle;
+  double angle;
+
+  dot_size = 3*pixel_size;
+
+  if (!nav_panel_config->show_lasers)
+    return;
+
+  particle = robot; 
+  for(index = 0; index < sensor_msg.num_readings; 
+      index += sensor_msg.laser_skip) {
+    angle = sensor_msg.pose.theta - M_PI_2 + 
+      index / (float)(sensor_msg.num_readings - 1) * M_PI;
+    particle.pose.x = sensor_msg.pose.x + sensor_msg.range[index] *
+      cos(angle);
+    particle.pose.y = sensor_msg.pose.y + sensor_msg.range[index] *
+      sin(angle);
+    if(sensor_msg.mask[index]) 
+      carmen_map_graphics_draw_circle(the_map_view, 
+				      &carmen_green, TRUE, 
+				      &particle, dot_size);
+    else
+      carmen_map_graphics_draw_circle(the_map_view, 
+				      &carmen_yellow, TRUE, 
+				      &particle, dot_size);
+  }
+      
+#ifdef blah
+  /* rear laser */
+  for(index = 0; index < sensor_msg.rear_laser_scan.num_readings; 
+      index++) {
+    colour = sensor_msg.rear_laser_scan.scan[index].mean_prob *
+      (GRADIENT_COLORS - 1);
+    
+    particle.pose.x = sensor_msg.rear_laser_scan.scan[index].mean_x;
+    particle.pose.y = sensor_msg.rear_laser_scan.scan[index].mean_y;
+    carmen_map_graphics_draw_circle(the_map_view, 
+				    &RedBlueGradient[colour], TRUE, 
+				    &particle, dot_size);
+  }
+#endif
+}
+
+static double x_coord(double x, double y, carmen_world_point_t *offset)
+{
+  return x*cos(offset->pose.theta)-y*sin(offset->pose.theta)+offset->pose.x;
+}
+
+static double y_coord(double x, double y, carmen_world_point_t *offset)
+{
+  return x*sin(offset->pose.theta)+y*cos(offset->pose.theta)+offset->pose.y;
+}
+
+static void draw_robot_shape(GtkMapViewer *the_map_view, 
+			     carmen_world_point_t *location, int filled, 
+			     GdkColor *colour, double pixel_size)
+{
+  double robot_radius;
+  carmen_world_point_t wp[5];
+  double width2, length2;
+
+  if (!robot_config->rectangular) {
+    robot_radius = robot_config->width/2.0;
+    if (robot_radius < pixel_size*5)
+      robot_radius = pixel_size*5;
+    
+    carmen_map_graphics_draw_circle(the_map_view, colour, filled, 
+				    location, robot_radius);
+    return;
+  } 
+
+  width2 = robot_config->width/2;
+  length2 = robot_config->length/2;
+
+  if (width2 < pixel_size*5)
+    width2 = pixel_size*5;
+  if (length2 < pixel_size*5)
+    length2 = pixel_size*5;
+
+  wp[0].pose.x = x_coord(length2, width2, location);
+  wp[0].pose.y = y_coord(length2, width2, location);
+  wp[1].pose.x = x_coord(length2, -width2, location);
+  wp[1].pose.y = y_coord(length2, -width2, location);
+  wp[2].pose.x = x_coord(-length2, -width2, location);
+  wp[2].pose.y = y_coord(-length2, -width2, location);
+  wp[3].pose.x = x_coord(-length2, width2, location);
+  wp[3].pose.y = y_coord(-length2, width2, location);
+  wp[4].pose.x = wp[0].pose.x;
+  wp[4].pose.y = wp[0].pose.y;
+
+  wp[0].map = wp[1].map = wp[2].map = wp[3].map = wp[4].map = location->map;
+
+  carmen_map_graphics_draw_polygon(the_map_view, colour, wp, 5, filled);
+}
+
+static void draw_robot(GtkMapViewer *the_map_view, double pixel_size)
+{
+  carmen_world_point_t robot_radius;
+
+  if (!nav_panel_config->show_particles && !nav_panel_config->show_gaussians) 
+    draw_robot_shape(the_map_view, &robot, TRUE, &robot_colour, pixel_size);
+
+  if (!nav_panel_config->show_gaussians)
+    draw_robot_shape(the_map_view, &robot, FALSE, &carmen_black, pixel_size);
+  
+  robot_radius = robot;  
+  robot_radius.pose.x = robot_radius.pose.x + 
+    cos(robot_radius.pose.theta)*0.2;
+  robot_radius.pose.y = robot_radius.pose.y + 
+    sin(robot_radius.pose.theta)*0.2;
+  
+  carmen_map_graphics_draw_line(the_map_view, &carmen_black, &robot, 
+				&robot_radius);  
+}
+
+static void draw_simulated_robot(GtkMapViewer *the_map_view, double pixel_size)
+{
+  double robot_size;
+  carmen_world_point_t radius;
+
+  if (!nav_panel_config->show_true_pos || simulator_trueposition.map == NULL)
+    return;
+
+  robot_size = robot_config->width/2.0;
+  if (robot_size < pixel_size*5)
+    robot_size = pixel_size*5;
+  
+  draw_robot_shape(the_map_view, &simulator_trueposition, TRUE, &carmen_blue,
+		   pixel_size);
+  draw_robot_shape(the_map_view, &simulator_trueposition, FALSE, &carmen_black,
+		   pixel_size);
+  
+  radius = simulator_trueposition;  
+  radius.pose.x = radius.pose.x + 
+    cos(radius.pose.theta)*0.2;
+  radius.pose.y = radius.pose.y + 
+    sin(radius.pose.theta)*0.2;
+  
+  carmen_map_graphics_draw_line(the_map_view, &carmen_black, 
+				&simulator_trueposition, &radius);  
+}
+
 void draw_robot_objects(GtkMapViewer *the_map_view) 
 {
   int index;
   //  int colour;
-  double angle;
   carmen_world_point_t path_x_1, path_x_2;
-  carmen_map_point_t map_particle;
   carmen_world_point_t particle;
-  carmen_world_point_t mean;
-  carmen_world_point_t robot_radius;
   double goal_size, pixel_size, robot_size, circle_size;
-  double dot_size = 3;
   GdkColor *colour = &carmen_black;
   carmen_world_point_t *draw_point = NULL;
   carmen_traj_point_t *simulator_object;
@@ -811,71 +997,20 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
   pixel_size *= map_view->internal_map->config.resolution * 
     (map_view->zoom/100.0);
 
-  dot_size = dot_size*pixel_size;
+  /* 
+   * Draw robot features
+   */
 
-  if (robot.pose.x > 0 && robot.pose.y > 0 && robot.map != NULL)
-    {
-      if (nav_panel_config->show_particles && particle_msg.particles != NULL) {
-	map_particle.map = the_map_view->internal_map;
-
-	for(index = 0; index < particle_msg.num_particles; index++) {
-	  particle.pose.x = particle_msg.particles[index].x;
-	  particle.pose.y = particle_msg.particles[index].y;
-	  particle.map = the_map_view->internal_map;
-	  carmen_map_graphics_draw_circle(the_map_view, &robot_colour, TRUE, 
-					  &particle, pixel_size);
-	}
-      }
-
-      if (nav_panel_config->show_gaussians && particle_msg.particles != NULL) {
-	mean = robot;
-	mean.pose.x = globalpos->globalpos.x;
-	mean.pose.y = globalpos->globalpos.y;
-	mean.pose.theta = globalpos->globalpos.theta;
-
-	carmen_map_graphics_draw_ellipse
-	  (the_map_view, &carmen_black, &mean, 
-	   carmen_square(globalpos->globalpos_std.x), 
-	   globalpos->globalpos_xy_cov, 
-	   carmen_square(globalpos->globalpos_std.y), 4);
-      }
-
-      if (nav_panel_config->show_lasers) {
-	particle = robot; 
-	for(index = 0; index < sensor_msg.num_readings; 
-	    index += sensor_msg.laser_skip) {
-	  angle = sensor_msg.pose.theta - M_PI_2 + 
-	    index / (float)(sensor_msg.num_readings - 1) * M_PI;
-	  particle.pose.x = sensor_msg.pose.x + sensor_msg.range[index] *
-	    cos(angle);
-	  particle.pose.y = sensor_msg.pose.y + sensor_msg.range[index] *
-	    sin(angle);
-	  if(sensor_msg.mask[index]) 
-	    carmen_map_graphics_draw_circle(the_map_view, 
-					    &carmen_green, TRUE, 
-					    &particle, dot_size);
-	  else
-	    carmen_map_graphics_draw_circle(the_map_view, 
-					    &carmen_yellow, TRUE, 
-					    &particle, dot_size);
-	}
-				
-#ifdef blah
-	/* rear laser */
-	for(index = 0; index < sensor_msg.rear_laser_scan.num_readings; 
-	    index++) {
-	  colour = sensor_msg.rear_laser_scan.scan[index].mean_prob *
-	    (GRADIENT_COLORS - 1);
-					
-	  particle.pose.x = sensor_msg.rear_laser_scan.scan[index].mean_x;
-	  particle.pose.y = sensor_msg.rear_laser_scan.scan[index].mean_y;
-	  carmen_map_graphics_draw_circle(the_map_view, 
-					  &RedBlueGradient[colour], TRUE, 
-					  &particle, dot_size);
-	}
-#endif
-      }
-    }
+  if (received_robot_pose()) {
+    draw_particles(the_map_view, pixel_size);
+    draw_gaussians(the_map_view, pixel_size);
+    draw_lasers(the_map_view, pixel_size);
+    draw_robot(the_map_view, pixel_size);
+  } 
+  
+  /* 
+   * Draw path 
+   */
 
   for (index = 1; index < num_path_points; index++) {
     if (path->map == NULL)
@@ -902,6 +1037,10 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
     }
   }
   
+  /* 
+   * Draw goal
+   */
+
   if (goal.pose.x > 0 && goal.pose.y > 0 && goal.map != NULL) {
     goal_size = nav_config->goal_size/2;
     if (goal_size < pixel_size*5)
@@ -912,21 +1051,12 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
     carmen_map_graphics_draw_circle(the_map_view, &carmen_black, FALSE, 
 				    &goal, goal_size);
   }
-  
-  if (nav_panel_config->show_true_pos && simulator_trueposition.map != NULL) {
-    robot_size = robot_config->width/2.0;
-    if (robot_size < pixel_size*5)
-      robot_size = pixel_size*5;
-    
-    if (black_and_white)
-      carmen_map_graphics_draw_circle(the_map_view, &carmen_grey, TRUE, 
-				      &simulator_trueposition, robot_size);
-    else
-      carmen_map_graphics_draw_circle(the_map_view, &carmen_blue, TRUE, 
-				      &simulator_trueposition, robot_size);
-    carmen_map_graphics_draw_circle(the_map_view, &carmen_black, FALSE, 
-				    &simulator_trueposition, robot_size);
-  }
+
+  /* 
+   * Draw simulator features
+   */
+
+  draw_simulated_robot(the_map_view, pixel_size);
   
   if (nav_panel_config->show_simulator_objects) {
     circle_size = robot_config->width/2.0;
@@ -950,28 +1080,6 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 					&particle, circle_size);
       }
     }
-  }
-
-  if (robot.pose.x > 0 && robot.pose.y > 0 && robot.map != NULL) {
-    robot_size = robot_config->width/2.0;
-    if (robot_size < pixel_size*5)
-      robot_size = pixel_size*5;
-    
-    if (!nav_panel_config->show_particles && !nav_panel_config->show_gaussians)
-      carmen_map_graphics_draw_circle(the_map_view, &robot_colour, TRUE, 
-				      &robot, robot_size);
-    if (!nav_panel_config->show_gaussians)
-      carmen_map_graphics_draw_circle(the_map_view, &carmen_black, FALSE, 
-				      &robot, robot_size);
-    
-    robot_radius = robot;  
-    robot_radius.pose.x = robot_radius.pose.x + 
-      cos(robot_radius.pose.theta)*0.2;
-    robot_radius.pose.y = robot_radius.pose.y + 
-      sin(robot_radius.pose.theta)*0.2;
-    
-    carmen_map_graphics_draw_line(the_map_view, &carmen_black, &robot, 
-				  &robot_radius);
   }
   
 #ifdef USE_DOT
@@ -1018,6 +1126,12 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
       placement_status != ORIENTING_PERSON &&
       placement_status != ORIENTING_SIMULATOR) 
     return;
+
+  /* Everything from here down is only used if we are orienting something.
+     We have to draw the object itself (the robot, person, whatever) since
+     in some cases the display hasn't actually published the fact that the
+     feature has changed. 
+   */
 
   if (placement_status == ORIENTING_ROBOT) {
     if (carmen_get_time_ms() - last_navigator_update > 30 &&
@@ -1127,122 +1241,108 @@ button_release_handler(GtkMapViewer *the_map_view,
   if (placement_status == PLACING_ROBOT ||
       (placement_status == NO_PLACEMENT && 
        ((event->button == 1 && (event->state & GDK_CONTROL_MASK)) ||
-	(event->button == 3))))
-    {
-      if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
-	{
-	  placement_status = NO_PLACEMENT;
-	  return TRUE;
-	}
-
-      world_point->pose.theta = robot.pose.theta;
-      robot = *world_point; 
-      last_robot = *world_point;
-      navigator_update_robot (world_point);
-      if (placement_status == PLACING_ROBOT)  
-	{
-	  placement_status = ORIENTING_ROBOT;
-	  cursor = gdk_cursor_new(GDK_EXCHANGE);
-	  gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-	}
-      else 
-	{
-	  cursor = gdk_cursor_new(GDK_LEFT_PTR);
-	  gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-	}
+	(event->button == 3)))) {
+    if (GTK_TOGGLE_BUTTON (autonomous_button)->active) {
+      placement_status = NO_PLACEMENT;
       return TRUE;
     }
 
-  if (placement_status == PLACING_GOAL || 
-      (placement_status == NO_PLACEMENT && event->button == 1)) 
-    {
-      placement_status = NO_PLACEMENT;
-
-      if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
-	return TRUE;
-
-      navigator_set_goal(world_point->pose.x, world_point->pose.y);
+    world_point->pose.theta = robot.pose.theta;
+    robot = *world_point; 
+    last_robot = *world_point;
+    navigator_update_robot (world_point);
+    if (placement_status == PLACING_ROBOT) {
+      placement_status = ORIENTING_ROBOT;
+      cursor = gdk_cursor_new(GDK_EXCHANGE);
+      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    } else {
       cursor = gdk_cursor_new(GDK_LEFT_PTR);
       gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-      return TRUE;
     }
+    return TRUE;
+  }
+
+  if (placement_status == PLACING_GOAL || 
+      (placement_status == NO_PLACEMENT && event->button == 1)) {
+    placement_status = NO_PLACEMENT;
+    
+    if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
+      return TRUE;
+    
+    navigator_set_goal(world_point->pose.x, world_point->pose.y);
+    cursor = gdk_cursor_new(GDK_LEFT_PTR);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    return TRUE;
+  }
   
-  if (placement_status == PLACING_PERSON) 
-    {
-      new_person = *world_point;
-      cursor = gdk_cursor_new(GDK_EXCHANGE);
-      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-      placement_status = ORIENTING_PERSON;
-      return TRUE;
-    }
+  if (placement_status == PLACING_PERSON) {
+    new_person = *world_point;
+    cursor = gdk_cursor_new(GDK_EXCHANGE);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    placement_status = ORIENTING_PERSON;
+    return TRUE;
+  }
 
-  if (placement_status == PLACING_SIMULATOR) 
-    {
-      new_simulator = *world_point;
-      cursor = gdk_cursor_new(GDK_EXCHANGE);
-      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-      placement_status = ORIENTING_SIMULATOR;
-      return TRUE;
-    }
-
+  if (placement_status == PLACING_SIMULATOR) {
+    new_simulator = *world_point;
+    cursor = gdk_cursor_new(GDK_EXCHANGE);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    placement_status = ORIENTING_SIMULATOR;
+    return TRUE;
+  }
+  
   if (placement_status == ORIENTING_ROBOT || 
       (placement_status == NO_PLACEMENT && 
        ((event->button == 2 && (event->state & GDK_CONTROL_MASK)) ||
-	(event->button == 3 && (event->state & GDK_CONTROL_MASK)))))
-    { 
-      placement_status = NO_PLACEMENT;
-
-      if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
-	return TRUE;    
-      
-      if (carmen_get_time_ms() - last_navigator_update > 30 &&
-	  carmen_get_time_ms() - last_simulator_update < 30)
-	{
-	  angle = atan2(world_point->pose.y - simulator_trueposition.pose.y, 
-			world_point->pose.x - simulator_trueposition.pose.x);
-	  simulator_trueposition.pose.theta = angle;
-	  navigator_update_robot(&simulator_trueposition);
-	}
-      else 
-	{
-	  angle = atan2(world_point->pose.y - robot.pose.y, 
-			world_point->pose.x - robot.pose.x);    
-	  robot.pose.theta = angle;
-	  last_robot = robot;
-	  navigator_update_robot(&robot);
-	}
-      cursor = gdk_cursor_new(GDK_LEFT_PTR);
-      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+	(event->button == 3 && (event->state & GDK_CONTROL_MASK))))) { 
+    placement_status = NO_PLACEMENT;
+    
+    if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
+      return TRUE;    
+    
+    if (carmen_get_time_ms() - last_navigator_update > 30 &&
+	carmen_get_time_ms() - last_simulator_update < 30) {
+      angle = atan2(world_point->pose.y - simulator_trueposition.pose.y, 
+		    world_point->pose.x - simulator_trueposition.pose.x);
+      simulator_trueposition.pose.theta = angle;
+      navigator_update_robot(&simulator_trueposition);
+    } else {
+      angle = atan2(world_point->pose.y - robot.pose.y, 
+		    world_point->pose.x - robot.pose.x);    
+      robot.pose.theta = angle;
+      last_robot = robot;
+      navigator_update_robot(&robot);
     }
+    cursor = gdk_cursor_new(GDK_LEFT_PTR);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+  }
 
-  if (placement_status == ORIENTING_PERSON)
-    {
-      placement_status = NO_PLACEMENT;
-
-      angle = atan2(world_point->pose.y - new_person.pose.y, 
-		    world_point->pose.x - new_person.pose.x);    
-      speed = hypot(world_point->pose.y - new_person.pose.y, 
-		    world_point->pose.x - new_person.pose.x);
-      speed /= 10;
-      new_person.pose.theta = angle;
-      carmen_simulator_set_object(&(new_person.pose), speed, 
-				  CARMEN_SIMULATOR_RANDOM_OBJECT);
-      cursor = gdk_cursor_new(GDK_LEFT_PTR);
-      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-      return TRUE;
-    }
+  if (placement_status == ORIENTING_PERSON) {
+    placement_status = NO_PLACEMENT;
+    
+    angle = atan2(world_point->pose.y - new_person.pose.y, 
+		  world_point->pose.x - new_person.pose.x);    
+    speed = hypot(world_point->pose.y - new_person.pose.y, 
+		  world_point->pose.x - new_person.pose.x);
+    speed /= 10;
+    new_person.pose.theta = angle;
+    carmen_simulator_set_object(&(new_person.pose), speed, 
+				CARMEN_SIMULATOR_RANDOM_OBJECT);
+    cursor = gdk_cursor_new(GDK_LEFT_PTR);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    return TRUE;
+  }
   
-  if (placement_status == ORIENTING_SIMULATOR)
-    {
-      placement_status = NO_PLACEMENT;
-      angle = atan2(world_point->pose.y - new_person.pose.y, 
-		    world_point->pose.x - new_person.pose.x);    
-      new_simulator.pose.theta = angle;
-      carmen_simulator_set_truepose(&(new_simulator.pose));
-      cursor = gdk_cursor_new(GDK_LEFT_PTR);
-      gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
-      return TRUE;
-    }
+  if (placement_status == ORIENTING_SIMULATOR) {
+    placement_status = NO_PLACEMENT;
+    angle = atan2(world_point->pose.y - new_person.pose.y, 
+		  world_point->pose.x - new_person.pose.x);    
+    new_simulator.pose.theta = angle;
+    carmen_simulator_set_truepose(&(new_simulator.pose));
+    cursor = gdk_cursor_new(GDK_LEFT_PTR);
+    gdk_window_set_cursor (the_map_view->image_widget->window, cursor);
+    return TRUE;
+  }
   
   return TRUE;
 }

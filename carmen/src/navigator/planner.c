@@ -50,100 +50,6 @@ static carmen_planner_path_t path = {NULL, 0, 0};
 
 static int goal_set = 0;
 
-#if 0
-static int 
-tracker_Compute_Path(void)
-{
-
-  /* We may need to convert the target position at some time in the
-     futures from robot to map coordinates
-     map_point_t target_map_position; 
-   
-     A bit of a hack-- we'll add an entire trajectory of
-     path points that are the tracked target. This way, if the 
-     target gets too close (within navigator's goal region)
-     we won't immediately step out of autonomous mode. Rather, we'll simply
-     keep switching goal points. We only need 2 points for this two work
-     I believe, */
-
-  carmen_planner_util_clear_path(&path);
-
-  /* The conversion of the tracker message has to go on here. 
-     I believe the tracker coordinates are robot centric, and thus need to
-     be converted to map centric. */
-
-  //if (robot_to_map(new_position, &new_map_position, &(carmen_planner_map->config)) < 0) 
-  //  return -1;
-
-  if (targmsg.num_people > 0 && targmsg.person_active[0] == 1){
-    carmen_Planner_Add_Path_Point(targmsg.person_mean[0].x/robot.resolution,
-				  targmsg.person_mean[0].y/robot.resolution);
-    carmen_Planner_Add_Path_Point(targmsg.person_mean[0].x/robot.resolution,
-				  targmsg.person_mean[0].y/robot.resolution);
-    carmen_verbose("Robot: %d %d Person: %.0f %.0f\n", robot.x, robot.y,
-		   targmsg.person_mean[0].x/robot.resolution,targmsg.person_mean[0].y/robot.resolution);
-  }
-  else {
-    //     carmen_warn("Couldn't find person to track! num_people: %d active[0]: %d\n",
-    //	  targmsg.num_people, targmsg.person_active[0]);
-    //     carmen_warn("Waypoint set to current robot position.");
-    carmen_Planner_Add_Path_Point(robot.x,robot.y);
-    carmen_Planner_Add_Path_Point(robot.x,robot.y);
-  }
-  carmen_warn("r");
-  return 0;
-
-}
-
-//This version is much simplified since it seems there's little point in
-//doing a lot of calculation of paths when the person is going to move
-static int 
-robust_extract_path(void) 
-{
-  int position;
-
-  carmen_map_point_t cur_point;
-  carmen_map_point_t prev_point;
-  carmen_map_point_t map_goal;
-
-  carmen_traj_point_t path_point;
-
-  if (!have_plan) 
-    return -1;
-
-  carmen_planner_clear_path();
-
-  carmen_planner_add_path_point(robot);
-  carmen_trajectory_to_map(&robot, &cur_point, carmen_planner_map);
-
-  map_goal.x = carmen_round(goal.x / carmen_planner_map->config.resolution);
-  map_goal.y = carmen_round(goal.y / carmen_planner_map->config.resolution);
-  map_goal.map = carmen_planner_map;
-
-  (*find_best_action)(&cur_point);
-
-  carmen_map_to_trajectory(&cur_point, &path_point);
-  
-  position = carmen_planner_add_path_point(path_point);
-
-  prev_point = cur_point;
-  prev_point.x--;
-  prev_point.y--;
-  
-  //while we've moved at all...
-  while (cur_point.x != prev_point.x || cur_point.y != prev_point.y) {
-    prev_point = cur_point;
-    (*find_best_action)(&cur_point);
-    if (cur_point.x == map_goal.x && cur_point.y == map_goal.y) 
-      return 0;
-
-    carmen_map_to_trajectory(&cur_point, &path_point);    
-    position = carmen_planner_add_path_point(path_point);
-  }
-  return 0;
-}
-#endif
-
 static int 
 extract_path_from_value_function(void) 
 {
@@ -310,113 +216,77 @@ regenerate_trajectory(carmen_navigator_config_t *nav_conf)
   if (fabs(robot.x) < 0.1 && fabs(robot.y) < 0.1)
     return;
 
-#if 0
-  if (current_planner == CARMEN_NAVIGATOR_TRACKER_v )
-    {
-      carmen_verbose("Calling tracker_Compute_Path\n");
-      tracker_Compute_Path();
-      return;
-    }
-
-  if (current_planner == CARMEN_NAVIGATOR_ROBUST_DP_v) 
-    {
-      if (robust_extract_path() < 0) 
-	{
-	  carmen_planner_clear_path();
-	  return;
-	}  
-      carmen_verbose("Regenerating robust trajectory\n  ");
-      for (index = 0; index < path.length; 
-	   index++) 
-	{
-	  path_point = carmen_planner_get_path_point(index);
-	  carmen_verbose("%.1f %.1f %.1f %.2f\n", path_point->x, path_point->y, 
-			 carmen_radians_to_degrees(path_point->theta), 
-			 path_point->t_vel);
-	}
-      return;
-    }
-#endif
-
   gettimeofday(&start, NULL);
   if (extract_path_from_value_function() < 0) 
-    {
-      carmen_planner_util_clear_path(&path);
-    } 
+    carmen_planner_util_clear_path(&path);
 	
-  else /* if (extract_path_from_value_function() < 0) ... */
-    {
-      if (nav_conf->smooth_path)
-	smooth_path(nav_conf);
-      //	  Refine_Path_Using_Velocities();
-
-      /* Add path orientations in */
-      index = 1;
-      while (index < path.length-1) 
-	{
-	  path.points[index].theta = 
-	    atan2(path.points[index+1].y-path.points[index].y,
-		  path.points[index+1].x-path.points[index].x);
-	  index++;
-	}
-      if (path.length > 1)
-	{
-	  if (allow_any_orientation)
-	    path.points[path.length-1].theta = 
-	      path.points[path.length-2].theta;
-	  else
-	    path.points[path.length-1].theta = goal.theta;
-	}
-
-      /* End of adding path orientations */
-
-      gettimeofday(&end, NULL);
-      msec = end.tv_usec - start.tv_usec;
-      sec = end.tv_sec - start.tv_sec;
-      if (msec < 0) 
-	{
-	  msec += 1e6;
-	  sec--;
-	}
-      //	  carmen_verbose("Took %d sec %d msec\n", sec, msec);
-      for (index = 0; index < path.length; index++)
-	{
-	  path_point = carmen_planner_util_get_path_point(index, &path);
-	  carmen_verbose("%.1f %.1f %.1f %.2f\n", path_point->x, 
-			 path_point->y, 
-			 carmen_radians_to_degrees(path_point->theta), 
-			 path_point->t_vel);
-	}
-    } /* if (extract_path_from_value_function() < 0) ... else ... */
-	
+  else /* if (extract_path_from_value_function() < 0) ... */ {
+    if (nav_conf->smooth_path)
+      smooth_path(nav_conf);
+    //	  Refine_Path_Using_Velocities();
+    
+    /* Add path orientations in */
+    index = 1;
+    while (index < path.length-1) {
+      path.points[index].theta = 
+	atan2(path.points[index+1].y-path.points[index].y,
+	      path.points[index+1].x-path.points[index].x);
+      index++;
+    }
+    if (path.length > 1) {
+      if (allow_any_orientation)
+	path.points[path.length-1].theta = 
+	  path.points[path.length-2].theta;
+      else
+	path.points[path.length-1].theta = goal.theta;
+    }
+    
+    /* End of adding path orientations */
+    
+    gettimeofday(&end, NULL);
+    msec = end.tv_usec - start.tv_usec;
+    sec = end.tv_sec - start.tv_sec;
+    if (msec < 0) {
+      msec += 1e6;
+      sec--;
+    }
+    //	  carmen_verbose("Took %d sec %d msec\n", sec, msec);
+    for (index = 0; index < path.length; index++) {
+      path_point = carmen_planner_util_get_path_point(index, &path);
+      carmen_verbose("%.1f %.1f %.1f %.2f\n", path_point->x, 
+		     path_point->y, 
+		     carmen_radians_to_degrees(path_point->theta), 
+		     path_point->t_vel);
+    }
+  } /* if (extract_path_from_value_function() < 0) ... else ... */
 }
 
 int 
 carmen_planner_update_robot(carmen_traj_point_p new_position, 
 			    carmen_navigator_config_t *nav_conf)
 {
-  carmen_traj_point_t old_position;
+  static carmen_traj_point_t old_position;
+  static int first_time = 1;
 
   if (!carmen_planner_map)
     return 0;
 
   if (new_position->x < 0 || new_position->y < 0 || 
       new_position->x > 
-      carmen_planner_map->config.resolution*carmen_planner_map->config.x_size ||
+      carmen_planner_map->config.resolution*
+      carmen_planner_map->config.x_size ||
       new_position->y > 
       carmen_planner_map->config.resolution*carmen_planner_map->config.y_size)
     return 0;
       
-  old_position = robot;
   robot = *new_position;
 
-  if (carmen_distance_traj(new_position, &old_position) < 
+  if (!first_time && carmen_distance_traj(new_position, &old_position) < 
       carmen_planner_map->config.resolution) 
     return 0;
 
-  /*   carmen_navigator_publish_status(); */
-
   regenerate_trajectory(nav_conf);
+  old_position = *new_position;
 
   return 1;
 }
@@ -503,18 +373,15 @@ carmen_planner_get_status(carmen_planner_status_p status)
   status->robot = robot;
   status->goal_set = goal_set;
   status->path.length = path.length;
-  if (status->path.length > 0) 
-    {
-      status->path.points = (carmen_traj_point_p)
-	calloc(status->path.length, sizeof(carmen_traj_point_t));
-      carmen_test_alloc(status->path.points);
-      for (index = 0; index < status->path.length; index++)
-	status->path.points[index] = path.points[index];
-    } 
-  else  
-    {
-      status->path.points = NULL;
-    }
+  if (status->path.length > 0) {
+    status->path.points = (carmen_traj_point_p)
+      calloc(status->path.length, sizeof(carmen_traj_point_t));
+    carmen_test_alloc(status->path.points);
+    for (index = 0; index < status->path.length; index++)
+      status->path.points[index] = path.points[index];
+  } else  {
+    status->path.points = NULL;
+  }
   return;
 }
 

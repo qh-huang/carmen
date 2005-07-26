@@ -56,6 +56,7 @@ PUBLIC_BINARIES += navigator_panel test_panel_config
 TARGETS += navigator_panel test_map_modify test_panel_config
 endif
 
+all:
 
 navigator: navigator.o navigator_ipc.o conventional.o planner.o \
 	trajectory.o map_modify.o
