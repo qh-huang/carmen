@@ -585,14 +585,10 @@ read_commandline(int argc, char **argv)
     if (carmen_map_file(argv[cur_arg]) && map_filename)
       usage(argv[0], "too many map files given: %s and %s", map_filename,
 	    argv[cur_arg]);
-    carmen_warn("Testing %s: %d\n", argv[cur_arg], 
-		carmen_map_file(argv[cur_arg]));
     if (carmen_map_file(argv[cur_arg])) {
       map_filename = (char *)calloc(strlen(argv[cur_arg])+1, sizeof(char));
       carmen_test_alloc(map_filename);
       strcpy(map_filename, argv[cur_arg]);
-      if (cur_arg < argc-1) 
-	memcpy(argv+cur_arg, argv+cur_arg+1, (argc-cur_arg-1)*sizeof(char *));
     }
   }
     
