@@ -390,7 +390,7 @@ publish_readings(void)
   odometry.rv = simulator_config->rv;
   odometry.acceleration = simulator_config->acceleration;
 
-  odometry.timestamp = carmen_get_time_ms();
+  odometry.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
   carmen_test_ipc(err, "Could not publish base_odometry_message", 
@@ -399,7 +399,7 @@ publish_readings(void)
   position.truepose = simulator_config->true_pose;
   position.odometrypose = simulator_config->odom_pose;
 
-  position.timestamp = carmen_get_time_ms();
+  position.timestamp = carmen_get_time();
   err = IPC_publishData(CARMEN_SIMULATOR_TRUEPOS_NAME, &position);
   carmen_test_ipc(err, "Could not publish simualator_truepos_message", 
 		  CARMEN_SIMULATOR_TRUEPOS_NAME);
@@ -408,7 +408,7 @@ publish_readings(void)
   carmen_simulator_get_object_poses
     (&(objects.num_objects), &(objects.objects_list));
 
-  objects.timestamp = carmen_get_time_ms();
+  objects.timestamp = carmen_get_time();
   err = IPC_publishData(CARMEN_SIMULATOR_OBJECTS_NAME, &objects);
   carmen_test_ipc(err, "Could not publish simulator_objects_message", 
 		  CARMEN_SIMULATOR_OBJECTS_NAME);
@@ -417,7 +417,7 @@ publish_readings(void)
     {
       carmen_simulator_calc_laser_msg(&flaser, simulator_config, 0);
 
-      flaser.timestamp = carmen_get_time_ms();
+      flaser.timestamp = carmen_get_time();
       err = IPC_publishData(CARMEN_LASER_FRONTLASER_NAME, &flaser);
       carmen_test_ipc(err, "Could not publish laser_frontlaser_message", 
 		      CARMEN_LASER_FRONTLASER_NAME);
@@ -427,7 +427,7 @@ publish_readings(void)
     {
       carmen_simulator_calc_laser_msg(&rlaser, simulator_config, 1);
 
-      rlaser.timestamp = carmen_get_time_ms();
+      rlaser.timestamp = carmen_get_time();
       err = IPC_publishData(CARMEN_LASER_REARLASER_NAME, &rlaser);
       carmen_test_ipc(err, "Could not publish laser_rearlaser_message", 
 		      CARMEN_LASER_REARLASER_NAME);
@@ -437,7 +437,7 @@ publish_readings(void)
     {
       carmen_simulator_calc_sonar_msg(&sonar, simulator_config);
     
-      sonar.timestamp = carmen_get_time_ms();
+      sonar.timestamp = carmen_get_time();
       err=IPC_publishData(CARMEN_BASE_SONAR_NAME, &sonar);
       carmen_test_ipc(err, "Could not publish base_sonar_message", 
 		      CARMEN_BASE_SONAR_NAME);

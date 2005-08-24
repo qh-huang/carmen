@@ -83,24 +83,24 @@ int main(int argc, char **argv)
 
   signal(SIGINT, sig_handler);
   
-  f_timestamp = carmen_get_time_ms();
+  f_timestamp = carmen_get_time();
   while(quit>=0) {
     sleep_ipc(0.05);
     if(!no_joystick && carmen_get_joystick_state(&joystick) >= 0) {
       carmen_joystick_control(&joystick, max_tv, max_rv,
 			      &command_tv, &command_rv);
       carmen_robot_velocity_command(command_tv, command_rv);
-      f_timestamp = carmen_get_time_ms();
+      f_timestamp = carmen_get_time();
     }
     else if(carmen_read_char(&c)) {
       quit = carmen_keyboard_control(c, max_tv, max_rv,
 				     &command_tv, &command_rv);
       carmen_robot_velocity_command(command_tv, command_rv);
-      f_timestamp = carmen_get_time_ms();
+      f_timestamp = carmen_get_time();
     }
-    else if(carmen_get_time_ms() - f_timestamp > 0.5) {
+    else if(carmen_get_time() - f_timestamp > 0.5) {
       carmen_robot_velocity_command(command_tv, command_rv);
-      f_timestamp = carmen_get_time_ms();
+      f_timestamp = carmen_get_time();
     }
   }
   sig_handler(SIGINT);

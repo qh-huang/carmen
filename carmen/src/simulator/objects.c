@@ -206,7 +206,7 @@ update_random_object(int i,
 	}
     }
   object_list[i] = new;
-  object_list[i].time_of_last_update = carmen_get_time_ms();
+  object_list[i].time_of_last_update = carmen_get_time();
 }
 
 static void 
@@ -277,7 +277,7 @@ update_line_follower(carmen_object_t * object,
 	}
     }
   *object = new;
-  object->time_of_last_update = carmen_get_time_ms();
+  object->time_of_last_update = carmen_get_time();
 }
 
 
@@ -501,12 +501,12 @@ globalpos_handler(carmen_localize_globalpos_message *msg)
   object = find_object(context);
   if (object == NULL)
     return;
-  if (carmen_get_time_ms() - object->time_of_last_update > 10) 
+  if (carmen_get_time() - object->time_of_last_update > 10) 
     {
       object->x1 = msg->globalpos.x;
       object->y1 = msg->globalpos.y;
       object->theta = msg->globalpos.theta;
-      object->time_of_last_update = carmen_get_time_ms();
+      object->time_of_last_update = carmen_get_time();
     }
 }
 
@@ -536,7 +536,7 @@ simulator_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   object->x1 = msg.truepose.x;
   object->y1 = msg.truepose.y;
   object->theta = msg.truepose.theta;
-  object->time_of_last_update = carmen_get_time_ms();
+  object->time_of_last_update = carmen_get_time();
 }
 
 void 

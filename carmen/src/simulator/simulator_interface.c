@@ -190,7 +190,7 @@ carmen_simulator_query_truepos(carmen_simulator_truepos_message **carmen_simulat
   carmen_simulator_query_message msg;
   static int initialized = 0;
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   if (!initialized) 
@@ -303,7 +303,7 @@ carmen_simulator_query_objects(carmen_simulator_objects_message **carmen_simulat
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_queryResponseData(CARMEN_SIMULATOR_OBJECTS_QUERY_NAME, &msg, 
@@ -335,7 +335,7 @@ carmen_simulator_set_object(carmen_point_t *point, double speed,
   msg.pose = *point;
   msg.speed = speed;
   msg.type = type;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_SIMULATOR_SET_OBJECT_NAME, &msg);
@@ -363,7 +363,7 @@ carmen_simulator_connect_robots(char *other_central)
 
 
   msg.other_central = other_central;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_SIMULATOR_CONNECT_ROBOTS_NAME, &msg);
@@ -389,7 +389,7 @@ carmen_simulator_clear_objects(void)
     }
 
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME, &msg);
@@ -437,7 +437,7 @@ carmen_simulator_set_truepose(carmen_point_t *point)
     }
 
   msg.pose = *point;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_SIMULATOR_SET_TRUEPOSE_NAME, &msg);

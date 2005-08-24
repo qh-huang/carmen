@@ -232,7 +232,7 @@ carmen_base_reset(void)
     first = 0;
   }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_RESET_COMMAND_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_RESET_COMMAND_NAME);

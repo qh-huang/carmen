@@ -64,7 +64,7 @@ base_velocity_command(double tv, double rv)
   }
   v.tv = tv;
   v.rv = rv;
-  v.timestamp = carmen_get_time_ms();
+  v.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  

@@ -84,7 +84,7 @@ initialize_robot(void)
   if (result < 0) 
     return -1;
 
-  reset_time = carmen_get_time_ms();
+  reset_time = carmen_get_time();
 
   host = carmen_get_tenchar_host_name();
   strcpy(odometry.host, host);     
@@ -258,7 +258,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   do 
     {
       base_err = carmen_base_direct_set_velocity(vel.tv, vel.rv);
-      last_motion_command = carmen_get_time_ms();
+      last_motion_command = carmen_get_time();
       if (base_err < 0)
 	initialize_robot();
     } 
@@ -445,7 +445,7 @@ carmen_base_run(void)
       return 1;
     }  
 
-  if (moving && carmen_get_time_ms() - last_motion_command > motion_timeout)
+  if (moving && carmen_get_time() - last_motion_command > motion_timeout)
     {
       moving = 0;
       do
@@ -468,7 +468,7 @@ carmen_base_run(void)
   do
     {
       base_err = carmen_base_direct_update_status();
-      odometry.timestamp = carmen_get_time_ms();
+      odometry.timestamp = carmen_get_time();
       if (base_err < 0)
 	initialize_robot();
     }

@@ -151,14 +151,14 @@ command_robot(void)
   
   command_t command;
   int err = 0;
-  double time_elapsed = carmen_get_time_ms() - last_command;
+  double time_elapsed = carmen_get_time() - last_command;
   double current_time; 
 
   while (!robot_is_ok) {
     err = base_reset();
     if (!err) {
       robot_is_ok = 1;
-      reset_time = carmen_get_time_ms();
+      reset_time = carmen_get_time();
     }
   }
 
@@ -180,7 +180,7 @@ command_robot(void)
 	  if (err < 0) 
 	    robot_is_ok = 0;
 	  
-	  reset_time = carmen_get_time_ms();
+	  reset_time = carmen_get_time();
 	  break;
 	case SET_VELOCITY:   
 	  if(tv == 0 && rv == 0) 
@@ -245,7 +245,7 @@ command_robot(void)
 	} /* End of switch(command) */
     } /* End of while (command_stack_size > 0) */
 
-  current_time = carmen_get_time_ms();
+  current_time = carmen_get_time();
 
   odometry.timestamp = current_time;
 
@@ -331,7 +331,7 @@ initialize_robot(char *dev, int backwards_flag)
     return -1;
   }
 
-  reset_time = carmen_get_time_ms();
+  reset_time = carmen_get_time();
 
   host = carmen_get_tenchar_host_name();
   strcpy(odometry.host, host);     

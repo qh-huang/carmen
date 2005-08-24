@@ -52,7 +52,7 @@ void send_base_velocity_command(double tv, double rv)
   }
   v.tv = tv;
   v.rv = rv;
-  v.timestamp = carmen_get_time_ms();
+  v.timestamp = carmen_get_time();
 
   if (v.tv > max_allowed_tv)
     v.tv = max_allowed_tv;
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
   if (throttle_mode)
     fprintf(stderr,"3. Use the \"throttle control\" to control the speed!\n\n");
 
-  f_timestamp = carmen_get_time_ms();
+  f_timestamp = carmen_get_time();
   while(1) {
     sleep_ipc(0.1);
     if(get_joystick(axes, buttons) >= 0) {
@@ -181,9 +181,9 @@ int main(int argc, char **argv)
 	}
       }
     }
-    else if(joystick_activated && carmen_get_time_ms() - f_timestamp > 0.5) {
+    else if(joystick_activated && carmen_get_time() - f_timestamp > 0.5) {
       send_base_velocity_command(command_tv, command_rv);
-      f_timestamp = carmen_get_time_ms();
+      f_timestamp = carmen_get_time();
     }
   }
   sig_handler(SIGINT);
