@@ -259,13 +259,13 @@ static int sick_compute_checksum(unsigned char *CommData, int uLen)
 int sick_read_data(sick_laser_p laser, unsigned char *data, double timeout)
 {
   static int val, i, j, l, pos, chk1, chk2;
-  double start_time = carmen_get_time_ms();
+  double start_time = carmen_get_time();
 
   l    = BUFFER_SIZE;
   pos  = 0;
   chk1 = FALSE;
   chk2 = FALSE;
-  while(carmen_get_time_ms() - start_time < timeout) {
+  while(carmen_get_time() - start_time < timeout) {
     val = carmen_serial_numChars(laser->dev.fd);
     if(val > 0) {
       if(pos + val >= BUFFER_SIZE)
@@ -329,7 +329,7 @@ int sick_write_command(sick_laser_p laser, unsigned char command,
   check = sick_compute_checksum(buffer, length + 4);
   buffer[pos++] = check & 0x00ff;
   buffer[pos++] = check / 256;
-  carmen_serial_writen(laser->dev.fd, buffer, pos);
+  carmen_serial_writen(laser->dev.fd, (char *)buffer, pos);
 
   /* wait for acknowledgement */
   loop = 1;
@@ -686,7 +686,7 @@ void sick_install_settings(sick_laser_p laser)
   laser->dev.stopbits = laser->settings.stopbits;
   laser->dev.hwf = laser->settings.hwf;
   laser->dev.swf = laser->settings.swf;
-  strncpy(laser->dev.passwd, laser->settings.password, 8);
+  strncpy((char *)laser->dev.passwd, (const char *)laser->settings.password, 8);
   laser->dev.ttyport =
     (char *)malloc((strlen(laser->settings.device_name) + 1) * sizeof(char));
   carmen_test_alloc(laser->dev.ttyport);
@@ -894,7 +894,7 @@ static void sick_process_packet_distance(sick_laser_p laser, unsigned char *pack
     }
 
 
-    laser->timestamp = carmen_get_time_ms();
+    laser->timestamp = carmen_get_time();
   }
 }
 
@@ -943,7 +943,7 @@ static void sick_process_packet_remission(sick_laser_p laser, unsigned char *pac
 	  laser->remission[i] = packet[i * 4 + offs + 12] * 256 + packet[i * 4 + offs + 11];
     }
 
-    laser->timestamp = carmen_get_time_ms();
+    laser->timestamp = carmen_get_time();
   }
 }
 
@@ -969,7 +969,7 @@ void sick_handle_laser(sick_laser_p laser)
   bytes_available = carmen_serial_numChars(laser->dev.fd);
   if(bytes_available > LASER_BUFFER_SIZE - laser->buffer_position)
     bytes_available = LASER_BUFFER_SIZE - laser->buffer_position;
-  bytes_read = carmen_serial_readn(laser->dev.fd, laser->buffer +
+  bytes_read = carmen_serial_readn(laser->dev.fd, (char *)laser->buffer +
 				   laser->buffer_position, bytes_available);
 
   /* process at most one laser reading */

@@ -35,11 +35,11 @@ void check_parameter_settings(sick_laser_p laser)
 {
   /*********************** TYPE CHECKING **************************/
   if(laser->settings.type == PLS) {
-    strncpy(laser->settings.password, PLS_PASSWORD, 8);
+    strncpy((char *)laser->settings.password, (const char *)PLS_PASSWORD, 8);
     laser->settings.parity = E;
   } 
   if(laser->settings.type == LMS) {
-    strncpy(laser->settings.password, LMS_PASSWORD, 8);
+    strncpy((char *)laser->settings.password, (const char *)LMS_PASSWORD, 8);
     laser->settings.parity = N;
   } 
   
@@ -285,10 +285,10 @@ int carmen_laser_run(void)
     laser4_stalled = 0;
 
   if(first) {
-    last_update = carmen_get_time_ms();
+    last_update = carmen_get_time();
     first = 0;
   }
-  current_time = carmen_get_time_ms();
+  current_time = carmen_get_time();
   print_stats = (current_time - last_update > 1.0);
   if(use_laser1) {
     sick_handle_laser(&laser1);

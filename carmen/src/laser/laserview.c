@@ -224,7 +224,7 @@ Redraw(void)
   }
 
   if(laser_count % 10 == 0 || laser_count < 10)
-    framerate = laser_count / (carmen_get_time_ms() - start_time);
+    framerate = laser_count / (carmen_get_time() - start_time);
 
   sprintf(str, "Laser %d - %.1f fps", laser_num, framerate);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
@@ -293,7 +293,7 @@ start_graphics(int argc, char *argv[])
     }
   display = GDK_WINDOW_XDISPLAY(main_window->window);
   window = GDK_WINDOW_XWINDOW(main_window->window);
-  mask = XCreatePixmapFromBitmapData(display, window, data,
+  mask = XCreatePixmapFromBitmapData(display, window, (char *)data,
 				     WINDOWSIZE, WINDOWSIZE, 1, 0, 1);
   XShapeCombineMask(display, window,
 		    ShapeBounding, 0, 0, mask, ShapeIntersect);
@@ -393,7 +393,7 @@ main(int argc, char **argv)
     
   }
   signal(SIGINT, shutdown_laserview);
-  start_time = carmen_get_time_ms();
+  start_time = carmen_get_time();
   start_graphics(argc, argv);
   return 0;
 }

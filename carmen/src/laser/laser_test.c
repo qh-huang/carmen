@@ -52,7 +52,7 @@ void print_statistics(void *clientdata __attribute__ ((unused)),
 		      unsigned long t1 __attribute__ ((unused)), 
 		      unsigned long t2 __attribute__ ((unused)))
 {
-  double current_timestamp = carmen_get_time_ms();
+  double current_timestamp = carmen_get_time();
 
   fprintf(stderr, "L1 - %.2f Hz      L2 - %.2f Hz\n", 
 	  front_laser_count / (current_timestamp - first_timestamp),
@@ -70,7 +70,7 @@ int main(int argc __attribute__ ((unused)), char **argv)
 
   IPC_addTimer(1000, TRIGGER_FOREVER, print_statistics, NULL);
 
-  first_timestamp = carmen_get_time_ms();
+  first_timestamp = carmen_get_time();
   IPC_dispatch();
   return 0;
 }
