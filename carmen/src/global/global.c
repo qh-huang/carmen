@@ -53,9 +53,6 @@ typedef struct {
 static ini_param param_list[MAX_PARAM_NUM];
 static int param_num = 0;
 
-static double *carmen_sin_table = NULL, *carmen_cos_table = NULL;
-static int trig_table_size = -1;
-
 static int carmen_carp_verbose;
 
 int 
@@ -381,13 +378,13 @@ carmen_find_robot_name(int argc, char **argv)
 }
 
 double 
-carmen_get_time_ms(void)
+carmen_get_time(void)
 {
   struct timeval tv;
   double t;
 
   if (gettimeofday(&tv, NULL) < 0) 
-    carmen_warn("carmen_get_time_ms encountered error in gettimeofday : %s\n",
+    carmen_warn("carmen_get_time encountered error in gettimeofday : %s\n",
 		strerror(errno));
   t = tv.tv_sec + tv.tv_usec/1000000.0;
   return t;
@@ -860,28 +857,6 @@ carmen_rect_to_polar(double x, double y, double *r, double *theta)
   *r = hypot(x, y);
   *theta = atan2(y, x);
 }
-
-void 
-carmen_init_trig_tables(int size)
-{
-  int i;
-  
-  if (carmen_sin_table != NULL)
-    free(carmen_sin_table);
-  if (carmen_cos_table != NULL)
-    free(carmen_cos_table);
-  carmen_sin_table = (double *)calloc(size, sizeof(double));
-  carmen_test_alloc(carmen_sin_table);
-  carmen_cos_table = (double *)calloc(size, sizeof(double));
-  carmen_test_alloc(carmen_cos_table);
-  trig_table_size = size;
-  for (i = 0; i < size; i++) 
-    {
-      carmen_sin_table[i] = sin((i - size / 2.0) * M_PI / (double)size);
-      carmen_cos_table[i] = cos((i - size / 2.0) * M_PI / (double)size);
-    }
-}
-
 
 unsigned int
 carmen_generate_random_seed(void)

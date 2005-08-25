@@ -108,7 +108,7 @@ typedef struct {
 #define carmen_blue_code "[34;1m"
 #define carmen_normal_code "[0m"
 
-#define carmen_time_code(code, str) { double time_code_t1, time_code_t2; time_code_t1 = carmen_get_time_ms(); code; time_code_t2 = carmen_get_time_ms(); fprintf(stderr, "%-20s : %.2f ms.\n", str, (time_code_t2 - time_code_t1) * 1000.0); }
+#define carmen_time_code(code, str) { double time_code_t1, time_code_t2; time_code_t1 = carmen_get_time(); code; time_code_t2 = carmen_get_time(); fprintf(stderr, "%-20s : %.2f ms.\n", str, (time_code_t2 - time_code_t1) * 1000.0); }
 
 void carmen_test_ipc(IPC_RETURN_TYPE err, const char *err_msg, const char *ipc_msg);
 
@@ -163,13 +163,13 @@ void carmen_carp_set_verbose(int verbosity);
 int carmen_carp_get_verbose(void);
 void carmen_carp_set_output(FILE *output);
 
-extern inline double carmen_get_time_ms(void)
+extern inline double carmen_get_time(void)
 {
   struct timeval tv;
   double t;
 
   if (gettimeofday(&tv, NULL) < 0) 
-    carmen_warn("carmen_get_time_ms encountered error in gettimeofday : %s\n",
+    carmen_warn("carmen_get_time encountered error in gettimeofday : %s\n",
 	      strerror(errno));
   t = tv.tv_sec + tv.tv_usec/1000000.0;
   return t;
@@ -289,9 +289,6 @@ void carmen_set_random_seed(unsigned int seed);
 int carmen_int_random(int max);
 double carmen_uniform_random(double min, double max);
 double carmen_gaussian_random(double mean, double std);
-
-extern double *carmen_sin_table, *carmen_cos_table;
-extern int carmen_trig_table_size;
 
 int carmen_file_exists(char *filename);
 char *carmen_file_extension(char *filename);
