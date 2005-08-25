@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 
   lines = 0; fend = 0;
   do{
-    if ((s = fgets(&(f[fptr]),filesize,fp)) == NULL) {
+    if ((s = fgets(&(((char *)(f))[fptr]),filesize,fp)) == NULL) {
       fend=1;
     } else {
       len = (strlen(s)+1);
