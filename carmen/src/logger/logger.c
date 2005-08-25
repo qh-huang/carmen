@@ -62,8 +62,8 @@ void get_all_params(void)
     }
     for(index = 0; index < list_length; index++) {
       carmen_logger_write_param(modules[module_index], variables[index], 
-				values[index], carmen_get_time_ms(), 
-				hostname, outfile, carmen_get_time_ms());
+				values[index], carmen_get_time(), 
+				hostname, outfile, carmen_get_time());
       free(variables[index]);
       free(values[index]);
     }
@@ -89,7 +89,7 @@ void param_change_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   carmen_logger_write_param(msg.module_name, msg.variable_name, 
 			    msg.value, msg.timestamp, 
-			    msg.host, outfile, carmen_get_time_ms());
+			    msg.host, outfile, carmen_get_time());
 }
 
 /* Truepos message support added by Cyrill Stachniss, 10/9/2003 */
@@ -98,14 +98,14 @@ void carmen_simulator_truepos_handler(carmen_simulator_truepos_message *truepos)
 {
   fprintf(stderr, "T");
   carmen_logger_write_truepos(truepos, outfile, 
-                              carmen_get_time_ms() - logger_starttime);
+                              carmen_get_time() - logger_starttime);
 }
 
 void base_odometry_handler(carmen_base_odometry_message *odometry)
 {
   fprintf(stderr, "O");
   carmen_logger_write_odometry(odometry, outfile, 
-			       carmen_get_time_ms() - logger_starttime);
+			       carmen_get_time() - logger_starttime);
 }
 
 
@@ -113,7 +113,7 @@ void robot_frontlaser_handler(carmen_robot_laser_message *frontlaser)
 {
   fprintf(stderr, "F");
   carmen_logger_write_frontlaser(frontlaser, outfile, 
-				 carmen_get_time_ms() - logger_starttime);
+				 carmen_get_time() - logger_starttime);
 }
 
 
@@ -121,14 +121,14 @@ void laser_laser3_handler(carmen_laser_laser_message *laser)
 {
   fprintf(stderr, "3");
   carmen_logger_write_laser3(laser, outfile,
-			     carmen_get_time_ms() - logger_starttime);
+			     carmen_get_time() - logger_starttime);
 }
 
 void laser_laser4_handler(carmen_laser_laser_message *laser)
 {
   fprintf(stderr, "4");
   carmen_logger_write_laser4(laser, outfile,
-			     carmen_get_time_ms() - logger_starttime);
+			     carmen_get_time() - logger_starttime);
 }
 
 
@@ -137,28 +137,28 @@ void laser_frontlaser_remission_handler(carmen_laser_remission_message *rem)
 {
   fprintf(stderr, "f");
   carmen_logger_write_frontlaser_remission(rem, outfile,
-					   carmen_get_time_ms() - logger_starttime);
+					   carmen_get_time() - logger_starttime);
 }
 
 void laser_rearlaser_remission_handler(carmen_laser_remission_message *rem)
 {
   fprintf(stderr, "r");
   carmen_logger_write_rearlaser_remission(rem, outfile,
-					   carmen_get_time_ms() - logger_starttime);
+					   carmen_get_time() - logger_starttime);
 }
 
 void laser_laser3_remission_handler(carmen_laser_remission_message *rem)
 {
   fprintf(stderr, "3");
   carmen_logger_write_laser3_remission(rem, outfile,
-					   carmen_get_time_ms() - logger_starttime);
+					   carmen_get_time() - logger_starttime);
 }
 
 void laser_laser4_remission_handler(carmen_laser_remission_message *rem)
 {
   fprintf(stderr, "4");
   carmen_logger_write_laser4_remission(rem, outfile,
-					   carmen_get_time_ms() - logger_starttime);
+					   carmen_get_time() - logger_starttime);
 }
 // *** REI - END *** //
 
@@ -166,13 +166,13 @@ void robot_rearlaser_handler(carmen_robot_laser_message *rearlaser)
 {
   fprintf(stderr, "R");
   carmen_logger_write_rearlaser(rearlaser, outfile, 
-				carmen_get_time_ms() - logger_starttime);
+				carmen_get_time() - logger_starttime);
 }
 
 void localize_handler(carmen_localize_globalpos_message *msg)
 {
   fprintf(stderr, "L");
-  carmen_logger_write_localize(msg, outfile, carmen_get_time_ms() - logger_starttime);
+  carmen_logger_write_localize(msg, outfile, carmen_get_time() - logger_starttime);
 }
 
 static void sync_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 							 CARMEN_SUBSCRIBE_ALL);
 // *** REI - END *** //
 
-  logger_starttime = carmen_get_time_ms();
+  logger_starttime = carmen_get_time();
 
 
   signal(SIGINT, shutdown_module);

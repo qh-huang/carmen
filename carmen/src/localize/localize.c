@@ -50,7 +50,7 @@ void publish_globalpos(carmen_localize_summary_p summary)
     strcpy(globalpos.host, carmen_get_tenchar_host_name());
     first = 0;
   }
-  globalpos.timestamp = carmen_get_time_ms();
+  globalpos.timestamp = carmen_get_time();
   globalpos.globalpos = summary->mean;
   globalpos.globalpos_std = summary->std;
   globalpos.globalpos_xy_cov = summary->xy_cov;
@@ -74,7 +74,7 @@ void publish_particles(carmen_localize_particle_filter_p filter,
     strcpy(pmsg.host, carmen_get_tenchar_host_name());
     first = 0;
   }
-  pmsg.timestamp = carmen_get_time_ms();
+  pmsg.timestamp = carmen_get_time();
   pmsg.globalpos = summary->mean;
   pmsg.globalpos_std = summary->mean;
   pmsg.num_particles = filter->param->num_particles;
@@ -99,7 +99,7 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
     strcpy(sensor.host, carmen_get_tenchar_host_name());
     first = 0;
   }
-  sensor.timestamp = carmen_get_time_ms();
+  sensor.timestamp = carmen_get_time();
   if(front) {
     sensor.pose.x = summary->mean.x + filter->param->front_laser_offset *
       cos(summary->mean.theta);
@@ -291,7 +291,7 @@ static void query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   response.compressed = 0;
 #endif
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   
   err = IPC_respondData(msgRef, CARMEN_LOCALIZE_MAP_NAME, &response);

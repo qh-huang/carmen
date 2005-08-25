@@ -85,7 +85,7 @@ int main(int argc, char **argv)
   carmen_test_alloc(localize_msg);
   carmen_localize_subscribe_globalpos_message(localize_msg, NULL, CARMEN_SUBSCRIBE_ALL);
 
-  logger_starttime = carmen_get_time_ms();
+  logger_starttime = carmen_get_time();
 
 
   signal(SIGINT, shutdown_module);

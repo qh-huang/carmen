@@ -255,7 +255,7 @@ laser_frontlaser_handler(void)
 
   check_message_data_chunk_sizes(&front_laser);
 
-  front_laser_local_timestamp = carmen_get_time_ms();
+  front_laser_local_timestamp = carmen_get_time();
   if(front_laser_count <= ESTIMATES_CONVERGE)
     front_laser_count++;
 
@@ -435,7 +435,7 @@ laser_rearlaser_handler(void)
 
   check_message_data_chunk_sizes(&rear_laser);
 
-  rear_laser_local_timestamp = carmen_get_time_ms();
+  rear_laser_local_timestamp = carmen_get_time();
   if(rear_laser_count <= ESTIMATES_CONVERGE)
     rear_laser_count++;
 

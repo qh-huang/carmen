@@ -242,8 +242,8 @@ void wait_for_timestamp(double ts)
   double current_time;
   
   if(playback_starttime == 0.0)
-    playback_starttime = carmen_get_time_ms() - ts;
-  current_time = carmen_get_time_ms() - playback_starttime;
+    playback_starttime = carmen_get_time() - ts;
+  current_time = carmen_get_time() - playback_starttime;
   if(!fast && !paused && ts > current_time)
     usleep((ts - current_time) * 1e6);
 }

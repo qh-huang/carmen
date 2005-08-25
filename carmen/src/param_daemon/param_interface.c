@@ -235,7 +235,7 @@ carmen_param_get_robot(void)
   carmen_param_response_robot_message *response;
   char *robot_name = NULL;
 
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = "paramServer";
   query.variable_name = "robot";
@@ -274,7 +274,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   if (modules == NULL || num_modules == NULL)
     return -1;
 
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
 
   query.module_name = "paramServer";
@@ -330,7 +330,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
   if (module == NULL || module[0] == '\0' || list_length == NULL)
     return -1;
   
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module;
   query.variable_name = "*";
@@ -425,7 +425,7 @@ carmen_param_get_int(char *variable, int *return_value)
   if (commandline_return != 0)
     return commandline_return;
 
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -490,7 +490,7 @@ carmen_param_get_double(char *variable, double *return_value)
   if (commandline_return != 0)
     return commandline_return;
 
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -556,7 +556,7 @@ carmen_param_get_onoff(char *variable, int *return_value)
   if (commandline_return != 0)
     return commandline_return;
 
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -621,7 +621,7 @@ carmen_param_get_string(char *variable, char **return_value)
   if (commandline_return != 0)
     return commandline_return;
   
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -691,7 +691,7 @@ carmen_param_get_filename(char *variable, char **return_value)
   if (commandline_return != 0)
     return commandline_return;
   
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -760,7 +760,7 @@ carmen_param_get_directory(char *variable, char **return_value)
   if (commandline_return != 0)
     return commandline_return;
   
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;
@@ -848,7 +848,7 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
       new_value[0] == '\0')
     return -1;
   
-  query.timestamp = carmen_get_time_ms();
+  query.timestamp = carmen_get_time();
   strcpy(query.host, carmen_get_tenchar_host_name());
   query.module_name = module_name;
   query.variable_name = variable;

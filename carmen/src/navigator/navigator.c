@@ -78,7 +78,7 @@ static void base_odometry_handler(void)
       
       odometry_initialised = 1;
       
-      last_message = carmen_get_time_ms();
+      last_message = carmen_get_time();
     } /* if (odometry_initialised) ... else */
   
   robot_position.t_vel = corrected_odometry.tv;
@@ -214,6 +214,9 @@ generate_next_motion_command(void)
   int is_goal;
   command_t command;
   carmen_planner_status_t status;
+
+  command.tv = 0;
+  command.rv = 0;
 
   waypoint = robot_position;
 

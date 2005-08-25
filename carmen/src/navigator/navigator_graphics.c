@@ -769,10 +769,10 @@ static void
 do_redraw(void)
 {
   if (display_needs_updating &&
-      (carmen_get_time_ms() - time_of_last_redraw > 0.3 || ALWAYS_REDRAW))
+      (carmen_get_time() - time_of_last_redraw > 0.3 || ALWAYS_REDRAW))
     {
       carmen_map_graphics_redraw(map_view);
-      time_of_last_redraw = carmen_get_time_ms();
+      time_of_last_redraw = carmen_get_time();
       display_needs_updating = 0;
     }
 }
@@ -803,7 +803,8 @@ static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
 
 }
 
-static void draw_gaussians(GtkMapViewer *the_map_view, double pixel_size)
+static void draw_gaussians(GtkMapViewer *the_map_view, 
+			   double pixel_size __attribute__ ((unused)))
 {
   carmen_world_point_t mean;
 
@@ -1134,8 +1135,8 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
    */
 
   if (placement_status == ORIENTING_ROBOT) {
-    if (carmen_get_time_ms() - last_navigator_update > 30 &&
-	carmen_get_time_ms() - last_simulator_update < 30)
+    if (carmen_get_time() - last_navigator_update > 30 &&
+	carmen_get_time() - last_simulator_update < 30)
       draw_point = &simulator_trueposition;
     else
       draw_point = &robot;
@@ -1300,8 +1301,8 @@ button_release_handler(GtkMapViewer *the_map_view,
     if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
       return TRUE;    
     
-    if (carmen_get_time_ms() - last_navigator_update > 30 &&
-	carmen_get_time_ms() - last_simulator_update < 30) {
+    if (carmen_get_time() - last_navigator_update > 30 &&
+	carmen_get_time() - last_simulator_update < 30) {
       angle = atan2(world_point->pose.y - simulator_trueposition.pose.y, 
 		    world_point->pose.x - simulator_trueposition.pose.x);
       simulator_trueposition.pose.theta = angle;
@@ -1783,7 +1784,7 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   if (!map_view->internal_map)
     return;
 
-  if (time_of_simulator_update - carmen_get_time_ms() > 30)
+  if (time_of_simulator_update - carmen_get_time() > 30)
     {
       gtk_widget_hide(simulator_box);
       gtk_widget_show(filler_box);
@@ -1841,7 +1842,7 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   sprintf(buffer, "Goal: %.1f m, %.1f m", goal.pose.x, goal.pose.y);
   gtk_label_set_text(GTK_LABEL(goal_status_label), buffer);
 
-  last_navigator_update = carmen_get_time_ms();
+  last_navigator_update = carmen_get_time();
 
   do_redraw();
 }
@@ -1894,7 +1895,7 @@ navigator_graphics_get_current_path(void)
 void
 navigator_graphics_update_simulator_truepos(carmen_point_t truepose)
 {
-  time_of_simulator_update = carmen_get_time_ms();
+  time_of_simulator_update = carmen_get_time();
   if (simulator_hidden)
     {
       gtk_widget_show_all(simulator_box);
@@ -1906,7 +1907,7 @@ navigator_graphics_update_simulator_truepos(carmen_point_t truepose)
 
   simulator_trueposition.pose = truepose;
   simulator_trueposition.map = map_view->internal_map;
-  last_simulator_update = carmen_get_time_ms();
+  last_simulator_update = carmen_get_time();
 }
 
 void navigator_graphics_update_simulator_objects(int num_objects, 

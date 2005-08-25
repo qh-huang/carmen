@@ -174,7 +174,7 @@ static void sonar_handler(void)
 
   check_message_data_chunk_sizes();
   
-  sonar_local_timestamp = carmen_get_time_ms();
+  sonar_local_timestamp = carmen_get_time();
   if(sonar_count <= ESTIMATES_CONVERGE)
     sonar_count++;
 

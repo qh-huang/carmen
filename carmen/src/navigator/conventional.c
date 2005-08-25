@@ -532,7 +532,7 @@ carmen_conventional_dynamic_program(int goal_x, int goal_y)
 
   gettimeofday(&start_time, NULL);
 
-  cur_time = carmen_get_time_ms();
+  cur_time = carmen_get_time();
   if ((int)(cur_time - last_print) > 10)
     {
       carmen_verbose("Time since last DP: %d secs, %d usecs\n", (int)(cur_time - last_time),

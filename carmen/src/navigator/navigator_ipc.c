@@ -41,7 +41,7 @@ void carmen_navigator_publish_status(void)
   carmen_navigator_status_message status_msg;
   IPC_RETURN_TYPE err;
 
-  status_msg.timestamp = carmen_get_time_ms();
+  status_msg.timestamp = carmen_get_time();
   strcpy(status_msg.host, carmen_get_tenchar_host_name());
   carmen_planner_get_status(&status);
 
@@ -63,7 +63,7 @@ void carmen_navigator_publish_autonomous_stopped(carmen_navigator_reason_t
   carmen_navigator_autonomous_stopped_message msg;
   IPC_RETURN_TYPE err;
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
   msg.reason = reason;
   
@@ -85,7 +85,7 @@ static void navigator_status_query_handler(MSG_INSTANCE msgRef,
   formatter = IPC_msgInstanceFormatter(msgRef);
   IPC_freeByteArray(callData);
   
-  status_msg.timestamp = carmen_get_time_ms();
+  status_msg.timestamp = carmen_get_time();
   strcpy(status_msg.host, carmen_get_tenchar_host_name());
   carmen_planner_get_status(&status);
 
@@ -130,7 +130,7 @@ void carmen_navigator_publish_plan(void)
 
   static carmen_planner_path_t prev_path = {NULL, 0, 0};
 
-  plan_msg.timestamp = carmen_get_time_ms();
+  plan_msg.timestamp = carmen_get_time();
   strcpy(plan_msg.host, carmen_get_tenchar_host_name());
 
   carmen_planner_get_status(&status);
@@ -179,7 +179,7 @@ static void navigator_plan_query_handler(MSG_INSTANCE msgRef,
   formatter = IPC_msgInstanceFormatter(msgRef);
   IPC_freeByteArray(callData);
   
-  plan_msg.timestamp = carmen_get_time_ms();
+  plan_msg.timestamp = carmen_get_time();
   strcpy(plan_msg.host, carmen_get_tenchar_host_name());
 
   carmen_planner_get_status(&status);
@@ -266,7 +266,7 @@ static void navigator_set_goal_place_handler(MSG_INSTANCE msgRef,
     response.error = carmen_new_string("No such place");
   }
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_NAVIGATOR_RETURN_CODE_NAME, &response);
@@ -361,7 +361,7 @@ static void navigator_map_request_handler(MSG_INSTANCE msgRef,
   map_msg->compressed = 0;
 #endif
 
-  map_msg->timestamp = carmen_get_time_ms();
+  map_msg->timestamp = carmen_get_time();
   strcpy(map_msg->host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_NAVIGATOR_MAP_NAME, map_msg);

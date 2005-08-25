@@ -13,7 +13,7 @@ navigator_display_config(char *attribute, int value)
     }
   else
     {
-      msg.timestamp = carmen_get_time_ms();
+      msg.timestamp = carmen_get_time();
       strcpy(msg.host, carmen_get_tenchar_host_name());
       msg.attribute = attribute;
       msg.value = value;

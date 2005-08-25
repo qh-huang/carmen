@@ -601,7 +601,7 @@ carmen_robot_velocity_command(double tv, double rv)
 
   v.tv = tv;
   v.rv = rv;
-  v.timestamp = carmen_get_time_ms();
+  v.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_ROBOT_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_VELOCITY_NAME);
@@ -624,7 +624,7 @@ carmen_robot_move_along_vector(double distance, double theta)
   }
   msg.distance = distance;
   msg.theta = theta;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_ROBOT_VECTOR_MOVE_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_VECTOR_MOVE_NAME);
@@ -653,7 +653,7 @@ carmen_robot_follow_trajectory(carmen_traj_point_t *trajectory,
   msg.trajectory_length = trajectory_length;
   msg.robot_position = *robot;
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 
@@ -680,7 +680,7 @@ carmen_robot_send_base_binary_command(char *data, int length)
   msg.data = data;
   msg.size = length;
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_BINARY_COMMAND_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 

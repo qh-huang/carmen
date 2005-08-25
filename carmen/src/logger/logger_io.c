@@ -202,7 +202,7 @@ carmen_logger_write_sync(carmen_logger_sync_message *sync_message,
 			 carmen_logger_file_p outfile) {
   carmen_logger_fprintf(outfile, "SYNC %s %f %s %f\n", sync_message->tag,
 			sync_message->timestamp, sync_message->host,
-			carmen_get_time_ms());
+			carmen_get_time());
 }
 
 void carmen_logger_write_localize(carmen_localize_globalpos_message *msg, 

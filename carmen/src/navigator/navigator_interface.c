@@ -205,7 +205,7 @@ carmen_navigator_query_status(carmen_navigator_status_message **status_msg)
   carmen_navigator_query_message msg;
   static int initialized = 0;
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   if (!initialized) 
@@ -317,7 +317,7 @@ carmen_navigator_query_plan(carmen_navigator_plan_message **plan_msg)
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_queryResponseData(CARMEN_NAVIGATOR_PLAN_QUERY_NAME, &msg, 
@@ -429,7 +429,7 @@ carmen_navigator_set_goal(double x, double y)
 
   msg.x = x;
   msg.y = y;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_NAVIGATOR_SET_GOAL_NAME, &msg);
@@ -457,7 +457,7 @@ carmen_navigator_set_goal_triplet(carmen_point_p goal)
 
 
   msg.goal = *goal;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_NAVIGATOR_SET_GOAL_TRIPLET_NAME, &msg);
@@ -488,7 +488,7 @@ carmen_navigator_set_goal_place(char *placename)
 
 
   msg.placename = placename;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_queryResponseData(CARMEN_NAVIGATOR_SET_GOAL_PLACE_NAME, &msg, 
@@ -527,7 +527,7 @@ carmen_navigator_stop(void)
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_NAVIGATOR_STOP_NAME, &msg);
@@ -553,7 +553,7 @@ carmen_navigator_go(void)
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_publishData(CARMEN_NAVIGATOR_GO_NAME, &msg);
@@ -592,7 +592,7 @@ carmen_navigator_get_map(carmen_navigator_map_t map_type,
     }
 
   msg.map_type = map_type;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_queryResponseData(CARMEN_NAVIGATOR_MAP_REQUEST_NAME, &msg, 

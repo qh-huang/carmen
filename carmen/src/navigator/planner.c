@@ -187,7 +187,7 @@ plan(carmen_navigator_config_t *nav_conf)
 
   if (nav_conf->replan_frequency > 0)
     {
-      if (carmen_get_time_ms() - last_plan_time < 
+      if (carmen_get_time() - last_plan_time < 
 	  1.0/nav_conf->replan_frequency)
 	return;
     }
@@ -197,7 +197,7 @@ plan(carmen_navigator_config_t *nav_conf)
 
   carmen_verbose("Doing DP to %d %d\n", goal_x, goal_y);
   carmen_conventional_dynamic_program(goal_x , goal_y);
-  last_plan_time = carmen_get_time_ms();
+  last_plan_time = carmen_get_time();
   old_goal_x = goal_x;
   old_goal_y = goal_y;
   old_robot = robot;
@@ -472,8 +472,6 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
     dbl_ptr = carmen_conventional_get_costs_ptr();
     if (dbl_ptr == NULL) {
       reply->size = 0;
-      /*    gcc 3.3.3 does not compile with: */
-      /*     (int)(reply->map_type) = -1; */
       reply->map_type = -1;
       return reply;
     }
@@ -493,8 +491,6 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
     dbl_ptr = carmen_conventional_get_utility_ptr();
     if (dbl_ptr == NULL) {
       reply->size = 0;
-      /*    gcc 3.3.3 does not compile with: */
-      /*      (int)(reply->map_type) = -1; */
       reply->map_type = -1; 
       return reply;
     }
@@ -513,8 +509,6 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
   default:
     carmen_warn("Request for unsupported data type : %d.\n", map_type);
     reply->size = 0;
-    /*    gcc 3.3.3 does not compile with: */
-    /*    (int)(reply->map_type) = -1; */
     reply->map_type = -1;
     return reply;
   }

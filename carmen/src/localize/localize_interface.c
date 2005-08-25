@@ -472,7 +472,7 @@ carmen_localize_initialize_gaussian_command(carmen_point_t mean,
 
       first = 0;
     }
-  init.timestamp = carmen_get_time_ms();
+  init.timestamp = carmen_get_time();
 
   init.distribution = CARMEN_INITIALIZE_GAUSSIAN;
   init.num_modes = 1;
@@ -499,7 +499,7 @@ void carmen_localize_initialize_uniform_command(void)
 
       first = 0;
     }
-  init.timestamp = carmen_get_time_ms();
+  init.timestamp = carmen_get_time();
     
   init.distribution = CARMEN_INITIALIZE_UNIFORM;
   init.num_modes = 0;
@@ -524,7 +524,7 @@ void carmen_localize_initialize_placename_command(char *placename)
 			 CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME);
     first = 0;
   }
-  init.timestamp = carmen_get_time_ms();
+  init.timestamp = carmen_get_time();
   init.placename = placename;
   err = IPC_publishData(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, &init);
   carmen_test_ipc(err, "Could not publish", 
@@ -648,7 +648,7 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
     }
 
   msg.global = global;
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   strcpy(msg.host, carmen_get_tenchar_host_name());
 
   err = IPC_queryResponseData(CARMEN_LOCALIZE_QUERY_NAME, &msg, 

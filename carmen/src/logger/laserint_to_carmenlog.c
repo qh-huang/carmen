@@ -71,8 +71,8 @@ void get_all_params(FILE *outfile)
     }
     for(index = 0; index < list_length; index++) {
       carmen_logger_write_param(modules[module_index], variables[index], 
-				values[index], carmen_get_time_ms(), 
-				hostname, outfile, carmen_get_time_ms());
+				values[index], carmen_get_time(), 
+				hostname, outfile, carmen_get_time());
       free(variables[index]);
       free(values[index]);
     }

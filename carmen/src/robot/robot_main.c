@@ -125,7 +125,7 @@ carmen_robot_send_base_velocity_command(void)
   v.rv = carmen_clamp(-carmen_robot_config.max_r_vel, command_rv,
 		    carmen_robot_config.max_r_vel);
 
-  v.timestamp = carmen_get_time_ms();
+  v.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  
@@ -156,7 +156,7 @@ base_odometry_handler(void)
     odometry_local_timestamp[i] = odometry_local_timestamp[i + 1];
   }
   carmen_robot_odometry[MAX_READINGS - 1] = carmen_robot_latest_odometry;
-  odometry_local_timestamp[MAX_READINGS - 1] = carmen_get_time_ms();
+  odometry_local_timestamp[MAX_READINGS - 1] = carmen_get_time();
 
   carmen_running_average_add(ODOMETRY_AVERAGE, 
 			     odometry_local_timestamp[MAX_READINGS - 1]- 
@@ -217,7 +217,7 @@ publish_vector_status(double distance, double angle)
     strcpy(msg.host, carmen_get_tenchar_host_name());
     first = 0;
   }
-  msg.timestamp = carmen_get_time_ms();
+  msg.timestamp = carmen_get_time();
   msg.vector_distance = distance;
   msg.vector_angle = angle;
 
@@ -241,7 +241,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
-  time_of_last_command = carmen_get_time_ms();
+  time_of_last_command = carmen_get_time();
 
   command_rv = v.rv;
   command_tv = v.tv;
@@ -435,7 +435,7 @@ vector_move_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return
     (err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
 
-  time_of_last_command = carmen_get_time_ms();
+  time_of_last_command = carmen_get_time();
 
   following_vector = 1;
   if (following_trajectory)
@@ -469,7 +469,7 @@ follow_trajectory_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return
     (err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
 
-  time_of_last_command = carmen_get_time_ms();
+  time_of_last_command = carmen_get_time();
 
   if (msg.trajectory_length == 0)
     return;
@@ -709,7 +709,7 @@ carmen_robot_start(int argc, char **argv)
 int
 carmen_robot_run(void)
 {
-  current_time = carmen_get_time_ms();
+  current_time = carmen_get_time();
   if (current_time - time_of_last_command > robot_timeout) 
     {
       if (command_tv != 0.0) {

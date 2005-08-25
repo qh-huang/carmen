@@ -692,7 +692,7 @@ get_robot(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall",
 			 IPC_msgInstanceName(msgRef));  
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   response.robot = (char *) calloc(strlen(selected_robot) + 1, sizeof(char));
@@ -726,7 +726,7 @@ get_modules(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall",
 			 IPC_msgInstanceName(msgRef));  
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   response.modules = (char **) calloc(num_modules, sizeof(char *));
@@ -774,7 +774,7 @@ get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));  
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   response.module_name = query.module_name;
@@ -847,7 +847,7 @@ get_param_int(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   response.module_name = query.module_name;
@@ -883,7 +883,7 @@ get_param_double(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -919,7 +919,7 @@ get_param_onoff(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -963,7 +963,7 @@ get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -998,7 +998,7 @@ get_param_filename(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -1069,7 +1069,7 @@ static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   /* Respond with the new value */
 
   
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -1103,7 +1103,7 @@ publish_new_param(int index)
   if (index < 0)
     return;
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
   response.module_name = param_list[index].module_name;
   response.variable_name = param_list[index].variable_name;
@@ -1125,7 +1125,7 @@ get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
   response.minor = CARMEN_MINOR_VERSION;
   response.revision = CARMEN_REVISION;
 
-  response.timestamp = carmen_get_time_ms();
+  response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_VERSION_NAME, &response);
