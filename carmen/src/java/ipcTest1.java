@@ -1,5 +1,3 @@
-package Carmen;
-
 import IPC.*;
 
 public class ipcTest1 {

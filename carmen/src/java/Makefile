@@ -14,7 +14,7 @@ MODULE_COMMENT = Module for interfacing java programs with Carmen!
 
 SOURCES = ipcjava.c
 PUBLIC_LIBRARIES = libipcjava.so
-TARGETS = libipcjava.so Carmen.jar ipcTest1.class TestBase.class TestRobot.class
+TARGETS = libipcjava.so Carmen.jar TestBase.class TestRobot.class
 
 CLASSFILES = Carmen/*.class IPC/*.class
 
