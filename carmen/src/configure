@@ -318,9 +318,10 @@ These are the robot types CARMEN currently supports:
 4. iRobot ATRV-JR
 5. iRobot B21R
 6. Nomadic Technologies Scout
+7. OrcBoard
 EOF
 
-  my $max = 7;
+  my $max = 8;
   my ($allow_xr4000);
 
   if ($os_type eq "linux" and $kernel eq $xr4000Kernel) {
@@ -350,7 +351,7 @@ EOF
   if (length($type_string) == 0 or $type_string eq "*" or 
       $type_string eq "$max") {
     print "Very well, compiling support for all base types.\n";
-    my (@robots) = ("rflex", "pioneer", "scout");
+    my (@robots) = ("rflex", "pioneer", "scout", "orc");
     push @robots, "xr4000" if ($allow_xr4000);
     push @robots, "segway" if ($allow_segway);
     return @robots;
@@ -374,6 +375,11 @@ EOF
     elsif ($_ eq "6") {
       if ((grep {/scout/} @types) == 0) {
 	push @types, "scout";
+      }
+    }
+    elsif ($_ eq "7") {
+      if ((grep {/orc/} @types) == 0) {
+	push @types, "orc";
       }
     }
     elsif ($allow_xr4000 and $_ eq "$allow_xr4000") {

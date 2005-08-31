@@ -88,6 +88,9 @@ extern "C" {
 #include <carmen/robot_messages.h>
 #include <carmen/robot_interface.h>
 
+#include <carmen/camera_messages.h>
+#include <carmen/camera_interface.h>
+
 #include <carmen/keyctrl.h>
 
 #include <carmen/map.h>

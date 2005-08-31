@@ -1,8 +1,8 @@
 include Makefile.conf
 
-PACKAGES = ipc global param_daemon base laser \
+PACKAGES = ipc global param_daemon base laser camera_daemon \
 	   robot simulator robotgraph joystick logger mapserver vasco \
-	   localize navigator
+	   localize navigator nanny 
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
 

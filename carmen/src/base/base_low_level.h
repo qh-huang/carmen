@@ -43,14 +43,21 @@ int carmen_base_direct_set_deceleration(double deceleration);
 int carmen_base_direct_set_velocity(double tv, double rv);
 int carmen_base_direct_update_status(void);
 int carmen_base_direct_get_state(double *displacement, double *rotation,
-				 double *vl, double *vr, double *ranges,
-				 int num_sonars);
+				 double *vl, double *vr);
 int carmen_base_direct_get_integrated_state(double *x, double *y, 
 					    double *theta, double *tv, 
-					    double *rv, double *ranges,
-					    int num_sonar_ranges);
+					    double *rv);
+int carmen_base_direct_get_sonars(double *ranges, carmen_point_t *positions,
+				  int num_sonars);
+int carmen_base_direct_get_bumpers(char *state, int num_bumpers);
 int carmen_base_direct_send_binary_data(char *data, int size);
 int carmen_base_direct_get_binary_data(char **data, int *size);
+
+void carmen_base_direct_arm_get(double servos[], int num_servos, 
+				double *currents, int *gripper);
+void carmen_base_direct_arm_set(double servos[], int num_servos);
+void carmen_base_direct_arm_set_limits(double min_angle, double max_angle,
+				       int min_pwm, int max_pwm);
 
 #ifdef __cplusplus
 }

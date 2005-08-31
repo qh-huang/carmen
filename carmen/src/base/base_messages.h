@@ -67,7 +67,7 @@ typedef struct {
   int num_sonars;
   double sensor_angle;                    //width of sonar cone
   double *range;
-  carmen_point_p sonar_offsets;
+  carmen_point_p positions;
   double timestamp;
   char host[10];
 } carmen_base_sonar_message;
@@ -141,6 +141,38 @@ typedef struct {
 
 #define CARMEN_BASE_BINARY_DATA_NAME "carmen_base_binary_data"
 #define CARMEN_BASE_BINARY_DATA_FMT "{<char:2>,int,double,[char:10]}"
+
+typedef struct {
+  double *servos;
+  int num_servos;
+  double timestamp;
+  char host[10];
+} carmen_base_servo_message;
+
+
+#define CARMEN_BASE_SERVO_ARM_COMMAND_NAME  "carmen_base_servo_arm_command"
+#define CARMEN_BASE_SERVO_ARM_COMMAND_FMT "{<double:2>,int,double,[char:10]}"
+
+typedef struct {
+  double timestamp;
+  char host[10];
+} carmen_base_servo_query_message;
+
+#define CARMEN_BASE_SERVO_ARM_QUERY_NAME "carmen_base_servo_arm_query"
+#define CARMEN_BASE_SERVO_ARM_QUERY_FMT "{double, [char:10]}"
+
+typedef struct {
+  double *servos;
+  int num_servos;
+  double *servo_currents;
+  int num_currents;
+  int gripper;
+  double timestamp;
+  char host[10];
+} carmen_base_arm_state_message;
+
+#define CARMEN_BASE_SERVO_ARM_STATE_NAME "carmen_base_arm_state"
+#define CARMEN_BASE_SERVO_ARM_STATE_FMT "{<double:2>, int, <double:4>, int, int, double, [char:10]}"
 
 #ifdef __cplusplus
 }

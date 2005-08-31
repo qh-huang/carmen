@@ -43,6 +43,10 @@ void carmen_base_subscribe_sonar_message(carmen_base_sonar_message *sonar,
 					 carmen_handler_t handler,
 					 carmen_subscribe_t subscribe_how);
 
+void carmen_base_subscribe_bumper_message(carmen_base_bumper_message *bumper,
+					  carmen_handler_t handler,
+					  carmen_subscribe_t subscribe_how);
+
 void carmen_base_subscribe_reset_message(carmen_base_reset_message *sonar,
 					 carmen_handler_t handler,
 					 carmen_subscribe_t subscribe_how);

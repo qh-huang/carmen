@@ -29,9 +29,11 @@
 
 static carmen_base_odometry_message *base_odometry_pointer_external = NULL;
 static carmen_base_sonar_message *base_sonar_pointer_external = NULL;
+static carmen_base_bumper_message *base_bumper_pointer_external = NULL;
 static carmen_base_reset_message *base_reset_pointer_external = NULL;
 static carmen_handler_t base_odometry_handler_external = NULL;
 static carmen_handler_t base_sonar_handler_external = NULL;
+static carmen_handler_t base_bumper_handler_external = NULL;
 static carmen_handler_t base_reset_handler_external = NULL;
 
 static void 
@@ -151,6 +153,64 @@ carmen_base_subscribe_sonar_message(carmen_base_sonar_message *sonar,
   else
     IPC_setMsgQueueLength(CARMEN_BASE_SONAR_NAME,100);
   carmen_test_ipc(err, "Could not subscribe", CARMEN_BASE_SONAR_NAME);
+}
+
+static void 
+bumper_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err = IPC_OK;
+  FORMATTER_PTR formatter;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  if (base_bumper_pointer_external)
+    err = IPC_unmarshallData(formatter, callData, base_bumper_pointer_external,
+			     sizeof(carmen_base_bumper_message));
+  IPC_freeByteArray(callData);
+	
+  carmen_test_ipc_return(err, "Could not unmarshall data", 
+			 CARMEN_BASE_BUMPER_NAME);
+  
+  if (base_bumper_handler_external)
+    base_bumper_handler_external(base_bumper_pointer_external);
+}
+
+void
+carmen_base_subscribe_bumper_message(carmen_base_bumper_message *bumper,
+				    carmen_handler_t handler,
+				    carmen_subscribe_t subscribe_how)
+{
+  IPC_RETURN_TYPE err = IPC_OK;
+
+  err = IPC_defineMsg(CARMEN_BASE_BUMPER_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_BASE_BUMPER_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_BASE_BUMPER_NAME);
+
+  if (subscribe_how == CARMEN_UNSUBSCRIBE) 
+    {
+      IPC_unsubscribe(CARMEN_BASE_BUMPER_NAME, bumper_interface_handler);
+      return;
+    }
+
+  if(bumper)
+    base_bumper_pointer_external=bumper;
+  else if (base_bumper_pointer_external == NULL) 
+    {
+      base_bumper_pointer_external=
+	(carmen_base_bumper_message *)
+	calloc(1, sizeof(carmen_base_bumper_message));
+      carmen_test_alloc(base_odometry_pointer_external);
+    }
+
+  base_bumper_handler_external=handler;
+
+  err=IPC_subscribe(CARMEN_BASE_BUMPER_NAME, bumper_interface_handler, NULL);
+  if(subscribe_how==CARMEN_SUBSCRIBE_LATEST)
+    IPC_setMsgQueueLength(CARMEN_BASE_BUMPER_NAME,1);
+  else
+    IPC_setMsgQueueLength(CARMEN_BASE_BUMPER_NAME,100);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_BASE_BUMPER_NAME);
 }
 
 static void 

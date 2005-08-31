@@ -13,6 +13,7 @@ PUBLIC_BINARIES = laser
 TARGETS = laser laser_test liblaser_interface.a liblaser.a
 
 ifndef NO_GRAPHICS
+ifndef NO_LIBJPEG
 CFLAGS +=
 IFLAGS += `$(GTK_CONFIG) --cflags` 
 LFLAGS += -lparam_interface -lipc -lglobal -lglobal_graphics -lgdk_imlib \
@@ -22,6 +23,7 @@ PUBLIC_INCLUDES +=
 PUBLIC_LIBRARIES += 
 PUBLIC_BINARIES += laserview
 TARGETS += laserview
+endif
 endif
 
 all:
