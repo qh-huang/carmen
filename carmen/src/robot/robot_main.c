@@ -51,7 +51,7 @@ static double odometry_local_timestamp[MAX_READINGS];
 
 static int use_laser = 1;
 static int use_sonar = 1;
-static int use_bumper = 1;
+static int use_bumper = 0;
 static int use_camera = 1;
 
 static int collision_avoidance = 1;
@@ -196,6 +196,8 @@ static void base_odometry_handler(void)
     carmen_robot_correct_sonar_and_publish();
   if (use_bumper)
     carmen_robot_correct_bumper_and_publish();
+  if (use_laser)
+    carmen_robot_correct_laser_and_publish();
 }
 
 static void publish_vector_status(double distance, double angle)
