@@ -345,9 +345,9 @@ carmen_planner_update_map(carmen_robot_laser_message *laser_msg,
   if (carmen_planner_map == NULL)
     return;
 
-  world_point.pose.x = laser_msg->x;
-  world_point.pose.y = laser_msg->y;
-  world_point.pose.theta = laser_msg->theta;
+  world_point.pose.x = laser_msg->laser_location.x;
+  world_point.pose.y = laser_msg->laser_location.y;
+  world_point.pose.theta = laser_msg->laser_location.theta;
   world_point.map = carmen_planner_map;
 
   map_modify_update(laser_msg->range, laser_msg->num_readings, nav_conf, 

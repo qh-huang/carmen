@@ -102,9 +102,9 @@ robot_frontlaser_handler(carmen_robot_laser_message *msg)
 
 	carmen_localize_correct_laser(msg, &globalpos);
 
-  world_point.pose.x = msg->x;
-  world_point.pose.y = msg->y;
-  world_point.pose.theta = msg->theta;
+  world_point.pose.x = msg->laser_location.x;
+  world_point.pose.y = msg->laser_location.y;
+  world_point.pose.theta = msg->laser_location.theta;
   world_point.map = map;
 
 	nav_conf.max_range = 50.0;

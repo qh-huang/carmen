@@ -585,40 +585,38 @@ carmen_localize_correct_laser(carmen_robot_laser_message *laser,
   int backwards;
   double dr1, dt, dr2;
   double dx, dy;
+  double dtheta;
 
-  dx = laser->x - globalpos->odometrypos.x;
-  dy = laser->y - globalpos->odometrypos.y;
+  dx = laser->laser_location.x - globalpos->odometrypos.x;
+  dy = laser->laser_location.y - globalpos->odometrypos.y;
+  dtheta = laser->laser_location.theta - globalpos->odometrypos.theta;
+
   dt = sqrt(dx * dx + dy * dy);
-  backwards = (dx * cos(laser->theta) + dy * sin(laser->theta) < 0);
+  backwards = (dx * cos(laser->laser_location.theta) + 
+	       dy * sin(laser->laser_location.theta) < 0);
 
   /* The dr1/dr2 code becomes unstable if dt is too small. */
-  if(dt < 0.05) 
-    {
-      dr1 = carmen_normalize_theta(laser->theta - 
-				   globalpos->odometrypos.theta) / 2.0;
-      dr2 = dr1;
-    }
-  else 
-    {
-      if(backwards)
-	dr1 = carmen_normalize_theta(atan2(globalpos->odometrypos.y-laser->y,
-					   globalpos->odometrypos.x-laser->x)-
-				     globalpos->odometrypos.theta);
-      else
-	dr1 = carmen_normalize_theta(atan2(laser->y-globalpos->odometrypos.y, 
-					   laser->x-globalpos->odometrypos.x)-
-				     globalpos->odometrypos.theta);
-      dr2 = carmen_normalize_theta(laser->theta - globalpos->odometrypos.theta
-				   - dr1);
+  if(dt < 0.05) {
+    dr1 = carmen_normalize_theta(laser->laser_location.theta - 
+				 globalpos->odometrypos.theta) / 2.0;
+    dr2 = dr1;
+  } else {
+    if(backwards)
+      dr1 = carmen_normalize_theta(atan2(-dy, -dx)-
+				   globalpos->odometrypos.theta);
+    else
+      dr1 = carmen_normalize_theta(atan2(dy, dx)-
+				   globalpos->odometrypos.theta);
+    dr2 = carmen_normalize_theta(dtheta - dr1);
     }
   if(backwards) 
     dt = -dt;
-  laser->x = globalpos->globalpos.x + dt * 
+  laser->laser_location.x = globalpos->globalpos.x + dt * 
     cos(globalpos->globalpos.theta + dr1);
-  laser->y = globalpos->globalpos.y + dt * 
+  laser->laser_location.y = globalpos->globalpos.y + dt * 
     sin(globalpos->globalpos.theta + dr1);
-  laser->theta = carmen_normalize_theta(globalpos->globalpos.theta + 
-					dr1 + dr2);
+  laser->laser_location.theta = 
+    carmen_normalize_theta(globalpos->globalpos.theta + dr1 + dr2);
 }
 
 int carmen_localize_get_map(int global, carmen_map_t *map) 

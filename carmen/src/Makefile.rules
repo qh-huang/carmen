@@ -213,7 +213,7 @@ install:
 
 clean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
-	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS)
+	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
 
 relink:
 	$(SILENT) $(RM) $(filter-out %.a, $(TARGETS))
