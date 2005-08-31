@@ -140,10 +140,15 @@ carmen_logger_write_frontlaser(carmen_robot_laser_message *frontlaser, carmen_lo
   carmen_logger_fprintf(outfile, "FLASER %d ", frontlaser->num_readings);
   for(i = 0; i < frontlaser->num_readings; i++)
     carmen_logger_fprintf(outfile, "%.2f ", frontlaser->range[i]);
-  carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", frontlaser->x, 
-	  frontlaser->y, frontlaser->theta, frontlaser->odom_x,
-	  frontlaser->odom_y, frontlaser->odom_theta, frontlaser->timestamp,
-	  frontlaser->host, timestamp);
+  carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", 
+			frontlaser->laser_location.x, 
+			frontlaser->laser_location.y, 
+			frontlaser->laser_location.theta, 
+			frontlaser->robot_location.x,
+			frontlaser->robot_location.y, 
+			frontlaser->robot_location.theta, 
+			frontlaser->timestamp,
+			frontlaser->host, timestamp);
 }
 
 void
@@ -156,10 +161,15 @@ carmen_logger_write_rearlaser(carmen_robot_laser_message *rearlaser,
   carmen_logger_fprintf(outfile, "RLASER %d ", rearlaser->num_readings);
   for(i = 0; i < rearlaser->num_readings; i++)
     carmen_logger_fprintf(outfile, "%.2f ", rearlaser->range[i]);
-  carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", rearlaser->x, 
-	  rearlaser->y, rearlaser->theta, rearlaser->odom_x,
-	  rearlaser->odom_y, rearlaser->odom_theta, rearlaser->timestamp,
-	  rearlaser->host, timestamp);
+  carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", 
+			rearlaser->laser_location.x, 
+			rearlaser->laser_location.y, 
+			rearlaser->laser_location.theta, 
+			rearlaser->robot_location.x,
+			rearlaser->robot_location.y, 
+			rearlaser->robot_location.theta, 
+			rearlaser->timestamp,
+			rearlaser->host, timestamp);
 }
 
 void

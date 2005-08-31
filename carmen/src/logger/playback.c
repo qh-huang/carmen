@@ -311,9 +311,14 @@ int read_message(int message_num, int publish)
       while (*line_ptr != ' ')
 	line_ptr++;
     }
-    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", &frontlaser.x,
-	   &frontlaser.y, &frontlaser.theta, &frontlaser.odom_x,
-	   &frontlaser.odom_y, &frontlaser.odom_theta, &frontlaser.timestamp,
+    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", 
+	   &frontlaser.laser_location.x,
+	   &frontlaser.laser_location.y, 
+	   &frontlaser.laser_location.theta, 
+	   &frontlaser.robot_location.x,
+	   &frontlaser.robot_location.y, 
+	   &frontlaser.robot_location.theta, 
+	   &frontlaser.timestamp,
 	   frontlaser.host, &playback_timestamp);
     if (!print_timestamp)
       fprintf(stderr, "F");
@@ -342,9 +347,14 @@ int read_message(int message_num, int publish)
       while (*line_ptr != ' ')
 	line_ptr++;
     }
-    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", &rearlaser.x,
-	   &rearlaser.y, &rearlaser.theta, &rearlaser.odom_x,
-	   &rearlaser.odom_y, &rearlaser.odom_theta, &rearlaser.timestamp,
+    sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", 
+	   &rearlaser.laser_location.x,
+	   &rearlaser.laser_location.y, 
+	   &rearlaser.laser_location.theta, 
+	   &rearlaser.robot_location.x,
+	   &rearlaser.robot_location.y, 
+	   &rearlaser.robot_location.theta, 
+	   &rearlaser.timestamp,
 	   rearlaser.host, &playback_timestamp);
     if (!print_timestamp)
       fprintf(stderr, "R");

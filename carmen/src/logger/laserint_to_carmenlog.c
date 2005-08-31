@@ -151,13 +151,15 @@ int main(int argc, char **argv)
 					fscanf(fp, "%d", &temp1);
 					front_laser.range[i] = temp1/100.0;
 				}
-				front_laser.x = odometry.x;
-				front_laser.y = odometry.y;
-				front_laser.theta = odometry.theta;
+				front_laser.laser_location.x = odometry.x;
+				front_laser.laser_location.y = odometry.y;
+				front_laser.laser_location.theta = 
+				  odometry.theta;
 
- 				front_laser.odom_x = odometry.x;
-				front_laser.odom_y = odometry.y;
-				front_laser.odom_theta = odometry.theta;
+ 				front_laser.robot_location.x = odometry.x;
+				front_laser.robot_location.y = odometry.y;
+				front_laser.robot_location.theta = 
+				  odometry.theta;
 
 				if(first) {
 					first_timestamp = timestamp;
