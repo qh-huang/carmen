@@ -23,6 +23,9 @@
  * HISTORY: Based on version by Carroll Thronesbery, Metrica (Sept 2000)
  *
  * $Log$
+ * Revision 1.1  2005/08/31 20:33:47  nickr
+ * *** empty log message ***
+ *
  * Revision 1.1  2005/08/31 20:25:31  nickr
  * Initial check-in of java class libraries
  *
