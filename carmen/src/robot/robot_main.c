@@ -29,8 +29,10 @@
 
 #include "robot_laser.h"
 #include "robot_sonar.h"
+#include "robot_bumper.h"
+#include "robot_camera.h"
 
-#include "robot.h"
+#include "robot_central.h"
 
 carmen_robot_config_t carmen_robot_config;
 char *carmen_robot_host;
@@ -39,15 +41,18 @@ carmen_base_odometry_message carmen_robot_odometry[MAX_READINGS];
 
 int carmen_robot_converge = 1;
 double carmen_robot_collision_avoidance_frequency = 1;
-double carmen_robot_laser_bearing_skip_rate = 0;
 double turn_before_driving_if_heading_bigger_than = M_PI/2;
+
+int carmen_robot_odometry_count = 0;
 
 static double current_time;
 
 static double odometry_local_timestamp[MAX_READINGS];
 
-static int use_sonar = 1;
 static int use_laser = 1;
+static int use_sonar = 1;
+static int use_bumper = 1;
+static int use_camera = 1;
 
 static int collision_avoidance = 1;
 
@@ -81,33 +86,28 @@ carmen_robot_get_odometry_skew(void)
     return carmen_running_average_report(ODOMETRY_AVERAGE);
 }
 
-double 
-carmen_robot_interpolate_heading(double head1, double head2, double fraction)
+double carmen_robot_interpolate_heading(double head1, double head2, 
+					double fraction)
 {
   double result;
 
-  if(head1 > 0 && head2 < 0 && head1 - head2 > M_PI) 
-    {
-      head2 += 2 * M_PI;
-      result = head1 + fraction * (head2 - head1);
-      if(result > M_PI)
-	result -= 2 * M_PI;
-      return result;
-    }
-  else if(head1 < 0 && head2 > 0 && head2 - head1 > M_PI) 
-    {
-      head1 += 2 * M_PI;
-      result = head1 + fraction * (head2 - head1);
-      if(result > M_PI)
-	result -= 2 * M_PI;
-      return result;
-    }
-  else
+  if(head1 > 0 && head2 < 0 && head1 - head2 > M_PI) {
+    head2 += 2 * M_PI;
+    result = head1 + fraction * (head2 - head1);
+    if(result > M_PI)
+      result -= 2 * M_PI;
+    return result;
+  } else if(head1 < 0 && head2 > 0 && head2 - head1 > M_PI) {
+    head1 += 2 * M_PI;
+    result = head1 + fraction * (head2 - head1);
+    if(result > M_PI)
+      result -= 2 * M_PI;
+    return result;
+  } else
     return head1 + fraction * (head2 - head1);
 }
 
-void 
-carmen_robot_send_base_velocity_command(void)
+void carmen_robot_send_base_velocity_command(void)
 {
   IPC_RETURN_TYPE err;
   char *host;
@@ -120,6 +120,20 @@ carmen_robot_send_base_velocity_command(void)
     first = 0;
   }
 
+  if (collision_avoidance) {
+    if (use_sonar)
+      command_tv = carmen_clamp(carmen_robot_sonar_min_rear_velocity(), 
+				command_tv,
+				carmen_robot_sonar_max_front_velocity());
+    if (use_bumper && carmen_robot_bumper_on()) {
+      command_tv = 0;
+      command_rv = 0;
+    } 
+  }
+  
+  if (!carmen_robot_config.allow_rear_motion && command_tv < 0)
+    command_tv = 0.0;
+
   v.tv = carmen_clamp(-carmen_robot_config.max_t_vel, command_tv, 
 		    carmen_robot_config.max_t_vel);
   v.rv = carmen_clamp(-carmen_robot_config.max_r_vel, command_rv,
@@ -131,8 +145,7 @@ carmen_robot_send_base_velocity_command(void)
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  
 }
 
-void 
-carmen_robot_stop_robot(int how)
+void carmen_robot_stop_robot(int how)
 {
   command_tv = 0.0;
   if (how == ALL_STOP)
@@ -146,10 +159,13 @@ carmen_robot_stop_robot(int how)
   carmen_robot_send_base_velocity_command();
 }
 
-static void 
-base_odometry_handler(void)
+static void base_odometry_handler(void)
 {
   int i;
+
+  carmen_robot_odometry_count++;
+
+  carmen_warn("o");
 
   for(i = 0; i < MAX_READINGS - 1; i++) {
     carmen_robot_odometry[i] = carmen_robot_odometry[i + 1];
@@ -162,52 +178,27 @@ base_odometry_handler(void)
 			     odometry_local_timestamp[MAX_READINGS - 1]- 
 			     carmen_robot_latest_odometry.timestamp);
 
-  if (collision_avoidance) 
-    {
-      if (carmen_robot_latest_odometry.tv > 0 &&
-	  carmen_robot_laser_max_front_velocity() < 
-	  carmen_robot_latest_odometry.tv &&
-	  command_tv > carmen_robot_laser_max_front_velocity())
-	{
-	  if (carmen_robot_laser_max_front_velocity() <= 0.0)
-	    {
-	      command_tv = 0;
-	      fprintf(stderr, "S");
-	      carmen_robot_stop_robot(ALLOW_ROTATE);
-	    }
-	  else 
-	    {
-	      command_tv = carmen_robot_laser_max_front_velocity();
-	      carmen_robot_send_base_velocity_command();
-	    }
-	} 
-      else if (carmen_robot_latest_odometry.tv < 0 &&
-	       carmen_robot_laser_min_rear_velocity() >
-	       carmen_robot_latest_odometry.tv &&
-	       command_tv < carmen_robot_laser_min_rear_velocity())
-	{
-	  if (carmen_robot_laser_min_rear_velocity() >= 0.0)
-	    {
-	      fprintf(stderr, "S");
-	      command_tv = 0;
-	      carmen_robot_stop_robot(ALLOW_ROTATE);
-	    }
-	  else 
-	    {
-	      command_tv = carmen_robot_laser_min_rear_velocity();
-	      carmen_robot_send_base_velocity_command();
-	    }
-	} 
-    } // End of if (collision_avoidance)
+  if (collision_avoidance) {
+    if (carmen_robot_latest_odometry.tv > 0) {
+   } else if (carmen_robot_latest_odometry.tv < 0) {
+    } else if (carmen_robot_bumper_on()) {
+      fprintf(stderr, "S");
+      carmen_robot_stop_robot(ALL_STOP);
+      command_tv = 0;
+      command_rv = 0;
+    }
+    
+  } // End of if (collision_avoidance)
 
-  if (use_laser)
-    carmen_robot_correct_laser_and_publish();
-  if (use_sonar)
+  if (use_camera)
+    carmen_robot_correct_camera_and_publish();
+  if (use_sonar) 
     carmen_robot_correct_sonar_and_publish();
+  if (use_bumper)
+    carmen_robot_correct_bumper_and_publish();
 }
 
-static void
-publish_vector_status(double distance, double angle)
+static void publish_vector_status(double distance, double angle)
 {
   static carmen_robot_vector_status_message msg;
   static int first = 1;
@@ -225,9 +216,8 @@ publish_vector_status(double distance, double angle)
   carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_VECTOR_STATUS_NAME);  
 }
 
-static void 
-velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		 void *clientData __attribute__ ((unused)))
+static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			     void *clientData __attribute__ ((unused)))
 {
   carmen_robot_velocity_message v;
   FORMATTER_PTR formatter;
@@ -246,28 +236,12 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   command_rv = v.rv;
   command_tv = v.tv;
 
-  if (collision_avoidance) 
-    {
-      if (use_laser)
-	command_tv = carmen_clamp(carmen_robot_laser_min_rear_velocity(), 
-				  command_tv,
-				  carmen_robot_laser_max_front_velocity());
-      if (use_sonar)
-	command_tv = carmen_clamp(carmen_robot_sonar_min_rear_velocity(), 
-				  command_tv,
-				  carmen_robot_sonar_max_front_velocity());
-    }
-
-  if (!carmen_robot_config.allow_rear_motion && command_tv < 0)
-    command_tv = 0.0;
-
   following_vector = following_trajectory = 0;
   carmen_robot_send_base_velocity_command();
   publish_vector_status(0, 0);
 }
 
-static void
-follow_vector(void)
+static void follow_vector(void)
 {
   double true_angle_difference, angle_difference, displacement;
   double radius;
@@ -292,31 +266,16 @@ follow_vector(void)
     displacement = 0.0;
 
   if (fabs(angle_difference) < carmen_degrees_to_radians(5.0) &&
-      fabs(displacement) < carmen_robot_config.approach_dist) 
-    {
-      command_tv = 0;
-      command_rv = 0;
-      following_vector = 0;		
-      carmen_robot_stop_robot(ALL_STOP);
-      publish_vector_status(0, 0);
-      return;
-    }
+      fabs(displacement) < carmen_robot_config.approach_dist) {
+    command_tv = 0;
+    command_rv = 0;
+    following_vector = 0;		
+    carmen_robot_stop_robot(ALL_STOP);
+    publish_vector_status(0, 0);
+    return;
+  }
 
   true_angle_difference = angle_difference;
-
-  if (carmen_robot_config.allow_rear_motion && 
-      (angle_difference > M_PI/2 || angle_difference < -M_PI/2)) 
-    {
-      if (!collision_avoidance || 
-	  carmen_robot_laser_min_rear_velocity() < 0.0) {
-	backwards = 1;
-	true_angle_difference = angle_difference;
-	if (angle_difference < 0) 
-	  angle_difference += M_PI ; 
-	else
-	  angle_difference -= M_PI; 
-      }
-    }
 
   command_rv = theta_gain*angle_difference;
 	
@@ -345,32 +304,18 @@ follow_vector(void)
   */
 
 			
-  else if (fabs(command_rv) > carmen_robot_config.max_r_vel / 4)
-    {
-      radius = fabs(displacement/4 / sin(angle_difference));
-      command_tv = fabs(radius * command_rv);
-    }
-  else 
-    {
-      command_tv = displacement * disp_gain;
-      if (fabs(displacement) > 0 && fabs(displacement) < 0.15)
-	command_tv -= carmen_robot_latest_odometry.tv/2;
-    }
+  else if (fabs(command_rv) > carmen_robot_config.max_r_vel / 4) {
+    radius = fabs(displacement/4 / sin(angle_difference));
+    command_tv = fabs(radius * command_rv);
+  } else {
+    command_tv = displacement * disp_gain;
+    if (fabs(displacement) > 0 && fabs(displacement) < 0.15)
+      command_tv -= carmen_robot_latest_odometry.tv/2;
+  }
 
   if (backwards)
     command_tv *= -1;
 
-  if (collision_avoidance) 
-    {
-      if (use_laser)
-	command_tv = 
-	  carmen_clamp(carmen_robot_laser_min_rear_velocity(), 
-		       command_tv, carmen_robot_laser_max_front_velocity());
-    }
-
-  if (!carmen_robot_config.allow_rear_motion && command_tv < 0)
-    command_tv = 0.0;
-  
   publish_vector_status(displacement, true_angle_difference);
   carmen_robot_send_base_velocity_command();	
 }
@@ -480,57 +425,40 @@ follow_trajectory_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   start_position.t_vel = carmen_robot_latest_odometry.tv;
   start_position.r_vel = carmen_robot_latest_odometry.rv;
 
-  if (use_3d_control)
-    {
-      following_vector = 0;
-      following_trajectory = 1;
-      goal = msg.trajectory[0];
-      follow_trajectory_3d();
+  if (use_3d_control) {
+    following_vector = 0;
+    following_trajectory = 1;
+    goal = msg.trajectory[0];
+    follow_trajectory_3d();
+  } else {
+    following_vector = 1;
+    following_trajectory = 0;
+    
+    goal = msg.trajectory[0];
+    goal.x -= msg.robot_position.x;
+    goal.y -= msg.robot_position.y;
+    
+    vector_distance = hypot(goal.x, goal.y);
+    
+    if (vector_distance < carmen_robot_config.approach_dist) 
+      vector_angle = carmen_normalize_theta(goal.theta);
+    else {
+      vector_angle = carmen_normalize_theta(atan2(goal.y, goal.x));
+      vector_angle = carmen_normalize_theta(vector_angle - msg.robot_position.theta);
     }
-  else
-    {
-      following_vector = 1;
-      following_trajectory = 0;
 
-      goal = msg.trajectory[0];
-      goal.x -= msg.robot_position.x;
-      goal.y -= msg.robot_position.y;
-      
-      vector_distance = hypot(goal.x, goal.y);
-
-      if (vector_distance < carmen_robot_config.approach_dist) 
-	vector_angle = carmen_normalize_theta(goal.theta);
-      else
-	{
-	  vector_angle = carmen_normalize_theta(atan2(goal.y, goal.x));
-	  vector_angle = carmen_normalize_theta(vector_angle - msg.robot_position.theta);
-	}
-
-      follow_vector();      
-    }
+    follow_vector();      
+  }
   free(msg.trajectory);
 }
 
-static int 
-initialize_robot_ipc(void)
+static int initialize_robot_ipc(void)
 {
   IPC_RETURN_TYPE err;
 
-  /* define messages created by this module */
-  err = IPC_defineMsg(CARMEN_ROBOT_FRONTLASER_NAME,
-                      IPC_VARIABLE_LENGTH,
-                      CARMEN_ROBOT_FRONTLASER_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_FRONTLASER_NAME);
-
-  err = IPC_defineMsg(CARMEN_ROBOT_REARLASER_NAME,
-                      IPC_VARIABLE_LENGTH,
-                      CARMEN_ROBOT_REARLASER_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_REARLASER_NAME);
-
-  err = IPC_defineMsg(CARMEN_ROBOT_SONAR_NAME,
-		      IPC_VARIABLE_LENGTH,
-		      CARMEN_ROBOT_SONAR_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_SONAR_NAME);
+  err = IPC_defineMsg(CARMEN_BASE_VELOCITY_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_BASE_VELOCITY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
   err = IPC_defineMsg(CARMEN_ROBOT_VELOCITY_NAME,
                       IPC_VARIABLE_LENGTH,
@@ -543,7 +471,8 @@ initialize_robot_ipc(void)
 
   err = IPC_defineMsg(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME);
 
   err = IPC_defineMsg(CARMEN_ROBOT_VECTOR_STATUS_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_ROBOT_VECTOR_STATUS_FMT);
@@ -561,8 +490,8 @@ initialize_robot_ipc(void)
 		       CARMEN_ROBOT_VECTOR_MOVE_NAME);
   IPC_setMsgQueueLength(CARMEN_ROBOT_VECTOR_MOVE_NAME, 1);
  
-  err = IPC_subscribe(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, follow_trajectory_handler, 
-		      NULL);
+  err = IPC_subscribe(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, 
+		      follow_trajectory_handler, NULL);
 
   carmen_test_ipc_exit(err, "Could not subscribe", 
 		       CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME);
@@ -571,39 +500,31 @@ initialize_robot_ipc(void)
   return 0;
 }
 
-void 
-carmen_robot_shutdown(int x __attribute__ ((unused)))
+void carmen_robot_shutdown(int x __attribute__ ((unused)))
 {
   carmen_robot_stop_robot(ALL_STOP);
 }
 
-void 
-carmen_robot_usage(char *progname, char *fmt, ...) 
+void  carmen_robot_usage(char *progname, char *fmt, ...) 
 {
   va_list args;
 
-  if (fmt != NULL)
-    {
-      fprintf(stderr, "\n[31;1m");
-      va_start(args, fmt);
-      vfprintf(stderr, fmt, args);
-      va_end(args);
-      fprintf(stderr, "[0m\n\n");
-    }
-  else
-    {
-      fprintf(stderr, "\n");
-    }
-
-  if (strrchr(progname, '/') != NULL)
-    {
-      progname = strrchr(progname, '/');
-      progname++;
-    }
+  if (fmt != NULL) {
+    fprintf(stderr, "\n[31;1m");
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "[0m\n\n");
+  } else {
+    fprintf(stderr, "\n");
+  }
+  
+  if (strrchr(progname, '/') != NULL) {
+    progname = strrchr(progname, '/');
+    progname++;
+  }
 
   fprintf(stderr, "Usage: %s <args> \n", progname);
-  fprintf(stderr, 
-	  "\t-laser {on|off}   - turn laser use on and off (default on).\n");
   fprintf(stderr, 
 	  "\t-sonar {on|off}   - turn sonar use on and off (unsupported).\n");
   fprintf(stderr, 
@@ -611,8 +532,7 @@ carmen_robot_usage(char *progname, char *fmt, ...)
   exit(-1);
 }
 
-static int 
-read_robot_parameters(int argc, char **argv)
+static int read_robot_parameters(int argc, char **argv)
 {
   int num_items;
 
@@ -657,8 +577,6 @@ read_robot_parameters(int argc, char **argv)
      &collision_avoidance, 1, NULL},
     {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE,
      &carmen_robot_collision_avoidance_frequency, 1, NULL},
-    {"robot", "laser_bearing_skip_rate", CARMEN_PARAM_DOUBLE,
-     &carmen_robot_laser_bearing_skip_rate, 1, NULL},
 
     {"robot", "turn_before_driving_if_heading_bigger_than", CARMEN_PARAM_DOUBLE,
      &turn_before_driving_if_heading_bigger_than, 1, NULL}
@@ -669,17 +587,18 @@ read_robot_parameters(int argc, char **argv)
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
 
-  if (use_laser)
-    carmen_robot_add_laser_parameters(argv[0]);
   if (use_sonar)
     carmen_robot_add_sonar_parameters(argv[0]);
+  if (use_bumper)
+    carmen_robot_add_bumper_parameters(argv[0]);
+  if (use_camera)
+    carmen_robot_add_camera_parameters(argv[0]);
 
   carmen_robot_config.acceleration = 0.5;
   return 0;
 }
 
-int 
-carmen_robot_start(int argc, char **argv)
+int carmen_robot_start(int argc, char **argv)
 {
   carmen_robot_host = carmen_get_tenchar_host_name();
   
@@ -688,11 +607,10 @@ carmen_robot_start(int argc, char **argv)
   if (read_robot_parameters(argc, argv) < 0)
     return -1;
 
-  if(initialize_robot_ipc() < 0) 
-    {
-      carmen_warn("Error: could not connect to IPC Server\n");
-      return -1;;
-    }
+  if (initialize_robot_ipc() < 0) {
+    carmen_warn("Error: could not connect to IPC Server\n");
+    return -1;;
+  }
 
   carmen_base_subscribe_odometry_message
     (&carmen_robot_latest_odometry, (carmen_handler_t)base_odometry_handler,
@@ -702,21 +620,23 @@ carmen_robot_start(int argc, char **argv)
     carmen_robot_add_laser_handlers();
   if (use_sonar)
     carmen_robot_add_sonar_handler();
+  if (use_bumper)
+    carmen_robot_add_bumper_handler();
+  if (use_camera)
+    carmen_robot_add_camera_handler();
 
   return 0;
 }
 
-int
-carmen_robot_run(void)
+int carmen_robot_run(void)
 {
   current_time = carmen_get_time();
-  if (current_time - time_of_last_command > robot_timeout) 
-    {
-      if (command_tv != 0.0) {
-	carmen_warn("Command timed out. Stopping robot.\n");
-	carmen_robot_stop_robot(ALL_STOP);
-      }
-    } 
+  if (current_time - time_of_last_command > robot_timeout) {
+    if (command_tv != 0.0) {
+      carmen_warn("Command timed out. Stopping robot.\n");
+      carmen_robot_stop_robot(ALL_STOP);
+    }
+  } 
   else if (following_vector) 
     follow_vector();
   else if (following_trajectory)

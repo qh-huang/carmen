@@ -25,44 +25,18 @@
  *
  ********************************************************/
 
-#ifndef ROBOT_H
-#define ROBOT_H
-
-#include <carmen/base_messages.h>
+#ifndef ROBOT_CAMERA_H
+#define ROBOT_CAMERA_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define        MAX_READINGS                    5
-#define        ESTIMATES_CONVERGE              30
-
-#define        ALL_STOP                        1
-#define        ALLOW_ROTATE                    2
-
-#define      ODOMETRY_AVERAGE          0
-#define      LOCALIZE_AVERAGE          5
-
-#define      MIN_ALLOWED_VELOCITY      0.03 // cm/s
-
-extern carmen_base_odometry_message carmen_robot_latest_odometry;
-extern carmen_base_odometry_message carmen_robot_odometry[MAX_READINGS];
-extern int carmen_robot_position_received;
-extern int carmen_robot_converge;
-extern carmen_robot_config_t carmen_robot_config;
-extern char *carmen_robot_host;
-
-extern double carmen_robot_collision_avoidance_frequency;
-extern double carmen_robot_laser_bearing_skip_rate;
-
-extern inline double 
-carmen_robot_get_odometry_skew(void)
-{
-  if(strcmp(carmen_robot_host, carmen_robot_latest_odometry.host) == 0)
-    return 0;  
-  else 
-    return carmen_running_average_report(ODOMETRY_AVERAGE);
-}
+inline double carmen_robot_get_camera_skew(void);
+void carmen_robot_correct_camera_and_publish(void);
+void carmen_robot_add_camera_handler(void);
+void carmen_robot_add_camera_parameters(char *progname);
+int carmen_robot_camera_on(void);
 
 #ifdef __cplusplus
 }

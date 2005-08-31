@@ -27,7 +27,7 @@
 
 #include <carmen/carmen.h>
 
-#include "robot.h"
+#include "robot_central.h"
 #include "robot_main.h"
 #include "robot_laser.h"
 
@@ -36,6 +36,8 @@
 
 static double frontlaser_offset;
 static double rearlaser_offset;
+
+static double carmen_robot_laser_bearing_skip_rate = 0;
 
 static carmen_laser_laser_message front_laser, rear_laser;
 static double front_laser_local_timestamp, rear_laser_local_timestamp;
@@ -66,106 +68,125 @@ publish_rearlaser_message(carmen_robot_laser_message laser_msg)
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_REARLASER_NAME);
 }
 
-static void 
-construct_laser_message(carmen_robot_laser_message *message, double offset, 
-			int which, double fraction, int rear) 
+static void
+construct_laser_message(carmen_robot_laser_message *msg, double offset, 
+			int rear, double timestamp, double laser_skew)
 {
-  message->odom_x = carmen_robot_odometry[which].x + fraction *
-    (carmen_robot_odometry[which + 1].x - carmen_robot_odometry[which].x);
-  message->odom_y = carmen_robot_odometry[which].y + fraction *
-    (carmen_robot_odometry[which + 1].y - carmen_robot_odometry[which].y);
-  message->odom_theta = carmen_robot_interpolate_heading
-    (carmen_robot_odometry[which].theta, 
-     carmen_robot_odometry[which + 1].theta,
-     fraction);
-  message->tv = carmen_robot_odometry[which].tv + fraction *
-    (carmen_robot_odometry[which + 1].tv - carmen_robot_odometry[which].tv);
-  message->rv = carmen_robot_odometry[which].rv + fraction *
-    (carmen_robot_odometry[which + 1].rv - carmen_robot_odometry[which].rv);
+  int low;
+  int high;
+  double fraction;
+  double odometry_skew;
+  int i;
+
+  odometry_skew = carmen_robot_get_odometry_skew();
+
+  low = 0;
+  high = 1;
+  for(i = 0; i < MAX_READINGS; i++) 
+    if (timestamp + laser_skew <
+	carmen_robot_odometry[i].timestamp + odometry_skew) {
+      if (i == 0) {
+	low = 0;
+	high = 1;
+      } else {
+	low = i-1;
+	high = i;
+      }      
+      break;
+    }
+  
+  if (i == MAX_READINGS) {
+    low = i-2;
+    high = i-1;
+  }
+    
+  fraction = (timestamp - carmen_robot_odometry[low].timestamp)/
+    (carmen_robot_odometry[high].timestamp - 
+     carmen_robot_odometry[low].timestamp);
+  
+  msg->robot_location.x=carmen_robot_odometry[low].x + fraction *
+    (carmen_robot_odometry[high].x - carmen_robot_odometry[low].x);
+  msg->robot_location.y= carmen_robot_odometry[low].y + fraction *
+    (carmen_robot_odometry[high].y - carmen_robot_odometry[low].y);
+  msg->robot_location.theta=carmen_robot_interpolate_heading
+    (carmen_robot_odometry[high].theta, 
+     carmen_robot_odometry[low].theta, fraction);
+
+  msg->tv = carmen_robot_odometry[low].tv + 
+    fraction*(carmen_robot_odometry[high].tv - 
+	      carmen_robot_odometry[low].tv);
+  msg->rv = carmen_robot_odometry[low].rv + 
+    fraction*(carmen_robot_odometry[high].rv - 
+	      carmen_robot_odometry[low].rv);
+
   if(rear)
-    message->theta = message->odom_theta + M_PI;
+    msg->laser_location.theta = msg->robot_location.theta + M_PI;
   else
-    message->theta = message->odom_theta;
-  message->theta = carmen_normalize_theta(message->theta);
-  message->x = message->odom_x + offset * cos(message->theta);
-  message->y = message->odom_y + offset * sin(message->theta);
+    msg->laser_location.theta = msg->robot_location.theta;
+  msg->laser_location.theta = 
+    carmen_normalize_theta(msg->laser_location.theta);
+  msg->laser_location.x = msg->robot_location.x + offset * 
+    cos(msg->laser_location.theta);
+  msg->laser_location.y = msg->robot_location.y + offset * 
+    sin(msg->laser_location.theta);
 }
 
 void 
 carmen_robot_correct_laser_and_publish(void) 
 {
-  double front_laser_skew, rear_laser_skew;
-  double odometry_skew;
-  double fraction;
-  int i, which;
+  double front_laser_skew = 0, rear_laser_skew = 0;
 
-  if(front_laser_ready) {
-    if (strcmp(carmen_robot_host, front_laser.host) == 0)
+  if(!front_laser_ready && !rear_laser_ready) 
+    return;
+
+  if (front_laser_ready) { 
+    if (strcmp(carmen_robot_host, front_laser.host) == 0) {
       front_laser_skew = 0;
-    else
+      front_laser_count = ESTIMATES_CONVERGE;
+    } else 
       front_laser_skew = carmen_running_average_report(FRONT_LASER_AVERAGE);
-    
-    odometry_skew = carmen_robot_get_odometry_skew();
-    which = -1;
+  }
 
-    for(i = 0; i < MAX_READINGS; i++)
-      if(front_laser.timestamp + front_laser_skew >= 
-	 carmen_robot_odometry[i].timestamp + odometry_skew)
-	which = i;
+  if (rear_laser_ready) { 
+    if (strcmp(carmen_robot_host, rear_laser.host) == 0) {
+      rear_laser_skew = 0;
+      rear_laser_count = ESTIMATES_CONVERGE;
+    } else 
+      rear_laser_skew = carmen_running_average_report(REAR_LASER_AVERAGE);
+  }
 
-    if(which >= 0 && which < MAX_READINGS - 1) {
-      fraction = ((front_laser.timestamp + front_laser_skew) -
-		  (carmen_robot_odometry[which].timestamp + odometry_skew))
-	/ (carmen_robot_odometry[which + 1].timestamp - 
-	   carmen_robot_odometry[which].timestamp);
+  if (front_laser_ready && front_laser_count < ESTIMATES_CONVERGE) {
+    carmen_warn("Waiting for laser data to accumulate from front laser\n");
+    front_laser_ready = 0;
+    return;
+  }
+  
+  if (rear_laser_ready && rear_laser_count < ESTIMATES_CONVERGE) {
+    carmen_warn("Waiting for laser data to accumulate from front laser\n");
+    rear_laser_ready = 0;
+    return;
+  }
+  
+  if (carmen_robot_odometry_count < ESTIMATES_CONVERGE) {
+    carmen_warn("Waiting for odometry to accumulate\n");
+    return;
+  }  
 
-      construct_laser_message(&robot_front_laser, frontlaser_offset, 
-				       which, fraction, 0);
-
-      if(front_laser_count > ESTIMATES_CONVERGE || !carmen_robot_converge) {
-	/* publish odometry corrected laser message */
-	publish_frontlaser_message(robot_front_laser);
-	fprintf(stderr, "f");
-      }
-      front_laser_ready = 0;
-    }
+  if (front_laser_ready) {
+    construct_laser_message(&robot_front_laser, frontlaser_offset, 
+			    0, front_laser.timestamp, front_laser_skew);
+    publish_frontlaser_message(robot_front_laser);
+    fprintf(stderr, "f");
+    publish_frontlaser_message(robot_front_laser);
+    front_laser_ready = 0;    
   }
 
   if (rear_laser_ready) {
-    if(strcmp(carmen_robot_host, rear_laser.host) == 0)
-      rear_laser_skew = 0;
-    else
-      rear_laser_skew = carmen_running_average_report(REAR_LASER_AVERAGE);
-
-    odometry_skew = carmen_robot_get_odometry_skew();
-    which = -1;
-
-    /* Find the index of the last odometry reading sent before this laser
-       message. t gets stored in which. If we have received one *before* 
-       this laser essage, but not one *after*, then don't do anything. */
-    
-    for(i = 0; i < MAX_READINGS; i++)
-      if(rear_laser.timestamp + rear_laser_skew >= 
-	 carmen_robot_odometry[i].timestamp + odometry_skew)
-	which = i;
-
-    /* If we don't have a matching laser reading, then return. */
-    if (which >= 0 || which < MAX_READINGS - 1) {
-      fraction = ((rear_laser.timestamp + rear_laser_skew) - 
-		  (carmen_robot_odometry[which].timestamp + odometry_skew)) / 
-	(carmen_robot_odometry[which + 1].timestamp - 
-	 carmen_robot_odometry[which].timestamp);
-      
-      construct_laser_message(&robot_rear_laser, rearlaser_offset, 
-				       which, fraction, 1);
-      
-      if(rear_laser_count > ESTIMATES_CONVERGE || !carmen_robot_converge) {
-	/* publish odometry corrected laser message */
-	publish_rearlaser_message(robot_rear_laser);
-	fprintf(stderr, "r");
-	rear_laser_ready = 0;
-      }
-    }
+    construct_laser_message(&robot_rear_laser, rearlaser_offset, 
+			    1, rear_laser.timestamp, rear_laser_skew);
+    fprintf(stderr, "r");
+    publish_rearlaser_message(robot_rear_laser);
+    rear_laser_ready = 0;
   }
 }
 
@@ -521,6 +542,19 @@ laser_rearlaser_handler(void)
 void 
 carmen_robot_add_laser_handlers(void) 
 {
+  IPC_RETURN_TYPE err;
+
+  /* define messages created by this module */
+  err = IPC_defineMsg(CARMEN_ROBOT_FRONTLASER_NAME,
+                      IPC_VARIABLE_LENGTH,
+                      CARMEN_ROBOT_FRONTLASER_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_FRONTLASER_NAME);
+
+  err = IPC_defineMsg(CARMEN_ROBOT_REARLASER_NAME,
+                      IPC_VARIABLE_LENGTH,
+                      CARMEN_ROBOT_REARLASER_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_REARLASER_NAME);
+
   carmen_laser_subscribe_frontlaser_message
     (&front_laser, (carmen_handler_t)laser_frontlaser_handler,
      CARMEN_SUBSCRIBE_LATEST);
@@ -539,6 +573,9 @@ carmen_robot_add_laser_parameters(char *progname)
   error = carmen_param_get_double("frontlaser_offset",&frontlaser_offset);
   carmen_param_handle_error(error, carmen_robot_usage, progname);
   error = carmen_param_get_double("rearlaser_offset", &rearlaser_offset);
+  carmen_param_handle_error(error, carmen_robot_usage, progname);
+  error = carmen_param_get_double("laser_bearing_skip_rate", 
+				  &carmen_robot_laser_bearing_skip_rate);
   carmen_param_handle_error(error, carmen_robot_usage, progname);
 }
 

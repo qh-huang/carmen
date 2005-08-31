@@ -341,12 +341,10 @@ robot_sonar_interface_handler(MSG_INSTANCE msgRef,
   
   if (sonar_msg[context_id]) 
     {
-      if(sonar_msg[context_id]->range != NULL)
-	free(sonar_msg[context_id]->range);
-      if(sonar_msg[context_id]->tooclose != NULL)
-	free(sonar_msg[context_id]->tooclose);
-      if(sonar_msg[context_id]->sonar_locations != NULL)
-	free(sonar_msg[context_id]->sonar_locations);
+      if(sonar_msg[context_id]->ranges != NULL)
+	free(sonar_msg[context_id]->ranges);
+      if(sonar_msg[context_id]->positions != NULL)
+	free(sonar_msg[context_id]->positions);
 
       err = IPC_unmarshallData(formatter, callData, 
 			       sonar_msg[context_id],
