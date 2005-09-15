@@ -15,8 +15,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2005/09/15 22:39:27  dhaehnel
+ * added support for x86_64 machines (almost untested)
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.7  2003/10/17 20:18:16  nickr
  * Upgraded to IPC 3.7.7, added Arm patches from Dirk Haehnel.
@@ -608,6 +611,8 @@ typedef enum
  */
 #elif #machine (sparc)
 #define ALIGN ALIGN_LONGEST
+#elif defined(__x86_64__)
+#define ALIGN ALIGN_INT
 #else 
 #undef ALIGN
 #endif

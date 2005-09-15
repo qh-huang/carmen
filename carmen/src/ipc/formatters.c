@@ -15,8 +15,11 @@
  * REVISION HISTORY:
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2005/09/15 22:39:27  dhaehnel
+ * added support for x86_64 machines (almost untested)
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/10/17 20:18:16  nickr
  * Upgraded to IPC 3.7.7, added Arm patches from Dirk Haehnel.
@@ -1585,7 +1588,7 @@ static int32 x_ipc_mostRestrictiveElement(CONST_FORMAT_PTR format)
     LOCK_M_MUTEX;
     maxSize = (GET_M_GLOBAL(TransTable)[format->formatter.i].RLength)();
     UNLOCK_M_MUTEX;
-#if (ALIGN & ALIGN_LONGEST)
+#if ((ALIGN & ALIGN_LONGEST) || defined(__x86_64__))
     return maxSize;
 #elif (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC)
     return (maxSize < (int32)sizeof(int32) ? maxSize : sizeof(int32));
@@ -1606,7 +1609,7 @@ static int32 x_ipc_mostRestrictiveElement(CONST_FORMAT_PTR format)
       nextSize = x_ipc_mostRestrictiveElement(format->formatter.a[i].f);
       if (nextSize > maxSize) maxSize = nextSize;
     }
-#if (ALIGN & ALIGN_LONGEST)
+#if ((ALIGN & ALIGN_LONGEST) || defined(__x86_64__))
     return maxSize;
 #elif (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC)
     return (maxSize < (int32)sizeof(int32) ? maxSize : sizeof(int32));

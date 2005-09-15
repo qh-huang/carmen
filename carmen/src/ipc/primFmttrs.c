@@ -62,8 +62,11 @@
  * REVISION HISTORY:
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2005/09/15 22:39:27  dhaehnel
+ * added support for x86_64 machines (almost untested)
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/10/17 20:18:16  nickr
  * Upgraded to IPC 3.7.7, added Arm patches from Dirk Haehnel.
@@ -1099,7 +1102,7 @@ static INLINE int32 Basic_Trans_Encode(CONST_GENERIC_DATA_PTR datastruct,
     shortToNetBytes(*(int16 *)(datastruct+dstart), (buffer+bstart));
   } else if (size == sizeof(int32)) {
     intToNetBytes(*(int32 *)(datastruct+dstart), (buffer+bstart));
-#ifndef __osf__
+#if !(defined(__osf__) || defined(__x86_64__))
   } else if (size == sizeof(long)) {
     longToNetBytes(*(long *)(datastruct+dstart), (buffer+bstart));
 #endif /* __osf__ */
@@ -1125,7 +1128,7 @@ static INLINE int32 Basic_Trans_Decode(GENERIC_DATA_PTR datastruct,
     netBytesToShort((buffer+bstart), (int16 *)(datastruct+dstart));
   } else if (size == sizeof(int32)) {
     netBytesToInt((buffer+bstart), (int32 *)(datastruct+dstart));
-#ifndef __osf__
+#if !(defined(__osf__) || defined(__x86_64__))
   } else if (size == sizeof(long)) {
     netBytesToLong((buffer+bstart), (long *)(datastruct+dstart));
 #endif /* __osf__ */
