@@ -982,6 +982,9 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
   int index;
   int err = 0;
   int last_command_line_arg;
+  int expert = 0;
+  int owner = 0;
+  char *prog_name;
 
   last_command_line_arg = carmen_read_commandline_parameters(argc, argv);
 
@@ -995,11 +998,33 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
 		       "%s no longer takes a robot name as an argument.\n"
 		       "It loads parameter settings from the paramServer.", 
 		       argv[0]);
-  
 
   for (index = 0; index < num_items; index++)
     {
       carmen_param_set_module(param_list[index].module);
+      if (param_list[index].type & CARMEN_PARAM_EXPERT) {
+	expert = 1;
+	param_list[index].type &= ~CARMEN_PARAM_EXPERT;
+      }
+      else
+	expert = 0;
+
+      prog_name = carmen_extract_filename(argv[0]);
+
+      if (!strcmp(prog_name, param_list[index].module) ||
+	  !strcmp(prog_name, "simulator") || !strcmp(prog_name, "base"))  // hack
+	owner = 1;
+      else
+	owner = 0;
+
+      if (expert && !owner)
+	carmen_param_usage(prog_name, param_list, num_items, 
+			   "Expert parameters may not be shared between programs:\n"
+			   "parameter %s_%s can only be set to expert by %s,\n"
+			   "but calling program is %s\n",
+			   param_list[index].module, param_list[index].variable,
+			   param_list[index].module, prog_name);
+
       switch (param_list[index].type)
 	{
 	case CARMEN_PARAM_INT:
@@ -1046,7 +1071,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
 			 (*(char **)(param_list[index].user_variable)));
 	  break;
 	} /* switch (param_list[index].type) */
-      if (err < 0)
+      if (err < 0 && !expert)
 	carmen_param_usage(argv[0], param_list, num_items, 
 			   carmen_param_get_error());
       install_parameter(param_list[index].module, param_list[index].variable, 

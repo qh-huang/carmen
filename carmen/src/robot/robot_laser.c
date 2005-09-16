@@ -37,7 +37,7 @@
 static double frontlaser_offset;
 static double rearlaser_offset;
 
-static double carmen_robot_laser_bearing_skip_rate = 0;
+static double carmen_robot_laser_bearing_skip_rate = 0.33;
 
 static carmen_laser_laser_message front_laser, rear_laser;
 static double front_laser_local_timestamp, rear_laser_local_timestamp;
@@ -574,8 +574,7 @@ carmen_robot_add_laser_parameters(char *progname)
   carmen_param_handle_error(error, carmen_robot_usage, progname);
   error = carmen_param_get_double("rearlaser_offset", &rearlaser_offset);
   carmen_param_handle_error(error, carmen_robot_usage, progname);
-  error = carmen_param_get_double("laser_bearing_skip_rate", 
-				  &carmen_robot_laser_bearing_skip_rate);
-  carmen_param_handle_error(error, carmen_robot_usage, progname);
+  carmen_param_get_double("laser_bearing_skip_rate",
+			  &carmen_robot_laser_bearing_skip_rate);
 }
 

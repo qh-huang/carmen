@@ -26,15 +26,14 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include <carmen/joystick.h>
+#include <carmen/joyctrl.h>
 
-static int deadzone;
-static double deadzone_size;
 static double min_max_tv = 0.0;// , min_max_rv = 0.0;
 static double max_max_tv = 0.8, max_max_rv = 0.6;
 
 static double max_allowed_tv = 1.5, max_allowed_rv = 1.5;
 
+static carmen_joystick_type joystick;
 static int joystick_activated=0;
 static int throttle_mode=0;
 
@@ -76,7 +75,7 @@ void sig_handler(int x)
 {
   if(x == SIGINT) {
     send_base_velocity_command(0, 0);
-    close_joystick();
+    carmen_close_joystick(&joystick);
     close_ipc();
     printf("Disconnected from robot.\n");
     exit(0);
@@ -88,33 +87,26 @@ void read_parameters(int argc, char **argv)
   int num_items;
 
   carmen_param_t param_list[] = {
-    {"joystick", "deadspot", CARMEN_PARAM_ONOFF, &deadzone, 1, NULL},
-    {"joystick", "deadspot_size", CARMEN_PARAM_DOUBLE, &deadzone_size, 1, NULL},
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, &max_max_tv, 1, NULL},
     {"robot", "max_r_vel", CARMEN_PARAM_DOUBLE, &max_max_rv, 1, NULL}
   };
   
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
-
-  // Set joystick deadspot
-  set_deadspot(deadzone, deadzone_size);
 }
 
 int main(int argc, char **argv)
 {
   double command_tv = 0, command_rv = 0;
-  int num_axes, num_buttons;
-  int axes[20], buttons[20];
   double max_tv = 0, max_rv = 0;
   double f_timestamp;
 
   carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
-  if(init_joystick(&num_axes, &num_buttons) < 0) 
+  if (carmen_initialize_joystick(&joystick) < 0)
     carmen_die("Erorr: could not find joystick.\n");
 
-  if (num_axes != 9 || num_buttons != 12)
+  if (joystick.nb_axes != 9 || joystick.nb_buttons != 12)
     fprintf(stderr,"This seems to be *NOT* a \"Logitech WingMan Cordless Rumble Pad\",\nbut I will start anyway (be careful!).\n\n");
   
   read_parameters(argc, argv);
@@ -129,40 +121,41 @@ int main(int argc, char **argv)
   f_timestamp = carmen_get_time();
   while(1) {
     sleep_ipc(0.1);
-    if(get_joystick(axes, buttons) >= 0) {
+    if(carmen_get_joystick_state(&joystick) >= 0) {
 
-      max_tv = min_max_tv + (-axes[2] + 32767.0) / (32767.0 * 2.0) * (max_max_tv - min_max_tv);
+      max_tv = min_max_tv + (-joystick.axes[2] + 32767.0) / (32767.0 * 2.0) * (max_max_tv - min_max_tv);
 
-     //      max_rv = min_max_rv + (-axes[2] + 32767.0) / (32767.0 * 2.0) * (max_max_rv - min_max_rv);
+     //      max_rv = min_max_rv + (-joystick.axes[2] + 32767.0) / (32767.0 * 2.0) * (max_max_rv - min_max_rv);
       max_rv = max_max_rv;
 
       if (throttle_mode) {
 	command_tv = max_tv;
 
-	if(axes[6] && command_tv > 0)
+	if(joystick.axes[6] && command_tv > 0)
 	  command_tv *= -1;
 
-	if (fabs(axes[1] / 32767.0) > 0.25   || 
-	    fabs(axes[0] / 32767.0) > 0.25)  
+	if (fabs(joystick.axes[1] / 32767.0) > 0.25   || 
+	    fabs(joystick.axes[0] / 32767.0) > 0.25)  
 	  command_tv = 0;
       }
       else 
-	command_tv = +1 * axes[1] / 32767.0 * max_max_tv;
+	command_tv = +1 * joystick.axes[1] / 32767.0 * max_max_tv;
 
-      if (axes[3]) 
-	command_rv = -1 * axes[3] / 32767.0 * max_max_rv;
+      if (joystick.axes[3]) 
+	command_rv = -1 * joystick.axes[3] / 32767.0 * max_max_rv;
       else 
 	command_rv = 0;
       
 
 		
-      //command_tv = -1 * axes[4] / 32767.0 * max_tv;
-      //command_tv = +1 * axes[1] / 32767.0 * max_tv;
+      //command_tv = -1 * joystick.axes[4] / 32767.0 * max_tv;
+      //command_tv = +1 * joystick.axes[1] / 32767.0 * max_tv;
 
       if (joystick_activated)
 	send_base_velocity_command(command_tv, command_rv);
 
-      if (buttons[7] || buttons[9] || buttons[10] || buttons[6]) {
+      if (joystick.buttons[7] || joystick.buttons[9] || joystick.buttons[10] ||
+	  joystick.buttons[6]) {
 	throttle_mode = !throttle_mode;
 	fprintf(stderr,"throttle control is %s! ", (throttle_mode?"ON":"OFF"));
 	if (throttle_mode)
@@ -171,7 +164,7 @@ int main(int argc, char **argv)
 	  fprintf(stderr,"\n");
       }
 
-      if (buttons[8]) {
+      if (joystick.buttons[8]) {
 	joystick_activated = !joystick_activated;
 	if (joystick_activated)
 	  fprintf(stderr,"Joystick activated!\n");

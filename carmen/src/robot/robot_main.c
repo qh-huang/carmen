@@ -39,8 +39,7 @@ char *carmen_robot_host;
 carmen_base_odometry_message carmen_robot_latest_odometry;
 carmen_base_odometry_message carmen_robot_odometry[MAX_READINGS];
 
-int carmen_robot_converge = 1;
-double carmen_robot_collision_avoidance_frequency = 1;
+double carmen_robot_collision_avoidance_frequency = 10.0;
 double turn_before_driving_if_heading_bigger_than = M_PI/2;
 
 int carmen_robot_odometry_count = 0;
@@ -56,15 +55,15 @@ static int use_camera = 1;
 
 static int collision_avoidance = 1;
 
-// Don't change; 3d controller isn't ready for main distribution yet - Jared Glover
+// Don't change; 3d controller isn't ready for main distribution yet - Jared
 static int use_3d_control = 0;
-static double control_lookahead = 1000.0;
-static double control_lookahead_approach_dist = 5.0;
+static double control_lookahead = 10.0;
+static double control_lookahead_approach_dist = 0.3;
 
 static double theta_gain;
 static double theta_d_gain;
 static double disp_gain;
-static double robot_timeout;
+static double robot_timeout = 10.0;
 static double command_tv = 0, command_rv = 0;
 static double time_of_last_command;
 
@@ -529,8 +528,6 @@ void  carmen_robot_usage(char *progname, char *fmt, ...)
   fprintf(stderr, "Usage: %s <args> \n", progname);
   fprintf(stderr, 
 	  "\t-sonar {on|off}   - turn sonar use on and off (unsupported).\n");
-  fprintf(stderr, 
-	  "\t-converge {on|off} - turn waiting for convergence on and off.\n");
   exit(-1);
 }
 
@@ -571,16 +568,16 @@ static int read_robot_parameters(int argc, char **argv)
 
     {"robot", "allow_rear_motion", CARMEN_PARAM_ONOFF, 
      &carmen_robot_config.allow_rear_motion, 1, NULL},
-    {"robot", "converge", CARMEN_PARAM_ONOFF, &carmen_robot_converge, 1, NULL},
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &use_laser, 1, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, NULL},
-    {"robot", "timeout", CARMEN_PARAM_DOUBLE, &robot_timeout, 1, NULL},
+    {"robot", "timeout", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+     &robot_timeout, 1, NULL},
     {"robot", "collision_avoidance", CARMEN_PARAM_ONOFF, 
      &collision_avoidance, 1, NULL},
-    {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE,
+    {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &carmen_robot_collision_avoidance_frequency, 1, NULL},
-
-    {"robot", "turn_before_driving_if_heading_bigger_than", CARMEN_PARAM_DOUBLE,
+    {"robot", "turn_before_driving_if_heading_bigger_than",
+     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &turn_before_driving_if_heading_bigger_than, 1, NULL}
   };
 

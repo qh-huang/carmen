@@ -723,6 +723,10 @@ void graphics_init(int argc, char **argv)
 
 void read_parameters(int argc, char **argv)
 {
+  occupied_prob = 0.5;
+  lmap_std = 0.3;
+  global_lmap_std = 0.6;
+
   carmen_param_t param_list[] = {
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE,
      &front_laser_offset, 0, NULL},

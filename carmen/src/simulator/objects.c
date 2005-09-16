@@ -42,9 +42,9 @@ static int list_capacity = 0;
 static carmen_traj_point_t *traj_object_list = NULL;
 static carmen_object_t *object_list = NULL;
 
-static double leg_width;
-static double min_dist_from_robot;
-static double person_speed;
+static double leg_width = .1;
+static double min_dist_from_robot = .4;
+static double person_speed = .3;
 
 static void update_other_robot(carmen_object_t *object);
 
@@ -466,11 +466,11 @@ void
 carmen_simulator_initialize_object_model(int argc, char *argv[])
 {
   carmen_param_t param_list[] = {
-    {"simulator", "person_leg_width", CARMEN_PARAM_DOUBLE,
+    {"simulator", "person_leg_width", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &leg_width, 1, NULL},
-    {"simulator", "person_dist_from_robot", CARMEN_PARAM_DOUBLE,
+    {"simulator", "person_dist_from_robot", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &min_dist_from_robot, 1, NULL},
-    {"simulator", "person_speed", CARMEN_PARAM_DOUBLE,
+    {"simulator", "person_speed", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &person_speed, 1, NULL}};
 
   int num_items = sizeof(param_list)/sizeof(param_list[0]);

@@ -37,8 +37,16 @@ extern "C" {
 
 #define carmen_param_handle_error(error, usage, progname) {if ((error) < 0) usage(progname, carmen_param_get_error());}
 
-typedef enum {CARMEN_PARAM_INT, CARMEN_PARAM_DOUBLE, CARMEN_PARAM_ONOFF, CARMEN_PARAM_STRING,
-	      CARMEN_PARAM_FILE, CARMEN_PARAM_DIR} carmen_param_type_t;
+#define CARMEN_PARAM_INT      1
+#define CARMEN_PARAM_DOUBLE   2
+#define CARMEN_PARAM_ONOFF    3
+#define CARMEN_PARAM_STRING   4
+#define CARMEN_PARAM_FILE     5
+#define CARMEN_PARAM_DIR      6
+
+#define CARMEN_PARAM_EXPERT  64
+
+typedef char carmen_param_type_t;
 
 typedef void (*carmen_param_change_handler_t)(char *module, char *variable, char *value);
 

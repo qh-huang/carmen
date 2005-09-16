@@ -42,6 +42,8 @@ extern "C" {
 #include <linux/joystick.h>
 
 #define         JOYSTICK_DEVICE         "/dev/js0"
+#define         JOYSTICK_DEADSPOT       1
+#define         JOYSTICK_DEADSPOT_SIZE  0.2
 
 typedef struct {
   int fd;
