@@ -13,12 +13,12 @@ PUBLIC_LIBRARIES = libkeyctrl.a
 TARGETS = libkeyctrl.a 
 
 ifndef NO_JOYSTICK
-SOURCES += joyrobot.c joyctrl.c wingman_control.c
+SOURCES += joyctrl.c wingman_control.c
 IFLAGS += $(JOYSTICK_INCLUDE)	
 PUBLIC_INCLUDES += joyctrl.h
 PUBLIC_LIBRARIES += libjoyctrl.a
-PUBLIC_BINARIES += joyrobot wingman_control
-TARGETS += libjoyctrl.a joyrobot wingman_control
+PUBLIC_BINARIES += wingman_control
+TARGETS += libjoyctrl.a wingman_control
 endif
 
 all:
@@ -27,11 +27,11 @@ libjoyctrl.a:	joyctrl.o
 
 libkeyctrl.a:	keyctrl.o
 
-joyrobot:	libjoyctrl.a libkeyctrl.a
+# joyrobot:	libjoyctrl.a libkeyctrl.a
 
 wingman_control: wingman_control.o joyctrl.o
 
-man:
-	cp ./joyrobot.1.gz /usr/man/man1/
+# man:
+#	cp ./joyrobot.1.gz /usr/man/man1/
 
 include ../Makefile.rules
