@@ -7,112 +7,189 @@ carmen_vascocore_param_t      carmen_vascocore_settings;
 carmen_vascocore_map_t        carmen_vascocore_map;
 carmen_vascocore_history_t    carmen_vascocore_history;
 
+
 void
-vascocore_get_params( int argc, char **argv, carmen_vascocore_param_p param )
+vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type )
 {
-  carmen_param_t param_list[] = {
+  if (!strcmp(laser_type, "samsung")) {
+    param->verbose = 0;
+    param->max_usable_laser_range = 5.5;
+    param->local_map_max_range = 5.0;
+    param->local_map_resolution = 0.025;
+    param->local_map_kernel_len = 7;
+    param->local_map_use_odometry = 1;
+    param->local_map_num_convolve = 2;
+    param->local_map_std_val = 0.00000000001;
+    param->local_map_history_length = 3000;
+    param->local_map_max_used_history = 90;
+    param->local_map_min_bbox_distance = 0.025;
+    param->local_map_use_last_scans = 2;
+    param->local_map_object_prob = 0.99;
+    param->bounding_box_max_range = 5.00;
+    param->bounding_box_border = 1.00;
+    param->motion_model_forward = 0.0075;
+    param->motion_model_sideward = 0.0075;
+    param->motion_model_rotation = 0.000872638;
+    param->pos_corr_step_size_forward = 0.0015;
+    param->pos_corr_step_size_sideward = 0.0015;
+    param->pos_corr_step_size_rotation = 0.0872638;
+    param->pos_corr_step_size_loop = 7;
+  }
+
+  else {
+    if (strcmp(laser_type, "sick"))
+      carmen_warn("Parameter \"vasco_laser_type\" not found; using default (sick) params\n");
+
+    param->verbose = 0;
+    param->max_usable_laser_range = 81.90;
+    param->local_map_max_range = 20.00;
+    param->local_map_resolution = 0.08;
+    param->local_map_kernel_len = 5;
+    param->local_map_use_odometry = 1;
+    param->local_map_num_convolve = 1;
+    param->local_map_std_val = 0.01;
+    param->local_map_history_length = 5000;
+    param->local_map_max_used_history = 300;
+    param->local_map_min_bbox_distance = 0.6;
+    param->local_map_use_last_scans = 2;
+    param->local_map_object_prob = 0.99;
+    param->bounding_box_max_range = 20.00;
+    param->bounding_box_border = 0.00;
+    param->motion_model_forward = 0.013;
+    param->motion_model_sideward = 0.013;
+    param->motion_model_rotation = 0.125;
+    param->pos_corr_step_size_forward = 0.075;
+    param->pos_corr_step_size_sideward = 0.075;
+    param->pos_corr_step_size_rotation = 0.125;
+    param->pos_corr_step_size_loop = 7;
+  }
+}
+
+void
+vascocore_get_expert_params( int argc, char **argv, carmen_vascocore_param_p param )
+{
+  carmen_param_t param_list_expert[] = {
     
-    {"vascocore", "verbose", CARMEN_PARAM_ONOFF, 
+    {"vasco", "verbose", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &param->verbose, 0, NULL},
     
-    {"vascocore", "max_usable_laser_range", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "max_usable_laser_range", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->max_usable_laser_range, 0, NULL},
     
-    {"vascocore", "local_map_max_range", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "local_map_max_range", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->local_map_max_range, 0, NULL},
-    {"vascocore", "local_map_resolution", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "local_map_resolution", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->local_map_resolution, 0, NULL},
-    {"vascocore", "local_map_kernel_len", CARMEN_PARAM_INT, 
+    {"vasco", "local_map_kernel_len", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
      &param->local_map_kernel_len, 0, NULL},
-    {"vascocore", "local_map_use_odometry", CARMEN_PARAM_ONOFF, 
+    {"vasco", "local_map_use_odometry", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT, 
      &param->local_map_use_odometry, 0, NULL},
-    {"vascocore", "local_map_num_convolve", CARMEN_PARAM_INT, 
+    {"vasco", "local_map_num_convolve", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
      &param->local_map_num_convolve, 0, NULL},
-    {"vascocore", "local_map_std_val", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "local_map_std_val", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->local_map_std_val, 0, NULL},
-    {"vascocore", "local_map_history_length", CARMEN_PARAM_INT, 
+    {"vasco", "local_map_history_length", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
      &param->local_map_history_length, 0, NULL},
-    {"vascocore", "local_map_max_used_history", CARMEN_PARAM_INT, 
+    {"vasco", "local_map_max_used_history", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
      &param->local_map_max_used_history, 0, NULL},
-    {"vascocore", "local_map_min_bbox_distance", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "local_map_min_bbox_distance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->local_map_min_bbox_distance, 0, NULL},
-    {"vascocore", "local_map_use_last_scans", CARMEN_PARAM_INT,
+    {"vasco", "local_map_use_last_scans", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT,
      &param->local_map_use_last_scans, 0, NULL},
-    {"vascocore", "local_map_object_prob", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "local_map_object_prob", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->local_map_object_prob, 0, NULL},
 
-    {"vascocore", "bounding_box_max_range", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "bounding_box_max_range", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->bounding_box_max_range, 0, NULL},
-    {"vascocore", "bounding_box_border", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "bounding_box_border", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->bounding_box_border, 0, NULL},
 
-    {"vascocore", "motion_model_forward", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "motion_model_forward", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->motion_model_forward, 0, NULL},
-    {"vascocore", "motion_model_sideward", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "motion_model_sideward", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->motion_model_sideward, 0, NULL},
-    {"vascocore", "motion_model_rotation", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "motion_model_rotation", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->motion_model_rotation, 0, NULL},
 
-    {"vascocore", "pos_corr_step_size_forward", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "pos_corr_step_size_forward", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->pos_corr_step_size_forward, 0, NULL},
-    {"vascocore", "pos_corr_step_size_sideward", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "pos_corr_step_size_sideward", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->pos_corr_step_size_sideward, 0, NULL},
-    {"vascocore", "pos_corr_step_size_rotation", CARMEN_PARAM_DOUBLE, 
+    {"vasco", "pos_corr_step_size_rotation", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
      &param->pos_corr_step_size_rotation, 0, NULL},
-    {"vascocore", "pos_corr_step_size_loop", CARMEN_PARAM_INT, 
+    {"vasco", "pos_corr_step_size_loop", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
      &param->pos_corr_step_size_loop, 0, NULL},
     
   };
 
+  carmen_param_install_params(argc, argv, param_list_expert, 
+			      sizeof(param_list_expert) / sizeof(param_list_expert[0]));
+
+#ifdef DEBUG
+    fprintf( stderr, "vasco_verbose                       %d\n",
+	     param->verbose );
+    fprintf( stderr, "vasco_max_usable_laser_range        %f\n",
+	     param->max_usable_laser_range );
+    fprintf( stderr, "vasco_local_map_max_range           %f\n", 
+	     param->local_map_max_range );
+    fprintf( stderr, "vasco_local_map_resolution          %f\n", 
+	     param->local_map_resolution );
+    fprintf( stderr, "vasco_local_map_kernel_len          %d\n", 
+	     param->local_map_kernel_len );
+    fprintf( stderr, "vasco_local_map_use_odometry        %d\n", 
+	     param->local_map_use_odometry );
+    fprintf( stderr, "vasco_local_map_num_convolve        %d\n", 
+	     param->local_map_num_convolve );
+    fprintf( stderr, "vasco_local_map_std_val             %f\n", 
+	     param->local_map_std_val );
+    fprintf( stderr, "vasco_local_map_history_length      %d\n", 
+	     param->local_map_history_length );
+    fprintf( stderr, "vasco_local_map_max_used_history    %d\n", 
+	     param->local_map_max_used_history );
+    fprintf( stderr, "vasco_local_map_min_bbox_distance   %f\n", 
+	     param->local_map_min_bbox_distance );
+    fprintf( stderr, "vasco_local_map_use_last_scans      %d\n", 
+	     param->local_map_use_last_scans );
+    fprintf( stderr, "vasco_local_map_object_prob         %f\n", 
+	     param->local_map_object_prob );
+    fprintf( stderr, "vasco_bounding_box_max_range        %f\n", 
+	     param->bounding_box_max_range );
+    fprintf( stderr, "vasco_bounding_box_border           %f\n", 
+	     param->bounding_box_border );
+    fprintf( stderr, "vasco_motion_model_forward          %f\n", 
+	     param->motion_model_forward );
+    fprintf( stderr, "vasco_motion_model_sideward         %f\n", 
+	     param->motion_model_sideward );
+    fprintf( stderr, "vasco_motion_model_rotation         %f\n", 
+	     param->motion_model_rotation );
+    fprintf( stderr, "vasco_pos_corr_step_size_forward    %f\n", 
+	     param->pos_corr_step_size_forward );
+    fprintf( stderr, "vasco_pos_corr_step_size_sideward   %f\n", 
+	     param->pos_corr_step_size_sideward );
+    fprintf( stderr, "vasco_pos_corr_step_size_rotation   %f\n", 
+	     param->pos_corr_step_size_rotation );
+    fprintf( stderr, "vasco_pos_corr_step_size_loop       %d\n", 
+	     param->pos_corr_step_size_loop );
+#endif
+}
+
+void
+vascocore_get_params( int argc, char **argv, carmen_vascocore_param_p param )
+{
+  char *laser_type;
+
+  carmen_param_t param_list[] = {
+    {"vasco", "laser_type", CARMEN_PARAM_STRING,
+     &laser_type, 0, NULL}
+  };
+
+  //dbug: add simple history length params
+
   carmen_param_install_params(argc, argv, param_list, 
 			      sizeof(param_list) / sizeof(param_list[0]));
 
-#ifdef DEBUG
-    fprintf( stderr, "vascocore_verbose                       %d\n",
-	     param->verbose );
-    fprintf( stderr, "vascocore_max_usable_laser_range        %f\n",
-	     param->max_usable_laser_range );
-    fprintf( stderr, "vascocore_local_map_max_range           %f\n", 
-	     param->local_map_max_range );
-    fprintf( stderr, "vascocore_local_map_resolution          %f\n", 
-	     param->local_map_resolution );
-    fprintf( stderr, "vascocore_local_map_kernel_len          %d\n", 
-	     param->local_map_kernel_len );
-    fprintf( stderr, "vascocore_local_map_use_odometry        %d\n", 
-	     param->local_map_use_odometry );
-    fprintf( stderr, "vascocore_local_map_num_convolve        %d\n", 
-	     param->local_map_num_convolve );
-    fprintf( stderr, "vascocore_local_map_std_val             %f\n", 
-	     param->local_map_std_val );
-    fprintf( stderr, "vascocore_local_map_history_length      %d\n", 
-	     param->local_map_history_length );
-    fprintf( stderr, "vascocore_local_map_max_used_history    %d\n", 
-	     param->local_map_max_used_history );
-    fprintf( stderr, "vascocore_local_map_min_bbox_distance   %f\n", 
-	     param->local_map_min_bbox_distance );
-    fprintf( stderr, "vascocore_local_map_use_last_scans      %d\n", 
-	     param->local_map_use_last_scans );
-    fprintf( stderr, "vascocore_local_map_object_prob         %f\n", 
-	     param->local_map_object_prob );
-    fprintf( stderr, "vascocore_bounding_box_max_range        %f\n", 
-	     param->bounding_box_max_range );
-    fprintf( stderr, "vascocore_bounding_box_border           %f\n", 
-	     param->bounding_box_border );
-    fprintf( stderr, "vascocore_motion_model_forward          %f\n", 
-	     param->motion_model_forward );
-    fprintf( stderr, "vascocore_motion_model_sideward         %f\n", 
-	     param->motion_model_sideward );
-    fprintf( stderr, "vascocore_motion_model_rotation         %f\n", 
-	     param->motion_model_rotation );
-    fprintf( stderr, "vascocore_pos_corr_step_size_forward    %f\n", 
-	     param->pos_corr_step_size_forward );
-    fprintf( stderr, "vascocore_pos_corr_step_size_sideward   %f\n", 
-	     param->pos_corr_step_size_sideward );
-    fprintf( stderr, "vascocore_pos_corr_step_size_rotation   %f\n", 
-	     param->pos_corr_step_size_rotation );
-    fprintf( stderr, "vascocore_pos_corr_step_size_loop       %d\n", 
-	     param->pos_corr_step_size_loop );
-#endif
+  vascocore_get_default_params(param, laser_type);
+  vascocore_get_expert_params(argc, argv, param);
 }
 
 void

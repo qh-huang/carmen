@@ -340,7 +340,17 @@ read_parameters(int argc, char *argv[], carmen_robot_config_t *robot_config,
 		carmen_navigator_config_t *nav_config,
 		carmen_navigator_panel_config_t *navivator_panel_config)
 {
-    int num_items;
+  int num_items;
+  
+  navivator_panel_config->initial_map_zoom = 100.0;
+  navivator_panel_config->track_robot = 1;
+  navivator_panel_config->draw_waypoints = 1;
+  navivator_panel_config->show_particles = 0;
+  navivator_panel_config->show_gaussians = 0;
+  navivator_panel_config->show_true_pos = 1;
+  navivator_panel_config->show_tracked_objects = 0;
+  navivator_panel_config->show_lasers = 0;
+  navivator_panel_config->show_simulator_objects = 0;
 
   carmen_param_t param_list[] = {
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, 
@@ -364,40 +374,30 @@ read_parameters(int argc, char *argv[], carmen_robot_config_t *robot_config,
     {"robot", "rectangular", CARMEN_PARAM_INT, 
      &(robot_config->rectangular), 1, NULL},
 
-    {"navigator", "num_lasers", CARMEN_PARAM_INT, 
-     &(nav_config->num_lasers_to_use), 1, NULL},
-    {"navigator", "update_map", CARMEN_PARAM_ONOFF, 
-     &(nav_config->update_map), 1, NULL},
-    {"navigator", "max_laser_range", CARMEN_PARAM_INT, 
-     &(nav_config->max_range), 1, NULL},
     {"navigator", "max_collision_range", CARMEN_PARAM_INT, 
      &(nav_config->max_collision_range), 1, NULL},
-    {"navigator", "replan_frequency", CARMEN_PARAM_DOUBLE, 
-     &(nav_config->replan_frequency), 1, NULL},
-    {"navigator", "smooth_path", CARMEN_PARAM_ONOFF, 
-     &(nav_config->smooth_path), 1, NULL},
     {"navigator", "goal_size", CARMEN_PARAM_DOUBLE,
      &(nav_config->goal_size), 1, NULL},
     {"navigator", "goal_theta_tolerance", CARMEN_PARAM_DOUBLE,
      &(nav_config->goal_theta_tolerance), 1, NULL},
 
-    {"navigator_panel", "initial_map_zoom", CARMEN_PARAM_DOUBLE,
+    {"navigator_panel", "initial_map_zoom", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->initial_map_zoom), 1, NULL},
-    {"navigator_panel", "track_robot", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "track_robot", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->track_robot), 1, NULL},
-    {"navigator_panel", "draw_waypoints", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "draw_waypoints", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->draw_waypoints), 1, NULL},
-    {"navigator_panel", "show_particles", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_particles", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_particles), 1, NULL},
-    {"navigator_panel", "show_gaussians", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_gaussians", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_gaussians), 1, NULL},
-    {"navigator_panel", "show_laser", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_laser", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_lasers), 1, NULL},
-    {"navigator_panel", "show_simulator_objects", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_simulator_objects", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_simulator_objects), 1, NULL},
-    {"navigator_panel", "show_true_pos", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_true_pos", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_true_pos), 1, NULL},
-    {"navigator_panel", "show_tracked_objects", CARMEN_PARAM_ONOFF,
+    {"navigator_panel", "show_tracked_objects", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &(navivator_panel_config->show_tracked_objects), 1, NULL}
   };
   
