@@ -912,7 +912,7 @@ carmen_param_usage(char *progname, carmen_param_p param_list, int num_items,
 		   char *fmt, ...) 
 {
   va_list args;
-  int index;
+  int index, expert;
 
   if (fmt != NULL)
     {
@@ -946,27 +946,36 @@ carmen_param_usage(char *progname, carmen_param_p param_list, int num_items,
 	  if (!param_list[index].variable)
 	    continue;
 	  fprintf(stderr, "\t-%s ", param_list[index].variable);
+	  if (param_list[index].type & CARMEN_PARAM_EXPERT) {
+	    expert = 1;
+	    param_list[index].type &= ~CARMEN_PARAM_EXPERT;
+	  }
+	  else
+	    expert = 0;
 	  switch (param_list[index].type)
 	    {
 	    case CARMEN_PARAM_INT:
-	      fprintf(stderr, "%%d\t");
+	      fprintf(stderr, "%%d");
 	      break;
 	    case CARMEN_PARAM_DOUBLE:
-	      fprintf(stderr, "%%f\t");
+	      fprintf(stderr, "%%f");
 	      break;
 	    case CARMEN_PARAM_ONOFF:
-	      fprintf(stderr, "{on|off}\t");
+	      fprintf(stderr, "{on|off}");
 	      break;
 	    case CARMEN_PARAM_STRING:
-	      fprintf(stderr, "%%s\t");
+	      fprintf(stderr, "%%s");
 	      break;
 	    case CARMEN_PARAM_FILE:
-	      fprintf(stderr, "<filename>\t");
+	      fprintf(stderr, "<filename>");
 	      break;
 	    case CARMEN_PARAM_DIR:
-	      fprintf(stderr, "<directory>\t");
+	      fprintf(stderr, "<directory>");
 	      break;
 	    }
+
+	  if (expert)
+	    fprintf(stderr, " [expert]");
 	  
 	  fprintf(stderr, "[50G Autoupdate : %s\n", 
 		  (param_list[index].subscribe ? "on" : "off"));
@@ -1551,4 +1560,142 @@ carmen_param_get_paramserver_host(char **hostname)
   strcpy(*hostname, response->host);
 
   return 0;
+}
+
+void
+carmen_param_load_paramfile(char *filename, char *param_set)
+{
+  FILE *fp;
+  char line[2000], *err, param[1024], value[1024];
+  int count = 0;
+  int param_err;
+  int skipping = 0;
+  int line_num = 0;
+  char *mark, *token, *dummy;
+  int token_num;
+  int line_length;
+
+  if (!carmen_file_exists(filename))
+    carmen_warn("Error loading parameters: %s does not exist.\n", filename);
+    
+  fp = fopen(filename, "r");
+  if (fp == NULL) 
+    carmen_die_syserror("Error loading parameters: cannot open %s for reading.\n", filename);
+
+  err = fgets(line, 2000, fp);
+  for (; err != NULL; err = fgets(line, 2000, fp)) {
+    line_num++;
+    line[1999] = '\0';
+    if (strlen(line) == 1999) 
+      carmen_die("Error loading parameters: line %d of file %s is too long.\n"
+		 "Maximum line length is %d. Please correct this line.\n\n"
+		 "It is also possible that this file has become corrupted.\n"
+		 "Make sure you have an up-to-date version of carmen, and\n"
+		 "consult the param_server documentation to make sure the\n"
+		 "file format is valid.\n", line_num, filename, 2000);
+    
+    if (feof(fp))
+      break;
+    mark = strchr(line, '#');    /* strip comments and trailing returns */
+    if (mark != NULL)
+      mark[0] = '\0';
+    mark = strchr(line, '\n');
+    if (mark != NULL)
+      mark[0] = '\0';
+    
+    // Trim off trailing white space 
+    
+    line_length = strlen(line) - 1;
+    while (line_length >= 0 && 
+	   (line[line_length] == ' ' || line[line_length] == '\t' ))
+      line[line_length--] = '\0';
+  
+    line_length++;
+    
+    if (line_length == 0)
+      continue;
+    
+    // Skip over initial blank space
+    
+    mark = line + strspn(line, " \t");
+    if (strlen(mark) == 0) 
+      carmen_die("You have encountered a bug in carmen. Please report it\n"
+		 "to the carmen maintainers. \n"
+		 "Line %d, function %s, file %s\n", __LINE__, __FUNCTION__,
+		 __FILE__);
+    
+    token_num = 0;
+    
+    /* tokenize line */
+    token = mark;
+    
+    // Move mark to the first whitespace character.
+    mark = strpbrk(mark, " \t");
+    // If we found a whitespace character, then turn it into a NULL
+    // and move mark to the next non-whitespace.
+    if (mark) 
+      {
+	mark[0] = '\0';
+	mark++;
+	mark += strspn(mark, " \t");
+      }
+    
+    if (strlen(token) > 254) 
+      {
+	carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
+		    "The parameter name %s is too long (%d characters).\n"
+		    "A parameter name can be no longer than 254 "
+		    "characters.\nSkipping this line.\n", filename, 
+		    count, token, (int) strlen(token));
+	continue;
+      }
+    
+    strcpy(param, token);
+    token_num++;
+    
+    // If mark points to a non-whitespace character, then we have a
+    // two-token line
+    if (mark)
+      {
+	if (strlen(mark) > 1999) 
+	  {
+	    carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
+			"The parameter value %s is too long (%d "
+			"characters).\nA parameter value can be no longer "
+			"than %d characters.\nSkipping this line.\n", 
+			filename, count, mark, (int) strlen(mark),
+			1999);
+	    continue;
+	  }
+	strcpy(value, mark);
+	token_num++;
+      }
+    
+    if (param[0] == '[') 
+      {
+	if (param[1] == '*')
+	  skipping = 0;
+	else if (param_set != NULL && 
+	    carmen_strncasecmp(param+1, param_set, strlen(param_set)) == 0)
+	  skipping = 0;	    
+	else
+	  skipping = 1;
+	continue;
+      }
+    else if(token_num == 2 && !skipping) 
+      {
+	param_err = carmen_param_get_string(param, &dummy);
+	if (param_err >= 0)
+	  carmen_warn("Overwriting parameter %s from %s: new value = %s.\n",
+		      param, carmen_extract_filename(filename), value);	  
+	param_err = carmen_param_set_variable(param, value, NULL);
+	if (param_err < 0)
+	  carmen_warn("Couldn't set parameter %s\n", param);
+	else {
+	  count++;
+	}
+      }
+  } 
+  
+  carmen_warn("Set %d parameters\n", count);
 }

@@ -95,6 +95,8 @@ int carmen_param_install_params(int argc, char *argv[],
 				 carmen_param_p param_list, 
 				 int num_items);
 
+void carmen_param_load_paramfile(char *filename, char *param_set);
+
 void carmen_param_check_unhandled_commandline_args(int argc, char *argv[]);
 
 void carmen_param_subscribe_int(char *module, char *variable, 

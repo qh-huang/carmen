@@ -1132,13 +1132,13 @@ read_robotgraph_parameters(int argc, char **argv)
     {"robot", "width", CARMEN_PARAM_DOUBLE, &width, 0, NULL},
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, &max_tv, 0, NULL},
     {"robot", "max_r_vel", CARMEN_PARAM_DOUBLE, &max_rv, 0, NULL},
-    {"robot_gui", "connect_distance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"robotgui", "connect_distance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
      &connect_distance, 1, NULL},
-    {"robot_gui", "add_control", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"robotgui", "add_control", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &gui_control, 1, NULL},
-    {"robot_gui", "show_velocity", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"robotgui", "show_velocity", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &show_velocity, 1, NULL},
-    {"robot_gui", "show_vector", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"robotgui", "show_vector", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
      &show_vector, 1, NULL}
   };
 
