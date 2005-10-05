@@ -1,14 +1,8 @@
 include ../Makefile.conf
 
-ifdef FOR_XAVIER
-INTERFACE_LIBS = -lxavier_interface
-else
-INTERFACE_LIBS = -lrobot_interface
-endif
-
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lglobal -lparam_interface -llaser_interface -lmap_interface $(INTERFACE_LIBS) -lipc 
+LFLAGS += -lglobal -lparam_interface -llaser_interface -lmap_interface -lrobot_interface -lipc 
 
 MODULE_NAME = LOCALIZE
 MODULE_COMMENT = Markov Localization Module

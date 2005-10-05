@@ -14,12 +14,13 @@ MODULE_NAME = "GLOBAL"
 MODULE_COMMENT = "CARMEN global functions"
 
 SOURCES = global.c geometry.c pswrap.c serial.c global_test.c \
-	carmen-config.c
-PUBLIC_INCLUDES = global.h geometry.h pswrap.h carmen.h serial.h
-PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a
- PUBLIC_BINARIES = carmen-config
+	carmen-config.c keyctrl.c
+PUBLIC_INCLUDES = global.h geometry.h pswrap.h carmen.h serial.h keyctrl.h
+PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
+	libkeyctrl.a
+PUBLIC_BINARIES = carmen-config
 TARGETS = libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
-	carmen-config
+	carmen-config libkeyctrl.a
 
 CHECK_CONFIG = $(shell if [ -f carmen-config.c ]; then echo "1"; fi;)
 
@@ -67,6 +68,8 @@ libpswrap.a:		pswrap.o
 libartwrap.a:		artwrap.o
 
 libserial.a:	serial.o
+
+libkeyctrl.a:   keyctrl.o
 
 global_test: global_test.o libglobal.a
 

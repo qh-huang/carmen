@@ -46,7 +46,7 @@ typedef struct {
 } carmen_ini_param_t, *carmen_ini_param_p;
 
 static pid_t central_pid = -1;
-static int auto_start_central = 1; 
+static int auto_start_central = 0; 
 
 static int connected = 0;
 
@@ -60,7 +60,7 @@ static carmen_ini_param_p param_list = NULL;
 static int num_params = 0;
 static int param_table_capacity = 0;
 static char *map_filename = NULL;
-static char *selected_robot;
+static char *selected_robot = NULL;
 static char *param_filename = NULL;
 
 static int alphabetize = 0;
@@ -401,16 +401,18 @@ read_parameters_from_file(void)
     if (lvalue[0] == '[') {
       if (lvalue[1] == '*')
 	found_matching_robot = 1;
-      else if (strlen(lvalue) < strlen(selected_robot) + 2)
-	found_matching_robot = 0;
-      else if (lvalue[strlen(selected_robot)+1] != ']') 
-	found_matching_robot = 0;
-      else if (carmen_strncasecmp
-	       (lvalue+1, selected_robot, strlen(selected_robot)) == 0) {
-	found_matching_robot = 1;
-	found_desired_robot = 1;
-      } else
-	found_matching_robot = 0;
+      else if (selected_robot) {
+	if (strlen(lvalue) < strlen(selected_robot) + 2)
+	  found_matching_robot = 0;
+	else if (lvalue[strlen(selected_robot)+1] != ']') 
+	  found_matching_robot = 0;
+	else if (carmen_strncasecmp
+		 (lvalue+1, selected_robot, strlen(selected_robot)) == 0) {
+	  found_matching_robot = 1;
+	  found_desired_robot = 1;
+	} else
+	  found_matching_robot = 0;
+      }
     }
     else if(token_num == 2 && found_matching_robot == 1) 
       set_param(lvalue, rvalue);
@@ -418,7 +420,7 @@ read_parameters_from_file(void)
   
   fclose(fp);
 
-  if (!found_desired_robot) {
+  if (selected_robot && !found_desired_robot) {
     carmen_die("Did not find a match for robot %s. Do you have the right\n"
 	       "init file? (Reading parameters from %s)\n", selected_robot,
 	       param_filename);
@@ -625,11 +627,15 @@ read_commandline(int argc, char **argv)
   robot_names = (char **)calloc(MAX_ROBOTS, sizeof(char *));
   carmen_test_alloc(robot_names);
   find_valid_robots(robot_names, &num_robots, MAX_ROBOTS);
+
+  if (num_robots == 0) {
+    carmen_warn("Loading parameters for default robot using param file "
+		"[31;1m%s[0m\n", param_filename);  
+    return 0;
+  }
+
   robot_names = (char **)realloc(robot_names, num_robots * sizeof(char *));
   carmen_test_alloc(robot_names);
-
-  if (num_robots == 0)
-    usage(argv[0], "ini file %s contains no robot names.");  
 
   if (selected_robot == NULL && num_robots > 1) {
     for (cur_arg = 1; cur_arg < optind; cur_arg++) {
@@ -645,6 +651,8 @@ read_commandline(int argc, char **argv)
     usage(argv[0], "The ini_file %s contains %d robot definitions.\n"
 	  "You must specify a robot name on the command line using --robot.",
 	  param_filename, num_robots);
+  if (selected_robot == NULL)
+    selected_robot = carmen_new_string("%s", robot_names[0]);
 
   for(i = 0; i < num_robots; i++)
     free(robot_names[i]);
@@ -695,10 +703,15 @@ get_robot(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   response.timestamp = carmen_get_time();
   strcpy(response.host, carmen_get_tenchar_host_name());
 
-  response.robot = (char *) calloc(strlen(selected_robot) + 1, sizeof(char));
-  carmen_test_alloc(response.robot);
-  strcpy(response.robot, selected_robot);
-
+  if (selected_robot) {
+    response.robot = (char *) calloc(strlen(selected_robot) + 1, sizeof(char));
+    carmen_test_alloc(response.robot);
+    strcpy(response.robot, selected_robot);
+  } else {
+    response.robot = (char *) calloc(8, sizeof(char));
+    carmen_test_alloc(response.robot);
+    strcpy(response.robot, "default");
+  }
   response.status = CARMEN_PARAM_OK;
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ROBOT_NAME, &response);

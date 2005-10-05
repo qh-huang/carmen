@@ -224,7 +224,7 @@ relink:
 distclean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
 	$(SILENT) $(RM) *.o *.a *.so *.exe *~ core a.out
-	$(SILENT) $(RM) Makefile.depend Makefile.depend.bak $(TARGETS)
+	$(SILENT) $(RM) Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
 	$(remove_includes)
 	$(remove_manpages)
 	$(remove_libraries)

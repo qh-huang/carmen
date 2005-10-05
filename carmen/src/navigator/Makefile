@@ -1,22 +1,9 @@
 include ../Makefile.conf
 
-ifdef FOR_XAVIER
-INTERFACE_LIBS = -lxavier_interface
-else
-INTERFACE_LIBS = -lrobot_interface
-endif
-
-DOT_FILES := $(wildcard $(INC_DIR)/carmen/dot*.h)
-
 IFLAGS +=
 LFLAGS += $(INTERFACE_LIBS) -lglobal -lipc -lbase_interface \
 	-llocalize_interface -lgeometry -lmap_interface \
-	-lparam_interface -lsimulator_interface
-
-ifdef DOT_FILES
-IFLAGS += -DUSE_DOT
-LFLAGS += -ldot_interface
-endif
+	-lparam_interface -lsimulator_interface -lrobot_interface
 
 MODULE_NAME = NAVIGATOR
 MODULE_COMMENT = The motion planner!
