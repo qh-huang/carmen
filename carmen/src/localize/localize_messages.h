@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef LOCALIZE_MESSAGES_H
-#define LOCALIZE_MESSAGES_H
+#ifndef CARMEN_LOCALIZE_MESSAGES_H
+#define CARMEN_LOCALIZE_MESSAGES_H
 
 #ifdef __cplusplus
 extern "C" {

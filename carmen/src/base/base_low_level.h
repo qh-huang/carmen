@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef BASE_LOW_LEVEL_H
-#define BASE_LOW_LEVEL_H
+#ifndef CARMEN_BASE_LOW_LEVEL_H
+#define CARMEN_BASE_LOW_LEVEL_H
 
 #ifdef __cplusplus
 extern "C" {

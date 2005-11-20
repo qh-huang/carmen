@@ -15,12 +15,12 @@
 
 #define MAX_POLY_POINTS 30
 
-ps_doc_p ps_open(char *filename, float width, float height, int eps)
+carmen_ps_doc_p carmen_ps_open(char *filename, float width, float height, int eps)
 {
-  ps_doc_p doc;
+  carmen_ps_doc_p doc;
   float lm, tm;
 
-  doc = (ps_doc_p)calloc(1, sizeof(ps_doc_t));
+  doc = (carmen_ps_doc_p)calloc(1, sizeof(carmen_ps_doc_t));
   /* carmen_check_alloc */
   if(doc == NULL)
     return NULL;
@@ -65,7 +65,7 @@ ps_doc_p ps_open(char *filename, float width, float height, int eps)
   return doc;
 }
 
-void ps_close(ps_doc_p doc)
+void carmen_ps_close(carmen_ps_doc_p doc)
 {
   if(!doc->eps) {
     fprintf(doc->fp, "%%%%Pages: %d\n", doc->page_count);
@@ -77,7 +77,7 @@ void ps_close(ps_doc_p doc)
   free(doc);
 }
 
-void ps_comment(ps_doc_p doc, char *comment)
+void carmen_ps_comment(carmen_ps_doc_p doc, char *comment)
 {
   char temp[100];
   int i;
@@ -89,7 +89,7 @@ void ps_comment(ps_doc_p doc, char *comment)
   fprintf(doc->fp, "%%%s\n", temp);
 }
 
-void ps_next_page(ps_doc_p doc)
+void carmen_ps_next_page(carmen_ps_doc_p doc)
 {
   float height, width, lm, tm;
 
@@ -112,33 +112,33 @@ void ps_next_page(ps_doc_p doc)
   }
 }
 
-void ps_set_color(ps_doc_p doc, unsigned char r, unsigned char g,
+void carmen_ps_set_color(carmen_ps_doc_p doc, unsigned char r, unsigned char g,
 		  unsigned char b)
 {
   fprintf(doc->fp, "%f %f %f setrgbcolor\n", r / 255.0, g / 255.0, b / 255.0);
 }
 
-void ps_set_gray(ps_doc_p doc, unsigned char level)
+void carmen_ps_set_gray(carmen_ps_doc_p doc, unsigned char level)
 {
   fprintf(doc->fp, "%f setgray\n", level / 255.0);
 }
 
-void ps_set_linewidth(ps_doc_p doc, float w)
+void carmen_ps_set_linewidth(carmen_ps_doc_p doc, float w)
 {
   fprintf(doc->fp, "%f setlinewidth\n", w);
 }
 
-void ps_set_jointype(ps_doc_p doc, int join)
+void carmen_ps_set_jointype(carmen_ps_doc_p doc, int join)
 {
   fprintf(doc->fp, "%d setlinejoin\n", join);
 }
 
-void ps_set_captype(ps_doc_p doc, int cap)
+void carmen_ps_set_captype(carmen_ps_doc_p doc, int cap)
 {
   fprintf(doc->fp, "%d setlinecap\n", cap);
 }
 
-void ps_set_dash(ps_doc_p doc, int length)
+void carmen_ps_set_dash(carmen_ps_doc_p doc, int length)
 {
   if(length == 0)
     fprintf(doc->fp, "[] 0 setdash\n");
@@ -146,27 +146,27 @@ void ps_set_dash(ps_doc_p doc, int length)
     fprintf(doc->fp, "[%d] 0 setdash\n", length);
 }
 
-void ps_set_font(ps_doc_p doc, char *fontname, int size)
+void carmen_ps_set_font(carmen_ps_doc_p doc, char *fontname, int size)
 {
   fprintf(doc->fp, "/%s findfont %d scalefont setfont\n", fontname, size);
 }
 
-void ps_draw_point(ps_doc_p doc, float x_1, float y_1)
+void carmen_ps_draw_point(carmen_ps_doc_p doc, float x_1, float y_1)
 {
   fprintf(doc->fp, "newpath\n");
   fprintf(doc->fp, "%f inch %f inch %f inch 0 360 arc\n", x_1, y_1, 0.01);
   fprintf(doc->fp, "fill\n");
 }
 
-void ps_draw_points(ps_doc_p doc, float *x_1, float *y_1, int n)
+void carmen_ps_draw_points(carmen_ps_doc_p doc, float *x_1, float *y_1, int n)
 {
   int i;
 
   for(i = 0; i < n; i++)
-    ps_draw_point(doc, x_1[i], y_1[i]);
+    carmen_ps_draw_point(doc, x_1[i], y_1[i]);
 }
 
-void ps_draw_line(ps_doc_p doc, float x_1, float y_1, float x_2, float y_2)
+void carmen_ps_draw_line(carmen_ps_doc_p doc, float x_1, float y_1, float x_2, float y_2)
 {
   fprintf(doc->fp, "newpath\n");
   fprintf(doc->fp, "%f inch %f inch moveto\n", x_1, y_1);
@@ -174,13 +174,13 @@ void ps_draw_line(ps_doc_p doc, float x_1, float y_1, float x_2, float y_2)
   fprintf(doc->fp, "stroke\n");
 }
 
-void ps_draw_x(ps_doc_p doc, float x_1, float y_1, float r)
+void carmen_ps_draw_x(carmen_ps_doc_p doc, float x_1, float y_1, float r)
 {
-  ps_draw_line(doc, x_1 - r, y_1 - r, x_1 + r, y_1 + r);
-  ps_draw_line(doc, x_1 - r, y_1 + r, x_1 + r, y_1 - r);
+  carmen_ps_draw_line(doc, x_1 - r, y_1 - r, x_1 + r, y_1 + r);
+  carmen_ps_draw_line(doc, x_1 - r, y_1 + r, x_1 + r, y_1 - r);
 }
 
-void ps_draw_poly(ps_doc_p doc, int filled, float *x_1, float *y_1, int n,
+void carmen_ps_draw_poly(carmen_ps_doc_p doc, int filled, float *x_1, float *y_1, int n,
 		  int closed)
 {
   int i;
@@ -197,7 +197,7 @@ void ps_draw_poly(ps_doc_p doc, int filled, float *x_1, float *y_1, int n,
     fprintf(doc->fp, "stroke\n");
 }
 
-void ps_draw_circle(ps_doc_p doc, int filled, float x_1, float y_1, float r)
+void carmen_ps_draw_circle(carmen_ps_doc_p doc, int filled, float x_1, float y_1, float r)
 {
   fprintf(doc->fp, "newpath\n");
   fprintf(doc->fp, "%f inch %f inch %f inch 0 360 arc\n", x_1, y_1, r);
@@ -207,7 +207,7 @@ void ps_draw_circle(ps_doc_p doc, int filled, float x_1, float y_1, float r)
     fprintf(doc->fp, "stroke\n");
 }
 
-void ps_draw_ellipse(ps_doc_p doc, int filled, float x_1, float y_1, 
+void carmen_ps_draw_ellipse(carmen_ps_doc_p doc, int filled, float x_1, float y_1, 
 		     float x_var, float xy_cov, float y_var, float k)
 {
   float poly_x[MAX_POLY_POINTS], poly_y[MAX_POLY_POINTS], l11, l21, l22;
@@ -222,11 +222,11 @@ void ps_draw_ellipse(ps_doc_p doc, int filled, float x_1, float y_1,
     poly_x[i] = x_1 + l11 * xt * k;
     poly_y[i] = y_1 + (l21 * xt + l22 * yt) * k;
   }
-  ps_draw_poly(doc, filled, poly_x, poly_y, MAX_POLY_POINTS, 1);
+  carmen_ps_draw_poly(doc, filled, poly_x, poly_y, MAX_POLY_POINTS, 1);
 }
 
 
-void ps_draw_gaussian(ps_doc_p doc, float x_1, float y_1, float x_var, 
+void carmen_ps_draw_gaussian(carmen_ps_doc_p doc, float x_1, float y_1, float x_var, 
 		      float xy_cov, float y_var, float k)
 {
   float poly_x[MAX_POLY_POINTS], poly_y[MAX_POLY_POINTS];
@@ -267,7 +267,7 @@ void ps_draw_gaussian(ps_doc_p doc, float x_1, float y_1, float x_var,
      done, eigvecs are unit vectors along axes and eigvals are
      corresponding radii */
   if (eigval1 < 0 || eigval2 < 0) {
-    ps_draw_point(doc, x_1, y_1);
+    carmen_ps_draw_point(doc, x_1, y_1);
     return;
   }
   eigval1 = sqrt(eigval1) * k;
@@ -283,28 +283,28 @@ void ps_draw_gaussian(ps_doc_p doc, float x_1, float y_1, float x_var,
   }
 
   /* finally we can draw it */
-  ps_draw_poly(doc, 0, poly_x, poly_y, MAX_POLY_POINTS, 1);
+  carmen_ps_draw_poly(doc, 0, poly_x, poly_y, MAX_POLY_POINTS, 1);
   ex1 = x_1 + eigval1 * eigvec1x;
   ey1 = y_1 + eigval1 * eigvec1y;
   ex2 = x_1 - eigval1 * eigvec1x;
   ey2 = y_1 - eigval1 * eigvec1y;
-  ps_draw_line(doc, ex1, ey1, ex2, ey2);
+  carmen_ps_draw_line(doc, ex1, ey1, ex2, ey2);
   ex1 = x_1 + eigval2 * eigvec2x;
   ey1 = y_1 + eigval2 * eigvec2y;
   ex2 = x_1 - eigval2 * eigvec2x;
   ey2 = y_1 - eigval2 * eigvec2y;
-  ps_draw_line(doc, ex1, ey1, ex2, ey2);
+  carmen_ps_draw_line(doc, ex1, ey1, ex2, ey2);
 }
 
-void ps_draw_rectangle(ps_doc_p doc, int filled, float x_1, float y_1,
+void carmen_ps_draw_rectangle(carmen_ps_doc_p doc, int filled, float x_1, float y_1,
 		       float x_2, float y_2)
 {
   float xp[4] = {x_1, x_2, x_2, x_1}, yp[4] = {y_1, y_1, y_2, y_2};
   
-  ps_draw_poly(doc, filled, xp, yp, 4, 1);
+  carmen_ps_draw_poly(doc, filled, xp, yp, 4, 1);
 }
 
-void ps_draw_arc(ps_doc_p doc, float x_1, float y_1, float r, 
+void carmen_ps_draw_arc(carmen_ps_doc_p doc, float x_1, float y_1, float r, 
 		 float start_angle, float delta)
 {
   fprintf(doc->fp, "newpath\n");
@@ -313,7 +313,7 @@ void ps_draw_arc(ps_doc_p doc, float x_1, float y_1, float r,
   fprintf(doc->fp, "stroke\n");
 }
 
-void ps_draw_wedge(ps_doc_p doc, int filled, float x_1, float y_1, float r,
+void carmen_ps_draw_wedge(carmen_ps_doc_p doc, int filled, float x_1, float y_1, float r,
 		   float start_angle, float delta)
 {
   fprintf(doc->fp, "newpath\n");
@@ -328,7 +328,7 @@ void ps_draw_wedge(ps_doc_p doc, int filled, float x_1, float y_1, float r,
     fprintf(doc->fp, "stroke\n");
 }
 
-void ps_draw_text_landscape(ps_doc_p doc, char *str, float x_1, float y_1)
+void carmen_ps_draw_text_landscape(carmen_ps_doc_p doc, char *str, float x_1, float y_1)
 {
   fprintf(doc->fp, "gsave\n");
   fprintf(doc->fp, "%f inch %f inch translate\n", x_1, y_1);
@@ -338,13 +338,13 @@ void ps_draw_text_landscape(ps_doc_p doc, char *str, float x_1, float y_1)
   fprintf(doc->fp, "\ngrestore\n");
 }
 
-void ps_draw_text(ps_doc_p doc, char *str, float x_1, float y_1)
+void carmen_ps_draw_text(carmen_ps_doc_p doc, char *str, float x_1, float y_1)
 {
   fprintf(doc->fp, "%f inch %f inch moveto\n", x_1, y_1);
   fprintf(doc->fp, "(%s) show\n", str);
 }
 
-void ps_draw_image(ps_doc_p doc, float dest_x, float dest_y, float dest_width,
+void carmen_ps_draw_image(carmen_ps_doc_p doc, float dest_x, float dest_y, float dest_width,
 		   float dest_height, char *src_image, int src_width,
 		   int src_height)
 {
@@ -368,7 +368,7 @@ void ps_draw_image(ps_doc_p doc, float dest_x, float dest_y, float dest_width,
   fprintf(doc->fp, "\ngrestore\n");
 }
 
-void ps_draw_transformed_image(ps_doc_p doc, char *src_image, int src_width,
+void carmen_ps_draw_transformed_image(carmen_ps_doc_p doc, char *src_image, int src_width,
 			       int src_height, float dest_x, float dest_y,
 			       float dest_theta, float dest_scale)
 {

@@ -1,5 +1,5 @@
-#ifndef SICK_H
-#define SICK_H
+#ifndef CARMEN_SICK_H
+#define CARMEN_SICK_H
 
 #define LASER_BUFFER_SIZE                100000
 

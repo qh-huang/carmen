@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef CARMEN_SERIAL_H
+#define CARMEN_SERIAL_H
 
 #ifdef __cplusplus
 extern "C" {

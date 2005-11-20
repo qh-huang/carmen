@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef LIKELIHOOD_MAP_H
-#define LIKELIHOOD_MAP_H
+#ifndef CARMEN_LIKELIHOOD_MAP_H
+#define CARMEN_LIKELIHOOD_MAP_H
 
 #include "localizecore.h"
 

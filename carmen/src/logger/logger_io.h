@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef LOGGER_IO_H
-#define LOGGER_IO_H
+#ifndef CARMEN_LOGGER_IO_H
+#define CARMEN_LOGGER_IO_H
 
 #include <carmen/carmen.h>
 

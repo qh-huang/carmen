@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef LOCALIZE_INTERFACE_H
-#define LOCALIZE_INTERFACE_H
+#ifndef CARMEN_LOCALIZE_INTERFACE_H
+#define CARMEN_LOCALIZE_INTERFACE_H
 
 #include "localize_messages.h"
 

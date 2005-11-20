@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef JOYCTRL_H
-#define JOYCTRL_H
+#ifndef CARMEN_JOYCTRL_H
+#define CARMEN_JOYCTRL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,9 +41,9 @@ extern "C" {
 #include <stdlib.h>
 #include <linux/joystick.h>
 
-#define         JOYSTICK_DEVICE         "/dev/js0"
-#define         JOYSTICK_DEADSPOT       1
-#define         JOYSTICK_DEADSPOT_SIZE  0.2
+#define         CARMEN_JOYSTICK_DEVICE         "/dev/js0"
+#define         CARMEN_JOYSTICK_DEADSPOT       1
+#define         CARMEN_JOYSTICK_DEADSPOT_SIZE  0.2
 
 typedef struct {
   int fd;

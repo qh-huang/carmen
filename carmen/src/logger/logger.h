@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef CARMEN_LOGGER_H
+#define CARMEN_LOGGER_H
 
 #ifdef __cplusplus
 extern "C" {

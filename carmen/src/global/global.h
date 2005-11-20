@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#ifndef CARMEN_GLOBAL_H
+#define CARMEN_GLOBAL_H
 
 #ifdef __cplusplus
 extern "C" {

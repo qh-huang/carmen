@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef BASE_INTERFACE_H
-#define BASE_INTERFACE_H
+#ifndef CARMEN_BASE_INTERFACE_H
+#define CARMEN_BASE_INTERFACE_H
 
 #include <carmen/base_messages.h>
 

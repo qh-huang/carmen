@@ -1,5 +1,5 @@
-#ifndef LASER_IPC_H
-#define LASER_IPC_H
+#ifndef CARMEN_LASER_IPC_H
+#define CARMEN_LASER_IPC_H
 
 #include "sick.h"
 

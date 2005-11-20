@@ -10,8 +10,8 @@
  *
  ****************************************************/
 
-#ifndef ARTWRAP_H
-#define ARTWRAP_H
+#ifndef CARMEN_ARTWRAP_H
+#define CARMEN_ARTWRAP_H
 
 #ifdef __cplusplus
 extern "C" {
