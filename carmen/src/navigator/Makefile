@@ -12,12 +12,12 @@ SOURCES = navigator.c conventional.c planner.c navigator_ipc.c \
 	navigator_interface.c trajectory.c map_modify.c \
 	navigator_test.c random_nav.c
 
-PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h
+PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h navigator.h planner_interface.h
 PUBLIC_LIBRARIES = libnavigator_interface.a libconventional.a
 
 PUBLIC_BINARIES = navigator
 
-TARGETS = libnavigator_interface.a navigator navigator_test random_nav
+TARGETS = libnavigator_interface.a navigator navigator_test random_nav libconventional.a
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
