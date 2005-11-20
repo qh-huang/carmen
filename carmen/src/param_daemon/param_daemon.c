@@ -46,7 +46,7 @@ typedef struct {
 } carmen_ini_param_t, *carmen_ini_param_p;
 
 static pid_t central_pid = -1;
-static int auto_start_central = 0; 
+static int auto_start_central = 1; 
 
 static int connected = 0;
 

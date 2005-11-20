@@ -184,21 +184,21 @@ save_postscript_screenshot(void)
 {
   static int screenshot_number = 0;
   char filename[100];
-  ps_doc_p doc;
+  carmen_ps_doc_p doc;
   float *laser_x, *laser_y;
   float rect_x[4], rect_y[4];
   int i;
   double range, theta, coswidth, coslength, sinlength, sinwidth;
 
   sprintf(filename, "rg_screenshot%03d.ps", screenshot_number);
-  doc = ps_open(filename, 4, 3, GENERATE_PS);
+  doc = carmen_ps_open(filename, 4, 3, CARMEN_GENERATE_PS);
   if(doc == NULL) {
     carmen_warn("Error: Could not generate .ps document.\n");
     return;
   }
-  ps_set_jointype(doc, PS_BEVELJOIN);
-  ps_set_color(doc, 30, 144, 255);
-  ps_draw_rectangle(doc, 1, 0, 0, doc->width, doc->height);
+  carmen_ps_set_jointype(doc, CARMEN_PS_BEVELJOIN);
+  carmen_ps_set_color(doc, 30, 144, 255);
+  carmen_ps_draw_rectangle(doc, 1, 0, 0, doc->width, doc->height);
 
   laser_x = (float *)calloc(front_laser.num_readings, sizeof(float));
   carmen_test_alloc(laser_x);
@@ -216,9 +216,9 @@ save_postscript_screenshot(void)
     laser_x[i] = doc->width / 2.0 + laser_x[i] / 500.0 * 2.0;
     laser_y[i] = doc->height / 2.0 + laser_y[i] / 500.0 * 2.0;
   }
-  ps_set_color(doc, 255, 255, 255);
-  ps_draw_poly(doc, 1, laser_x, laser_y, front_laser.num_readings, 0);
-  ps_draw_poly(doc, 0, laser_x, laser_y, front_laser.num_readings, 0);
+  carmen_ps_set_color(doc, 255, 255, 255);
+  carmen_ps_draw_poly(doc, 1, laser_x, laser_y, front_laser.num_readings, 0);
+  carmen_ps_draw_poly(doc, 0, laser_x, laser_y, front_laser.num_readings, 0);
 
   coslength = cos(front_laser.robot_location.theta) / 2.0 * length;
   coswidth = cos(front_laser.robot_location.theta) / 2.0 * width;
@@ -234,15 +234,15 @@ save_postscript_screenshot(void)
   rect_x[2] = doc->width / 2.0 - (coslength - sinwidth) / 500.0 * 2.0;
   rect_y[2] = doc->height / 2.0 - (sinlength + coswidth) / 500.0 * 2.0;
   
-  ps_set_color(doc, 255, 255, 255);
-  ps_draw_poly(doc, 1, rect_x, rect_y, 4, 1);
-  ps_draw_poly(doc, 0, rect_x, rect_y, 4, 1);
-  ps_draw_line(doc, doc->width / 2.0, doc->height / 2.0, 
+  carmen_ps_set_color(doc, 255, 255, 255);
+  carmen_ps_draw_poly(doc, 1, rect_x, rect_y, 4, 1);
+  carmen_ps_draw_poly(doc, 0, rect_x, rect_y, 4, 1);
+  carmen_ps_draw_line(doc, doc->width / 2.0, doc->height / 2.0, 
 	       doc->width / 2.0 + length * 0.75 / 500.0 * 2.0 * 
 	       cos(front_laser.robot_location.theta),
 	       doc->height / 2.0 + length * 0.75 / 500.0 * 2.0 * 
 	       sin(front_laser.robot_location.theta));
-  ps_close(doc);
+  carmen_ps_close(doc);
   carmen_verbose("Generated %s\n", filename);
   screenshot_number++;
 }

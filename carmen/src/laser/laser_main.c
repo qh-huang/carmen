@@ -244,10 +244,10 @@ int carmen_laser_start(int argc, char **argv)
   ipc_initialize_messages();
 
   /* get laser parameters */
-  set_default_parameters(&laser1, FRONT_LASER_NUM);  
-  set_default_parameters(&laser2, REAR_LASER_NUM);
-  set_default_parameters(&laser3, LASER3_NUM);
-  set_default_parameters(&laser4, LASER4_NUM);
+  set_default_parameters(&laser1, CARMEN_FRONT_LASER_NUM);  
+  set_default_parameters(&laser2, CARMEN_REAR_LASER_NUM);
+  set_default_parameters(&laser3, CARMEN_LASER3_NUM);
+  set_default_parameters(&laser4, CARMEN_LASER4_NUM);
   read_parameters(argc, argv);
   
   /* start lasers, and start publishing scans */
