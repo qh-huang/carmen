@@ -307,7 +307,7 @@ int carmen_serial_ClearInputBuffer(int dev_fd)
   return(val);
 }
 
-int carmen_serial_writen(int dev_fd, char *buf, int nChars)
+int carmen_serial_writen(int dev_fd, unsigned char *buf, int nChars)
 {
   int amountWritten = 0;
   
@@ -329,7 +329,7 @@ int carmen_serial_writen(int dev_fd, char *buf, int nChars)
   return 0;
 }
 
-int carmen_serial_readn(int dev_fd, char *buf, int nChars)
+int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars)
 {
   int amountRead = 0, bytes_read = 0;
   struct timeval t;

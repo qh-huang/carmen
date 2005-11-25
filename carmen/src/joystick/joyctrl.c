@@ -29,7 +29,8 @@
 
 int carmen_initialize_joystick(carmen_joystick_type *joystick)
 {
-  if ((joystick->fd = open(CARMEN_JOYSTICK_DEVICE, O_RDONLY | O_NONBLOCK)) < 0){
+  if ((joystick->fd = open(CARMEN_JOYSTICK_DEVICE, 
+			   O_RDONLY | O_NONBLOCK)) < 0) {
     carmen_warn("Warning: could not initialize joystick.\n");
     joystick->initialized = 0;
     return -1;

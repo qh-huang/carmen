@@ -130,7 +130,7 @@ typedef struct {
 #define CARMEN_BASE_RESET_COMMAND_FMT "{double, [char:10]}"
 
 typedef struct {
-  char *data;
+  unsigned char *data;
   int size;
   double timestamp;
   char host[10];

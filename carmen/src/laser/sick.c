@@ -307,7 +307,7 @@ int sick_read_data(sick_laser_p laser, unsigned char *data, double timeout)
 int sick_write_command(sick_laser_p laser, unsigned char command,
 		       unsigned char *argument, int arg_length)
 {
-  unsigned char  buffer[MAX_COMMAND_SIZE];
+  unsigned char buffer[MAX_COMMAND_SIZE];
   int pos = 0, i, check, length, loop, answer = 0, counter = 0;
   int val = 0;
 
@@ -329,7 +329,7 @@ int sick_write_command(sick_laser_p laser, unsigned char command,
   check = sick_compute_checksum(buffer, length + 4);
   buffer[pos++] = check & 0x00ff;
   buffer[pos++] = check / 256;
-  carmen_serial_writen(laser->dev.fd, (char *)buffer, pos);
+  carmen_serial_writen(laser->dev.fd, buffer, pos);
 
   /* wait for acknowledgement */
   loop = 1;
@@ -969,7 +969,7 @@ void sick_handle_laser(sick_laser_p laser)
   bytes_available = carmen_serial_numChars(laser->dev.fd);
   if(bytes_available > LASER_BUFFER_SIZE - laser->buffer_position)
     bytes_available = LASER_BUFFER_SIZE - laser->buffer_position;
-  bytes_read = carmen_serial_readn(laser->dev.fd, (char *)laser->buffer +
+  bytes_read = carmen_serial_readn(laser->dev.fd, laser->buffer +
 				   laser->buffer_position, bytes_available);
 
   /* process at most one laser reading */

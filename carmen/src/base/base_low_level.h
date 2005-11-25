@@ -49,9 +49,9 @@ int carmen_base_direct_get_integrated_state(double *x, double *y,
 					    double *rv);
 int carmen_base_direct_get_sonars(double *ranges, carmen_point_t *positions,
 				  int num_sonars);
-int carmen_base_direct_get_bumpers(char *state, int num_bumpers);
-int carmen_base_direct_send_binary_data(char *data, int size);
-int carmen_base_direct_get_binary_data(char **data, int *size);
+int carmen_base_direct_get_bumpers(unsigned char *state, int num_bumpers);
+int carmen_base_direct_send_binary_data(unsigned char *data, int size);
+int carmen_base_direct_get_binary_data(unsigned char **data, int *size);
 
 void carmen_base_direct_arm_get(double servos[], int num_servos, 
 				double *currents, int *gripper);

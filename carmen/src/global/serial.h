@@ -40,9 +40,9 @@ long carmen_serial_numChars(int dev_fd);
 
 int carmen_serial_ClearInputBuffer(int dev_fd);
 
-int carmen_serial_writen(int dev_fd, char *buf, int nChars);
+int carmen_serial_writen(int dev_fd, unsigned char *buf, int nChars);
 
-int carmen_serial_readn(int dev_fd, char *buf, int nChars);
+int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars);
 
 #ifdef __cplusplus
 }

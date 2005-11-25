@@ -1329,7 +1329,7 @@ fork_central(void)
   central_pid = fork();
   if (central_pid == 0) {
     setenv("PATH", path, 1);
-    execlp("central", NULL);
+    execlp("central", NULL, NULL);
     carmen_die_syserror("Could not exec central: %s", path);
   }
   sleep(1);
