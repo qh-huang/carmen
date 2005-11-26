@@ -659,7 +659,7 @@ carmen_robot_follow_trajectory(carmen_traj_point_t *trajectory,
 }
 
 void 
-carmen_robot_send_base_binary_command(char *data, int length)
+carmen_robot_send_base_binary_command(unsigned char *data, int length)
 {
   IPC_RETURN_TYPE err;
   static carmen_base_binary_data_message msg;

@@ -640,14 +640,12 @@ carmen_base_run(void)
 			 CARMEN_BASE_SONAR_NAME);
   }
 
-  bumper.num_bumpers = 
-    carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
   if (bumper.state == NULL) {
     bumper.state = (char *)calloc(bumper.num_bumpers, sizeof(char));
     carmen_test_alloc(bumper.state);
-    bumper.num_bumpers = 
-      carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
   }
+  bumper.num_bumpers = 
+    carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
 
   if (bumper.num_bumpers > 0) {
     bumper.timestamp = carmen_get_time();

@@ -89,7 +89,7 @@ typedef struct {
 
 typedef struct {
   int num_bumpers;
-  char *state;
+  unsigned char *state;
   double timestamp;
   char host[10];
 } carmen_base_bumper_message;

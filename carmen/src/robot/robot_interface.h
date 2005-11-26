@@ -58,7 +58,7 @@ void carmen_robot_velocity_command(double tv, double rv);
 void carmen_robot_move_along_vector(double distance, double theta);
 void carmen_robot_follow_trajectory(carmen_traj_point_t *trajectory, int trajectory_length,
 				    carmen_traj_point_t *robot);
-void carmen_robot_send_base_binary_command(char *data, int length);
+void carmen_robot_send_base_binary_command(unsigned char *data, int length);
 
 #ifdef __cplusplus
 }
