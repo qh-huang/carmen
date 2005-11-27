@@ -641,7 +641,7 @@ carmen_base_run(void)
   }
 
   if (bumper.state == NULL) {
-    bumper.state = (char *)calloc(bumper.num_bumpers, sizeof(char));
+    bumper.state = (unsigned char *)calloc(bumper.num_bumpers, sizeof(char));
     carmen_test_alloc(bumper.state);
   }
   bumper.num_bumpers = 
