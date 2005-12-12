@@ -12,7 +12,7 @@ carmen_camera_image_t *carmen_camera_start(int argc __attribute__ ((unused)),
   carmen_camera_image_t *image;
   XpmImage xpm_image;
   XpmInfo xpm_info;  
-  int *xpm_ptr;
+  unsigned int *xpm_ptr;
   char *image_ptr;
   int i;
   long int colour;
