@@ -1,5 +1,5 @@
-#ifndef DGC_GENERIC_INTERFACE_H
-#define DGC_GENERIC_INTERFACE_H
+#ifndef CARMEN_GENERIC_INTERFACE_H
+#define CARMEN_GENERIC_INTERFACE_H
 
 #ifdef __cplusplus
 extern "C" {

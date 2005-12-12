@@ -51,12 +51,6 @@ extern "C" {
 
 /* Useful macros */
 
-//typedef enum {CARMEN_UNSUBSCRIBE, CARMEN_SUBSCRIBE_LATEST, CARMEN_SUBSCRIBE_ALL} carmen_subscribe_t;
-typedef enum {CARMEN_SIMULATOR_RANDOM_OBJECT, CARMEN_SIMULATOR_LINE_FOLLOWER,
-	      CARMEN_SIMULATOR_OTHER_ROBOT} carmen_simulator_object_t;
-
-  //typedef void (*carmen_handler_t)(void *);
-
 typedef struct {
   double x;
   double y;
@@ -112,6 +106,16 @@ typedef struct {
 } carmen_default_message;
 
 #define CARMEN_DEFAULT_MESSAGE_FMT "{double,string}"
+
+typedef struct {
+  char *module_name;
+  int pid;
+  double timestamp;
+  char hostname[10];
+} carmen_heartbeat_message;
+  
+#define CARMEN_HEARTBEAT_NAME "carmen_heartbeat"
+#define CARMEN_HEARTBEAT_FMT "{string, int, double, [char:10]}"
 
 #define carmen_red_code "[31;1m"
 #define carmen_blue_code "[34;1m"
@@ -339,6 +343,8 @@ void carmen_list_destroy(carmen_list_t **list);
 void carmen_eigs_to_covariance(double theta, double major, double minor,
 			       double *vx, double *vxy, double *vy);
 
+
+void carmen_publish_heartbeat(char *module_name);
 
 #ifdef __cplusplus
 }

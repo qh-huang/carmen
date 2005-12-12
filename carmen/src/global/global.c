@@ -1477,3 +1477,22 @@ void carmen_eigs_to_covariance(double theta, double major, double minor,
 
   *vxy = -major*sin_theta*cos_theta + minor*sin_theta*cos_theta;
 }
+
+void carmen_publish_heartbeat(char *module_name)
+{
+  carmen_heartbeat_message msg;
+  IPC_RETURN_TYPE err;
+  
+  msg.module_name = carmen_new_string(module_name);
+  msg.pid = getpid();
+  strcpy(msg.hostname, carmen_get_tenchar_host_name());
+  msg.timestamp = carmen_get_time();
+  
+  err = IPC_defineMsg(CARMEN_HEARTBEAT_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_HEARTBEAT_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_HEARTBEAT_NAME);  
+  
+  err = IPC_publishData(CARMEN_HEARTBEAT_NAME, &msg);
+  carmen_test_ipc_exit(err, "Could not publish",
+		       CARMEN_HEARTBEAT_NAME);
+}

@@ -81,6 +81,7 @@ extern "C" {
 #include <carmen/param_interface.h>
 
 #include <carmen/simulator_messages.h>
+#include <carmen/simulator_interface.h>
 
 #include <carmen/laser_messages.h>
 #include <carmen/laser_interface.h>
@@ -112,8 +113,6 @@ extern "C" {
 #include <carmen/logger_io.h>
 #include <carmen/playback_interface.h>
 #include <carmen/playback_messages.h>
-
-#include <carmen/simulator_interface.h>
 
 #ifdef CARMEN_MEMORY_DEBUG
 #include <dmalloc.h>
