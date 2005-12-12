@@ -11,8 +11,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2005/12/12 23:51:36  nickr
+ * Added support for PID access. Needed for java
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.8  2003/04/20 02:28:13  nickr
  * Upgraded to IPC 3.7.6.
@@ -909,4 +912,9 @@ IPC_RETURN_TYPE IPC_setContext (IPC_CONTEXT_PTR context)
 IPC_CONTEXT_PTR IPC_getContext (void)
 {
   return (IPC_CONTEXT_PTR)x_ipcGetContext();
+}
+
+long IPC_getPID (void)
+{
+  return (long)getpid();
 }

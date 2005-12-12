@@ -12,8 +12,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2005/12/12 23:51:36  nickr
+ * Added support for PID access. Needed for java
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.6  2003/04/20 02:28:13  nickr
  * Upgraded to IPC 3.7.6.
@@ -480,6 +483,9 @@ IPC_EXTERN_FUNCTION (IPC_CONTEXT_PTR IPC_getContext,
 
 IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setContext,
 		     (IPC_CONTEXT_PTR context));
+
+IPC_EXTERN_FUNCTION (long IPC_getPID,
+                     (void));
 
 /*****************************************************************
  *                     TIMER FUNCTIONS
