@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
   /* connect to IPC */
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
 
   if(argc < 2)
     carmen_die("Error: not enough arguments.\n"

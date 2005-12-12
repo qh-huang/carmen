@@ -610,7 +610,7 @@ void main_playback_loop(void)
       current_position++;
       rewind_frame = 0;
     }
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
   }
 }
 
@@ -672,7 +672,7 @@ int main(int argc, char **argv)
 {
   char *filename;
   
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   
   register_ipc_messages();

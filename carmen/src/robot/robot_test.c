@@ -87,15 +87,15 @@ void shutdown_module(int x)
 {
   if(x == SIGINT) {
     carmen_robot_velocity_command(0, 0);
-    close_ipc();
+    carmen_ipc_disconnect();
     printf("Disconnected from robot.\n");
     exit(0);
   }
 }
 
-int main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
+int main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   
   signal(SIGINT, shutdown_module);
@@ -119,7 +119,7 @@ int main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused))
   carmen_robot_move_along_vector(2, 0);
 
   while(1) {
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
     carmen_warn(".");
   }
   return 0;

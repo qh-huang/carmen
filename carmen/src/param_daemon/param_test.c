@@ -32,7 +32,7 @@ void
 shutdown_module(int x)
 {
   if(x == SIGINT) {
-    close_ipc();
+    carmen_ipc_disconnect();
     exit(1);
   }
 }
@@ -44,7 +44,7 @@ handler(char *module, char *variable, char *value)
 }
 
 int 
-main(int argc __attribute__ ((unused)), char** argv)
+main(int argc, char** argv)
 {
   double length;
   char *dev;
@@ -55,7 +55,7 @@ main(int argc __attribute__ ((unused)), char** argv)
     {"scout", "dev", CARMEN_PARAM_STRING, &dev, 1, handler},
   };
 
-  carmen_initialize_ipc(argv[0]); 
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   signal(SIGINT, shutdown_module);
@@ -69,7 +69,7 @@ main(int argc __attribute__ ((unused)), char** argv)
 
   carmen_param_check_unhandled_commandline_args(argc, argv);
 
-  IPC_dispatch();
+  carmen_ipc_dispatch();
 
   return 0;
 }

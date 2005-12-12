@@ -94,9 +94,9 @@ int main(int argc, char **argv)
   double timestamp, first_timestamp = 0;
   double last_front_laser_timestamp, last_odometry_timestamp;
   int first = 1;
-	char key;
+  char key;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);	
 
   if(argc < 3) {

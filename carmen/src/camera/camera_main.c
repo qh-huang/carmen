@@ -34,7 +34,7 @@ int main(int argc, char **argv)
   IPC_RETURN_TYPE err;
 
   /* connect to IPC server */
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   err = IPC_defineMsg(CARMEN_CAMERA_IMAGE_NAME, IPC_VARIABLE_LENGTH, 
@@ -53,9 +53,9 @@ int main(int argc, char **argv)
       image->is_new = 0;
     }
   
-    // We are rate-controlling the camera at 100 Hz.
+    // We are rate-controlling the camera at 10 Hz.
 
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
   }
   return 0;
 }

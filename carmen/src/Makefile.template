@@ -17,6 +17,4 @@ TARGETS =
 
 # rules
 
-all:
-
 include ../Makefile.rules

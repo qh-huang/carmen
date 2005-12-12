@@ -29,9 +29,9 @@
 #include "laserscans.h"
 #include "vascocore.h"
 
-int main(int argc, char *argv[]) {
-
-  carmen_initialize_ipc(argv[0]);
+int main(int argc, char *argv[]) 
+{
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   gtk_init(&argc, &argv);

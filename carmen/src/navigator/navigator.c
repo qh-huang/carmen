@@ -354,7 +354,7 @@ navigator_shutdown(int signo __attribute__ ((unused)) )
   static int done = 0;
 
   if(!done) {
-    close_ipc();
+    carmen_ipc_disconnect();
     printf("Disconnected from IPC.\n");
 
     done = 1;
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
   int num_offlimits_segments;
   char *goal_string;	
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   read_parameters(argc, argv);
@@ -496,7 +496,7 @@ int main(int argc, char **argv)
     carmen_navigator_goal(x, y);
   }
 	
-  IPC_dispatch();
+  carmen_ipc_dispatch();
 
   return 0;
 }

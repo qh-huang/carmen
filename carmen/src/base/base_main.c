@@ -694,9 +694,9 @@ shutdown_base(int signo __attribute__ ((unused)))
 }
 
 int 
-main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
+main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   signal(SIGINT, shutdown_base);
@@ -710,7 +710,7 @@ main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
   while(1) {
     if (carmen_base_run() == 1)
       fprintf(stderr, ".");
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
   }
 
   return 0;

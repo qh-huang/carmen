@@ -59,7 +59,7 @@ main( int argc, char *argv[] )
   scan.range = (float *) malloc( MAX_NUM_LASER_VALUES * sizeof(float) );
   carmen_test_alloc(scan.range);
   
-  carmen_initialize_ipc( argv[0] );
+  carmen_ipc_initialize(argc, argv);
 
   /*****************************************************************/
   vascocore_init( argc, argv );

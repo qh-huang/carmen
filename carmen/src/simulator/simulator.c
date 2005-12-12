@@ -205,7 +205,7 @@ shutdown_module(int x)
       {
 	carmen_robot_shutdown(x);
       }
-    close_ipc();
+    carmen_ipc_disconnect();
     carmen_warn("\nDisconnected.\n");
     exit(1);
   }
@@ -577,7 +577,7 @@ int main(int argc, char** argv)
   carmen_simulator_config_t simulator_conf;
   carmen_localize_initialize_message init_msg;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   memset(&simulator_conf, 0, sizeof(carmen_simulator_config_t));
@@ -609,7 +609,7 @@ int main(int argc, char** argv)
     carmen_robot_start(argc, argv);
 
   while (1) {
-    sleep_ipc(simulator_conf.real_time);
+    carmen_ipc_sleep(simulator_conf.real_time);
     if (!simulator_conf.sync_mode)
       {
 	if (use_robot)
@@ -620,7 +620,7 @@ int main(int argc, char** argv)
 
   carmen_simulator_clear_objects();
 
-  close_ipc();
+  carmen_ipc_disconnect();
 
   exit(0);
 }

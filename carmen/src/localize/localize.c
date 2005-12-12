@@ -440,7 +440,7 @@ int main(int argc, char **argv)
 
   /* initialize carmen */
   carmen_randomize(&argc, &argv);
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   
   /* Setup exit handler */
@@ -472,6 +472,6 @@ int main(int argc, char **argv)
 					      CARMEN_SUBSCRIBE_LATEST);
 
   /* Loop forever */
-  IPC_dispatch();
+  carmen_ipc_dispatch();
   return 0;
 }

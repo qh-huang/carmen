@@ -7,7 +7,7 @@
 int main(int argc, char **argv) 
 {
   /* connect to IPC server */
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   if(carmen_laser_start(argc, argv) < 0)
@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   
   while(1) {
     carmen_laser_run();
-    sleep_ipc(0.001);
+    carmen_ipc_sleep(0.001);
   }
   return 0;
 }

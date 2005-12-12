@@ -350,7 +350,7 @@ int carmen_laser_run(void)
 void shutdown_laser(int x)
 {
   carmen_laser_shutdown(x);
-  close_ipc();
+  carmen_ipc_disconnect();
   exit(-1);
 }
 

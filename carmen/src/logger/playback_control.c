@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 
   gtk_init(&argc, &argv);
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   cmap = gdk_colormap_get_system();

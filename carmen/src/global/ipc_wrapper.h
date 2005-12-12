@@ -20,8 +20,8 @@ extern MSG_INSTANCE current_msgRef;
 
 void 
 carmen_subscribe_message(char *message_name, char *message_fmt, 
-		      void *message_mem, int message_size, 
-		      carmen_handler_t handler, carmen_subscribe_t subscribe_how);
+			 void *message_mem, int message_size, 
+			 carmen_handler_t handler, carmen_subscribe_t subscribe_how);
 
   /* carmen_unsubscribe_message - Generic IPC unsubscribe message function. */
 

@@ -235,7 +235,7 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
     if(i % 10000 == 0) {
       fprintf(stderr, "\rDoing global localization... (%.1f%% complete)", 
 	      i / (float)filter->param->global_test_samples * 100.0);
-      sleep_ipc(0.001);
+      carmen_ipc_sleep(0.001);
     }
     do {
       point.x = carmen_uniform_random(0, map->config.x_size - 1);

@@ -1478,6 +1478,30 @@ void carmen_eigs_to_covariance(double theta, double major, double minor,
   *vxy = -major*sin_theta*cos_theta + minor*sin_theta*cos_theta;
 }
 
+inline char *carmen_next_word(char *str)
+{
+  char *mark = str;
+
+  if(str == NULL)
+    return NULL;
+  while(*mark != '\0' && !(*mark == ' ' || *mark == '\t'))
+    mark++;
+  while(*mark != '\0' &&  (*mark == ' ' || *mark == '\t'))
+    mark++;
+  return mark;
+}
+
+inline char *carmen_next_n_words(char *str, int n)
+{
+  int i;
+  char *result;
+
+  result = str;
+  for(i = 0; i < n; i++)
+    result = carmen_next_word(result);
+  return result;
+}
+
 void carmen_publish_heartbeat(char *module_name)
 {
   carmen_heartbeat_message msg;

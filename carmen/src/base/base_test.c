@@ -43,7 +43,7 @@ void base_sonar_handler(void)
 void shutdown_module(int x)
 {
   if(x == SIGINT) {
-    close_ipc();
+    carmen_ipc_disconnect();
     printf("Disconnected.\n");
     exit(1);
   }
@@ -64,17 +64,21 @@ base_velocity_command(double tv, double rv)
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  
 }
 
-int main(int argc __attribute__ ((unused)), char **argv)
+int main(int argc, char **argv)
 {
   int count = 0;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   signal(SIGINT, shutdown_module);
 
-  carmen_base_subscribe_odometry_message(&odometry, (carmen_handler_t)base_odometry_handler,CARMEN_SUBSCRIBE_LATEST);
-  carmen_base_subscribe_sonar_message(&sonar, (carmen_handler_t)base_sonar_handler,CARMEN_SUBSCRIBE_LATEST);
+  carmen_base_subscribe_odometry_message(&odometry, (carmen_handler_t)
+					 base_odometry_handler,
+					 CARMEN_SUBSCRIBE_LATEST);
+  carmen_base_subscribe_sonar_message(&sonar, (carmen_handler_t)
+				      base_sonar_handler,
+				      CARMEN_SUBSCRIBE_LATEST);
 
 	while (1) {
 		base_velocity_command(0.0, carmen_degrees_to_radians(40.0));
@@ -82,7 +86,7 @@ int main(int argc __attribute__ ((unused)), char **argv)
 	}
 
   while(1) {
-    sleep_ipc(4.0);
+    carmen_ipc_sleep(4.0);
 
     fprintf(stderr, ".");
     /*    if(count % 2 == 0)

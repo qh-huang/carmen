@@ -681,7 +681,7 @@ void localize_sensor_handler(void)
 
 gint updateIPC(gpointer *data __attribute__ ((unused))) 
 {
-  sleep_ipc(0.01);
+  dgc_ipc_sleep(0.01);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
   return 1;
 }
@@ -772,11 +772,11 @@ void create_localize_map(localize_map_t *map)
   }
 }
 
-int main(int argc __attribute__ ((unused)), char **argv)
+int main(int argc, char **argv)
 {
   /* initialize carmen */
   carmen_randomize();
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   /* get parameters and create a localize likelihood map */

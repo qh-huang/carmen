@@ -32,7 +32,7 @@ void
 shutdown_robot(int signo) 
 {
   carmen_robot_shutdown(signo);
-  close_ipc();
+  carmen_ipc_disconnect();
   exit(-1);
 }
 
@@ -40,7 +40,7 @@ shutdown_robot(int signo)
 int 
 main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   carmen_robot_start(argc, argv);
@@ -48,7 +48,7 @@ main(int argc, char **argv)
   signal(SIGINT, shutdown_robot);
 
   while(1) {
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
 
     carmen_robot_run();
   }

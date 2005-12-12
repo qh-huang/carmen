@@ -162,7 +162,7 @@ main(int argc, char *argv[])
   if (argc < 2)
     carmen_die("Usage: %s [-p paramset] {logfile | paramfile}\n", argv[0]);
   
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
 
   for (index = 1; index < argc; index++) {
     if (strcmp(argv[index], "-p") == 0) {

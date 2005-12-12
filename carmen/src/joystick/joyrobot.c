@@ -40,7 +40,7 @@ void sig_handler(int x)
     carmen_robot_velocity_command(0, 0);
     if(!no_joystick)
       carmen_close_joystick(&joystick);
-    close_ipc();
+    carmen_ipc_disconnect();
     printf("Disconnected from robot.\n");
     exit(0);
   }
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   int quit = 0;
   double f_timestamp;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   // Initialize keybord, joystick and IPC
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
   
   f_timestamp = carmen_get_time();
   while(quit>=0) {
-    sleep_ipc(0.05);
+    carmen_ipc_sleep(0.05);
     if(!no_joystick && carmen_get_joystick_state(&joystick) >= 0) {
       carmen_joystick_control(&joystick, max_tv, max_rv,
 			      &command_tv, &command_rv);

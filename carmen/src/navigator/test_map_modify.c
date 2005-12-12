@@ -87,7 +87,7 @@ handle_ipc(gpointer *data __attribute__ ((unused)),
            gint source __attribute__ ((unused)), 
            GdkInputCondition condition __attribute__ ((unused))) 
 {
-  sleep_ipc(0.01);
+  carmen_ipc_sleep(0.01);
   
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)handle_ipc);
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	laser_msg.tooclose = NULL;
 
 	carmen_randomize(&argc, &argv);
-  carmen_initialize_ipc(argv[0]);
+	carmen_ipc_initialize(argc, argv);
 
 	map = &global_map;
   carmen_map_get_gridmap(map);

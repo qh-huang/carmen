@@ -69,7 +69,7 @@ static void
 shutdown_camera_view(int x)
 {
   if(x == SIGINT) {
-    close_ipc();	
+    carmen_ipc_disconnect();
     printf("Disconnected from robot.\n");
     exit(1);
   }
@@ -78,7 +78,7 @@ shutdown_camera_view(int x)
 static gint 
 updateIPC(gpointer *data __attribute__ ((unused))) 
 {
-  sleep_ipc(0.01);
+  carmen_ipc_sleep(0.01);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
   return 1;
 }
@@ -171,7 +171,7 @@ int
 main(int argc, char **argv)
 {  
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   carmen_camera_subscribe_images

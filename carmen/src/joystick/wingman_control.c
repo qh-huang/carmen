@@ -70,7 +70,7 @@ void sig_handler(int x)
   if(x == SIGINT) {
     send_base_velocity_command(0, 0);
     carmen_close_joystick(&joystick);
-    close_ipc();
+    carmen_ipc_disconnect();
     printf("Disconnected from robot.\n");
     exit(0);
   }
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
   double max_tv = 0, max_rv = 0;
   double f_timestamp;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   if (carmen_initialize_joystick(&joystick) < 0)
     carmen_die("Erorr: could not find joystick.\n");
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
   f_timestamp = carmen_get_time();
   while(1) {
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
     if(carmen_get_joystick_state(&joystick) >= 0) {
 
       max_tv = min_max_tv + (-joystick.axes[2] + 32767.0) / (32767.0 * 2.0) * (max_max_tv - min_max_tv);

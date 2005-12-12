@@ -159,21 +159,21 @@ shutdown_base(int signo)
 }
 
 int 
-main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
+main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
-  if (read_base_services_parameters(argc, argv) < 0)
+  if(read_base_services_parameters(argc, argv) < 0)
     return -1;
 
   signal(SIGINT, shutdown_base);
   signal(SIGSEGV, base_emergency_crash);
 
-  if (base_start(argc, argv) < 0)
+  if(base_start(argc, argv) < 0)
     exit(-1);
 
-  if (carmen_laser_start(argc, argv) < 0) {
+  if(carmen_laser_start(argc, argv) < 0) {
     base_shutdown(SIGTERM);
     exit(-1);
   }
@@ -183,7 +183,7 @@ main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
 
   while(1) {
     fprintf(stderr, ".");
-    sleep_ipc(0.01);
+    carmen_ipc_sleep(0.01);
 
     base_run();
     carmen_laser_run();

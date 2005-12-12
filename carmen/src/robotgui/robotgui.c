@@ -166,7 +166,7 @@ shutdown_robotgraph(int x)
       if (joystick.initialized)
 	carmen_close_joystick(&joystick);
 #endif
-      close_ipc();
+      carmen_ipc_disconnect();
       printf("Disconnected from robot.\n");
       exit(1);
     }
@@ -175,7 +175,7 @@ shutdown_robotgraph(int x)
 static gint 
 updateIPC(gpointer *data __attribute__ ((unused))) 
 {
-  sleep_ipc(0.01);
+  carmen_ipc_sleep(0.01);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
   return 1;
 }
@@ -1157,7 +1157,7 @@ main(int argc, char **argv)
   int err;
 #endif
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
 #ifndef NO_JOYSTICK

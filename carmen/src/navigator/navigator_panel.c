@@ -259,7 +259,7 @@ nav_shutdown(int signo __attribute__ ((unused)))
   if(!done) 
     {
       done = 1;
-      close_ipc();
+      carmen_ipc_disconnect();
       exit(-1);
     }
 }
@@ -269,7 +269,7 @@ handle_ipc(gpointer *data __attribute__ ((unused)),
 	   gint source __attribute__ ((unused)), 
 	   GdkInputCondition condition __attribute__ ((unused))) 
 {
-  sleep_ipc(0.01);
+  carmen_ipc_sleep(0.01);
   
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)handle_ipc);
 
@@ -418,7 +418,7 @@ main(int argc, char **argv)
   carmen_navigator_plan_message *plan;
   IPC_RETURN_TYPE err;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   signal(SIGINT, nav_shutdown);

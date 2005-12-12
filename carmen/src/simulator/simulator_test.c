@@ -58,31 +58,33 @@ void shutdown_module(int x)
   if (x == SIGINT)
     {
       carmen_warn("\n");
-      close_ipc();
+      carmen_ipc_disconnect();
       printf("shut down\n");
       exit(0);
     }
 }
 
-int main (int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
+int main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   signal(SIGINT, shutdown_module);
  
   carmen_laser_subscribe_frontlaser_message(&frontLaserMessage,
-				    (carmen_handler_t)frontLaserHandler,
-				    CARMEN_SUBSCRIBE_LATEST);
+					    (carmen_handler_t)
+					    frontLaserHandler,
+					    CARMEN_SUBSCRIBE_LATEST);
   carmen_laser_subscribe_rearlaser_message(&rearLaserMessage,
-				    (carmen_handler_t)rearLaserHandler,
-				    CARMEN_SUBSCRIBE_LATEST);
+					   (carmen_handler_t)
+					   rearLaserHandler,
+					   CARMEN_SUBSCRIBE_LATEST);
   carmen_base_subscribe_sonar_message(&sonarMessage,
-				    (carmen_handler_t)sonarHandler,
-				    CARMEN_SUBSCRIBE_LATEST);
+				      (carmen_handler_t)sonarHandler,
+				      CARMEN_SUBSCRIBE_LATEST);
 
   while(1) {
-    sleep_ipc(0.1);
+    carmen_ipc_sleep(0.1);
     fprintf(stderr, ".");
   }
   return 0;

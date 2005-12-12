@@ -211,7 +211,7 @@ void shutdown_module(int sig)
 {
   if(sig == SIGINT) {
     carmen_logger_fclose(outfile);
-    close_ipc();
+    carmen_ipc_disconnect();
     fprintf(stderr, "\nDisconnecting.\n");
     exit(0);
   }
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
   carmen_laser_remission_message frontlaser_remission, rearlaser_remission, laser3_remission, laser4_remission;
 // *** REI - START *** //
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);	
 
   if (argc < 2) 
@@ -313,6 +313,6 @@ int main(int argc, char **argv)
 
 
   signal(SIGINT, shutdown_module);
-  IPC_dispatch();
+  carmen_ipc_dispatch();
   return 0;
 }

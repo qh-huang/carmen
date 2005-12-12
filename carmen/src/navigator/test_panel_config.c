@@ -26,9 +26,9 @@ navigator_display_config(char *attribute, int value)
 }
 
 int
-main (int argc __attribute__ ((unused)), char *argv[] __attribute__ ((unused)))
+main (int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   navigator_display_config("robot colour", 0xff << 16 | 218 << 8 | 185);

@@ -800,9 +800,9 @@ shutdown_base(int signo)
 }
 
 int 
-main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
+main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   if (read_base_services_parameters(argc, argv) < 0)
@@ -824,7 +824,7 @@ main(int argc __attribute__ ((unused)), char **argv __attribute__ ((unused)))
 
   while(1) {
     fprintf(stderr, ".");
-    sleep_ipc(0.01);
+    carmen_ipc_sleep(0.01);
 
     carmen_base_run();
     carmen_laser_run();

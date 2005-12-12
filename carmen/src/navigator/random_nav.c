@@ -79,7 +79,7 @@ void check_free_space_from_navigator(carmen_map_p c_space)
 
 int main(int argc, char *argv[]) 
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_randomize(&argc, &argv);
 
   c_space = (carmen_map_t *)calloc(1, sizeof(carmen_map_t));
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     (NULL, (carmen_handler_t)odometry_handler, CARMEN_SUBSCRIBE_LATEST);
   
   pick_random_place();
-  IPC_dispatch();
+  carmen_ipc_dispatch();
 
   return 0;
 }

@@ -707,7 +707,7 @@ static void gui_init() {
 
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {
 
-  sleep_ipc(0.01);
+  carmen_ipc_sleep(0.01);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction) updateIPC);
 
   return 1;
@@ -715,7 +715,7 @@ static gint updateIPC(gpointer *data __attribute__ ((unused))) {
 
 int main(int argc, char *argv[]) {
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   gtk_init(&argc, &argv);

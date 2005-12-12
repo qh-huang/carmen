@@ -73,7 +73,7 @@ main(int argc, char** argv)
   if (argc < 2 || argc > 3)
     usage(argv[0], NULL);
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
 
   carmen_param_check_version(argv[0]);
 

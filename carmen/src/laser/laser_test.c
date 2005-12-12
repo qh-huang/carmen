@@ -43,7 +43,7 @@ void laser_rearlaser_handler(void)
 
 void shutdown_module(int x __attribute__ ((unused)))
 {
-  close_ipc();
+  carmen_ipc_disconnect();
   printf("\nDisconnected from laser.\n");
   exit(1);  
 }
@@ -59,18 +59,22 @@ void print_statistics(void *clientdata __attribute__ ((unused)),
 	  rear_laser_count / (current_timestamp - first_timestamp));
 }
 
-int main(int argc __attribute__ ((unused)), char **argv)
+int main(int argc, char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   signal(SIGINT, shutdown_module);
  
-  carmen_laser_subscribe_frontlaser_message(&frontlaser, (carmen_handler_t)laser_frontlaser_handler, CARMEN_SUBSCRIBE_LATEST);
-  carmen_laser_subscribe_rearlaser_message(&rearlaser, (carmen_handler_t)laser_rearlaser_handler, CARMEN_SUBSCRIBE_LATEST);
+  carmen_laser_subscribe_frontlaser_message(&frontlaser, (carmen_handler_t)
+					    laser_frontlaser_handler, 
+					    CARMEN_SUBSCRIBE_LATEST);
+  carmen_laser_subscribe_rearlaser_message(&rearlaser, (carmen_handler_t)
+					   laser_rearlaser_handler, 
+					   CARMEN_SUBSCRIBE_LATEST);
 
-  IPC_addTimer(1000, TRIGGER_FOREVER, print_statistics, NULL);
+  carmen_ipc_addPeriodicTimer(1000, print_statistics, NULL);
 
   first_timestamp = carmen_get_time();
-  IPC_dispatch();
+  carmen_ipc_dispatch();
   return 0;
 }

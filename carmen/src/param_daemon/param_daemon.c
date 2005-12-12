@@ -81,7 +81,7 @@ static void
 shutdown_param_server(int signo)
 {
   if (signo == SIGINT) {
-    close_ipc();
+    carmen_ipc_disconnect();
     if (central_pid > 0)
       kill(central_pid, SIGINT);
     exit(1);
@@ -1289,7 +1289,7 @@ main(int argc, char **argv)
   if (auto_start_central)
     fork_central();
   
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
 
   connected = 1;
 
