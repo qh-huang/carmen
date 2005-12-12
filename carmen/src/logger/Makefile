@@ -9,12 +9,6 @@ endif
 LFLAGS += $(INTERFACE_LIBS) -llocalize_interface -lparam_interface \
 	-lglobal -lipc
 
-ifdef NO_ZLIB
-CFLAGS += -DNO_ZLIB
-else
-LFLAGS += -lz
-endif
-
 MODULE_NAME = LOGGER
 MODULE_COMMENT = Modules for logging, displaying, and playing back data.
 

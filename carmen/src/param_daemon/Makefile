@@ -17,12 +17,6 @@ ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
 endif
 
-ifndef NO_ZLIB
-LFLAGS += -lz
-else
-CFLAGS += -DNO_ZLIB
-endif
-
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs gtk`

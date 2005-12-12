@@ -531,29 +531,6 @@ carmen_carp_get_verbose(void) {
 
 extern IPC_VERBOSITY_TYPE ipcVerbosity;
 
-void
-carmen_test_ipc(IPC_RETURN_TYPE err, const char *err_msg, const char *ipc_msg)
-{
-  if (err == IPC_OK)
-    return;
-  if (err == IPC_Timeout)
-    {
-      if (ipcVerbosity > IPC_Silent)
-	fprintf(stderr, "IPC_ERROR : Message timed out : message %s\n", 
-		ipc_msg);
-      return;
-    }
-  if (err == IPC_Error)
-    {
-      fprintf(stderr, "IPC_ERROR : %s : message %s\n", err_msg, ipc_msg);
-      IPC_perror("          ");
-      return;
-    }
-  fprintf(stderr, "Bad value encountered in err value passed to %s\n", __FUNCTION__);
-  fprintf(stderr, "This is very definitely a bug, and most likely in IPC.\n");
-  fprintf(stderr, "Please file a bug report.\n");
-}
-
 void 
 carmen_initialize_ipc(char *module_name)
 {

@@ -15,13 +15,6 @@ MAN_PAGES =
 
 TARGETS = localize liblocalize_interface.a localize_initialize liblocalize_core.a
 
-ifndef NO_ZLIB
-LFLAGS += -lz
-else
-CFLAGS += -DNO_ZLIB
-endif
-
-
 # rules
 
 all:

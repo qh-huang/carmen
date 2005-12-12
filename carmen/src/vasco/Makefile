@@ -10,12 +10,6 @@ LFLAGS 	+= 	-lmap_io -lparam_interface -llaser_interface \
 		-lgdk_imlib `$(GTK_CONFIG) --libs gthread`
 endif
 
-ifndef NO_ZLIB
-LFLAGS += -lz
-else
-CFLAGS += -DNO_ZLIB
-endif
-
 MODULE_NAME 	= 	VASCO
 MODULE_COMMENT 	= 	Scan-matching mapper by Dirk Haehnel
 

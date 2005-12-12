@@ -5,11 +5,6 @@ LFLAGS += -lmap_interface -lparam_interface -llocalize_interface -lrobot \
 	  -lbase_interface -llaser_interface -lcamera_interface -lgeometry \
 	  -lglobal -lipc 
 
-ifndef NO_ZLIB
-LFLAGS += -lz
-endif
-
-
 MODULE_NAME = SIMULATOR
 MODULE_COMMENT = "simulates the readings of a robot on a map"
 

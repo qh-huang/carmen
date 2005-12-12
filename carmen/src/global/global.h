@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+#include <carmen/ipc_wrapper.h>
+
 #define CARMEN_MAJOR_VERSION 0
 #define CARMEN_MINOR_VERSION 4
 #define CARMEN_REVISION 6
@@ -49,11 +51,11 @@ extern "C" {
 
 /* Useful macros */
 
-typedef enum {CARMEN_UNSUBSCRIBE, CARMEN_SUBSCRIBE_LATEST, CARMEN_SUBSCRIBE_ALL} carmen_subscribe_t;
+//typedef enum {CARMEN_UNSUBSCRIBE, CARMEN_SUBSCRIBE_LATEST, CARMEN_SUBSCRIBE_ALL} carmen_subscribe_t;
 typedef enum {CARMEN_SIMULATOR_RANDOM_OBJECT, CARMEN_SIMULATOR_LINE_FOLLOWER,
 	      CARMEN_SIMULATOR_OTHER_ROBOT} carmen_simulator_object_t;
 
-typedef void (*carmen_handler_t)(void *);
+  //typedef void (*carmen_handler_t)(void *);
 
 typedef struct {
   double x;

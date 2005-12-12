@@ -26,432 +26,82 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include "localize_messages.h"
-
-static carmen_localize_globalpos_message **globalpos_message_pointer_internal = NULL;
-static carmen_handler_t *globalpos_message_handler_internal = NULL;
-static carmen_localize_particle_message **particle_pointer_internal = NULL;
-static carmen_handler_t *particle_handler_internal = NULL;
-static carmen_localize_sensor_message **sensor_pointer_internal = NULL;
-static carmen_handler_t *sensor_handler_internal = NULL;
-static carmen_localize_initialize_message **localize_initialize_internal = NULL;
-static carmen_handler_t *localize_initialize_handler = NULL;
-
-static unsigned int timeout = 5000;
-
-static int context_array_size = 0;
-static IPC_CONTEXT_PTR *context_array = NULL;
-
-static int
-get_context_id(void)
-{
-  int index = 0;
-  IPC_CONTEXT_PTR current_context = IPC_getContext();
-
-  if (context_array == NULL)
-    return -1;
-
-  while (context_array[index] != NULL) 
-    {
-      if (context_array[index] == current_context)
-	return index;
-      index++;
-    }
-
-  return -1;
-
-}
-
-static int 
-add_context(void)
-{
-  int index;
-  
-  if (context_array == NULL)
-    {
-      context_array = (IPC_CONTEXT_PTR *)calloc(10, sizeof(IPC_CONTEXT_PTR));
-      carmen_test_alloc(context_array);
-
-      globalpos_message_pointer_internal = 
-	(carmen_localize_globalpos_message **)
-	calloc(10, sizeof(carmen_localize_globalpos_message *));
-      carmen_test_alloc(globalpos_message_pointer_internal);
-
-      particle_pointer_internal = (carmen_localize_particle_message **)
-	calloc(10, sizeof(carmen_localize_particle_message *));
-      carmen_test_alloc(particle_pointer_internal);
-
-      sensor_pointer_internal = (carmen_localize_sensor_message **)
-	calloc(10, sizeof(carmen_localize_sensor_message *));
-      carmen_test_alloc(sensor_pointer_internal);
-
-      localize_initialize_internal = (carmen_localize_initialize_message **)
-	calloc(10, sizeof(carmen_localize_initialize_message *));
-      carmen_test_alloc(localize_initialize_internal);
-
-      globalpos_message_handler_internal = (carmen_handler_t *)
-	calloc(10, sizeof(carmen_handler_t));
-      carmen_test_alloc(globalpos_message_handler_internal);
-
-      particle_handler_internal = (carmen_handler_t *)
-	calloc(10, sizeof(carmen_handler_t));
-      carmen_test_alloc(particle_handler_internal);
-
-      sensor_handler_internal = (carmen_handler_t *)
-	calloc(10, sizeof(carmen_handler_t));
-      carmen_test_alloc(sensor_handler_internal);
-
-      localize_initialize_handler = (carmen_handler_t *)
-	calloc(10, sizeof(carmen_handler_t));
-      carmen_test_alloc(localize_initialize_handler);
-
-      context_array_size = 10;
-      context_array[0] = IPC_getContext();
-
-      return 0;
-    }
-
-  index = 0;
-  while (index < context_array_size && context_array[index] != NULL) 
-    index++;
-  
-  if (index == context_array_size) 
-    {
-      context_array_size += 10;
-      context_array = (IPC_CONTEXT_PTR *)realloc
-	(context_array, context_array_size*sizeof(IPC_CONTEXT_PTR));
-      carmen_test_alloc(context_array);
-      memset(context_array+index, 0, 10*sizeof(IPC_CONTEXT_PTR));
-    }
-
-  context_array[index] = IPC_getContext();
-  return index;
-}
-
-static void 
-globalpos_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-                            void *clientData __attribute__ ((unused)))
-{
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err = IPC_OK;
-  int context_id;
-  
-  context_id = get_context_id();
-
-  if (context_id < 0) 
-    {
-      carmen_warn("Bug detected: invalid context\n");
-      IPC_freeByteArray(callData);
-      return;
-    }
-
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  if(globalpos_message_pointer_internal[context_id])
-    err = IPC_unmarshallData(formatter, callData, 
-			     globalpos_message_pointer_internal[context_id],
-                             sizeof(carmen_localize_globalpos_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
-  if(globalpos_message_handler_internal[context_id])
-    globalpos_message_handler_internal[context_id]
-      (globalpos_message_pointer_internal[context_id]);
-}
+#include <carmen/localize_messages.h>
 
 void
-carmen_localize_subscribe_globalpos_message(carmen_localize_globalpos_message
+carmen_localize_subscribe_globalpos_message(carmen_localize_globalpos_message 
 					    *globalpos,
 					    carmen_handler_t handler,
 					    carmen_subscribe_t subscribe_how)
 {
-  IPC_RETURN_TYPE err = IPC_OK;  
-  int context_id;
-
-  err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_NAME, 
-		      IPC_VARIABLE_LENGTH, 
-		      CARMEN_LOCALIZE_GLOBALPOS_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_LOCALIZE_GLOBALPOS_NAME);
-
-  if(subscribe_how == CARMEN_UNSUBSCRIBE) 
-    {
-      IPC_unsubscribe(CARMEN_LOCALIZE_GLOBALPOS_NAME, 
-		      globalpos_interface_handler);
-      return;
-    }
-
-  context_id = get_context_id();
-  if (context_id < 0)
-    context_id = add_context();
-
-  if(globalpos)
-    globalpos_message_pointer_internal[context_id] = globalpos;
-  else if(globalpos_message_pointer_internal[context_id] == NULL) 
-    {
-      globalpos_message_pointer_internal[context_id] = 
-	(carmen_localize_globalpos_message *)
-	calloc(1, sizeof(carmen_localize_globalpos_message));
-      carmen_test_alloc(globalpos_message_pointer_internal[context_id]);
-    }
-  globalpos_message_handler_internal[context_id] = handler;
-  err = IPC_subscribe(CARMEN_LOCALIZE_GLOBALPOS_NAME, 
-		      globalpos_interface_handler, NULL);
-  if(subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_GLOBALPOS_NAME, 1);
-  else
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_GLOBALPOS_NAME, 100);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_GLOBALPOS_NAME);
+  carmen_subscribe_message(CARMEN_LOCALIZE_GLOBALPOS_NAME, 
+                           CARMEN_LOCALIZE_GLOBALPOS_FMT,
+                           globalpos, sizeof(carmen_localize_globalpos_message), 
+			   handler, subscribe_how);
 }
 
-static void 
-particle_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-			   void *clientData __attribute__ ((unused)))
+void
+carmen_localize_unsubscribe_globalpos_message(carmen_handler_t handler)
 {
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err = IPC_OK;
-  int context_id;
-  
-  context_id = get_context_id();
-
-  if (context_id < 0) 
-    {
-      carmen_warn("Bug detected: invalid context\n");
-      IPC_freeByteArray(callData);
-      return;
-    }
-
-  if(particle_pointer_internal[context_id] &&
-     particle_pointer_internal[context_id]->particles != NULL)
-    free(particle_pointer_internal[context_id]->particles);
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  if(particle_pointer_internal[context_id])
-    err = IPC_unmarshallData(formatter, callData,
-			     particle_pointer_internal[context_id],
-                             sizeof(carmen_localize_particle_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
-  if(particle_handler_internal[context_id])
-    particle_handler_internal[context_id]
-      (particle_pointer_internal[context_id]);
+  carmen_unsubscribe_message(CARMEN_LOCALIZE_GLOBALPOS_NAME, handler);
 }
 
-void 
+void
 carmen_localize_subscribe_particle_message(carmen_localize_particle_message 
-					   *particle, carmen_handler_t handler,
+					   *particle,
+					   carmen_handler_t handler,
 					   carmen_subscribe_t subscribe_how)
 {
-  IPC_RETURN_TYPE err;
-  int context_id;
-  
-  err = IPC_defineMsg(CARMEN_LOCALIZE_PARTICLE_NAME, 
-		      IPC_VARIABLE_LENGTH, 
-		      CARMEN_LOCALIZE_PARTICLE_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_LOCALIZE_PARTICLE_NAME);
-
-  if(subscribe_how == CARMEN_UNSUBSCRIBE) 
-    {
-      IPC_unsubscribe(CARMEN_LOCALIZE_PARTICLE_NAME, 
-		      particle_interface_handler);
-      return;
-    }
-
-  context_id = get_context_id();
-  if (context_id < 0)
-    context_id = add_context();
-
-  if(particle) 
-    {
-      particle_pointer_internal[context_id] = particle;
-      memset(particle_pointer_internal[context_id], 0, 
-	     sizeof(carmen_localize_particle_message));
-    }
-  else if(particle_pointer_internal[context_id] == NULL) 
-    {
-      particle_pointer_internal[context_id] = 
-	(carmen_localize_particle_message *)calloc
-	(1, sizeof(carmen_localize_particle_message));
-      carmen_test_alloc(particle_pointer_internal[context_id]);
-    }
-  particle_handler_internal[context_id] = handler;
-  err = IPC_subscribe(CARMEN_LOCALIZE_PARTICLE_NAME, 
-		      particle_interface_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_PARTICLE_NAME);
-  if (subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_PARTICLE_NAME, 1);
-  else
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_PARTICLE_NAME, 100);
+  carmen_subscribe_message(CARMEN_LOCALIZE_PARTICLE_NAME, 
+                           CARMEN_LOCALIZE_PARTICLE_FMT,
+                           particle, sizeof(carmen_localize_particle_message), 
+			   handler, subscribe_how);
 }
 
-void 
-sensor_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-			 void *clientData __attribute__ ((unused)))
+void
+carmen_localize_unsubscribe_particle_message(carmen_handler_t handler)
 {
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err = IPC_OK;
-  int context_id;
-  
-  context_id = get_context_id();
-
-  if (context_id < 0) 
-    {
-      carmen_warn("Bug detected: invalid context\n");
-      IPC_freeByteArray(callData);
-      return;
-    }
-  
-  if(sensor_pointer_internal[context_id]) 
-    {
-      if(sensor_pointer_internal[context_id]->range != NULL)
-	free(sensor_pointer_internal[context_id]->range);
-      if(sensor_pointer_internal[context_id]->mask != NULL)
-	free(sensor_pointer_internal[context_id]->mask);
-    }
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  if(sensor_pointer_internal[context_id])
-    err = IPC_unmarshallData(formatter, callData,
-			     sensor_pointer_internal[context_id],
-                             sizeof(carmen_localize_sensor_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
-  if(sensor_handler_internal[context_id])
-    sensor_handler_internal[context_id]
-      (sensor_pointer_internal[context_id]);
+  carmen_unsubscribe_message(CARMEN_LOCALIZE_PARTICLE_NAME, handler);
 }
 
-void 
+void
 carmen_localize_subscribe_sensor_message(carmen_localize_sensor_message 
-					 *sensor_msg, carmen_handler_t handler,
+					 *sensor,
+					 carmen_handler_t handler,
 					 carmen_subscribe_t subscribe_how)
 {
-  IPC_RETURN_TYPE err;
-  int context_id;
-
-  err = IPC_defineMsg(CARMEN_LOCALIZE_SENSOR_NAME, 
-		      IPC_VARIABLE_LENGTH, 
-		      CARMEN_LOCALIZE_SENSOR_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_LOCALIZE_SENSOR_NAME);
-
-  if(subscribe_how == CARMEN_UNSUBSCRIBE) 
-    {
-      IPC_unsubscribe(CARMEN_LOCALIZE_SENSOR_NAME, sensor_interface_handler);
-      return;
-    }
-
-  context_id = get_context_id();
-  if (context_id < 0)
-    context_id = add_context();
-
-  if(sensor_msg) 
-    {
-      sensor_pointer_internal[context_id] = sensor_msg;
-      memset(sensor_pointer_internal[context_id], 0, 
-	     sizeof(carmen_localize_sensor_message));
-    }
-  else if(sensor_pointer_internal[context_id] == NULL) 
-    {
-      sensor_pointer_internal[context_id] = 
-	(carmen_localize_sensor_message *)
-	calloc(1, sizeof(carmen_localize_sensor_message));
-      carmen_test_alloc(sensor_pointer_internal[context_id]);
-    }
-  sensor_handler_internal[context_id] = handler;
-  err = IPC_subscribe(CARMEN_LOCALIZE_SENSOR_NAME,
-		      sensor_interface_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_SENSOR_NAME);
-  if(subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_SENSOR_NAME, 1);
-  else
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_SENSOR_NAME, 100);
+  carmen_subscribe_message(CARMEN_LOCALIZE_SENSOR_NAME, 
+                           CARMEN_LOCALIZE_SENSOR_FMT,
+                           sensor, sizeof(carmen_localize_sensor_message), 
+			   handler, subscribe_how);
 }
 
-void 
-localize_initialize_interface_handler
-(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
- void *clientData __attribute__ ((unused)))
+void
+carmen_localize_unsubscribe_sensor_message(carmen_handler_t handler)
 {
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err = IPC_OK;
-  int context_id;
-  
-  context_id = get_context_id();
-
-  if (context_id < 0) 
-    {
-      carmen_warn("Bug detected: invalid context\n");
-      IPC_freeByteArray(callData);
-      return;
-    }
-  
-  if(localize_initialize_internal[context_id]) 
-    {
-      if(localize_initialize_internal[context_id]->mean != NULL)
-	free(localize_initialize_internal[context_id]->mean);
-      if(localize_initialize_internal[context_id]->std != NULL)
-	free(localize_initialize_internal[context_id]->std);
-    }
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  if(localize_initialize_internal[context_id])
-    err = IPC_unmarshallData(formatter, callData, 
-			     localize_initialize_internal[context_id],
-                             sizeof(carmen_localize_initialize_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
-  
-  if(localize_initialize_handler[context_id])
-    localize_initialize_handler[context_id]
-      (localize_initialize_internal[context_id]);
+  carmen_unsubscribe_message(CARMEN_LOCALIZE_SENSOR_NAME, handler);
 }
 
-void 
-carmen_localize_subscribe_initialize_message
-(carmen_localize_initialize_message *init_msg,
- carmen_handler_t handler, 
- carmen_subscribe_t subscribe_how)
+void
+carmen_localize_subscribe_initialize_message(carmen_localize_initialize_message 
+					     *initialize,
+					     carmen_handler_t handler,
+					     carmen_subscribe_t subscribe_how)
 {
-  IPC_RETURN_TYPE err;
-  int context_id;
-  
-  err = IPC_defineMsg(CARMEN_LOCALIZE_INITIALIZE_NAME, 
-		      IPC_VARIABLE_LENGTH, 
-		      CARMEN_LOCALIZE_INITIALIZE_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_LOCALIZE_INITIALIZE_NAME);
-
-  if(subscribe_how == CARMEN_UNSUBSCRIBE) 
-    {
-      IPC_unsubscribe(CARMEN_LOCALIZE_INITIALIZE_NAME, 
-		      localize_initialize_interface_handler);
-      return;
-    }
-  
-  context_id = get_context_id();
-  if (context_id < 0)
-    context_id = add_context();
-
-  if(init_msg) 
-    localize_initialize_internal[context_id] = init_msg;
-  else if(localize_initialize_internal[context_id] == NULL) 
-    {
-      localize_initialize_internal[context_id] = 
-	(carmen_localize_initialize_message *)calloc
-	(1, sizeof(carmen_localize_initialize_message));
-      carmen_test_alloc(localize_initialize_internal[context_id]);
-    }
-  localize_initialize_handler[context_id] = handler;
-  err = IPC_subscribe(CARMEN_LOCALIZE_INITIALIZE_NAME, 
-		      localize_initialize_interface_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_INITIALIZE_NAME);
-  if(subscribe_how == CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_INITIALIZE_NAME, 1);
-  else
-    IPC_setMsgQueueLength(CARMEN_LOCALIZE_INITIALIZE_NAME, 100);
+  carmen_subscribe_message(CARMEN_LOCALIZE_INITIALIZE_NAME, 
+                           CARMEN_LOCALIZE_INITIALIZE_FMT,
+                           initialize,
+			   sizeof(carmen_localize_initialize_message), 
+			   handler, subscribe_how);
 }
 
+void
+carmen_localize_unsubscribe_initialize_message(carmen_handler_t handler)
+{
+  carmen_unsubscribe_message(CARMEN_LOCALIZE_INITIALIZE_NAME, handler);
+}
+
+static unsigned int timeout = 5000;
 
 void 
 carmen_localize_initialize_gaussian_command(carmen_point_t mean,
