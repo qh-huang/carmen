@@ -1,8 +1,11 @@
 package Carmen;
+
+import IPC.*;
+
 /**  Carmen CameraHandler's message
    */
 
-public class CameraMessage {
+public class CameraMessage extends Message {
   /** unit is pixels */
   public int width;
   /** unit is pixels */
@@ -12,16 +15,43 @@ public class CameraMessage {
   public int image_size;
   /** camera image */
   public char image[];
-  /** position of the camera on the robot */
-  public double x, y, theta;
- /** robot pose at the center of the robot */
-  public double odom_x, odom_y, odom_theta; 
-  /** commanded translational velocity (m/s) */
-  public double tv;
-  /** commanded rotational velocity (r/s) */
-  public double rv;
-  /** Timestamp from host locally running orcd daemon */
-  public double timestamp;
-  public char host[];
+
+  private static final String CARMEN_CAMERA_IMAGE_NAME = 
+    "carmen_camera_image";    
+  private static final String CARMEN_CAMERA_IMAGE_FMT = "{double,string,int,int,int,int,<char:6>}";
+
+  private static boolean defined = false;
+
+  private static class PrivateCameraHandler implements IPC.HANDLER_TYPE {
+    private static CameraHandler userHandler = null;
+    PrivateCameraHandler(CameraHandler userHandler) {
+      this.userHandler = userHandler;
+    }
+    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
+      CameraMessage message = (CameraMessage)callData;
+      userHandler.handleCamera(message);
+    }
+  }
+
+  /** Application module calls this to subscribe to CameraMessage.
+   *  Application module must extend CameraHandler
+   */
+  public static void subscribe(CameraHandler handler) {
+    IPC.defineMsg(CARMEN_CAMERA_IMAGE_NAME, CARMEN_CAMERA_IMAGE_FMT);
+    IPC.subscribeData(CARMEN_CAMERA_IMAGE_NAME, 
+		      new PrivateCameraHandler(handler),
+		      CameraMessage.class);
+    IPC.setMsgQueueLength(CARMEN_CAMERA_IMAGE_NAME, 1);
+  }
+
+  public void publish() {
+    if (!defined) {
+      IPC.defineMsg(CARMEN_CAMERA_IMAGE_NAME, CARMEN_CAMERA_IMAGE_FMT);
+      defined = true;
+    }
+    timestamp = Util.getTimeMs();
+    host = Util.getHostName();
+    IPC.publishData(CARMEN_CAMERA_IMAGE_NAME, this);
+  }
 }
 

@@ -4,53 +4,28 @@ import java.util.*;
 import IPC.*;
 /** Carmen class for  a Robot */
 public class Robot {
-  private static final String CARMEN_ROBOT_SONAR_NAME = "robot_sonar";
-  private static final String CARMEN_ROBOT_SONAR_FMT =
-    "{int,double,<double:1>,<{double,double,double}:1>,{double,double,double},double,double,double,[char:10]}";
-
-  private static final String CARMEN_ROBOT_FRONTLASER_NAME =
-    "carmen_robot_frontlaser";
-  private static final String CARMEN_ROBOT_REARLASER_NAME =
-    "carmen_robot_rearlaser";
-
-  private static final String CARMEN_ROBOT_LASER_FMT = 
-    "{int,<float:1>,<char:1>,double,double,double,double,double,double,double,double,double,double,double,double,[char:10]}";
-
   private static final String CARMEN_ROBOT_VELOCITY_NAME = "carmen_robot_vel";
   private static final String CARMEN_ROBOT_VELOCITY_FMT = 
-    "{double,double,double,[char:10]}";
+    "{double,string,double,double}";
 
   private static final String CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME =
     "carmen_robot_follow_trajectory";
   private static final String CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT = 
-    "{int,<{double,double,double,double,double}:1>,{double,double,double,double,double},double,[char:10]}";
+    "{double,string,int,<{double,double,double,double,double}:3>,{double,double,double,double,double}}";
 
   private static final String CARMEN_ROBOT_VECTOR_MOVE_NAME = 
     "carmen_robot_vector_move";
   private static final String CARMEN_ROBOT_VECTOR_MOVE_FMT = 
-    "{double,double,double,[char:10]}";
-
-  private static final String CARMEN_ROBOT_BUMPER_NAME =
-    "carmen_robot_bumper";
-  private static final String CARMEN_ROBOT_BUMPER_FMT = 
-    "{int, <char:1>, {double,double,double}, double, double, double, [char:10]}";
-
-  private static final String CARMEN_ROBOT_CAMERA_NAME = 
-    "carmen_robot_camera";
-  private static final String CARMEN_ROBOT_CAMERA_FMT = "{int, int, int, int, <char:4>, double, double, double, double, double, double, double, double, double, [char:10]};";
+    "{double,string,double,double}";
 
   private static final String CARMEN_ROBOT_VECTOR_STATUS_NAME =
     "carmen_robot_vector_status";
   private static final String CARMEN_ROBOT_VECTOR_STATUS_FMT =
-    "{double, double, double,[char:10]}";
+    "{double, string, double, double}";
   
-  private static final String CARMEN_ROBOT_ODOMETRY_NAME = "carmen_base_odometry";
-  private static final String CARMEN_ROBOT_ODOMETRY_FMT = 
-  	"{double, double, double,double, double, double,double,[char:10]}";
-
   private static final String CARMEN_BASE_RESET_COMMAND_NAME = "carmen_base_reset_command";
   private static final String CARMEN_BASE_RESET_COMMAND_FMT = 
-  	"{double,[char:10]}";
+  	"{double,string}";
 
   /** Event Handler receives this and can set its fields */
   public static class CarmenBaseResetMessage {
@@ -113,63 +88,6 @@ public class Robot {
     }
   }
 
-  private static class RobotPrivateSonarHandler implements IPC.HANDLER_TYPE {
-    private static SonarHandler userHandler = null;
-    RobotPrivateSonarHandler(SonarHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      SonarMessage message = (SonarMessage)callData;
-      userHandler.handleSonar(message);
-    }
-  }
-
-  private static class RobotPrivateFrontLaserHandler implements 
-						       IPC.HANDLER_TYPE {
-    private static FrontLaserHandler userHandler = null;
-    RobotPrivateFrontLaserHandler(FrontLaserHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      LaserMessage message = (LaserMessage)callData;
-      userHandler.handleFrontLaser(message);
-    }
-  }
-
-  private static class RobotPrivateRearLaserHandler implements 
-						       IPC.HANDLER_TYPE {
-    private static RearLaserHandler userHandler = null;
-    RobotPrivateRearLaserHandler(RearLaserHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      LaserMessage message = (LaserMessage)callData;
-      userHandler.handleRearLaser(message);
-    }
-  }
-
-  private static class RobotPrivateCameraHandler implements IPC.HANDLER_TYPE {
-    private static CameraHandler userHandler = null;
-    RobotPrivateCameraHandler(CameraHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      CameraMessage message = (CameraMessage)callData;
-      userHandler.handleCamera(message);
-    }
-  }
-
-  private static class RobotPrivateBumperHandler implements IPC.HANDLER_TYPE {
-    private static BumperHandler userHandler = null;
-    RobotPrivateBumperHandler(BumperHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      BumperMessage message = (BumperMessage)callData;
-      userHandler.handleBumper(message);
-    }
-  }
-
   private static class RobotPrivateVectorStatusHandler implements IPC.HANDLER_TYPE {
     private static VectorStatusHandler userHandler = null;
     RobotPrivateVectorStatusHandler(VectorStatusHandler userHandler) {
@@ -181,83 +99,6 @@ public class Robot {
     }
   }
   
-  private static class RobotPrivateOdometryHandler implements IPC.HANDLER_TYPE {
-    private static OdometryHandler userHandler = null;
-    RobotPrivateOdometryHandler(OdometryHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      OdometryMessage message = (OdometryMessage)callData;
-      userHandler.handleOdometry(message);
-    }
-  }
-
-  /** Application module calls this to subscribe to OdometryMessage.
-   *  Application module must extend OdometryHandler.
-   */
-  public static void subscribeOdometry(OdometryHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_ODOMETRY_NAME, CARMEN_ROBOT_ODOMETRY_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_ODOMETRY_NAME, 
-		      new RobotPrivateOdometryHandler(handler),
-		      OdometryMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_ODOMETRY_NAME, 1);
-  }
-  
-  /** Application module calls this to subscribe to SonarMessage.
-   *  Application module must extend SonarHandler
-   */
-  public static void subscribeSonar(SonarHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_SONAR_NAME, CARMEN_ROBOT_SONAR_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_SONAR_NAME, 
-		      new RobotPrivateSonarHandler(handler),
-		      SonarMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_SONAR_NAME, 1);
-  }
-
-  /** Application module calls this to subscribe to LaserMessage.
-   *  Application module must extend either FrontLaserHandler or RearLaserHandler.
-   */
-  public static void subscribeFrontLaser(FrontLaserHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_FRONTLASER_NAME, CARMEN_ROBOT_LASER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_FRONTLASER_NAME, 
-		      new RobotPrivateFrontLaserHandler(handler),
-		      LaserMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_FRONTLASER_NAME, 1);
-  }
-
-  /** Application module calls this to subscribe to LaserMessage.
-   *  Application module must extend either FrontLaserHandler or RearLaserHandler.
-   */
-  public static void subscribeRearLaser(RearLaserHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_REARLASER_NAME, CARMEN_ROBOT_LASER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_REARLASER_NAME, 
-		      new RobotPrivateRearLaserHandler(handler),
-		      LaserMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_REARLASER_NAME, 1);
-  }
-
-  /** Application module calls this to subscribe to CameraMessage.
-   *  Application module must extend CameraHandler
-   */
-  public static void subscribeCamera(CameraHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_CAMERA_NAME, CARMEN_ROBOT_CAMERA_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_CAMERA_NAME, 
-		      new RobotPrivateCameraHandler(handler),
-		      CameraMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_CAMERA_NAME, 1);
-  }
-
-  /** Application module calls this to subscribe to BumperMessage.
-      Application module must extend BumperHandler.
-   */
-  public static void subscribeBumper(BumperHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_BUMPER_NAME, CARMEN_ROBOT_BUMPER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_BUMPER_NAME, 
-		      new RobotPrivateBumperHandler(handler),
-		      BumperMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_BUMPER_NAME, 1);
-  }
-
   /** Application module calls this to subscribe to VectorStatusMessage.
    *  Application module must extend VectorStatusHandler
    */

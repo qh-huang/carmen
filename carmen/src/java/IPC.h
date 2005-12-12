@@ -450,6 +450,14 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1removeTimerByRef
 JNIEXPORT jlong JNICALL Java_IPC_IPC_IPC_1timeInMillis
   (JNIEnv *, jclass);
 
+/*
+ * Class:     IPC
+ * Method:    IPC_getPID
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_IPC_IPC_IPC_1getPID
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif

@@ -8,11 +8,9 @@ public class Arm {
   private static final String CARMEN_BASE_SERVO_ARM_FMT = 
     "{<double:2>, int, double, [char:10]}";
 
-  public static class ServoArmMessage {
+  public static class ServoArmMessage extends Message {
     public double servos [];
     public int numServos;
-    public double timestamp;
-    public char host[];
 
     ServoArmMessage(double servos[]) {
       this.servos = servos;

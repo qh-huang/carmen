@@ -3,14 +3,6 @@ package Carmen;
  */
 
 public class Util {
-  public static double radsToDegrees(double radians) {
-    return (radians * 180.0 / Math.PI);
-  }
-
-  public static double degreesToRads(double degrees) {
-    return (degrees * Math.PI / 180.0);
-  }
-
   public static double getTimeMs() {
     return (double)(System.currentTimeMillis() / 1000.0);
   }
@@ -47,7 +39,10 @@ public class Util {
       hostname = java.net.InetAddress.getLocalHost().toString();
     }
     catch(java.net.UnknownHostException uhe) {
-      //handle exception
+      System.err.println("Could not recover hostname.\n"+
+			 "Is the network functioning properly? Is the"+
+			 "nameserver working?");
+      System.exit(-1);
     }
 
     if (hostname.length() > 10) {

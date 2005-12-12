@@ -12,7 +12,7 @@ public class TestRobot implements FrontLaserHandler, OdometryHandler {
     }
     message.timestamp -= startTime;
     System.out.println("Odometry: "+message.tv+" m/s "+
-		       Util.radsToDegrees(message.rv)+" deg/s");
+		       Math.toDegrees(message.rv)+" deg/s");
     if (message.timestamp > 2) {
       System.exit(0);
     }
@@ -34,9 +34,9 @@ public class TestRobot implements FrontLaserHandler, OdometryHandler {
   public static void main (String args[]) {
     Robot.initialize("TestRobot", "localhost");
     TestRobot test = new TestRobot();
-    Robot.subscribeOdometry(test);
-    Robot.subscribeFrontLaser(test);
-    Robot.setVelocity(0, Util.degreesToRads(30));
+    OdometryMessage.subscribe(test);
+    LaserMessage.subscribeFront(test);
+    Robot.setVelocity(0, Math.toRadians(30));
     Robot.dispatch();
   }
 }

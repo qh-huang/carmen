@@ -1,8 +1,10 @@
 package Carmen;
 
+import IPC.*;
+
 /**  Carmen BumperHandler's message
    */
-public class BumperMessage {
+public class BumperMessage extends Message {
   
   public int num_bumpers; 
   /** state of bumper */
@@ -13,8 +15,33 @@ public class BumperMessage {
   public double tv;
   /** commanded rotational velocity (r/s) */
   public double rv;
-  /** Timestamp from host locally running orcd daemon */
-  public double timestamp;
-  public char host[];
+
+  private static final String CARMEN_ROBOT_BUMPER_NAME =
+    "carmen_robot_bumper";
+  private static final String CARMEN_ROBOT_BUMPER_FMT = 
+    "{double, string, int, <char:3>, {double,double,double}, double, double}";
+
+  private static class PrivateBumperHandler implements IPC.HANDLER_TYPE {
+    private static BumperHandler userHandler = null;
+    PrivateBumperHandler(BumperHandler userHandler) {
+      this.userHandler = userHandler;
+    }
+    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
+      BumperMessage message = (BumperMessage)callData;
+      userHandler.handleBumper(message);
+    }
+  }
+
+  /** Application module calls this to subscribe to BumperMessage.
+      Application module must extend BumperHandler.
+   */
+  public static void subscribe(BumperHandler handler) {
+    IPC.defineMsg(CARMEN_ROBOT_BUMPER_NAME, CARMEN_ROBOT_BUMPER_FMT);
+    IPC.subscribeData(CARMEN_ROBOT_BUMPER_NAME, 
+		      new PrivateBumperHandler(handler),
+		      BumperMessage.class);
+    IPC.setMsgQueueLength(CARMEN_ROBOT_BUMPER_NAME, 1);
+  }
+
 }
 

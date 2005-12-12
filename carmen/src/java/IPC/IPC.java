@@ -23,6 +23,9 @@
  * HISTORY: Based on version by Carroll Thronesbery, Metrica (Sept 2000)
  *
  * $Log$
+ * Revision 1.2  2005/12/12 23:52:26  nickr
+ * Made message classes inherit
+ *
  * Revision 1.1  2005/08/31 20:33:47  nickr
  * *** empty log message ***
  *
@@ -597,6 +600,10 @@ public class IPC {
     return IPC_setContext(context.cptr);
   }
 
+  public static long getPID() {
+    return IPC_getPID();
+  }
+
   public static int addTimer (long tdelay, long count, 
 			      TIMER_HANDLER_TYPE handler) {
     int handlerNum = ++handlerNumber;
@@ -721,6 +728,7 @@ public class IPC {
 						 String formatString);
   private native static int IPC_getContext (); 
   private native static int IPC_setContext (int context);
+  private native static long IPC_getPID();
   private native static void IPC_freeByteArray(int byteArray);
   private native static int IPC_msgFormatter(String msgName);
   private native static int IPC_addTimer(long tdelay, long count, 

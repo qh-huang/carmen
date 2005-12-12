@@ -21,7 +21,7 @@ public class TestBase implements OdometryHandler{
   public static void main (String args[]) {
     Robot.initialize("TestBase", "localhost");
     Robot.resetRobotBase();
-    Robot.subscribeOdometry(new TestBase());
+    OdometryMessage.subscribe(new TestBase());
     Robot.dispatch();
   }
 }

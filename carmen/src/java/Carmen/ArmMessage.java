@@ -2,20 +2,18 @@ package Carmen;
 
 import IPC.*;
  
-public class ArmMessage {
+public class ArmMessage extends Message {
   public double servos[];
   public int numServos;
   public double servoCurrents[];
   public int numCurrents;
   public int gripperState;
-  public double timestamp;
-  public char host[];
-
   
   private static final String CARMEN_BASE_ARM_STATE_NAME = 
     "carmen_base_arm_state";
   private static final String CARMEN_BASE_ARM_STATE_FMT =  
-    "{<double:2>, int, <double:4>, int, int, double, [char:10]}";
+    "{double, string, <double:4>, int, <double:6>, int, int}";
+  private static boolean defined = false;
 
   private static class PrivateArmHandler implements IPC.HANDLER_TYPE {
     private static ArmHandler userHandler = null;
@@ -30,8 +28,11 @@ public class ArmMessage {
 
   public static void subscribe(ArmHandler handler)
   {
-    IPC.defineMsg(CARMEN_BASE_ARM_STATE_NAME,
-                  CARMEN_BASE_ARM_STATE_FMT);
+    if (!defined) {
+      IPC.defineMsg(CARMEN_BASE_ARM_STATE_NAME, CARMEN_BASE_ARM_STATE_FMT);
+      defined = true;
+    }
+
     IPC.subscribeData(CARMEN_BASE_ARM_STATE_NAME,
                       new PrivateArmHandler(handler),
                       ArmMessage.class);
