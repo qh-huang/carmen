@@ -38,6 +38,8 @@ extern "C" {
 #define CARMEN_SIMULATOR_OBJECTS_QUERY_NAME   "carmen_simulator_objects_query"
 #define CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME   "carmen_simulator_clear_objects"
 
+typedef enum {CARMEN_SIMULATOR_RANDOM_OBJECT, CARMEN_SIMULATOR_LINE_FOLLOWER,
+	      CARMEN_SIMULATOR_OTHER_ROBOT} carmen_simulator_object_t;
 
 typedef struct {
   double timestamp;
