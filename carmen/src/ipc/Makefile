@@ -26,8 +26,6 @@ TARGETS = central libipc.a test_generate test_receive ipc-endian-test ipc-die-te
 
 # rules
 
-all:
-
 libipc.a: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
 	tcModError.o datamsg.o formatters.o hash.o idtable.o key.o \
 	primFmttrs.o reg.o sendMsg.o tcaMem.o tcaRef.o comModule.o com.o \

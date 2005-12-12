@@ -25,9 +25,6 @@ PUBLIC_BINARIES += param_edit
 TARGETS += param_edit
 endif
 
-
-all:
-
 param_daemon: param_daemon.o 
 
 libparam_interface.a:	param_interface.o

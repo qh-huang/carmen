@@ -18,8 +18,6 @@ TARGETS = libipcjava.so Carmen.jar TestBase.class TestRobot.class
 
 CLASSFILES = Carmen/*.class IPC/*.class
 
-all:
-
 libipcjava.so: ipcjava.o
 	$(ECHO) "    ---- Creating shared library (C)"
 	@ld -o $@ -G -dy $^ -L ../ipc -lipc

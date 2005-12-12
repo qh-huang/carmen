@@ -30,8 +30,6 @@ LFLAGS += `$(GTK_CONFIG) --libs`
 TARGETS += playback_control
 endif
 
-all:
-
 logger:	logger.o liblogger_io.a
 
 liblogger_io.a : logger_io.o

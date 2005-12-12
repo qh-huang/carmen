@@ -20,8 +20,6 @@ TARGETS = simulator simulator_test libsimulator_interface.a simulator_connect_mu
 
 # rules
 
-all:
-
 simulator:	simulator.o simulator_simulation.o objects.o
 
 libsimulator_interface.a : simulator_interface.o

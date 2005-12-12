@@ -15,8 +15,6 @@ PUBLIC_BINARIES = robot
 
 TARGETS = librobot.a robot librobot_interface.a robot_test
 
-all:
-
 robot:	robot.o librobot.a
 
 librobot.a: robot_sonar.o robot_bumper.o robot_main.o robot_laser.o 

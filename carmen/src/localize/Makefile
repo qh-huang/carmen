@@ -17,8 +17,6 @@ TARGETS = localize liblocalize_interface.a localize_initialize liblocalize_core.
 
 # rules
 
-all:
-
 localize_initialize:	localize_initialize.o liblocalize_interface.a
 
 liblocalize_interface.a:	localize_interface.o

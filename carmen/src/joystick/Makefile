@@ -16,8 +16,6 @@ PUBLIC_BINARIES += wingman_control
 TARGETS += libjoyctrl.a wingman_control
 endif
 
-all:
-
 libjoyctrl.a:	joyctrl.o
 
 # joyrobot:	libjoyctrl.a 

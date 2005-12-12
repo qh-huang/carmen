@@ -50,8 +50,6 @@ TARGETS += libartwrap.a
 CFLAGS += -DHAVE_LIBART
 endif
 
-all:
-
 libglobal.a:		global.o ipc_wrapper.o carmen_stdio.o
 
 ifndef NO_LIBJPEG

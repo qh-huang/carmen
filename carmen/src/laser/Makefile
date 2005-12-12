@@ -26,8 +26,6 @@ TARGETS += laserview
 endif
 endif
 
-all:
-
 laser:			sick.o laser_ipc.o laser_main.o laser.o
 
 laser_test:		laser_test.o liblaser_interface.a

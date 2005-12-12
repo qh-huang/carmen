@@ -19,8 +19,6 @@ PUBLIC_BINARIES += camera_view
 TARGETS += camera_view
 endif
 
-all:
-
 fakecam/libfakecam.a:
 	$(MAKE) -C fakecam
 

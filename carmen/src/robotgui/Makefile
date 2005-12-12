@@ -23,8 +23,6 @@ PUBLIC_BINARIES = robotgui
 TARGETS = robotgui
 endif
 
-all:
-
 robotgui: robotgui.o keyctrl.o
 
 # rules

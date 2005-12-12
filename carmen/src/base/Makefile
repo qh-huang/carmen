@@ -19,8 +19,6 @@ TARGETS = libbase_interface.a libbase.a base_test base_services base_main.o
 
 # rules
 
-all:
-
 libbase_interface.a:	base_interface.o
 
 base_test:		base_test.o libbase_interface.a

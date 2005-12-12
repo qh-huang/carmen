@@ -26,8 +26,6 @@ endif
 
 # rules
 
-all:	
-
 libegrid.a:	egrid.o
 
 vasco:		libvascocore.a vscanmatch.o vegrid.o laserscans.o \

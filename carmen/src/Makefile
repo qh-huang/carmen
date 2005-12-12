@@ -1,3 +1,5 @@
+total:	home export phase1 phase2
+
 include Makefile.conf
 
 PACKAGES = ipc global param_daemon base laser camera \
@@ -26,8 +28,6 @@ INSTALL_RECURSE = $(SILENT) \
                         fi; \
 		fi \
 	done
-
-total:	home export phase1 phase2
 
 loud:
 	$(SILENT) $(MAKE) MAKEFLAGS= LOUD=1 total
