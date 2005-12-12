@@ -30,7 +30,6 @@
 #include "robot_laser.h"
 #include "robot_sonar.h"
 #include "robot_bumper.h"
-#include "robot_camera.h"
 
 #include "robot_central.h"
 
@@ -51,7 +50,6 @@ static double odometry_local_timestamp[MAX_READINGS];
 static int use_laser = 1;
 static int use_sonar = 1;
 static int use_bumper = 0;
-static int use_camera = 1;
 
 static int collision_avoidance = 1;
 
@@ -109,15 +107,9 @@ double carmen_robot_interpolate_heading(double head1, double head2,
 void carmen_robot_send_base_velocity_command(void)
 {
   IPC_RETURN_TYPE err;
-  char *host;
   static carmen_base_velocity_message v;
-  static int first = 1;
 
-  if(first) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(v.host, host);
-    first = 0;
-  }
+  v.host = carmen_get_host();
 
   if (collision_avoidance) {
     if (use_sonar)
@@ -189,8 +181,6 @@ static void base_odometry_handler(void)
     
   } // End of if (collision_avoidance)
 
-  if (use_camera)
-    carmen_robot_correct_camera_and_publish();
   if (use_sonar) 
     carmen_robot_correct_sonar_and_publish();
   if (use_bumper)
@@ -202,13 +192,9 @@ static void base_odometry_handler(void)
 static void publish_vector_status(double distance, double angle)
 {
   static carmen_robot_vector_status_message msg;
-  static int first = 1;
   int err;
 
-  if (first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    first = 0;
-  }
+  msg.host = carmen_get_host();
   msg.timestamp = carmen_get_time();
   msg.vector_distance = distance;
   msg.vector_angle = angle;
@@ -590,8 +576,6 @@ static int read_robot_parameters(int argc, char **argv)
     carmen_robot_add_sonar_parameters(argv[0]);
   if (use_bumper)
     carmen_robot_add_bumper_parameters(argv[0]);
-  if (use_camera)
-    carmen_robot_add_camera_parameters(argv[0]);
 
   carmen_robot_config.acceleration = 0.5;
   return 0;
@@ -599,7 +583,7 @@ static int read_robot_parameters(int argc, char **argv)
 
 int carmen_robot_start(int argc, char **argv)
 {
-  carmen_robot_host = carmen_get_tenchar_host_name();
+  carmen_robot_host = carmen_get_host();
   
   carmen_running_average_clear(ODOMETRY_AVERAGE);
   
@@ -621,8 +605,6 @@ int carmen_robot_start(int argc, char **argv)
     carmen_robot_add_sonar_handler();
   if (use_bumper)
     carmen_robot_add_bumper_handler();
-  if (use_camera)
-    carmen_robot_add_camera_handler();
 
   return 0;
 }

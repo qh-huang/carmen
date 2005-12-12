@@ -40,18 +40,12 @@ static int throttle_mode=0;
 void send_base_velocity_command(double tv, double rv)
 {
   IPC_RETURN_TYPE err;
-  char *host;
   static carmen_base_velocity_message v;
-  static int first = 1;
 
-  if(first) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(v.host, host);
-    first = 0;
-  }
   v.tv = tv;
   v.rv = rv;
   v.timestamp = carmen_get_time();
+  v.host = carmen_get_host();
 
   if (v.tv > max_allowed_tv)
     v.tv = max_allowed_tv;

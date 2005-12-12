@@ -101,12 +101,12 @@ static void
 clear_objects_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
 		     void *clientData __attribute__ ((unused)))
 {
-  carmen_simulator_query_message msg;
+  carmen_default_message msg;
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);
   IPC_unmarshallData(formatter, callData, &msg,
-                     sizeof(carmen_simulator_query_message));
+                     sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
 
   carmen_simulator_clear_objects();	
@@ -180,20 +180,19 @@ static void
 next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
 		  void *clientData __attribute__ ((unused)))
 {
-  carmen_simulator_query_message msg;
+  carmen_default_message msg;
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);
   IPC_unmarshallData(formatter, callData, &msg,
-                     sizeof(carmen_simulator_query_message));
+                     sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
 
-  if (simulator_config->sync_mode) 
-    {
-      if (use_robot)
-	carmen_robot_run();
-      publish_readings();
-    }
+  if (simulator_config->sync_mode) {
+    if (use_robot)
+      carmen_robot_run();
+    publish_readings();
+  }
 }
 
 /* handles C^c */
@@ -274,13 +273,13 @@ initialize_ipc(void)
 
   err = IPC_defineMsg(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME,
                       IPC_VARIABLE_LENGTH,
-                      CARMEN_SIMULATOR_CLEAR_OBJECTS_FMT);
+                      CARMEN_DEFAULT_MESSAGE_FMT);
   if(err != IPC_OK)
     return -1;
 
   err = IPC_defineMsg(CARMEN_SIMULATOR_NEXT_TICK_NAME,
                       IPC_VARIABLE_LENGTH,
-                      CARMEN_SIMULATOR_NEXT_TICK_FMT);
+                      CARMEN_DEFAULT_MESSAGE_FMT);
   if(err != IPC_OK)
     return -1;
 
@@ -339,10 +338,10 @@ publish_readings(void)
   if (first)
     {
 
-      strcpy(odometry.host, carmen_get_tenchar_host_name());
-      strcpy(position.host, carmen_get_tenchar_host_name());
+      odometry.host = carmen_get_host();
+      position.host = carmen_get_host();
 
-      strcpy(objects.host, carmen_get_tenchar_host_name());
+      objects.host = carmen_get_host();
 
       odometry.x = position.truepose.x;
       odometry.y = position.truepose.y;
@@ -350,36 +349,33 @@ publish_readings(void)
       
       odometry.tv = odometry.rv = 0;
 
-      if (simulator_config->use_front_laser) 
-	{
-	  strcpy(flaser.host, carmen_get_tenchar_host_name());
-	  flaser.num_readings = 
-	    simulator_config->front_laser_config.num_lasers;
-	  flaser.range = (float *)calloc
-	    (simulator_config->front_laser_config.num_lasers, sizeof(float));
-	  carmen_test_alloc(flaser.range);
-	}
-
-      if (simulator_config->use_rear_laser) 
-	{
-	  strcpy(rlaser.host, carmen_get_tenchar_host_name());
-
-	  rlaser.num_readings = simulator_config->rear_laser_config.num_lasers;
-	  rlaser.range = (float *)calloc
-	    (simulator_config->rear_laser_config.num_lasers, sizeof(float));
-	  carmen_test_alloc(rlaser.range);
-	}
-
-      if (simulator_config->use_sonar) 
-	{
-	  strcpy(sonar.host, carmen_get_tenchar_host_name());
-	  sonar.num_sonars = simulator_config->sonar_config.num_sonars;
-	  sonar.sensor_angle = simulator_config->sonar_config.sensor_angle;
-	  
-	  sonar.range = (double *)calloc
-	    (simulator_config->sonar_config.num_sonars, sizeof(double));
-	  carmen_test_alloc(sonar.range);	  
-	}
+      if (simulator_config->use_front_laser) {
+	flaser.host = carmen_get_host();
+	flaser.num_readings = 
+	  simulator_config->front_laser_config.num_lasers;
+	flaser.range = (float *)calloc
+	  (simulator_config->front_laser_config.num_lasers, sizeof(float));
+	carmen_test_alloc(flaser.range);
+      }
+      
+      if (simulator_config->use_rear_laser) {
+	rlaser.host = carmen_get_host();
+	
+	rlaser.num_readings = simulator_config->rear_laser_config.num_lasers;
+	rlaser.range = (float *)calloc
+	  (simulator_config->rear_laser_config.num_lasers, sizeof(float));
+	carmen_test_alloc(rlaser.range);
+      }
+      
+      if (simulator_config->use_sonar) {
+	sonar.host = carmen_get_host();
+	sonar.num_sonars = simulator_config->sonar_config.num_sonars;
+	sonar.sensor_angle = simulator_config->sonar_config.sensor_angle;
+	
+	sonar.range = (double *)calloc
+	  (simulator_config->sonar_config.num_sonars, sizeof(double));
+	carmen_test_alloc(sonar.range);	  
+      }
       first = 0;
     }
 

@@ -38,40 +38,40 @@ extern "C" {
 #define CARMEN_INITIALIZE_GAUSSIAN    2
 
 typedef struct {
+  double timestamp;
+  char *host;
   int distribution;
   int num_modes;
   carmen_point_t *mean, *std;
-  double timestamp;
-  char host[10];
 } carmen_localize_initialize_message;
 
 #define CARMEN_LOCALIZE_INITIALIZE_NAME  "carmen_localize_initialize"
-#define CARMEN_LOCALIZE_INITIALIZE_FMT   "{int,int,<{double,double,double}:2>,<{double,double,double}:2>,double,[char:10]}"
+#define CARMEN_LOCALIZE_INITIALIZE_FMT   "{double,string,int,int,<{double,double,double}:4>,<{double,double,double}:4>}"
 
   /* initialize by map placename */
 
 typedef struct {
-  char *placename;
   double timestamp;
-  char host[10];
+  char *host;
+  char *placename;
 } carmen_localize_initialize_placename_message;
 
 #define CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME "carmen_localize_initialize_placename"
-#define CARMEN_LOCALIZE_INITIALIZE_PLACENAME_FMT "{string,double,[char:10]}"
+#define CARMEN_LOCALIZE_INITIALIZE_PLACENAME_FMT "{double,string,string}"
 
 /* Contains the mean and standard deviation of the position of the robot */
 
 typedef struct {
+  double timestamp;
+  char *host;
   carmen_point_t globalpos, globalpos_std;
   carmen_point_t odometrypos;
   double globalpos_xy_cov;
   int converged;
-  double timestamp;
-  char host[10];
 } carmen_localize_globalpos_message;
 
 #define CARMEN_LOCALIZE_GLOBALPOS_NAME "carmen_localize_globalpos"
-#define CARMEN_LOCALIZE_GLOBALPOS_FMT  "{{double,double,double},{double,double,double},{double,double,double},double,int,double,[char:10]}"
+#define CARMEN_LOCALIZE_GLOBALPOS_FMT  "{double,string,{double,double,double},{double,double,double},{double,double,double},double,int}"
 
 /* particle message */
 
@@ -80,53 +80,53 @@ typedef struct {
 } carmen_localize_particle_ipc_t, *carmen_localize_particle_ipc_p;
 
 typedef struct {
+  double timestamp;
+  char *host;
   int num_particles;
   carmen_localize_particle_ipc_p particles;
   carmen_point_t globalpos, globalpos_std;
   double globalpos_xy_cov;
-  double timestamp;
-  char host[10];
 } carmen_localize_particle_message;
 
 #define CARMEN_LOCALIZE_PARTICLE_NAME "carmen_localize_particle"
-#define CARMEN_LOCALIZE_PARTICLE_FMT  "{int,<{float,float,float,float}:1>,{double,double,double},{double,double,double},double,double,[char:10]}"
+#define CARMEN_LOCALIZE_PARTICLE_FMT  "{double,string,int,<{float,float,float,float}:3>,{double,double,double},{double,double,double},double}"
 
 /* sensor message in localize coordinates */
 
 typedef struct {
+  double timestamp;
+  char *host;
   int num_readings, laser_skip;
   float *range;
   char *mask;
   carmen_point_t pose;
   int num_laser;
-  double timestamp;
-  char host[10];
 } carmen_localize_sensor_message;
 
 #define CARMEN_LOCALIZE_SENSOR_NAME "carmen_localize_sensor"
-#define CARMEN_LOCALIZE_SENSOR_FMT  "{int,int,<float:1>,<char:1>,{double,double,double},int,double,[char:10]}"
+#define CARMEN_LOCALIZE_SENSOR_FMT  "{double,string,int,int,<float:3>,<char:3>,{double,double,double},int}"
 
 typedef struct {
-  int global;
   double timestamp;
-  char host[10];
+  char *host;
+  int global;
 } carmen_localize_query_message;
   
 #define CARMEN_LOCALIZE_QUERY_NAME "carmen_localize_query"
-#define CARMEN_LOCALIZE_QUERY_FMT "{int,double,[char:10]}"
+#define CARMEN_LOCALIZE_QUERY_FMT "{double,string,int}"
   
 typedef struct {
+  double timestamp;
+  char *host;
   unsigned char *data;    
   int size;
   carmen_map_config_t config;
   int compressed;
   int global;
-  double timestamp;
-  char host[10];
 } carmen_localize_map_message;  
   
 #define CARMEN_LOCALIZE_MAP_NAME "carmen_localize_map"
-#define CARMEN_LOCALIZE_MAP_FMT  "{<char:2>,int,{int,int,double,string},int,int,double,[char:10]}"
+#define CARMEN_LOCALIZE_MAP_FMT  "{double,string,<char:4>,int,{int,int,double,string},int,int}"
 
 #ifdef __cplusplus
 }

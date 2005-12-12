@@ -128,8 +128,8 @@ int main(int argc, char **argv)
 	front_laser.range = (float *)calloc(180, sizeof(float));
 	carmen_test_alloc(front_laser.range);
 
-	strcpy(front_laser.host, carmen_get_tenchar_host_name());
-	strcpy(odometry.host, carmen_get_tenchar_host_name());
+	front_laser.host = carmen_get_host();
+	odometry.host = carmen_get_host();
 
 	carmen_logger_write_header(outfile);
 	carmen_logger_write_robot_name("beesoft", outfile);

@@ -29,7 +29,6 @@ void publish_laser_alive(int front_stalled, int rear_stalled,
 
 void publish_laser_message(sick_laser_p laser)
 {
-  static char *host = NULL;
   static carmen_laser_laser_message msg;
 
 // *** REI - START *** //
@@ -39,13 +38,8 @@ void publish_laser_message(sick_laser_p laser)
   IPC_RETURN_TYPE err;
   int i;
 
-  if(host == NULL) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(msg.host, host);
-// *** REI - START *** //
-	strcpy(msg_rem.host, host);
-// *** REI - END *** //
-  }
+  msg.host = carmen_get_host();
+  msg_rem.host = carmen_get_host();
   msg.num_readings = laser->numvalues - 1;
   msg.timestamp = laser->timestamp;
   

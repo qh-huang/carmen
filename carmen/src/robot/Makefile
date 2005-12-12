@@ -1,13 +1,13 @@
 include ../Makefile.conf
 
 LFLAGS += -lglobal -lgeometry -lbase_interface \
-	-lcamera_interface -llaser_interface -lparam_interface -lipc 
+	-llaser_interface -lparam_interface -lipc 
 
 MODULE_NAME = ROBOT_DAEMON
 MODULE_COMMENT = Module integrating all robot sensors and configuration
 
 SOURCES = robot.c robot_interface.c robot_test.c \
-	robot_sonar.c robot_bumper.c robot_camera.c robot_main.c \
+	robot_sonar.c robot_bumper.c robot_main.c \
 	robot_laser.c 
 PUBLIC_INCLUDES = robot_interface.h robot_messages.h 
 PUBLIC_LIBRARIES = librobot_interface.a librobot.a 
@@ -19,8 +19,7 @@ all:
 
 robot:	robot.o librobot.a
 
-librobot.a: robot_sonar.o robot_bumper.o robot_camera.o \
-	robot_main.o robot_laser.o 
+librobot.a: robot_sonar.o robot_bumper.o robot_main.o robot_laser.o 
 
 librobot_interface.a:	robot_interface.o
 

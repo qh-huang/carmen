@@ -187,23 +187,20 @@ int
 carmen_simulator_query_truepos(carmen_simulator_truepos_message **carmen_simulator_interface_truepos_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_simulator_query_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
-
-  if (!initialized) 
-    {
-      err = IPC_defineMsg(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME, 
-			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_SIMULATOR_TRUEPOS_QUERY_FMT);
-      carmen_test_ipc_exit(err, "Could not define message", 
-			   CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME);
-      initialized = 1;
-    }
-
-  err = IPC_queryResponseData(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME, &msg, 
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME);
+    initialized = 1;
+  }
+  
+  msg = carmen_default_message_create();
+  err = IPC_queryResponseData(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME, msg, 
 			      (void **)carmen_simulator_interface_truepos_msg, timeout);
   carmen_test_ipc_return_int(err, "Could not query simulator truepos", 
 			     CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME);
@@ -290,23 +287,21 @@ int
 carmen_simulator_query_objects(carmen_simulator_objects_message **carmen_simulator_interface_objects_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_simulator_query_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
-  if (!initialized) 
-    {
-      err = IPC_defineMsg(CARMEN_SIMULATOR_OBJECTS_QUERY_NAME, 
-			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_SIMULATOR_OBJECTS_QUERY_FMT);
-      carmen_test_ipc_exit(err, "Could not define message", 
-			   CARMEN_SIMULATOR_OBJECTS_QUERY_NAME);
-      initialized = 1;
-    }
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_SIMULATOR_OBJECTS_QUERY_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_SIMULATOR_OBJECTS_QUERY_NAME);
+    initialized = 1;
+  }
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg = carmen_default_message_create();
 
-  err = IPC_queryResponseData(CARMEN_SIMULATOR_OBJECTS_QUERY_NAME, &msg, 
+  err = IPC_queryResponseData(CARMEN_SIMULATOR_OBJECTS_QUERY_NAME, msg, 
 			      (void **)carmen_simulator_interface_objects_msg, timeout);
   carmen_test_ipc_return_int(err, "Could not query objects", 
 			     CARMEN_SIMULATOR_OBJECTS_QUERY_NAME);
@@ -336,7 +331,7 @@ carmen_simulator_set_object(carmen_point_t *point, double speed,
   msg.speed = speed;
   msg.type = type;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_SIMULATOR_SET_OBJECT_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_SIMULATOR_SET_OBJECT_NAME);
@@ -364,7 +359,7 @@ carmen_simulator_connect_robots(char *other_central)
 
   msg.other_central = other_central;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_SIMULATOR_CONNECT_ROBOTS_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 
@@ -374,7 +369,7 @@ carmen_simulator_connect_robots(char *other_central)
 void
 carmen_simulator_clear_objects(void)
 {
-  carmen_simulator_clear_objects_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
   IPC_RETURN_TYPE err = IPC_OK;
 
@@ -382,15 +377,13 @@ carmen_simulator_clear_objects(void)
     {
       err = IPC_defineMsg(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME, 
 			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_SIMULATOR_CLEAR_OBJECTS_FMT);
+			  CARMEN_DEFAULT_MESSAGE_FMT);
       carmen_test_ipc_exit(err, "Could not define message", 
 			   CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME);
       initialized = 1;
     }
 
-
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg = carmen_default_message_create();
 
   err = IPC_publishData(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 
@@ -401,20 +394,21 @@ void
 carmen_simulator_next_tick(void)
 {
   IPC_RETURN_TYPE err = IPC_OK;
-  carmen_simulator_query_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
   if (!initialized) 
     {
       err = IPC_defineMsg(CARMEN_SIMULATOR_NEXT_TICK_NAME, 
 			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_SIMULATOR_NEXT_TICK_FMT);
+			  CARMEN_DEFAULT_MESSAGE_FMT);
       carmen_test_ipc_exit(err, "Could not define message", 
 			   CARMEN_SIMULATOR_NEXT_TICK_NAME);
       initialized = 1;
     }
 
-  err = IPC_publishData(CARMEN_SIMULATOR_NEXT_TICK_NAME, &msg);
+  msg = carmen_default_message_create();
+  err = IPC_publishData(CARMEN_SIMULATOR_NEXT_TICK_NAME, msg);
   carmen_test_ipc(err, "Could not publish", 
 		  CARMEN_SIMULATOR_NEXT_TICK_NAME);
 }
@@ -438,7 +432,7 @@ carmen_simulator_set_truepose(carmen_point_t *point)
 
   msg.pose = *point;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_SIMULATOR_SET_TRUEPOSE_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 

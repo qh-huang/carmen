@@ -33,17 +33,17 @@ extern "C" {
 #endif
 
 typedef struct  {
+  double timestamp;
+  char *host;
   int width;
   int height;
   int bytes_per_pixel;
   int image_size;
   char *image;
-  double timestamp;
-  char host[10];
 } carmen_camera_image_message;
 
 #define      CARMEN_CAMERA_IMAGE_NAME       "carmen_camera_image"
-#define      CARMEN_CAMERA_IMAGE_FMT        "{int,int,int,int,<char:4>,double,[char:10]}"
+#define      CARMEN_CAMERA_IMAGE_FMT        "{double,string,int,int,int,int,<char:6>}"
 
 #ifdef __cplusplus
 }

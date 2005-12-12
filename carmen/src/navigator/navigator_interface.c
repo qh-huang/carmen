@@ -202,23 +202,22 @@ int
 carmen_navigator_query_status(carmen_navigator_status_message **status_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_navigator_query_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg = carmen_default_message_create();
 
   if (!initialized) 
     {
       err = IPC_defineMsg(CARMEN_NAVIGATOR_STATUS_QUERY_NAME, 
 			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_NAVIGATOR_STATUS_QUERY_FMT);
+			  CARMEN_DEFAULT_MESSAGE_FMT);
       carmen_test_ipc_exit(err, "Could not define message", 
 			   CARMEN_NAVIGATOR_STATUS_QUERY_NAME);
       initialized = 1;
     }
 
-  err = IPC_queryResponseData(CARMEN_NAVIGATOR_STATUS_QUERY_NAME, &msg, 
+  err = IPC_queryResponseData(CARMEN_NAVIGATOR_STATUS_QUERY_NAME, msg, 
 			      (void **)status_msg, timeout);
   carmen_test_ipc_return_int(err, "Could not query navigator status", 
 			     CARMEN_NAVIGATOR_STATUS_QUERY_NAME);
@@ -304,23 +303,22 @@ int
 carmen_navigator_query_plan(carmen_navigator_plan_message **plan_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_navigator_query_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
   if (!initialized) 
     {
       err = IPC_defineMsg(CARMEN_NAVIGATOR_PLAN_QUERY_NAME, 
 			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_NAVIGATOR_PLAN_QUERY_FMT);
+			  CARMEN_DEFAULT_MESSAGE_FMT);
       carmen_test_ipc_exit(err, "Could not define message", 
 			   CARMEN_NAVIGATOR_PLAN_QUERY_NAME);
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg = carmen_default_message_create();
 
-  err = IPC_queryResponseData(CARMEN_NAVIGATOR_PLAN_QUERY_NAME, &msg, 
+  err = IPC_queryResponseData(CARMEN_NAVIGATOR_PLAN_QUERY_NAME, msg, 
 			      (void **)plan_msg, timeout);
   carmen_test_ipc_return_int(err, "Could not query plans", 
 			     CARMEN_NAVIGATOR_PLAN_QUERY_NAME);
@@ -430,7 +428,7 @@ carmen_navigator_set_goal(double x, double y)
   msg.x = x;
   msg.y = y;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_NAVIGATOR_SET_GOAL_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_NAVIGATOR_SET_GOAL_NAME);
@@ -458,7 +456,7 @@ carmen_navigator_set_goal_triplet(carmen_point_p goal)
 
   msg.goal = *goal;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_NAVIGATOR_SET_GOAL_TRIPLET_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 
@@ -489,7 +487,7 @@ carmen_navigator_set_goal_place(char *placename)
 
   msg.placename = placename;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_queryResponseData(CARMEN_NAVIGATOR_SET_GOAL_PLACE_NAME, &msg, 
 			      (void **)&return_msg, timeout);
@@ -514,23 +512,21 @@ int
 carmen_navigator_stop(void) 
 {
   IPC_RETURN_TYPE err;
-  carmen_navigator_stop_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
-  if (!initialized) 
-    {
-      err = IPC_defineMsg(CARMEN_NAVIGATOR_STOP_NAME, 
-			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_NAVIGATOR_STOP_FMT);
-      carmen_test_ipc_exit(err, "Could not define message", 
-			   CARMEN_NAVIGATOR_STOP_NAME);
-      initialized = 1;
-    }
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_NAVIGATOR_STOP_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_NAVIGATOR_STOP_NAME);
+    initialized = 1;
+  }
+  
+  msg = carmen_default_message_create();
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
-
-  err = IPC_publishData(CARMEN_NAVIGATOR_STOP_NAME, &msg);
+  err = IPC_publishData(CARMEN_NAVIGATOR_STOP_NAME, msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_NAVIGATOR_STOP_NAME);
 
   return 0;
@@ -540,23 +536,21 @@ int
 carmen_navigator_go(void) 
 {
   IPC_RETURN_TYPE err;
-  carmen_navigator_go_message msg;
+  carmen_default_message *msg;
   static int initialized = 0;
 
-  if (!initialized) 
-    {
-      err = IPC_defineMsg(CARMEN_NAVIGATOR_GO_NAME, 
-			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_NAVIGATOR_GO_FMT);
-      carmen_test_ipc_exit(err, "Could not define message", 
-			   CARMEN_NAVIGATOR_GO_NAME);
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_NAVIGATOR_GO_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_NAVIGATOR_GO_NAME);
       initialized = 1;
     }
 
-  msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg = carmen_default_message_create();
 
-  err = IPC_publishData(CARMEN_NAVIGATOR_GO_NAME, &msg);
+  err = IPC_publishData(CARMEN_NAVIGATOR_GO_NAME, msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_NAVIGATOR_GO_NAME);
 
   return 0;
@@ -593,7 +587,7 @@ carmen_navigator_get_map(carmen_navigator_map_t map_type,
 
   msg.map_type = map_type;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_queryResponseData(CARMEN_NAVIGATOR_MAP_REQUEST_NAME, &msg, 
 			      (void **)&response, timeout);

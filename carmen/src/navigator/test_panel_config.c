@@ -14,7 +14,7 @@ navigator_display_config(char *attribute, int value)
   else
     {
       msg.timestamp = carmen_get_time();
-      strcpy(msg.host, carmen_get_tenchar_host_name());
+      msg.host = carmen_get_host();
       msg.attribute = attribute;
       msg.value = value;
       msg.reset_all_to_defaults = 0;

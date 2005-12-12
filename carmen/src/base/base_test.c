@@ -53,17 +53,11 @@ static void
 base_velocity_command(double tv, double rv)
 {
   IPC_RETURN_TYPE err;
-  char *host;
   static carmen_base_velocity_message v;
-  static int first = 1;
 
-  if(first) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(v.host, host);
-    first = 0;
-  }
   v.tv = tv;
   v.rv = rv;
+  v.host = carmen_get_host();
   v.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_BASE_VELOCITY_NAME, &v);

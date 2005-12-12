@@ -701,7 +701,7 @@ get_robot(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			 IPC_msgInstanceName(msgRef));  
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   if (selected_robot) {
     response.robot = (char *) calloc(strlen(selected_robot) + 1, sizeof(char));
@@ -740,7 +740,7 @@ get_modules(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			 IPC_msgInstanceName(msgRef));  
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   response.modules = (char **) calloc(num_modules, sizeof(char *));
   carmen_test_alloc(response.modules);
@@ -788,7 +788,7 @@ get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			 IPC_msgInstanceName(msgRef));  
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   response.module_name = query.module_name;
   response.status = CARMEN_PARAM_OK;    
@@ -861,7 +861,7 @@ get_param_int(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
@@ -897,7 +897,8 @@ get_param_double(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
+
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
   response.status = CARMEN_PARAM_OK;
@@ -933,7 +934,8 @@ get_param_onoff(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
+
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
   response.status = CARMEN_PARAM_OK;
@@ -977,7 +979,8 @@ get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
   
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
+
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
   response.status = CARMEN_PARAM_OK;
@@ -992,58 +995,6 @@ get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);
-
-  free(query.module_name);
-  free(query.variable_name);
-}
-
-static void
-get_param_filename(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		   void *clientData)
-{
-  IPC_RETURN_TYPE err;
-
-  carmen_param_query_message query;
-  carmen_param_response_filename_message response;
-
-  int param_index;
-  struct stat buf;
-
-  param_index = lookup_ipc_query(msgRef, callData, clientData, &query);  
-  
-  response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
-  response.module_name = query.module_name;
-  response.variable_name = query.variable_name;
-  response.status = CARMEN_PARAM_OK;
-
-  if (param_index < 0)
-    {     
-      response.status = CARMEN_PARAM_NOT_FOUND;
-      response.filename = NULL;
-    }
-  else
-    {
-      response.filename = param_list[param_index].rvalue;
-
-      if (stat(response.filename, &buf) < 0) 
-	{    
-	  carmen_warn("Option '%s', file %s not available: %s\n", 
-		      param_list[param_index].lvalue, 
-		      param_list[param_index].rvalue, strerror(errno));
-	  response.status = CARMEN_PARAM_FILE_ERR;
-	}
-      else 
-	{
-	  if (!S_ISREG(buf.st_mode)) 
-	    response.status = CARMEN_PARAM_NOT_FILE;
-	}
-    }
-
-  err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_FILENAME_NAME, 
-			&response);
-  carmen_test_ipc(err, "Could not respond", 
-		  CARMEN_PARAM_RESPONSE_FILENAME_NAME);
 
   free(query.module_name);
   free(query.variable_name);
@@ -1083,7 +1034,8 @@ static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
+
   response.module_name = query.module_name;
   response.variable_name = query.variable_name;
   response.status = CARMEN_PARAM_OK;
@@ -1117,7 +1069,8 @@ publish_new_param(int index)
     return;
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
+
   response.module_name = param_list[index].module_name;
   response.variable_name = param_list[index].variable_name;
   response.value = param_list[index].rvalue;
@@ -1139,7 +1092,7 @@ get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
   response.revision = CARMEN_REVISION;
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_VERSION_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VERSION_NAME);
@@ -1218,16 +1171,6 @@ initialize_param_ipc(void)
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_PARAM_RESPONSE_STRING_NAME);
   
-  err = IPC_defineMsg(CARMEN_PARAM_QUERY_FILENAME_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_PARAM_QUERY_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_PARAM_QUERY_FILENAME_NAME);
-  
-  err = IPC_defineMsg(CARMEN_PARAM_RESPONSE_FILENAME_NAME, IPC_VARIABLE_LENGTH,
-		      CARMEN_PARAM_RESPONSE_FILENAME_FMT);
-  carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_PARAM_RESPONSE_FILENAME_NAME);
-
   err = IPC_defineMsg(CARMEN_PARAM_SET_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_PARAM_SET_FMT);
   carmen_test_ipc_exit(err, "Could not define message", CARMEN_PARAM_SET_NAME);
@@ -1238,7 +1181,7 @@ initialize_param_ipc(void)
 		       CARMEN_PARAM_VARIABLE_CHANGE_NAME);
 
   err = IPC_defineMsg(CARMEN_PARAM_VERSION_QUERY_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_PARAM_VERSION_QUERY_FMT);
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_PARAM_VERSION_QUERY_NAME);
 
@@ -1280,12 +1223,6 @@ initialize_param_ipc(void)
   carmen_test_ipc_exit(err, "Could not subscribe to", 
 		       CARMEN_PARAM_QUERY_STRING_NAME);
   IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_STRING_NAME, 100);
-
-  err = IPC_subscribe(CARMEN_PARAM_QUERY_FILENAME_NAME, 
-		      get_param_filename, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe to", 
-		       CARMEN_PARAM_QUERY_FILENAME_NAME);
-  IPC_setMsgQueueLength(CARMEN_PARAM_QUERY_FILENAME_NAME, 100);
 
   err = IPC_subscribe(CARMEN_PARAM_VERSION_QUERY_NAME, get_version, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe to", 

@@ -33,32 +33,34 @@ extern "C" {
 #endif
 
 typedef struct {
+  double timestamp;
+  char *host;
   int num_sonars;
   double sensor_angle;          //width of sonar cone
   double *ranges;
   carmen_point_t *positions;
   carmen_point_t robot_location;
   double tv, rv;
-  double timestamp;
-  char host[10];
 } carmen_robot_sonar_message;
 
 #define      CARMEN_ROBOT_SONAR_NAME            "robot_sonar"
-#define      CARMEN_ROBOT_SONAR_FMT             "{int,double,<double:1>,<{double,double,double}:1>,{double,double,double},double,double,double,[char:10]}"
+#define      CARMEN_ROBOT_SONAR_FMT             "{double,string,int,double,<double:3>,<{double,double,double}:3>,{double,double,double},double,double}"
 
 typedef struct { 
+  double timestamp;
+  char *host;
   int num_bumpers;
   char *state;
   carmen_point_t robot_location; //position of the center of the robot
   double tv, rv;
-  double timestamp;
-  char host[10];
 } carmen_robot_bumper_message;
 
 #define CARMEN_ROBOT_BUMPER_NAME "carmen_robot_bumper"
-#define CARMEN_ROBOT_BUMPER_FMT "{int, <char:1>, {double,double,double}, double, double, double, [char:10]}"
+#define CARMEN_ROBOT_BUMPER_FMT "{double, string, int, <char:3>, {double,double,double}, double, double}"
   
 typedef struct {
+  double timestamp;
+  char *host;
   int num_readings;
   float *range;
   char *tooclose;
@@ -67,71 +69,53 @@ typedef struct {
   double tv, rv;
   double forward_safety_dist, side_safety_dist;
   double turn_axis;
-  double timestamp;
-  char host[10];
 } carmen_robot_laser_message;
 
 #define      CARMEN_ROBOT_FRONTLASER_NAME       "carmen_robot_frontlaser"
-#define      CARMEN_ROBOT_FRONTLASER_FMT        "{int,<float:1>,<char:1>,{double,double,double},{double,double,double},double,double,double,double,double,double,[char:10]}"
+#define      CARMEN_ROBOT_FRONTLASER_FMT        "{double,string,int,<float:3>,<char:3>,{double,double,double},{double,double,double},double,double,double,double,double}"
 
 #define      CARMEN_ROBOT_REARLASER_NAME        "carmen_robot_rearlaser"
-#define      CARMEN_ROBOT_REARLASER_FMT         "{int,<float:1>,<char:1>,double,double,double,double,double,double,double,double,double,double,double,double,[char:10]}"
+#define      CARMEN_ROBOT_REARLASER_FMT         "{double,string,int,<float:3>,<char:3>,double,double,double,double,double,double,double,double,double,double,double}"
 
 typedef struct {
+  double timestamp;
+  char *host;
   double vector_distance;
   double vector_angle;
-  double timestamp;
-  char host[10];
 } carmen_robot_vector_status_message;
 
 #define CARMEN_ROBOT_VECTOR_STATUS_NAME "carmen_robot_vector_status"
-#define CARMEN_ROBOT_VECTOR_STATUS_FMT "{double, double, double,[char:10]}"
+#define CARMEN_ROBOT_VECTOR_STATUS_FMT "{double, string, double, double}"
   
 typedef struct {
-  double tv, rv;
   double timestamp;
-  char host[10];
+  char *host;
+  double tv, rv;
 } carmen_robot_velocity_message;
 
 #define      CARMEN_ROBOT_VELOCITY_NAME         "carmen_robot_vel"
-#define      CARMEN_ROBOT_VELOCITY_FMT          "{double,double,double,[char:10]}"
+#define      CARMEN_ROBOT_VELOCITY_FMT          "{double,string,double,double}"
 
 typedef struct {
+  double timestamp;
+  char *host;
   int trajectory_length;
   carmen_traj_point_t *trajectory;
   carmen_traj_point_t robot_position;
-  double timestamp;
-  char host[10];
 } carmen_robot_follow_trajectory_message;
 
 #define      CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME         "carmen_robot_follow_trajectory"
-#define      CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT          "{int,<{double,double,double,double,double}:1>,{double,double,double,double,double},double,[char:10]}"
+#define      CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT          "{double,string,int,<{double,double,double,double,double}:3>,{double,double,double,double,double}}"
 
 typedef struct {
+  double timestamp;
+  char *host;
   double distance;
   double theta;
-  double timestamp;
-  char host[10];
 } carmen_robot_vector_move_message;
 
 #define      CARMEN_ROBOT_VECTOR_MOVE_NAME         "carmen_robot_vector_move"
-#define      CARMEN_ROBOT_VECTOR_MOVE_FMT          "{double,double,double,[char:10]}"
-
-typedef struct  {
-  int width;
-  int height;
-  int bytes_per_pixel;
-  int image_size;
-  char *image;
-  double x, y, theta;//position of the camera on the robot
-  double odom_x, odom_y, odom_theta; //position of the center of the robot
-  double tv, rv;
-  double timestamp;
-  char host[10];
-} carmen_robot_camera_message;
-
-#define CARMEN_ROBOT_CAMERA_NAME "carmen_robot_camera"
-#define CARMEN_ROBOT_CAMERA_FMT "{int, int, int, int, <char:4>, double, double, double, double, double, double, double, double, double, [char:10]}"
+#define      CARMEN_ROBOT_VECTOR_MOVE_FMT          "{double,string,double,double}"
 
 #ifdef __cplusplus
 }

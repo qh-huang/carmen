@@ -67,7 +67,6 @@ static int
 initialize_robot(void)
 {
   int result;
-  char *host;
 
   result = carmen_base_direct_initialize_robot
     (model_name, dev_name);
@@ -94,10 +93,9 @@ initialize_robot(void)
     return -1;
 
   reset_time = carmen_get_time();
+  odometry.host = carmen_get_host();
 
-  host = carmen_get_tenchar_host_name();
-  strcpy(odometry.host, host);     
-  strcpy(binary_data.host, host);
+  binary_data.host = carmen_get_host();
   binary_data.size = 0;
   
   return 0;
@@ -350,7 +348,7 @@ arm_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			       response.servo_currents, &response.gripper);
   }
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
   err = IPC_respondData(msgRef, CARMEN_BASE_SERVO_ARM_STATE_NAME, &response);
   if (num_servos > 0) {
     free(response.servos);
@@ -392,13 +390,13 @@ reset_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 {
   IPC_RETURN_TYPE err;
   int base_err;
-  carmen_base_reset_message msg;
+  carmen_default_message msg;
 
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &msg,
-			   sizeof(carmen_base_reset_message));
+			   sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
@@ -438,12 +436,12 @@ carmen_base_initialize_ipc(void)
                       CARMEN_BASE_VELOCITY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_VELOCITY_NAME);
 
-  err = IPC_defineMsg(CARMEN_BASE_RESET_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_RESET_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_RESET_NAME);
+  err = IPC_defineMsg(CARMEN_BASE_RESET_OCCURRED_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_DEFAULT_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_RESET_OCCURRED_NAME);
 
   err = IPC_defineMsg(CARMEN_BASE_RESET_COMMAND_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_RESET_COMMAND_FMT);
+                      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_BASE_RESET_COMMAND_NAME);
 
@@ -464,7 +462,7 @@ carmen_base_initialize_ipc(void)
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_SERVO_ARM_COMMAND_NAME);
 
   err = IPC_defineMsg(CARMEN_BASE_SERVO_ARM_QUERY_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_SERVO_ARM_QUERY_FMT);
+                      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_BASE_SERVO_ARM_QUERY_NAME);
 
@@ -524,7 +522,7 @@ carmen_base_start(int argc, char **argv)
     return -1;
   }
 
-  strcpy(odometry.host, carmen_get_tenchar_host_name());
+  odometry.host = carmen_get_host();
 
   return 0;
 }
@@ -556,15 +554,16 @@ carmen_base_run(void)
 {
   IPC_RETURN_TYPE err;
   int index;
-  static carmen_base_reset_message reset;  
+  static carmen_default_message reset = {0, 0};  
   int base_err;
   double tv, rv;
   double displacement, rotation;
 
   if (reset_time > reset.timestamp) {
     reset.timestamp = reset_time;
-    err = IPC_publishData(CARMEN_BASE_RESET_NAME, &reset);
-    carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_RESET_NAME);  
+    reset.host = carmen_get_host();
+    err = IPC_publishData(CARMEN_BASE_RESET_OCCURRED_NAME, &reset);
+    carmen_test_ipc_exit(err, "Could not publish", CARMEN_BASE_RESET_OCCURRED_NAME);  
     return 1;
   }  
 
@@ -633,7 +632,7 @@ carmen_base_run(void)
   if (use_sonar) {
     carmen_warn("s");  
     sonar.timestamp = carmen_get_time();
-    strcpy(sonar.host, carmen_get_tenchar_host_name());
+    sonar.host = carmen_get_host();
 
     err = IPC_publishData(CARMEN_BASE_SONAR_NAME, &sonar);
     carmen_test_ipc_exit(err, "Could not publish", 
@@ -649,7 +648,7 @@ carmen_base_run(void)
 
   if (bumper.num_bumpers > 0) {
     bumper.timestamp = carmen_get_time();
-    strcpy(bumper.host, carmen_get_tenchar_host_name());
+    bumper.host = carmen_get_host();
     err = IPC_publishData(CARMEN_BASE_BUMPER_NAME, &bumper);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_BASE_BUMPER_NAME);
@@ -658,7 +657,7 @@ carmen_base_run(void)
   //Edsinger: added 
   if (num_servos> 0) {
     arm_state.timestamp = carmen_get_time();
-    strcpy(arm_state.host, carmen_get_tenchar_host_name());
+    arm_state.host = carmen_get_host();
     carmen_base_direct_arm_get(arm_state.servos, arm_state.num_servos, 
 			       arm_state.servo_currents, &arm_state.gripper);
     err = IPC_publishData(CARMEN_BASE_SERVO_ARM_STATE_NAME, &arm_state);

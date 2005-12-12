@@ -43,14 +43,10 @@ carmen_robot_laser_message front_laser;
 void publish_globalpos(carmen_localize_summary_p summary)
 {
   static carmen_localize_globalpos_message globalpos;
-  static int first = 1;
   IPC_RETURN_TYPE err;
   
-  if(first) {
-    strcpy(globalpos.host, carmen_get_tenchar_host_name());
-    first = 0;
-  }
   globalpos.timestamp = carmen_get_time();
+  globalpos.host = carmen_get_host();
   globalpos.globalpos = summary->mean;
   globalpos.globalpos_std = summary->std;
   globalpos.globalpos_xy_cov = summary->xy_cov;
@@ -67,14 +63,10 @@ void publish_particles(carmen_localize_particle_filter_p filter,
 		       carmen_localize_summary_p summary)
 {
   static carmen_localize_particle_message pmsg;
-  static int first = 1;
   IPC_RETURN_TYPE err;
 
-  if(first) {
-    strcpy(pmsg.host, carmen_get_tenchar_host_name());
-    first = 0;
-  }
   pmsg.timestamp = carmen_get_time();
+  pmsg.host = carmen_get_host();
   pmsg.globalpos = summary->mean;
   pmsg.globalpos_std = summary->mean;
   pmsg.num_particles = filter->param->num_particles;
@@ -92,14 +84,10 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
 		    carmen_robot_laser_message *laser, int front)
 {
   static carmen_localize_sensor_message sensor;
-  static int first = 1;
   IPC_RETURN_TYPE err;
 
-  if(first) {
-    strcpy(sensor.host, carmen_get_tenchar_host_name());
-    first = 0;
-  }
   sensor.timestamp = carmen_get_time();
+  sensor.host = carmen_get_host();
   if(front) {
     sensor.pose.x = summary->mean.x + filter->param->front_laser_offset *
       cos(summary->mean.theta);
@@ -292,7 +280,7 @@ static void query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 #endif
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
   
   err = IPC_respondData(msgRef, CARMEN_LOCALIZE_MAP_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_LOCALIZE_MAP_NAME);

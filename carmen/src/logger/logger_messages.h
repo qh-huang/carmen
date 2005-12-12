@@ -33,13 +33,13 @@ extern "C" {
 #endif
 
 typedef struct {
-  char *tag;
   double timestamp;
-  char host[10];
+  char *host;
+  char *tag;
 } carmen_logger_sync_message;
 
 #define CARMEN_LOGGER_SYNC_NAME     "carmen_logger_sync"
-#define CARMEN_LOGGER_SYNC_FMT      "{string,double,[char:10]}"
+#define CARMEN_LOGGER_SYNC_FMT      "{double,string,string}"
 
 #ifdef __cplusplus
 }

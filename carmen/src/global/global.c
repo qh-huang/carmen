@@ -32,6 +32,8 @@
 
 #define        NUM_ROBOT_NAMES        7
 
+static carmen_default_message static_message = {0, 0};
+
 static char *robot_names[] =
 {"flo", "pearl", "robin", "dorothy", "oscar", "xavier", "walker"};
 
@@ -390,56 +392,38 @@ carmen_get_time(void)
   return t;
 }
 
-static char *
-get_From_Bin_Host(void) {
-  FILE *bin_Host;
-  char hostname[255];
+char *carmen_get_host(void) 
+{
+  FILE *bin_host;
+  char hostname[1024];
 
-  if (getenv("HOST") == NULL) 
-    {
-      if (getenv("HOSTNAME") != NULL)       
-	setenv("HOST", getenv("HOSTNAME"), 1);
-      else if (getenv("host") != NULL)       
-	setenv("HOST", getenv("host"), 1);
-      else if (getenv("hostname") != NULL)       
-	setenv("HOST", getenv("hostname"), 1);
-      else 
-	{
-	  bin_Host = popen("/bin/hostname", "r");
-	  if (bin_Host == NULL)
-	    return NULL;
-	  fscanf(bin_Host, "%s", hostname);
-	  setenv("HOST", hostname, 1);
-	}
-    }
-  return getenv("HOST");
-}
-
-char *
-carmen_get_tenchar_host_name(void) {
-  char *Host;
-  char *mark;
-  static char hostname[10] = "";
-
-  if (strlen(hostname) == 0) 
-    {
-      Host = get_From_Bin_Host();
-      if (!Host) 
+  if (getenv("HOST") == NULL) {
+    if (getenv("HOSTNAME") != NULL)       
+      setenv("HOST", getenv("HOSTNAME"), 1);
+    else if (getenv("host") != NULL)       
+      setenv("HOST", getenv("host"), 1);
+    else if (getenv("hostname") != NULL)       
+      setenv("HOST", getenv("hostname"), 1);
+    else {
+      bin_host = popen("/bin/hostname", "r");
+      if (bin_host == NULL)
 	carmen_die("\n\tCan't get machine name from $HOST, $host, $hostname or /bin/hostname.\n"
 		   "\tPlease set one of these environment variables properly.\n\n");      
-      if (strlen(Host) >= 10) 
-	{
-	  strncpy(hostname, Host, 9);
-	  hostname[9] = '\0';
-	} 
-      else 
-	strcpy (hostname, Host);
-      mark = strchr(hostname, '.');
-      if (mark)
-	mark = '\0';
+      fscanf(bin_host, "%s", hostname);
+      setenv("HOST", hostname, 1);
     }
-  
-  return hostname;  
+  }
+  return getenv("HOST");
+
+}
+
+carmen_default_message *carmen_default_message_create(void)
+{
+  if (static_message.host == NULL) 
+    static_message.host = carmen_get_host();
+  static_message.timestamp = carmen_get_time();
+
+  return &static_message;
 }
 
 char *

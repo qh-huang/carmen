@@ -42,7 +42,7 @@ void carmen_navigator_publish_status(void)
   IPC_RETURN_TYPE err;
 
   status_msg.timestamp = carmen_get_time();
-  strcpy(status_msg.host, carmen_get_tenchar_host_name());
+  status_msg.host = carmen_get_host();
   carmen_planner_get_status(&status);
 
   status_msg.autonomous = carmen_navigator_autonomous_status();
@@ -64,7 +64,7 @@ void carmen_navigator_publish_autonomous_stopped(carmen_navigator_reason_t
   IPC_RETURN_TYPE err;
 
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
   msg.reason = reason;
   
   err = IPC_publishData(CARMEN_NAVIGATOR_AUTONOMOUS_STOPPED_NAME, &msg);
@@ -86,7 +86,7 @@ static void navigator_status_query_handler(MSG_INSTANCE msgRef,
   IPC_freeByteArray(callData);
   
   status_msg.timestamp = carmen_get_time();
-  strcpy(status_msg.host, carmen_get_tenchar_host_name());
+  status_msg.host = carmen_get_host();
   carmen_planner_get_status(&status);
 
   status_msg.autonomous = carmen_navigator_autonomous_status();
@@ -131,7 +131,7 @@ void carmen_navigator_publish_plan(void)
   static carmen_planner_path_t prev_path = {NULL, 0, 0};
 
   plan_msg.timestamp = carmen_get_time();
-  strcpy(plan_msg.host, carmen_get_tenchar_host_name());
+  plan_msg.host = carmen_get_host();
 
   carmen_planner_get_status(&status);
 
@@ -180,7 +180,7 @@ static void navigator_plan_query_handler(MSG_INSTANCE msgRef,
   IPC_freeByteArray(callData);
   
   plan_msg.timestamp = carmen_get_time();
-  strcpy(plan_msg.host, carmen_get_tenchar_host_name());
+  plan_msg.host = carmen_get_host();
 
   carmen_planner_get_status(&status);
 
@@ -267,7 +267,7 @@ static void navigator_set_goal_place_handler(MSG_INSTANCE msgRef,
   }
 
   response.timestamp = carmen_get_time();
-  strcpy(response.host, carmen_get_tenchar_host_name());
+  response.host = carmen_get_host();
 
   err = IPC_respondData(msgRef, CARMEN_NAVIGATOR_RETURN_CODE_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_NAVIGATOR_RETURN_CODE_NAME);
@@ -279,13 +279,13 @@ static void navigator_set_goal_place_handler(MSG_INSTANCE msgRef,
 static void navigator_stop_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 				   void *clientData __attribute__ ((unused)))
 {
-  carmen_navigator_stop_message stop_msg;
+  carmen_default_message stop_msg;
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &stop_msg, 
-			   sizeof(carmen_navigator_stop_message));
+			   sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
   
   carmen_test_ipc_return(err, "Could not unmarshall", 
@@ -298,13 +298,13 @@ static void navigator_stop_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 static void navigator_go_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 				 void *clientData __attribute__ ((unused)))
 {
-  carmen_navigator_go_message go_msg;
+  carmen_default_message go_msg;
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &go_msg, 
-			   sizeof(carmen_navigator_go_message));
+			   sizeof(carmen_default_message));
   IPC_freeByteArray(callData);  
 
   carmen_test_ipc_return(err, "Could not unmarshall", 
@@ -362,7 +362,7 @@ static void navigator_map_request_handler(MSG_INSTANCE msgRef,
 #endif
 
   map_msg->timestamp = carmen_get_time();
-  strcpy(map_msg->host, carmen_get_tenchar_host_name());
+  map_msg->host = carmen_get_host();
 
   err = IPC_respondData(msgRef, CARMEN_NAVIGATOR_MAP_NAME, map_msg);
   carmen_test_ipc(err, "Could not respond", CARMEN_NAVIGATOR_MAP_NAME);
@@ -376,7 +376,7 @@ int carmen_navigator_initialize_ipc(void)
   IPC_RETURN_TYPE err;
 
   err = IPC_defineMsg(CARMEN_NAVIGATOR_STATUS_QUERY_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_NAVIGATOR_STATUS_QUERY_FMT);
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_NAVIGATOR_STATUS_QUERY_NAME);
 
@@ -391,7 +391,7 @@ int carmen_navigator_initialize_ipc(void)
 		       CARMEN_NAVIGATOR_PLAN_NAME);
 
   err = IPC_defineMsg(CARMEN_NAVIGATOR_PLAN_QUERY_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_NAVIGATOR_PLAN_QUERY_FMT);
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_NAVIGATOR_PLAN_QUERY_NAME);
 
@@ -413,7 +413,7 @@ int carmen_navigator_initialize_ipc(void)
 		       CARMEN_NAVIGATOR_SET_GOAL_PLACE_NAME);
 
   err = IPC_defineMsg(CARMEN_NAVIGATOR_STOP_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_NAVIGATOR_STOP_FMT);
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_NAVIGATOR_STOP_NAME);
 
@@ -424,7 +424,7 @@ int carmen_navigator_initialize_ipc(void)
 		       CARMEN_NAVIGATOR_AUTONOMOUS_STOPPED_NAME);
 
   err = IPC_defineMsg(CARMEN_NAVIGATOR_GO_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_NAVIGATOR_GO_FMT);
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_NAVIGATOR_GO_NAME);
 

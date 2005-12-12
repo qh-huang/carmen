@@ -10,16 +10,11 @@ void shutdown_module(int signo __attribute__ ((unused)))
 
 void carmen_camera_publish_image_message(carmen_camera_image_t *image)
 {
-  static char *host = NULL;
   static carmen_camera_image_message msg;
 
   IPC_RETURN_TYPE err;
 
-  if(host == NULL) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(msg.host, host);
-  }
-
+  msg.host = carmen_get_host();
   msg.timestamp = image->timestamp;
   
   msg.image_size = image->image_size;

@@ -236,7 +236,7 @@ carmen_param_get_robot(void)
   char *robot_name = NULL;
 
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = "paramServer";
   query.variable_name = "robot";
 
@@ -275,7 +275,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
     return -1;
 
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
 
   query.module_name = "paramServer";
   query.variable_name = "modules";
@@ -331,7 +331,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
     return -1;
   
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module;
   query.variable_name = "*";
   
@@ -426,7 +426,7 @@ carmen_param_get_int(char *variable, int *return_value)
     return commandline_return;
 
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -491,7 +491,7 @@ carmen_param_get_double(char *variable, double *return_value)
     return commandline_return;
 
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -557,7 +557,7 @@ carmen_param_get_onoff(char *variable, int *return_value)
     return commandline_return;
 
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -622,7 +622,7 @@ carmen_param_get_string(char *variable, char **return_value)
     return commandline_return;
   
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -692,7 +692,7 @@ carmen_param_get_filename(char *variable, char **return_value)
     return commandline_return;
   
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -761,7 +761,7 @@ carmen_param_get_directory(char *variable, char **return_value)
     return commandline_return;
   
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   
@@ -849,7 +849,7 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
     return -1;
   
   query.timestamp = carmen_get_time();
-  strcpy(query.host, carmen_get_tenchar_host_name());
+  query.host = carmen_get_host();
   query.module_name = module_name;
   query.variable_name = variable;
   query.value = new_value;
@@ -1448,9 +1448,10 @@ carmen_param_check_version(char *prog_name)
 {
   IPC_RETURN_TYPE err;
 
-  carmen_param_version_query_message query;
+  carmen_default_message *query;
   carmen_param_version_message *response;
 
+  query = carmen_default_message_create();
   err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, &query, 
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not check Carmen version", 
@@ -1548,10 +1549,11 @@ carmen_param_get_paramserver_host(char **hostname)
 {
   IPC_RETURN_TYPE err;
 
-  carmen_param_version_query_message query;
+  carmen_default_message *query;
   carmen_param_version_message *response;
 
-  err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, &query, 
+  query = carmen_default_message_create();
+  err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, query, 
 			      (void **)&response, timeout);
   carmen_test_ipc_return_int(err, "Could not check Carmen version", 
 			     CARMEN_PARAM_VERSION_QUERY_NAME);

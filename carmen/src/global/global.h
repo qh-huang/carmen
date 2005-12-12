@@ -104,6 +104,13 @@ typedef struct {
   void *list;
 } carmen_list_t;
 
+typedef struct {
+  double timestamp;
+  char *host;
+} carmen_default_message;
+
+#define CARMEN_DEFAULT_MESSAGE_FMT "{double,string}"
+
 #define carmen_red_code "[31;1m"
 #define carmen_blue_code "[34;1m"
 #define carmen_normal_code "[0m"
@@ -175,7 +182,9 @@ extern inline double carmen_get_time(void)
   return t;
 }
 
-char *carmen_get_tenchar_host_name(void);
+char *carmen_get_host(void);
+
+carmen_default_message *carmen_default_message_create(void);
 
 void carmen_initialize_ipc(char *module_name);
 void sleep_ipc(double timeout);

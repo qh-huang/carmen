@@ -111,6 +111,7 @@ robot_sonar_handler(void)
 static void
 odometry_handler(void)
 {
+
   if (!gui_control || !mouse_down)
     return;
   else

@@ -30,7 +30,7 @@
 static carmen_base_odometry_message *base_odometry_pointer_external = NULL;
 static carmen_base_sonar_message *base_sonar_pointer_external = NULL;
 static carmen_base_bumper_message *base_bumper_pointer_external = NULL;
-static carmen_base_reset_message *base_reset_pointer_external = NULL;
+static carmen_default_message *base_reset_pointer_external = NULL;
 static carmen_handler_t base_odometry_handler_external = NULL;
 static carmen_handler_t base_sonar_handler_external = NULL;
 static carmen_handler_t base_bumper_handler_external = NULL;
@@ -223,31 +223,31 @@ reset_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   formatter = IPC_msgInstanceFormatter(msgRef);
   if (base_reset_pointer_external)
     err = IPC_unmarshallData(formatter, callData, base_reset_pointer_external,
-			     sizeof(carmen_base_reset_message));
+			     sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
 	
   carmen_test_ipc_return(err, "Could not unmarshall data", 
-			 CARMEN_BASE_RESET_NAME);
+			 CARMEN_BASE_RESET_OCCURRED_NAME);
   
   if (base_reset_handler_external)
     base_reset_handler_external(base_reset_pointer_external);
 }
 
 void
-carmen_base_subscribe_reset_message(carmen_base_reset_message *reset,
+carmen_base_subscribe_reset_message(carmen_default_message *reset,
 				    carmen_handler_t handler,
 				    carmen_subscribe_t subscribe_how)
 {
   IPC_RETURN_TYPE err = IPC_OK;
 
-  err = IPC_defineMsg(CARMEN_BASE_RESET_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_BASE_RESET_FMT);
+  err = IPC_defineMsg(CARMEN_BASE_RESET_OCCURRED_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DEFAULT_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define message", 
-		       CARMEN_BASE_RESET_NAME);
+		       CARMEN_BASE_RESET_OCCURRED_NAME);
 
   if (subscribe_how == CARMEN_UNSUBSCRIBE) 
     {
-      IPC_unsubscribe(CARMEN_BASE_RESET_NAME, reset_interface_handler);
+      IPC_unsubscribe(CARMEN_BASE_RESET_OCCURRED_NAME, reset_interface_handler);
       return;
     }
 
@@ -256,44 +256,40 @@ carmen_base_subscribe_reset_message(carmen_base_reset_message *reset,
   else if (base_reset_pointer_external == NULL) 
     {
       base_reset_pointer_external=
-	(carmen_base_reset_message *)
-	calloc(1, sizeof(carmen_base_reset_message));
+	(carmen_default_message *)
+	calloc(1, sizeof(carmen_default_message));
       carmen_test_alloc(base_odometry_pointer_external);
     }
 
   base_reset_handler_external=handler;
 
-  err=IPC_subscribe(CARMEN_BASE_RESET_NAME, reset_interface_handler, NULL);
+  err=IPC_subscribe(CARMEN_BASE_RESET_OCCURRED_NAME, reset_interface_handler, NULL);
   if(subscribe_how==CARMEN_SUBSCRIBE_LATEST)
-    IPC_setMsgQueueLength(CARMEN_BASE_RESET_NAME,1);
+    IPC_setMsgQueueLength(CARMEN_BASE_RESET_OCCURRED_NAME,1);
   else
-    IPC_setMsgQueueLength(CARMEN_BASE_RESET_NAME,100);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_BASE_RESET_NAME);
+    IPC_setMsgQueueLength(CARMEN_BASE_RESET_OCCURRED_NAME,100);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_BASE_RESET_OCCURRED_NAME);
 }
 
 void 
 carmen_base_reset(void)
 {
   IPC_RETURN_TYPE err;
-  char *host;
-  static carmen_base_reset_message msg;
+  carmen_default_message *msg;
   static int first = 1;
 
   if(first) {
-    host = carmen_get_tenchar_host_name();
-    strcpy(msg.host, host);
-
     err = IPC_defineMsg(CARMEN_BASE_RESET_COMMAND_NAME, 
 			IPC_VARIABLE_LENGTH, 
-			CARMEN_BASE_RESET_COMMAND_FMT);
+			CARMEN_DEFAULT_MESSAGE_FMT);
     carmen_test_ipc_exit(err, "Could not define message", 
 			 CARMEN_BASE_RESET_COMMAND_NAME);
     
     first = 0;
   }
 
-  msg.timestamp = carmen_get_time();
+  msg = carmen_default_message_create();
 
-  err = IPC_publishData(CARMEN_BASE_RESET_COMMAND_NAME, &msg);
+  err = IPC_publishData(CARMEN_BASE_RESET_COMMAND_NAME, msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_RESET_COMMAND_NAME);
 }

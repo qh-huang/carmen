@@ -33,23 +33,23 @@ extern "C" {
 #endif
 
 typedef struct {
+  double timestamp;
+  char *host;
   int num_readings;
   float *range;
-  double timestamp;
-  char host[10];
 } carmen_laser_laser_message;
 
 #define      CARMEN_LASER_FRONTLASER_NAME       "carmen_laser_frontlaser"
-#define      CARMEN_LASER_FRONTLASER_FMT        "{int,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_FRONTLASER_FMT        "{double,string,int,<float:3>}"
 
 #define      CARMEN_LASER_REARLASER_NAME        "carmen_laser_rearlaser"
-#define      CARMEN_LASER_REARLASER_FMT         "{int,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_REARLASER_FMT         "{double,string,int,<float:3>}"
 
 #define      CARMEN_LASER_LASER3_NAME           "carmen_laser_laser3"
-#define      CARMEN_LASER_LASER3_FMT            "{int,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_LASER3_FMT            "{double,string,int,<float:3>}"
 
 #define      CARMEN_LASER_LASER4_NAME           "carmen_laser_laser4"
-#define      CARMEN_LASER_LASER4_FMT            "{int,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_LASER4_FMT            "{double,string,int,<float:3>}"
 
 typedef struct {
   int frontlaser_stalled;
@@ -65,24 +65,24 @@ typedef struct {
 #define      CARMEN_LASER_REMISSION_INVALID_VALUE         -1
 
 typedef struct {
+  double timestamp;
+  char *host;
   int num_readings;
   float *range;
   float *remission;
-  double timestamp;
-  char host[10];
 } carmen_laser_remission_message;
 
 #define      CARMEN_LASER_FRONTLASER_REMISSION_NAME       "carmen_laser_frontlaser_remission"
-#define      CARMEN_LASER_FRONTLASER_REMISSION_FMT        "{int,<float:1>,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_FRONTLASER_REMISSION_FMT        "{double,string,int,<float:3>,<float:3>}"
 
 #define      CARMEN_LASER_REARLASER_REMISSION_NAME        "carmen_laser_rearlaser_remission"
-#define      CARMEN_LASER_REARLASER_REMISSION_FMT         "{int,<float:1>,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_REARLASER_REMISSION_FMT         "{double,string,int,<float:3>,<float:3>}"
 
 #define      CARMEN_LASER_LASER3_REMISSION_NAME           "carmen_laser_laser3_remission"
-#define      CARMEN_LASER_LASER3_REMISSION_FMT            "{int,<float:1>,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_LASER3_REMISSION_FMT            "{double,string,int,<float:3>,<float:3>}"
 
 #define      CARMEN_LASER_LASER4_REMISSION_NAME           "carmen_laser_laser4_remission"
-#define      CARMEN_LASER_LASER4_REMISSION_FMT            "{int,<float:1>,<float:1>,double,[char:10]}"
+#define      CARMEN_LASER_LASER4_REMISSION_FMT            "{double,string,int,<float:3>,<float:3>}"
 
 // *** REI - END *** //
 

@@ -586,19 +586,15 @@ carmen_robot_velocity_command(double tv, double rv)
 {
   IPC_RETURN_TYPE err;
   static carmen_robot_velocity_message v;
-  static int first = 1;
 
-  if(first) {
-    strcpy(v.host, carmen_get_tenchar_host_name());
-    err = IPC_defineMsg(CARMEN_ROBOT_VELOCITY_NAME, IPC_VARIABLE_LENGTH, 
-			CARMEN_ROBOT_VELOCITY_FMT);
-    carmen_test_ipc_exit(err, "Could not define message", 
-			 CARMEN_ROBOT_VELOCITY_NAME);
-    first = 0;
-  }
+  err = IPC_defineMsg(CARMEN_ROBOT_VELOCITY_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_ROBOT_VELOCITY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_ROBOT_VELOCITY_NAME);
 
   v.tv = tv;
   v.rv = rv;
+  v.host = carmen_get_host();
   v.timestamp = carmen_get_time();
 
   err = IPC_publishData(CARMEN_ROBOT_VELOCITY_NAME, &v);
@@ -610,19 +606,15 @@ carmen_robot_move_along_vector(double distance, double theta)
 {
   IPC_RETURN_TYPE err;
   static carmen_robot_vector_move_message msg;
-  static int first = 1;
 
-  if(first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    err = IPC_defineMsg(CARMEN_ROBOT_VECTOR_MOVE_NAME, IPC_VARIABLE_LENGTH, 
-			CARMEN_ROBOT_VECTOR_MOVE_FMT);
-    carmen_test_ipc_exit(err, "Could not define message", 
-			 CARMEN_ROBOT_VECTOR_MOVE_NAME);
-    first = 0;
-  }
+  err = IPC_defineMsg(CARMEN_ROBOT_VECTOR_MOVE_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_ROBOT_VECTOR_MOVE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_ROBOT_VECTOR_MOVE_NAME);
   msg.distance = distance;
   msg.theta = theta;
   msg.timestamp = carmen_get_time();
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_ROBOT_VECTOR_MOVE_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_VECTOR_MOVE_NAME);
@@ -635,23 +627,19 @@ carmen_robot_follow_trajectory(carmen_traj_point_t *trajectory,
 {
   IPC_RETURN_TYPE err;
   static carmen_robot_follow_trajectory_message msg;
-  static int first = 1;
 
-  if(first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    err = IPC_defineMsg(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, 
-			IPC_VARIABLE_LENGTH, 
-			CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT);
-    carmen_test_ipc_exit(err, "Could not define message", 
-			 CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME);
-    first = 0;
-  }
+  err = IPC_defineMsg(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, 
+		      IPC_VARIABLE_LENGTH, 
+		      CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME);
 
   msg.trajectory = trajectory;
   msg.trajectory_length = trajectory_length;
   msg.robot_position = *robot;
 
   msg.timestamp = carmen_get_time();
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 
@@ -663,22 +651,18 @@ carmen_robot_send_base_binary_command(unsigned char *data, int length)
 {
   IPC_RETURN_TYPE err;
   static carmen_base_binary_data_message msg;
-  static int first = 1;
 
-  if(first) {
-    strcpy(msg.host, carmen_get_tenchar_host_name());
-    err = IPC_defineMsg(CARMEN_BASE_BINARY_COMMAND_NAME, 
-			IPC_VARIABLE_LENGTH, 
-			CARMEN_BASE_BINARY_COMMAND_FMT);
-    carmen_test_ipc_exit(err, "Could not define message", 
-			 CARMEN_BASE_BINARY_COMMAND_NAME);
-    first = 0;
-  }
+  err = IPC_defineMsg(CARMEN_BASE_BINARY_COMMAND_NAME, 
+		      IPC_VARIABLE_LENGTH, 
+		      CARMEN_BASE_BINARY_COMMAND_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_BASE_BINARY_COMMAND_NAME);
 
   msg.data = data;
   msg.size = length;
 
   msg.timestamp = carmen_get_time();
+  msg.host = carmen_get_host();
 
   err = IPC_publishData(CARMEN_BASE_BINARY_COMMAND_NAME, &msg);
   carmen_test_ipc(err, "Could not publish", 

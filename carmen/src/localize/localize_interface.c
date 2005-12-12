@@ -463,7 +463,6 @@ carmen_localize_initialize_gaussian_command(carmen_point_t mean,
   
   if(first) 
     {
-      strcpy(init.host, carmen_get_tenchar_host_name());
       err = IPC_defineMsg(CARMEN_LOCALIZE_INITIALIZE_NAME, 
 			  IPC_VARIABLE_LENGTH, 
 			  CARMEN_LOCALIZE_INITIALIZE_FMT);
@@ -473,6 +472,7 @@ carmen_localize_initialize_gaussian_command(carmen_point_t mean,
       first = 0;
     }
   init.timestamp = carmen_get_time();
+  init.host = carmen_get_host();
 
   init.distribution = CARMEN_INITIALIZE_GAUSSIAN;
   init.num_modes = 1;
@@ -490,7 +490,6 @@ void carmen_localize_initialize_uniform_command(void)
 
   if(first) 
     {
-      strcpy(init.host, carmen_get_tenchar_host_name());
       err = IPC_defineMsg(CARMEN_LOCALIZE_INITIALIZE_NAME, 
 			  IPC_VARIABLE_LENGTH, 
 			  CARMEN_LOCALIZE_INITIALIZE_FMT);
@@ -500,6 +499,7 @@ void carmen_localize_initialize_uniform_command(void)
       first = 0;
     }
   init.timestamp = carmen_get_time();
+  init.host = carmen_get_host();
     
   init.distribution = CARMEN_INITIALIZE_UNIFORM;
   init.num_modes = 0;
@@ -516,7 +516,6 @@ void carmen_localize_initialize_placename_command(char *placename)
   IPC_RETURN_TYPE err;
   
   if(first) {
-    strcpy(init.host, carmen_get_tenchar_host_name());
     err = IPC_defineMsg(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, 
 			IPC_VARIABLE_LENGTH, 
 			CARMEN_LOCALIZE_INITIALIZE_PLACENAME_FMT);
@@ -525,6 +524,7 @@ void carmen_localize_initialize_placename_command(char *placename)
     first = 0;
   }
   init.timestamp = carmen_get_time();
+  init.host = carmen_get_host();
   init.placename = placename;
   err = IPC_publishData(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, &init);
   carmen_test_ipc(err, "Could not publish", 
@@ -647,7 +647,7 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
 
   msg.global = global;
   msg.timestamp = carmen_get_time();
-  strcpy(msg.host, carmen_get_tenchar_host_name());
+  msg.host = carmen_get_host();
 
   err = IPC_queryResponseData(CARMEN_LOCALIZE_QUERY_NAME, &msg, 
 			      (void **)&response, timeout);
