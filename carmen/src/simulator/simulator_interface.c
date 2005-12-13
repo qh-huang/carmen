@@ -70,7 +70,7 @@ carmen_simulator_query_truepos(carmen_simulator_truepos_message
 			       **carmen_simulator_interface_truepos_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_simulator_truepos_query_message *msg;
   static int initialized = 0;
 
   if(!initialized) {
@@ -96,7 +96,7 @@ carmen_simulator_query_objects(carmen_simulator_objects_message
 			       **carmen_simulator_interface_objects_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_simulator_objects_query_message *msg;
   static int initialized = 0;
 
   if(!initialized) {
@@ -177,7 +177,7 @@ carmen_simulator_connect_robots(char *other_central)
 void
 carmen_simulator_clear_objects(void)
 {
-  carmen_default_message *msg;
+  carmen_simulator_clear_objects_message *msg;
   static int initialized = 0;
   IPC_RETURN_TYPE err = IPC_OK;
 
@@ -202,7 +202,7 @@ void
 carmen_simulator_next_tick(void)
 {
   IPC_RETURN_TYPE err = IPC_OK;
-  carmen_default_message *msg;
+  carmen_simulator_next_tick_message *msg;
   static int initialized = 0;
 
   if (!initialized) 

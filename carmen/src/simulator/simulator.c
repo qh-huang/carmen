@@ -101,7 +101,7 @@ static void
 clear_objects_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
 		     void *clientData __attribute__ ((unused)))
 {
-  carmen_default_message msg;
+  carmen_simulator_clear_objects_message msg;
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);
@@ -180,7 +180,7 @@ static void
 next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
 		  void *clientData __attribute__ ((unused)))
 {
-  carmen_default_message msg;
+  carmen_simulator_next_tick_message msg;
   FORMATTER_PTR formatter;
   
   formatter = IPC_msgInstanceFormatter(msgRef);

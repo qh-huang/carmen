@@ -39,7 +39,7 @@ typedef struct {
   double sensor_angle;          //width of sonar cone
   double *ranges;
   carmen_point_t *positions;
-  carmen_point_t robot_location;
+  carmen_point_t robot_pose;
   double tv, rv;
 } carmen_robot_sonar_message;
 
@@ -51,7 +51,7 @@ typedef struct {
   char *host;
   int num_bumpers;
   char *state;
-  carmen_point_t robot_location; //position of the center of the robot
+  carmen_point_t robot_pose; //position of the center of the robot
   double tv, rv;
 } carmen_robot_bumper_message;
 
@@ -65,7 +65,7 @@ typedef struct {
   float *range;
   char *tooclose;
   carmen_point_t laser_location; //position of the center of the laser
-  carmen_point_t robot_location; //position of the center of the robot
+  carmen_point_t robot_pose; //position of the center of the robot
   double tv, rv;
   double forward_safety_dist, side_safety_dist;
   double turn_axis;

@@ -32,11 +32,14 @@
 extern "C" {
 #endif
 
-#define CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME "carmen_simulator_clear_objects"
-#define CARMEN_SIMULATOR_NEXT_TICK_NAME       "carmen_simulator_next_tick"
-#define CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME   "carmen_simulator_truepos_query"
-#define CARMEN_SIMULATOR_OBJECTS_QUERY_NAME   "carmen_simulator_objects_query"
 #define CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME   "carmen_simulator_clear_objects"
+typedef carmen_default_message carmen_simulator_clear_objects_message;
+#define CARMEN_SIMULATOR_NEXT_TICK_NAME       "carmen_simulator_next_tick"
+typedef carmen_default_message carmen_simulator_next_tick_message;
+#define CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME   "carmen_simulator_truepos_query"
+typedef carmen_default_message carmen_simulator_truepos_query_message;
+#define CARMEN_SIMULATOR_OBJECTS_QUERY_NAME   "carmen_simulator_objects_query"
+typedef carmen_default_message carmen_simulator_objects_query_message;
 
 typedef enum {CARMEN_SIMULATOR_RANDOM_OBJECT, CARMEN_SIMULATOR_LINE_FOLLOWER,
 	      CARMEN_SIMULATOR_OTHER_ROBOT} carmen_simulator_object_t;
