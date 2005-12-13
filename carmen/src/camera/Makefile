@@ -7,8 +7,16 @@ LFLAGS += -lparam_interface -lipc -lglobal -L/usr/X11R6/lib -lXpm
 SOURCES = camera_main.c camera_view.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h
 PUBLIC_LIBRARIES = libcamera_interface.a
-PUBLIC_BINARIES = camera_quickcam camera_fakecam
-TARGETS = camera_fakecam camera_quickcam libcamera_interface.a 
+PUBLIC_BINARIES = camera_fakecam
+TARGETS = camera_fakecam libcamera_interface.a 
+
+ifdef CYGWIN
+error:
+	$(ECHO) "QuickCam must be run in Linux; you are using Cygwin!"
+else
+PUBLIC_BINARIES += camera_quickcam
+TARGETS += camera_quickcam
+endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
@@ -24,10 +32,12 @@ fakecam/libfakecam.a:
 
 camera_fakecam:		camera_main.o fakecam/libfakecam.a
 
+ifndef CYGWIN
 quickcam/libquickcam.a:
 	$(MAKE) -C quickcam
 
 camera_quickcam:	camera_main.o quickcam/libquickcam.a quickcam/libccvt.a
+endif
 
 libcamera_interface.a:	camera_interface.o
 
