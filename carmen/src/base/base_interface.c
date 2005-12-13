@@ -80,7 +80,7 @@ carmen_base_unsubscribe_bumper_message(carmen_handler_t handler)
 }
 
 void
-carmen_base_subscribe_reset_occurred_message(carmen_default_message *reset,
+carmen_base_subscribe_reset_occurred_message(carmen_base_reset_occurred_message *reset,
 					     carmen_handler_t handler,
 					     carmen_subscribe_t subscribe_how)
 {
@@ -100,7 +100,7 @@ void
 carmen_base_reset(void)
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_base_reset_command_message *msg;
   static int first = 1;
 
   if(first) {

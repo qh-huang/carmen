@@ -1448,7 +1448,7 @@ carmen_param_check_version(char *prog_name)
 {
   IPC_RETURN_TYPE err;
 
-  carmen_default_message *query;
+  carmen_param_query_version_message *query;
   carmen_param_version_message *response;
 
   query = carmen_default_message_create();
@@ -1549,7 +1549,7 @@ carmen_param_get_paramserver_host(char **hostname)
 {
   IPC_RETURN_TYPE err;
 
-  carmen_default_message *query;
+  carmen_param_query_version_message *query;
   carmen_param_version_message *response;
 
   query = carmen_default_message_create();

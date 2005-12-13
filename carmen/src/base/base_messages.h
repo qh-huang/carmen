@@ -35,8 +35,11 @@ extern "C" {
 // These messages are generic format messages
 
 #define CARMEN_BASE_SERVO_ARM_QUERY_NAME "carmen_base_servo_arm_query"
+typedef carmen_default_message carmen_base_servo_arm_query_message;
 #define CARMEN_BASE_RESET_OCCURRED_NAME "carmen_base_reset_occurred"
+typedef carmen_default_message carmen_base_reset_occurred_message;
 #define CARMEN_BASE_RESET_COMMAND_NAME "carmen_base_reset_command"
+typedef carmen_default_message carmen_base_reset_command_message;
 
 typedef struct {
   double timestamp;

@@ -279,7 +279,7 @@ static void navigator_set_goal_place_handler(MSG_INSTANCE msgRef,
 static void navigator_stop_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 				   void *clientData __attribute__ ((unused)))
 {
-  carmen_default_message stop_msg;
+  carmen_navigator_stop_message stop_msg;
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
 
@@ -298,7 +298,7 @@ static void navigator_stop_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 static void navigator_go_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 				 void *clientData __attribute__ ((unused)))
 {
-  carmen_default_message go_msg;
+  carmen_navigator_go_message go_msg;
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
 

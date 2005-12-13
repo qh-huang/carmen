@@ -90,7 +90,7 @@ int
 carmen_navigator_query_status(carmen_navigator_status_message **status_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_navigator_status_query_message *msg;
   static int initialized = 0;
 
   msg = carmen_default_message_create();
@@ -117,7 +117,7 @@ int
 carmen_navigator_query_plan(carmen_navigator_plan_message **plan_msg) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_navigator_plan_query_message *msg;
   static int initialized = 0;
 
   if (!initialized) 
@@ -244,7 +244,7 @@ int
 carmen_navigator_stop(void) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_navigator_stop_message *msg;
   static int initialized = 0;
 
   if (!initialized) {
@@ -268,7 +268,7 @@ int
 carmen_navigator_go(void) 
 {
   IPC_RETURN_TYPE err;
-  carmen_default_message *msg;
+  carmen_navigator_go_message *msg;
   static int initialized = 0;
 
   if (!initialized) {

@@ -37,13 +37,12 @@ typedef enum {CARMEN_PARAM_OK, CARMEN_PARAM_NOT_FOUND, CARMEN_PARAM_NOT_INT,
 	      CARMEN_PARAM_NOT_FILE, CARMEN_PARAM_FILE_ERR} carmen_param_status_t;
 
 #define CARMEN_PARAM_QUERY_ALL_NAME       "carmen_param_query_all"
-
-#define CARMEN_PARAM_QUERY_INT_NAME    "carmen_param_query_int"
+#define CARMEN_PARAM_QUERY_INT_NAME       "carmen_param_query_int"
 #define CARMEN_PARAM_QUERY_DOUBLE_NAME    "carmen_param_query_double"
-#define CARMEN_PARAM_QUERY_ONOFF_NAME    "carmen_param_query_onoff"
+#define CARMEN_PARAM_QUERY_ONOFF_NAME     "carmen_param_query_onoff"
 #define CARMEN_PARAM_QUERY_STRING_NAME    "carmen_param_query_string"
-
 #define CARMEN_PARAM_VERSION_QUERY_NAME   "carmen_param_query_version"
+typedef carmen_default_message carmen_param_query_version_message;
 
 typedef struct {
   double timestamp;
