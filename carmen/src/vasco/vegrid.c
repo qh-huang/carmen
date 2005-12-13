@@ -509,7 +509,7 @@ static void egrid_dialog_destroy(GtkWidget *widget __attribute__ ((unused)),
 
 int save_egrid(char *description) {
 
-  carmen_map_file_p fp;
+  carmen_FILE *fp;
   char *filename = egrid_filename;
   char buf[1024];
 
@@ -522,19 +522,19 @@ int save_egrid(char *description) {
   }
 #endif
   
-  fp = carmen_map_fopen(filename, "w");
+  fp = carmen_fopen(filename, "w");
   if(fp == NULL) {
     sprintf(buf, "Error: Could not open file %s for writing.", filename);
     status_print(buf, "vegrid");
     return -1;
   }
-  if (carmen_map_write_all(fp, egrid->prob, egrid->size_x, egrid->size_y,
-			   egrid->resolution, egrid_origin, description,
-			   "", "", NULL, 0, NULL, 0, NULL, 0) < 0) {
-    carmen_map_fclose(fp);
+  if(carmen_map_write_all(fp, egrid->prob, egrid->size_x, egrid->size_y,
+			  egrid->resolution, egrid_origin, description,
+			  "", "", NULL, 0, NULL, 0, NULL, 0) < 0) {
+    carmen_fclose(fp);
     return -1;
   }
-  carmen_map_fclose(fp);
+  carmen_fclose(fp);
   return 0;
 }
 
