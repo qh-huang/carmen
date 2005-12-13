@@ -97,32 +97,33 @@ timeDiff( struct timeval  t1, struct timeval t2)
 }
 
 
-VECTOR2
-rotate_vector2( VECTOR2 p, double rot )
+logtools_vector2_t
+rotate_vector2( logtools_vector2_t p, double rot )
 {
-  VECTOR2 v;
+  logtools_vector2_t v;
   v.x = p.x*cos(rot)-p.y*sin(rot);
   v.y = p.x*sin(rot)+p.y*cos(rot);
   return(v);
 }
 
-VECTOR2
-rotate_and_translate_vector2( VECTOR2 p, double rot, VECTOR2 trans )
+logtools_vector2_t
+rotate_and_translate_vector2( logtools_vector2_t p, double rot,
+			      logtools_vector2_t trans )
 {
-  VECTOR2 v;
+  logtools_vector2_t v;
   v.x = p.x*cos(rot)-p.y*sin(rot)+trans.x;
   v.y = p.x*sin(rot)+p.y*cos(rot)+trans.y;
   return(v);
 }
 
 double
-vector2_distance( VECTOR2 p1, VECTOR2 p2 ) {
+vector2_distance( logtools_vector2_t p1, logtools_vector2_t p2 ) {
   return sqrt( (p1.x-p2.x)*(p1.x-p2.x) +
 	       (p1.y-p2.y)*(p1.y-p2.y) );
 }
   
 double
-vector2_length( VECTOR2 v1 )
+vector2_length( logtools_vector2_t v1 )
 {
   return( sqrt( (v1.x*v1.x) + (v1.y*v1.y) ) );
 }
@@ -150,49 +151,6 @@ random_gauss( void )
     return gset;
   }
 }
-
-LINE2_LSQFT
-compute_lsqf_line( VECTOR2_SET p )
-{
-  int i;
-  LINE2_LSQFT line;
-  double oxm, oym, Sx, Sy, Sxy, cphi, sphi;
-  
-  line.numpoints  = p.numvectors;
-  line.xm         = 0;
-  line.ym         = 0;
-  line.error      = 0;
-  line.phi        = 0;
-  line.ndist      = 0;
-  
-  if (line.numpoints<2)
-    return(line);
-  
-  for (i=0; i<p.numvectors; i++) {
-    line.xm += p.vec[i].x; 
-    line.ym += p.vec[i].y; 
-  }
-  
-  oxm = line.xm / (double) p.numvectors;
-  oym = line.ym / (double) p.numvectors;
-
-  Sx = 0; Sy = 0; Sxy = 0;
-  for (i=0; i<p.numvectors; i++) {
-    Sx  += (p.vec[i].x-oxm) * (p.vec[i].x-oxm);
-    Sy  += (p.vec[i].y-oym) * (p.vec[i].y-oym);
-    Sxy += (p.vec[i].x-oxm) * (p.vec[i].y-oym);
-  }
-  line.phi = 0.5 * atan2( (-2*Sxy), (Sy-Sx) );
-  cphi = cos(line.phi);
-  sphi = sin(line.phi);
-  line.ndist = oxm * cphi + oym * sphi;
-  for (i=0; i<p.numvectors; i++) {
-    line.error += 
-      ( ( p.vec[i].x * cphi + p.vec[i].y * sphi - line.ndist ) *
-	( p.vec[i].x * cphi + p.vec[i].y * sphi - line.ndist ) );
-  }
-  return(line);
-}  
 
 double
 gauss_function( double x, double mu, double sigma )
@@ -270,10 +228,10 @@ compute_orientation_diff( double start, double end ) {
   }
 }
 
-RMOVE2
-compute_movement2_between_rpos2( RPOS2 start, RPOS2 end )
+logtools_rmove2_t
+compute_movement2_between_rpos2( logtools_rpos2_t start, logtools_rpos2_t end )
 {
-  RMOVE2 move;
+  logtools_rmove2_t move;
 
   /* compute forward and sideward sensing_MOVEMENT */
   move.forward =
@@ -289,9 +247,9 @@ compute_movement2_between_rpos2( RPOS2 start, RPOS2 end )
   return( move );
 }
 
-RPOS2
-compute_rpos2_with_movement2( RPOS2 start, RMOVE2 move ) {
-  RPOS2 end;
+logtools_rpos2_t
+compute_rpos2_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
+  logtools_rpos2_t end;
   if ( (move.forward==0.0) && (move.sideward==0.0) && (move.rotation==0.0) )
     return (start);
   end.x = start.x + cos(start.o) * move.forward + sin(start.o) * move.sideward;
@@ -300,46 +258,15 @@ compute_rpos2_with_movement2( RPOS2 start, RMOVE2 move ) {
   return(end);
 }
 
-RPOS2
-compute_rpos2_backwards_with_movement2( RPOS2 start, RMOVE2 move ) {
-  RPOS2 end;
+logtools_rpos2_t
+compute_rpos2_backwards_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
+  logtools_rpos2_t end;
   if ( (move.forward==0.0) && (move.sideward==0.0) && (move.rotation==0.0) )
     return (start);
   end.o = convert_orientation_to_range( start.o - move.rotation );
   end.x = start.x - cos(end.o) * move.forward - sin(end.o) * move.sideward;
   end.y = start.y - sin(end.o) * move.forward + cos(end.o) * move.sideward;
   return(end);
-}
-
-int
-inside_polygon( POLYGON polygon, POINT2 p )
-{
-  int counter = 0;
-  int i;
-  double xinters;
-  POINT2 p1,p2;
-
-  p1 = polygon.pt[0];
-  for (i=1;i<=polygon.numpoints;i++) {
-    p2 = polygon.pt[i % polygon.numpoints];
-    if (p.y > MIN(p1.y,p2.y)) {
-      if (p.y <= MAX(p1.y,p2.y)) {
-        if (p.x <= MAX(p1.x,p2.x)) {
-          if (p1.y != p2.y) {
-            xinters = (p.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
-            if (p1.x == p2.x || p.x <= xinters)
-              counter++;
-          }
-        }
-      }
-    }
-    p1 = p2;
-  }
-
-  if (counter % 2 == 0)
-    return( FALSE);
-  else
-    return( TRUE );
 }
 
 double
@@ -422,7 +349,7 @@ kl_distance( GAUSSIAN g1, GAUSSIAN g2 )
 }
 
 double
-rpos2_distance( RPOS2 p1, RPOS2 p2 )
+rpos2_distance( logtools_rpos2_t p1, logtools_rpos2_t p2 )
 {
   return sqrt( (p1.x-p2.x)*(p1.x-p2.x) +
 	       (p1.y-p2.y)*(p1.y-p2.y) );
@@ -663,10 +590,10 @@ gps_degree_decimal( double degree_minute, char orient )
   }
 }
 
-VECTOR2
-compute_laser_abs_point( RPOS2 rpos, double val, RMOVE2 offset, double angle )
+logtools_vector2_t
+compute_laser_abs_point( logtools_rpos2_t rpos, double val, logtools_rmove2_t offset, double angle )
 {
-  VECTOR2 abspt;
+  logtools_vector2_t abspt;
   abspt.x =
     rpos.x + 
     cos( angle+offset.rotation+rpos.o ) * val;
@@ -679,11 +606,11 @@ compute_laser_abs_point( RPOS2 rpos, double val, RMOVE2 offset, double angle )
 
 
 LASER_COORD2
-compute_laser2d_coord( LASERSENS2_DATA lsens, int i )
+compute_laser2d_coord( logtools_lasersens2_data_t lsens, int i )
 {
   double        val;
   LASER_COORD2  coord;
-  RPOS2         rpos, npos;
+  logtools_rpos2_t         rpos, npos;
 
   rpos  = compute_rpos2_with_movement2( lsens.estpos,
 					lsens.laser.offset );
@@ -702,7 +629,7 @@ compute_laser2d_coord( LASERSENS2_DATA lsens, int i )
 }
 
 void
-compute_rec2d_coordpts( REC2_DATA *rec )
+compute_rec2d_coordpts( logtools_rec2_data_t *rec )
 {
   int i, j;
   for (j=0;j<rec->numlaserscans;j++) {

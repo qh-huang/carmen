@@ -38,15 +38,15 @@
 
 static char utm_letter( double latitude );
 
-UTM_COORD
-ll2utm( LL_COORD ll )
+logtools_utm_coord_t
+ll2utm( logtools_ll_coord_t ll )
 {
   double lat_rad, long_rad;
   double long_origin, long_origin_rad;
   double eccPrimeSquared;
   double N, T, C, A, M;
   int zone;
-  UTM_COORD utm;
+  logtools_utm_coord_t utm;
   
   /* We want the longitude within -180..180. */
   if ( ll.longitude < -180.0 )

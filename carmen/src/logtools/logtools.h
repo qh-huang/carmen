@@ -59,88 +59,53 @@
 typedef struct {
   double        x;
   double        y;
-} VECTOR2;
+} logtools_vector2_t;
 
 typedef struct {
   int           numvectors;
-  VECTOR2     * vec;
-} VECTOR2_SET;
+  logtools_vector2_t     * vec;
+} logtools_vector2_t_SET;
 
 typedef struct {
   int           x;
   int           y;
-} iVECTOR2;
+} logtools_ivector2_t;
 
 typedef struct {
-  int           numvectors;
-  iVECTOR2    * vec;
-} iVECTOR2_SET;
+  int                      numvectors;
+  logtools_ivector2_t    * vec;
+} logtools_ivector2_set_t;
 
-#define POINT2 VECTOR2
-
-typedef struct {
-  int           numpoints;
-  POINT2      * p;
-} POINT2_SET;
-
-#define iPOINT2 iVECTOR2
-
-typedef struct {
-  VECTOR2     point0;
-  VECTOR2     point1;
-} LINE2;
-
-typedef struct {
-  int         start;
-  int         end;
-} EDGEREF;
-
-typedef struct {
-  int              numedges;
-  EDGEREF        * edge;
-} EDGEREF_SET;
-
-
-typedef struct {
-  int                numpoints;
-  POINT2           * pt;
-} POLYGON;
+#define POINT2 logtools_vector2_t
 
 typedef struct {
   double        x;
   double        y;
   double        o;
-} RPOS2;
+} logtools_rpos2_t;
 
 typedef struct {
   double        forward;
   double        sideward;
   double        rotation;
-} RMOVE2;
+} logtools_rmove2_t;
 
 typedef struct {
   double        tv;
   double        rv;
-} RVEL2;
-
-typedef struct {
-  struct timeval      time;
-  double              x;
-  double              y;
-  double              o;
-} POS_CORR2_DATA;
+} logtools_rvel2_t;
 
 typedef struct {
   double easting;
   double northing;
   int    zone;
   char   letter;
-} UTM_COORD;
+} logtools_utm_coord_t;
 
 typedef struct {
   double longitude;
   double latitude;
-} LL_COORD;
+} logtools_ll_coord_t;
 
 typedef struct {
   struct timeval      time;
@@ -159,35 +124,16 @@ typedef struct {
   double              geo_sep; 
   double              speed_over_ground;
   int                 data_age;
-} GPS_DATA;
+} logtools_gps_data_t;
 
 typedef struct {
-  struct timeval      time;
-  double              latitude;
-  double              longitude;
-  int                 gpsidx;
-} EST_DATA;
-
-typedef struct {
-  struct timeval      time;
-  double              rx;
-  double              ry;
-  double              rz;
-} COMPASS3_DATA;
-
-typedef struct {
-  struct timeval      time;
-  double              o;
-} COMPASS2_DATA;
-
-typedef struct {
-  VECTOR2             min;
-  VECTOR2             max;
+  logtools_vector2_t             min;
+  logtools_vector2_t             max;
 } BOUNDING_BOX2;
 
 typedef struct {
-  VECTOR2             relpt;
-  VECTOR2             abspt;
+  logtools_vector2_t             relpt;
+  logtools_vector2_t             abspt;
   int                 tag;
   int                 info;
 } LASER_COORD2;
@@ -199,7 +145,7 @@ typedef struct {
 } LASER_FOV;
 
 typedef struct {
-  RMOVE2              offset;
+  logtools_rmove2_t              offset;
   LASER_FOV           fov;
 } LASER_PROPERTIES2;
 
@@ -209,19 +155,19 @@ typedef struct {
 } AMTEC_SETTINGS;
 
 typedef struct {
-  VECTOR2             offset;   /* offset to robot center */
+  logtools_vector2_t             offset;   /* offset to robot center */
   int                 on_amtec;
   AMTEC_SETTINGS      amtec;
 } LASER_PROPERTIES3;
 
 typedef struct {
-  RPOS2               pos;
+  logtools_rpos2_t               pos;
   double              vel;
   double              cov_sx;
   double              cov_sy;
   double              cov_sxy;
-  VECTOR2             ll;       /* lower left */
-  VECTOR2             ur;       /* upper right */
+  logtools_vector2_t             ll;       /* lower left */
+  logtools_vector2_t             ur;       /* upper right */
 } P_STATE;
 
 typedef struct {
@@ -241,26 +187,25 @@ typedef struct {
   int                 partial;
   int                 numvalues;
   double              fov;
-  RMOVE2              offset;
+  logtools_rmove2_t              offset;
   float             * val;
   float             * angle;
 } LASER_DATA;
 
 typedef struct {
-  RPOS2               estpos;
+  logtools_rpos2_t               estpos;
   LASER_DATA          laser;
   LASER_COORD2      * coord;
-  POLYGON             poly;
   BOUNDING_BOX2       bbox;
   DISTRIBUTION      * dynamic;
   int                 id;
-} LASERSENS2_DATA;
+} logtools_lasersens2_data_t;
 
 typedef struct {
   struct timeval      time;
-  RPOS2               rpos;
-  RVEL2               rvel;
-} POSSENS2_DATA;
+  logtools_rpos2_t               rpos;
+  logtools_rvel2_t               rvel;
+} logtools_possens2_data_t;
 
 #define GSM_CELL_TYPE    2
 #define GSM_CHANNEL_TYPE 1
@@ -313,7 +258,7 @@ typedef struct {
 
 
 
-enum FILE_TYPE    { SCRIPT,
+enum logtools_file_t    { SCRIPT,
 		    REC,
 		    CARMEN,
 		    MOOS,
@@ -331,21 +276,12 @@ enum FILE_TYPE    { SCRIPT,
 #define FILE_PLACELAB_EXT            ".plab"
 
 enum ENTRY_TYPE   { POSITION,
-		    CORR_POSITION,
 		    LASER_VALUES,
-		    LASER_VALUES3,
-		    CAMERA3D,
-		    AMTEC_POS,
 		    HUMAN_PROB,
 		    GPS,
-		    ESTIMATE,
 		    GSM,
 		    WIFI,
-		    COMPASS,
-		    POS_CORR,
-		    HELI_POS,
 		    MARKER,
-		    RFID_TAG,
                     UNKNOWN };
 
 typedef struct {
@@ -357,7 +293,7 @@ typedef struct {
 
 typedef struct {
 
-  enum FILE_TYPE     system;
+  enum logtools_file_t     system;
   
 } REC2_INFO;
 
@@ -375,7 +311,7 @@ enum RFID_TYPE    { ALIEN, SIEMENS };
 typedef struct {
 
   struct timeval      time;
-  RPOS2               estpos;
+  logtools_rpos2_t               estpos;
   enum RFID_TYPE      type;
   unsigned long long  tag;
   int                 antenna;
@@ -390,58 +326,42 @@ typedef struct {
 typedef struct {
 
   /* entries */
-  int                 numentries;
-  ENTRY_POSITION    * entry;  
+  int                            numentries;
+  ENTRY_POSITION               * entry;  
 
   /* positions */
-  int                 numpositions;
-  POSSENS2_DATA     * psens;
+  int                            numpositions;
+  logtools_possens2_data_t     * psens;
   
   /* laser scans */
-  int                 numlaserscans;
-  LASERSENS2_DATA   * lsens;
+  int                            numlaserscans;
+  logtools_lasersens2_data_t   * lsens;
 
-  int                 numcompass;
-  COMPASS3_DATA     * compass;
+  int                            numwifi;
+  WIFI_DATA                    * wifi;
 
-  int                 numwifi;
-  WIFI_DATA         * wifi;
+  int                            numgsm;
+  GSM_DATA                     * gsm;
 
-  int                 numgsm;
-  GSM_DATA          * gsm;
+  int                            numgps;
+  logtools_gps_data_t          * gps;
 
-  int                 numgps;
-  GPS_DATA          * gps;
-
-  int                 numestimates;
-  EST_DATA          * est;
-
-  int                 nummarkers;
-  MARKER_DATA      *  marker;
+  int                            nummarkers;
+  MARKER_DATA                 *  marker;
   
-  REC2_INFO           info;
+  REC2_INFO                     info;
   
-} REC2_DATA;
-
-typedef struct {
-  double              pan;
-  double              tilt;
-} DECL_TYPE;
+} logtools_rec2_data_t;
 
 typedef struct {
   int                numvalues;
   double           * val;
-} VALUE_SET;
+} logtools_value_set_t;
 
 typedef struct {
   int                numvalues;
   int              * val;
-} iVALUE_SET;
-
-typedef struct {
-  int                numfaces;
-  int              * facept;
-} POLYGON_REF;
+} logtools_ivalue_set_t;
 
 typedef struct {
   int                numvectors;
@@ -452,16 +372,6 @@ typedef struct {
   int                numpoints;
   int              * ptref;
 } POINTREF_SET;
-
-typedef struct {
-  int          numpoints;
-  double       xm;
-  double       ym;
-  double       phi;
-  double       ndist;
-  double       error;
-  VECTOR2      pos;
-} LINE2_LSQFT;
 
 typedef struct {
   int idx0;
@@ -490,20 +400,20 @@ typedef struct {
 
 typedef struct {
   int          numgrids;
-  iVECTOR2   * grid;
+  logtools_ivector2_t   * grid;
 } GRID_LINE;
 
 typedef struct {
-  RPOS2             offset;
+  logtools_rpos2_t             offset;
   double            resolution;
   float          ** maphit;
   short          ** mapsum;
   float          ** mapprob;
   float          ** calc;
-  iVECTOR2          mapsize;
-  VECTOR2           center;
+  logtools_ivector2_t          mapsize;
+  logtools_vector2_t           center;
   double            zoom;
-} GRID_MAP2;
+} logtools_grid_map2_t;
 
 #define rad2deg rad2Deg
 double        rad2Deg(double val);
@@ -523,81 +433,77 @@ void *        mdalloc(int ndim, int width, ...);
 
 void          mdfree(void *tip, int ndim);
 
-int           load_rec2d_file( char *filename, REC2_DATA *rec,
-			       enum FILE_TYPE type, int mode );
+int           load_rec2d_file( char *filename, logtools_rec2_data_t *rec,
+			       enum logtools_file_t type, int mode );
 
-int           read_rec2d_file( char *filename, REC2_DATA *rec, int mode );
+int           read_rec2d_file( char *filename, logtools_rec2_data_t *rec, int mode );
 
-int           read_data2d_file( REC2_DATA * rec, char * filename );
+int           read_data2d_file( logtools_rec2_data_t * rec, char * filename );
 
-int           write_rec2d_file( char *filename, REC2_DATA rec );
+int           write_rec2d_file( char *filename, logtools_rec2_data_t rec );
 
-int           write_data2d_file( char * filename, REC2_DATA rec );
+int           write_data2d_file( char * filename, logtools_rec2_data_t rec );
 
-int           rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int verbose );
+int           rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int verbose );
 
-int           carmen_parse_line( char *line, REC2_DATA *rec, int alloc, int mode );
+int           carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode );
 
-int           moos_parse_line( char *line, REC2_DATA *rec, int alloc, int mode );
+int           moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode );
 
-int           player_parse_line( char *line, REC2_DATA *rec, int alloc, int mode );
+int           player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode );
 
-int           saphira_parse_line( char *line, REC2_DATA *rec, int alloc, int mode );
+int           saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode );
 
-int           placelab_parse_line( char *line, REC2_DATA *rec, int alloc, int mode );
+int           placelab_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode );
 
-int           read_script( char *filename, REC2_DATA *script, int verbose );
+int           read_script( char *filename, logtools_rec2_data_t *script, int verbose );
 
-VECTOR2       rotate_vector2( VECTOR2 p, double angle );
+logtools_vector2_t  rotate_vector2( logtools_vector2_t p, double angle );
 
-VECTOR2       rotate_and_translate_vector2( VECTOR2 p, double rot,
-					    VECTOR2 trans );
+logtools_vector2_t  rotate_and_translate_vector2( logtools_vector2_t p,
+						  double rot,
+						  logtools_vector2_t trans );
 
-double        vector2_length( VECTOR2 v1 );
+double        vector2_length( logtools_vector2_t v1 );
 
-double        vector2_distance( VECTOR2 p1, VECTOR2 p2 );
+double        vector2_distance( logtools_vector2_t p1, logtools_vector2_t p2 );
 
-void          compute_rec2d_coordpts( REC2_DATA *rec );
+void          compute_rec2d_coordpts( logtools_rec2_data_t *rec );
 
-VECTOR2       compute_laser_abs_point( RPOS2 rpos, double val,
-				       RMOVE2 offset, double angle );
+logtools_vector2_t       compute_laser_abs_point( logtools_rpos2_t rpos, double val,
+				       logtools_rmove2_t offset, double angle );
 
-void          compute_vec2_convex_hull( VECTOR2_SET pts,
+void          compute_vec2_convex_hull( logtools_vector2_t_SET pts,
 					VECTORREF_SET *hull );
-
-double        distance_vec2_to_line2( VECTOR2 p, LINE2 l );
 
 double        gauss_function( double x, double mu, double sigma );
 
 GAUSS_KERNEL  compute_gauss_kernel( int length );
 
-RMOVE2        compute_movement2_between_rpos2( RPOS2 s, RPOS2 e );
+logtools_rmove2_t        compute_movement2_between_rpos2( logtools_rpos2_t s, logtools_rpos2_t e );
 
-RPOS2         compute_rpos2_with_movement2( RPOS2 start, RMOVE2 move );
+logtools_rpos2_t         compute_rpos2_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move );
 
-RPOS2         compute_rpos2_backwards_with_movement2( RPOS2 start,
-						      RMOVE2 move );
+logtools_rpos2_t         compute_rpos2_backwards_with_movement2( logtools_rpos2_t start,
+						      logtools_rmove2_t move );
 
 double        convert_orientation_to_range( double angle );
 
 double        compute_orientation_diff( double start, double end );
 
-void          robot2map( RPOS2 pos, RPOS2 corr, RPOS2 *map );
+void          robot2map( logtools_rpos2_t pos, logtools_rpos2_t corr, logtools_rpos2_t *map );
 
-void          map2robot( RPOS2 map, RPOS2 corr, RPOS2 *pos );
+void          map2robot( logtools_rpos2_t map, logtools_rpos2_t corr, logtools_rpos2_t *pos );
 
-void          computeCorr( RPOS2 pos, RPOS2 map, RPOS2 *corr );
+void          computeCorr( logtools_rpos2_t pos, logtools_rpos2_t map, logtools_rpos2_t *corr );
 
-LINE2_LSQFT   compute_lsqf_line( VECTOR2_SET p );
+void          compute_forward_correction( logtools_rpos2_t pos, logtools_rpos2_t corr, logtools_rpos2_t *cpos );
 
+void          compute_backward_correction( logtools_rpos2_t cpos, logtools_rpos2_t corr, logtools_rpos2_t *pos );
 
-void          compute_forward_correction( RPOS2 pos, RPOS2 corr, RPOS2 *cpos );
+void          compute_correction_parameters( logtools_rpos2_t pos, logtools_rpos2_t cpos, logtools_rpos2_t *corr );
 
-void          compute_backward_correction( RPOS2 cpos, RPOS2 corr, RPOS2 *pos );
-
-void          compute_correction_parameters( RPOS2 pos, RPOS2 cpos, RPOS2 *corr );
-
-void          update_correction_parameters( RPOS2 cpos, RPOS2 delta, RPOS2 *corr );
+void          update_correction_parameters( logtools_rpos2_t cpos, logtools_rpos2_t delta, logtools_rpos2_t *corr );
 
 
 double        double_time( struct timeval time );
@@ -617,7 +523,7 @@ double        sick_laser_angle_diff( int num, double fov );
 
 double        kl_distance( GAUSSIAN g1, GAUSSIAN g2 );
 
-double        rpos2_distance( RPOS2 p1, RPOS2 p2 );
+double        rpos2_distance( logtools_rpos2_t p1, logtools_rpos2_t p2 );
 
 char *        extended_filename( char * filename );
 
@@ -635,9 +541,9 @@ double        gps_degree_abs_decimal( double degree_minute );
 
 double        gps_degree_decimal( double degree_minute, char orient );
 
-UTM_COORD     ll2utm( LL_COORD ll );
+logtools_utm_coord_t     ll2utm( logtools_ll_coord_t ll );
 
-LL_COORD      utm2ll( UTM_COORD utm );
+logtools_ll_coord_t      utm2ll( logtools_utm_coord_t utm );
 
 #endif /* ifdef BD_UTILS_H */
 

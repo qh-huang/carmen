@@ -25,9 +25,9 @@
 #endif
 
 typedef struct {
-  int        width;
-  int        height;
-  VECTOR2    start;
+  int                  width;
+  int                  height;
+  logtools_vector2_t   start;
   RGB     ** pixel;
 } log2pic_background_image_t;
 
@@ -50,7 +50,7 @@ typedef struct {
   char                          pathcolor[MAX_STRING_LENGTH];
   double                        pathwidth;
   double                        rotation_angle;
-  VECTOR2                       rotation_center;
+  logtools_vector2_t            rotation_center;
   char                          infilename[MAX_STRING_LENGTH];
   char                          outfilename[MAX_STRING_LENGTH];
   char                          filetemplate[MAX_STRING_LENGTH];
@@ -91,8 +91,8 @@ typedef struct {
   int                           bgfile;
   log2pic_background_image_t    background;
   int                           gpspath;
-  VECTOR2                       bgoffset;
-  RPOS2                         posstart;
+  logtools_vector2_t            bgoffset;
+  logtools_rpos2_t                         posstart;
 } log2pic_settings_t;
 
 double round(double x);
@@ -100,14 +100,15 @@ double round(double x);
 extern log2pic_settings_t settings;
 
 void
-log2pic_map_integrate_scan( GRID_MAP2 *map, LASERSENS2_DATA data,
+log2pic_map_integrate_scan( logtools_grid_map2_t *map, logtools_lasersens2_data_t data,
 			    double max_range, double max_usable  );
 
 int
-log2pic_map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v );
+log2pic_map_pos_from_vec2( logtools_vector2_t pos, logtools_grid_map2_t *map,
+			   logtools_vector2_t *v );
 
 void
-log2pic_map_compute_probs( GRID_MAP2 * map, double unknown_val );
+log2pic_map_compute_probs( logtools_grid_map2_t * map, double unknown_val );
 
 void
 log2pic_filetemplate_from_filename( char * filetemplate, char * filename );
@@ -116,10 +117,10 @@ char *
 log2pic_dump_filename( void );
 
 void
-log2pic_write_image_magick_map( GRID_MAP2 *map, REC2_DATA *rec );
+log2pic_write_image_magick_map( logtools_grid_map2_t *map, logtools_rec2_data_t *rec );
 
 void
-log2pic_simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel );
+log2pic_simple_convolve_map( logtools_grid_map2_t *map, GAUSS_KERNEL kernel );
 
 void
 log2pic_read_image_file( char * filename, log2pic_background_image_t * img );

@@ -12,7 +12,7 @@
 #include <carmen/logtools.h>
 
 void 
-compute_forward_correction( RPOS2 pos, RPOS2 corr, RPOS2 *cpos )
+compute_forward_correction( logtools_rpos2_t pos, logtools_rpos2_t corr, logtools_rpos2_t *cpos )
 {
   cpos->o = pos.o - corr.o;
   for (; cpos->o <= -M_PI;) cpos->o += 2*M_PI;
@@ -26,7 +26,7 @@ compute_forward_correction( RPOS2 pos, RPOS2 corr, RPOS2 *cpos )
 }
 
 void 
-compute_backward_correction( RPOS2 cpos, RPOS2 corr, RPOS2 *pos )
+compute_backward_correction( logtools_rpos2_t cpos, logtools_rpos2_t corr, logtools_rpos2_t *pos )
 {
   pos->o = corr.o + cpos.o;
   for (; pos->o <= -M_PI;) pos->o += 2*M_PI;
@@ -40,7 +40,7 @@ compute_backward_correction( RPOS2 cpos, RPOS2 corr, RPOS2 *pos )
 }  
 
 void 
-compute_correction_parameters( RPOS2 pos, RPOS2 cpos, RPOS2 *corr )
+compute_correction_parameters( logtools_rpos2_t pos, logtools_rpos2_t cpos, logtools_rpos2_t *corr )
 {
   corr->o = pos.o - cpos.o;
   for (; corr->o <= -M_PI;) corr->o += 2*M_PI;
@@ -54,9 +54,9 @@ compute_correction_parameters( RPOS2 pos, RPOS2 cpos, RPOS2 *corr )
 }
 
 void 
-update_correction_parameters( RPOS2 cpos, RPOS2 delta, RPOS2 *corr )
+update_correction_parameters( logtools_rpos2_t cpos, logtools_rpos2_t delta, logtools_rpos2_t *corr )
 {
-  RPOS2 pos, cpos2;
+  logtools_rpos2_t pos, cpos2;
 
   compute_backward_correction( cpos, *corr, &pos );
   
@@ -68,9 +68,9 @@ update_correction_parameters( RPOS2 cpos, RPOS2 delta, RPOS2 *corr )
 }
 
 void
-robot2map( RPOS2 pos, RPOS2 corr, RPOS2 *map )
+robot2map( logtools_rpos2_t pos, logtools_rpos2_t corr, logtools_rpos2_t *map )
 {
-  RPOS2 rpos = pos;
+  logtools_rpos2_t rpos = pos;
   rpos.o = deg2rad(pos.o);
   compute_forward_correction( rpos, corr, map );
   /*  map->o = deg2rad( map->o ); */
@@ -78,9 +78,9 @@ robot2map( RPOS2 pos, RPOS2 corr, RPOS2 *map )
 
 
 void
-map2robot( RPOS2 map, RPOS2 corr, RPOS2 *pos )
+map2robot( logtools_rpos2_t map, logtools_rpos2_t corr, logtools_rpos2_t *pos )
 {
-  RPOS2 map2 = map;
+  logtools_rpos2_t map2 = map;
   /*  map2.o = rad2deg( map.o ); */
   compute_backward_correction( map2, corr, pos );
   pos->o = 90.0 - rad2deg(pos->o);
@@ -88,9 +88,9 @@ map2robot( RPOS2 map, RPOS2 corr, RPOS2 *pos )
 
 
 void
-computeCorr( RPOS2 pos, RPOS2 map, RPOS2 *corr )
+computeCorr( logtools_rpos2_t pos, logtools_rpos2_t map, logtools_rpos2_t *corr )
 {
-  RPOS2 map2, pos2;
+  logtools_rpos2_t map2, pos2;
   
   map2   = map;
   map2.o = rad2deg( map.o );

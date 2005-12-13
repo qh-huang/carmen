@@ -39,10 +39,10 @@
 
 #define ABS(x) ((x)>=0?(x):(-x))
 
-LL_COORD
-utm2ll( UTM_COORD utm )
+logtools_ll_coord_t
+utm2ll( logtools_utm_coord_t utm )
 {
-  LL_COORD ll;
+  logtools_ll_coord_t ll;
   double x, y;
   double eccPrimeSquared;
   double e1;

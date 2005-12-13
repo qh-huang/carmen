@@ -165,9 +165,9 @@ rec2_parse_gsm_line( char * string,  GSM_DATA * data )
 */
 
 int
-rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
+rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 {
-  static RPOS2   npos = {0.0, 0.0, 0.0};
+  static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
 
   static char    command[MAX_CMD_LENGTH];
   static char    dummy[MAX_CMD_LENGTH];
@@ -352,50 +352,6 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
       
 
       rec->numgps++;
-      
-    }
-    
-  } else if (!strncmp( command, "COMPASS2D", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld: %s",
-		dummy, &sec, &usec, str1 ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = COMPASS;
-      rec->entry[rec->numentries].index  = rec->numcompass;
-      rec->numentries++;
-      
-      rec->compass[rec->numcompass].time.tv_sec  = sec;
-      rec->compass[rec->numcompass].time.tv_usec = usec;
-      rec->compass[rec->numcompass].rx   = 0.0;
-      rec->compass[rec->numcompass].ry   = 0.0;
-      rec->compass[rec->numcompass].rz   = deg2rad(atof(str1));
-      rec->numcompass++;
-      
-    }
-    
-  } else if (!strncmp( command, "COMPASS3D", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld: %s %s %s",
-		dummy, &sec, &usec, str1, str2, str3 ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = COMPASS;
-      rec->entry[rec->numentries].index  = rec->numcompass;
-      rec->numentries++;
-	  
-      rec->compass[rec->numcompass].time.tv_sec  = sec;
-      rec->compass[rec->numcompass].time.tv_usec = usec;
-      rec->compass[rec->numcompass].rx   = deg2rad(atof(str1));
-      rec->compass[rec->numcompass].ry   = deg2rad(atof(str2));
-      rec->compass[rec->numcompass].rz   = deg2rad(atof(str3));
-      rec->numcompass++;
       
     }
     
@@ -739,7 +695,7 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
 }
 
 int
-carmen_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
+carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 {
   static char    markerstr[MAX_LINE_LENGTH];
   static char    command[MAX_CMD_LENGTH];
@@ -972,9 +928,9 @@ carmen_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
 }
 
 int
-moos_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
+moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 {
-  static RPOS2   npos = {0.0, 0.0, 0.0};
+  static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    command[MAX_CMD_LENGTH];
   static char    dummy[MAX_CMD_LENGTH];
   static char  * running, * valptr, * strptr, * datastr, * laserstr;
@@ -1126,9 +1082,9 @@ moos_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
 enum PLAYER_COMMANDS { LASER, POS, OTHER };
 
 int
-player_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
+player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 {
-  static RPOS2   npos = {0.0, 0.0, 0.0};
+  static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    dummy[MAX_CMD_LENGTH];
   static char  * running, * valptr;
   double         angleDiff, time, fov;
@@ -1265,9 +1221,9 @@ player_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
 }
 
 int
-saphira_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
+saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 {
-  static RPOS2   npos = {0.0, 0.0, 0.0};
+  static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    command[MAX_CMD_LENGTH];
   static char    dummy[MAX_CMD_LENGTH];
   static char    str1[MAX_CMD_LENGTH];
@@ -1527,7 +1483,7 @@ placelab_parse_marker_line( char * line, MARKER_DATA * data ){
 }
 
 void
-placelab_parse_gps_line( char * line, GPS_DATA * data )
+placelab_parse_gps_line( char * line, logtools_gps_data_t * data )
 { 
   static char       dmy[MAX_LINE_LENGTH];
   static char       cmd[MAX_LINE_LENGTH];
@@ -1597,36 +1553,6 @@ placelab_parse_gps_line( char * line, GPS_DATA * data )
   }
 }
 
-void
-placelab_parse_est_line( char * line, EST_DATA * data )
-{ 
-  static char       dmy[MAX_LINE_LENGTH];
-  static char       cmd[MAX_LINE_LENGTH];
-  static char       str[MAX_LINE_LENGTH];
-  static char       buf[MAX_LINE_LENGTH];
-  char            * running, * ptr;
-  int               ctr;
-  double            tf;
-  running = line; ctr = 0;
-  while ((ptr=strtok_r( ctr==0?running:NULL, "|",(char **) &buf))!=NULL) {
-    sscanf( ptr, "%[^=]", str ); sscanf( str, "%s", cmd );
-    if (!strncasecmp( "type", cmd, MAX_LINE_LENGTH)) {
-    } else if (!strncasecmp( "time", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      tf = atof(str);
-      data->time.tv_sec = (int) (tf/1000.0);
-      data->time.tv_usec = (int) ((tf-(data->time.tv_sec*1000.0))*1000.0);
-    } else if (!strncasecmp( "lat", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->latitude = atof(str);
-    } else if (!strncasecmp( "lon", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->longitude = atof(str);
-    }
-    ctr++;
-  }
-}
-
 int
 plab_same_cell( GSM_CELL_INFO * cell1, GSM_CELL_INFO * cell2 )
 {
@@ -1651,7 +1577,7 @@ plab_unknown_cell( GSM_CELL_INFO * cell, GSM_DATA * data )
 }
 
 int
-placelab_parse_line( char *line, REC2_DATA *rec,
+placelab_parse_line( char *line, logtools_rec2_data_t *rec,
 		     int alloc __attribute__ ((unused)), int mode )
 {
   char  * ptr, * running;
@@ -1679,10 +1605,6 @@ placelab_parse_line( char *line, REC2_DATA *rec,
       } else if (!strncasecmp( "gps", command, MAX_LINE_LENGTH)) {
 	rec->entry[rec->numentries].type   = GPS;
 	rec->entry[rec->numentries].index  = rec->numgps;
-	break;
-      } else if (!strncasecmp( "estimate", command, MAX_LINE_LENGTH)) {
-	rec->entry[rec->numentries].type   = ESTIMATE;
-	rec->entry[rec->numentries].index  = rec->numestimates;
 	break;
       } else if (!strncasecmp( "marker", command, MAX_LINE_LENGTH)) {
 	rec->entry[rec->numentries].type   = MARKER;
@@ -1715,13 +1637,6 @@ placelab_parse_line( char *line, REC2_DATA *rec,
     case GPS:
       placelab_parse_gps_line( cline, &(rec->gps[rec->numgps]) );
       rec->numgps++;
-      rec->numentries++;
-      continuous = FALSE;
-      return(TRUE);
-      break;
-    case ESTIMATE:
-      placelab_parse_est_line( cline, &(rec->est[rec->numestimates]) );
-      rec->numestimates++;
       rec->numentries++;
       continuous = FALSE;
       return(TRUE);

@@ -14,23 +14,23 @@
 #include <carmen/logtools.h>
 #include <carmen/logtools_graphics.h>
 
-draw_function_t d_fct = NULL;
+logtools_draw_function_t d_fct = NULL;
 
 void
-putpixel( int x, int y )
+logtools_putpixel( int x, int y )
 {
   if (d_fct!=NULL)
     d_fct( x, y );
 }
 
 void
-draw_set_function( draw_function_t funct )
+logtools_draw_set_function( logtools_draw_function_t funct )
 {
   d_fct = funct;
 }
 
 void
-draw_ellipse( iPOINT2 pt, const int a, const int b)
+logtools_draw_ellipse( logtools_ivector2_t pt, const int a, const int b)
 {
   float aa=(a*a);
   float bb=(b*b);
@@ -45,10 +45,10 @@ draw_ellipse( iPOINT2 pt, const int a, const int b)
   
   float p = (int) (bb-(aa*b)+(0.25*aa)+0.5);
   
-  putpixel( (pt.x+x), (pt.y+y) );
-  putpixel( (pt.x+x), (pt.y-y) );
-  putpixel( (pt.x-x), (pt.y-y) );
-  putpixel( (pt.x-x), (pt.y+y) );
+  logtools_putpixel( (pt.x+x), (pt.y+y) );
+  logtools_putpixel( (pt.x+x), (pt.y-y) );
+  logtools_putpixel( (pt.x-x), (pt.y-y) );
+  logtools_putpixel( (pt.x-x), (pt.y+y) );
   
   while(fx<fy) {
     x++;
@@ -62,10 +62,10 @@ draw_ellipse( iPOINT2 pt, const int a, const int b)
       p+=(fx+bb-fy);
     }
     
-    putpixel( (pt.x+x), (pt.y+y) );
-    putpixel( (pt.x+x), (pt.y-y) );
-    putpixel( (pt.x-x), (pt.y-y) );
-    putpixel( (pt.x-x), (pt.y+y) );
+    logtools_putpixel( (pt.x+x), (pt.y+y) );
+    logtools_putpixel( (pt.x+x), (pt.y-y) );
+    logtools_putpixel( (pt.x-x), (pt.y-y) );
+    logtools_putpixel( (pt.x-x), (pt.y+y) );
   }
   
   p = (int) ((bb*(x+0.5)*(x+0.5))+(aa*(y-1)*(y-1))-(aa*bb)+0.5);
@@ -82,15 +82,15 @@ draw_ellipse( iPOINT2 pt, const int a, const int b)
       p+=(fx+aa-fy);
     }
     
-    putpixel( (pt.x+x), (pt.y+y) );
-    putpixel( (pt.x+x), (pt.y-y) );
-    putpixel( (pt.x-x), (pt.y-y) );
-    putpixel( (pt.x-x), (pt.y+y) );
+    logtools_putpixel( (pt.x+x), (pt.y+y) );
+    logtools_putpixel( (pt.x+x), (pt.y-y) );
+    logtools_putpixel( (pt.x-x), (pt.y-y) );
+    logtools_putpixel( (pt.x-x), (pt.y+y) );
   }
 }
 
 void
-draw_line( iPOINT2 p1, iPOINT2 p2 )
+logtools_draw_line( logtools_ivector2_t p1, logtools_ivector2_t p2 )
 {
   int p, x, y, x1, y1, x2, y2, dx, dy;
   int two_dx, two_dx_dy, two_dy, two_dy_dx, inc_dec;
@@ -115,7 +115,7 @@ draw_line( iPOINT2 p1, iPOINT2 p2 )
     x=x1;
     y=y1;
     
-    putpixel( x, y );
+    logtools_putpixel( x, y );
 
     while(x<x2) {
       x++;
@@ -127,7 +127,7 @@ draw_line( iPOINT2 p1, iPOINT2 p2 )
 	p+=two_dy_dx;
       }
       
-      putpixel( x, y );
+      logtools_putpixel( x, y );
     }
     
   } else {
@@ -139,7 +139,7 @@ draw_line( iPOINT2 p1, iPOINT2 p2 )
     x=x1;
     y=y1;
     
-    putpixel( x, y );
+    logtools_putpixel( x, y );
     
     while(y!=y2) {
       y+=inc_dec;
@@ -151,13 +151,13 @@ draw_line( iPOINT2 p1, iPOINT2 p2 )
 	p+=two_dx_dy;
       }
       
-      putpixel( x, y );
+      logtools_putpixel( x, y );
     }
   }
 }
 
 void
-draw_circle( iPOINT2 p, const int r )
+logtools_draw_circle( logtools_ivector2_t p, const int r )
 {
   int x=0;
   int y=r;
@@ -165,14 +165,14 @@ draw_circle( iPOINT2 p, const int r )
 
   do {
     
-    putpixel( (p.x+x), (p.y+y) );
-    putpixel( (p.x+y), (p.y+x) );
-    putpixel( (p.x+y), (p.y-x) );
-    putpixel( (p.x+x), (p.y-y) );
-    putpixel( (p.x-x), (p.y-y) );
-    putpixel( (p.x-y), (p.y-x) );
-    putpixel( (p.x-y), (p.y+x) );
-    putpixel( (p.x-x), (p.y+y) );
+    logtools_putpixel( (p.x+x), (p.y+y) );
+    logtools_putpixel( (p.x+y), (p.y+x) );
+    logtools_putpixel( (p.x+y), (p.y-x) );
+    logtools_putpixel( (p.x+x), (p.y-y) );
+    logtools_putpixel( (p.x-x), (p.y-y) );
+    logtools_putpixel( (p.x-y), (p.y-x) );
+    logtools_putpixel( (p.x-y), (p.y+x) );
+    logtools_putpixel( (p.x-x), (p.y+y) );
     
     x++;
     
@@ -186,9 +186,9 @@ draw_circle( iPOINT2 p, const int r )
 }
 
 void
-draw_filled_circle( iPOINT2 p, const int r )
+logtools_draw_filled_circle( logtools_ivector2_t p, const int r )
 {
-  iPOINT2 p1, p2;
+  logtools_ivector2_t p1, p2;
   int count, counter = (p.y+r);
 
   for ( count=(p.y-r); count<=counter; count++ ) {
@@ -196,7 +196,7 @@ draw_filled_circle( iPOINT2 p, const int r )
     p1.y = count;
     p2.x = (int) (p.x-sqrt((r*r)-((count-p.y)*(count-p.y)))+0.5);
     p2.y = count;
-    draw_line( p1, p2 );
+    logtools_draw_line( p1, p2 );
   }
   
 }

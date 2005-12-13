@@ -29,7 +29,7 @@ log2pic_settings_t  settings = {
   2.0,
   /*  double    rotation_angle; */
   DEFAULT_ROTATION_ANGLE,
-  /*  VECTOR2   rotation_center; */
+  /*  logtools_vector2_t   rotation_center; */
   {0.0,0.0},
   /*  char      infilename[MAX_STRING_LENGTH]; */
   "in.rec",
@@ -111,14 +111,14 @@ log2pic_settings_t  settings = {
   { 0, 0, { 0, 0 }, NULL },
   /*   int      gpspath; */
   FALSE,
-  /* VECTOR2            bgoffset; */
+  /* logtools_vector2_t  bgoffset; */
   {0.0, 0.0},
-  /* RPOS2              posstart; */
+  /* logtools_rpos2_t              posstart; */
   {0.0, 0.0, 0.0}
 };
 
 void
-fast_grid_line( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line )
+fast_grid_line( logtools_ivector2_t start, logtools_ivector2_t end, GRID_LINE *line )
 {
   int dy = end.y - start.y;
   int dx = end.x - start.x;
@@ -170,7 +170,7 @@ fast_grid_line( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line )
 }
 
 void
-grid_line_core( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line )
+grid_line_core( logtools_ivector2_t start, logtools_ivector2_t end, GRID_LINE *line )
 {
   int dx, dy, incr1, incr2, d, x, y, xend, yend, xdirflag, ydirflag;
 
@@ -262,10 +262,10 @@ grid_line_core( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line )
 }
 
 void
-grid_line( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line ) {
+grid_line( logtools_ivector2_t start, logtools_ivector2_t end, GRID_LINE *line ) {
   int i,j;
   int half;
-  iVECTOR2 v;
+  logtools_ivector2_t v;
   grid_line_core( start, end, line );
   if ( start.x!=line->grid[0].x ||
        start.y!=line->grid[0].y ) {
@@ -279,7 +279,9 @@ grid_line( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line ) {
 }
      
 int
-log2pic_map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v )
+log2pic_map_pos_from_vec2( logtools_vector2_t pos,
+			   logtools_grid_map2_t *map,
+			   logtools_vector2_t *v )
 {
   v->x = (map->center.x + (pos.x-map->offset.x)/settings.resolution_x);
   v->y = (map->center.y + (pos.y-map->offset.y)/settings.resolution_y);
@@ -297,18 +299,20 @@ log2pic_map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v )
 }
 
 int
-log2pic_map_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, VECTOR2 *v )
+log2pic_map_pos_from_rpos( logtools_rpos2_t rpos, logtools_grid_map2_t *map,
+			   logtools_vector2_t *v )
 {
-  VECTOR2 pos;
+  logtools_vector2_t pos;
   pos.x = rpos.x;
   pos.y = rpos.y;
   return(log2pic_map_pos_from_vec2( pos, map, v));
 }
 
 int
-log2pic_imap_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, iVECTOR2 *iv )
+log2pic_imap_pos_from_vec2( logtools_vector2_t pos,
+			    logtools_grid_map2_t *map, logtools_ivector2_t *iv )
 {
-  VECTOR2 v;
+  logtools_vector2_t v;
   int ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->x = (int)v.x;
   iv->y = (int)v.y;
@@ -316,9 +320,10 @@ log2pic_imap_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, iVECTOR2 *iv )
 }
 
 int
-log2pic_imap_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, iVECTOR2 *iv )
+log2pic_imap_pos_from_rpos( logtools_rpos2_t rpos, logtools_grid_map2_t *map,
+			    logtools_ivector2_t *iv )
 {
-  VECTOR2 v;
+  logtools_vector2_t v;
   int ret = log2pic_map_pos_from_rpos( rpos, map, &v );
   iv->x = (int)v.x;
   iv->y = (int)v.y;
@@ -326,7 +331,7 @@ log2pic_imap_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, iVECTOR2 *iv )
 }
 
 void
-log2pic_simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel )
+log2pic_simple_convolve_map( logtools_grid_map2_t *map, GAUSS_KERNEL kernel )
 {
   int x, y, k, hk;
   double ksum;
@@ -360,21 +365,21 @@ log2pic_simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel )
 }
 
 void
-log2pic_map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
+log2pic_map_integrate_scan( logtools_grid_map2_t * map, logtools_lasersens2_data_t data,
 			    double max_range, double max_usable  )
 {
   static int            first_time = TRUE; 
   static GRID_LINE      line;
   static int            max_num_linepoints = 0;
   int                   i, j, x, y;
-  iVECTOR2              start, end;
-  VECTOR2               abspt;
-  RMOVE2                nomove = {0.0, 0.0, 0.0};
+  logtools_ivector2_t              start, end;
+  logtools_vector2_t    abspt;
+  logtools_rmove2_t                nomove = {0.0, 0.0, 0.0};
   
   if (first_time) {
     max_num_linepoints =
       3 * ( max_range / map->resolution );
-    line.grid = (iVECTOR2 *) malloc( max_num_linepoints * sizeof(iVECTOR2) );
+    line.grid = (logtools_ivector2_t *) malloc( max_num_linepoints * sizeof(logtools_ivector2_t) );
     first_time = FALSE;
   }
 
@@ -440,7 +445,7 @@ log2pic_map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
 }
   
 void
-clear_map( GRID_MAP2 * map, RPOS2 pos )
+clear_map( logtools_grid_map2_t * map, logtools_rpos2_t pos )
 {
   int x, y;
   for (x=0;x<map->mapsize.x;x++) {
@@ -454,8 +459,8 @@ clear_map( GRID_MAP2 * map, RPOS2 pos )
 }
 
 void
-map_initialize( GRID_MAP2 *map, int sx, int sy, int center_x, int center_y,
-		double zoom, double resolution, RPOS2 start )
+map_initialize( logtools_grid_map2_t *map, int sx, int sy, int center_x, int center_y,
+		double zoom, double resolution, logtools_rpos2_t start )
 {
   int x, y;
 
@@ -502,7 +507,7 @@ printUnknown( FILE *fp, int n)
 }
 
 void
-log2pic_write_gnuplot_data( GRID_MAP2 *map )
+log2pic_write_gnuplot_data( logtools_grid_map2_t *map )
 {
   FILE    * ofp;
   int       x, y;
@@ -529,7 +534,7 @@ log2pic_write_gnuplot_data( GRID_MAP2 *map )
 } 
   
 double
-rpos2_length( RPOS2 pos1, RPOS2 pos2 )
+rpos2_length( logtools_rpos2_t pos1, logtools_rpos2_t pos2 )
 {
   return( sqrt( ( (pos1.x-pos2.x) * (pos1.x-pos2.x) ) +
 		( (pos1.y-pos2.y) * (pos1.y-pos2.y) ) ) );
@@ -537,7 +542,7 @@ rpos2_length( RPOS2 pos1, RPOS2 pos2 )
 
 
 void
-log2pic_map_compute_probs( GRID_MAP2 * map, double unknown_val )
+log2pic_map_compute_probs( logtools_grid_map2_t * map, double unknown_val )
 {
   int     x, y, occ_cells, free_cells;
   double  odds, logodds, s_prob = 0.0, d_prob = 0.0;
@@ -577,7 +582,7 @@ log2pic_map_compute_probs( GRID_MAP2 * map, double unknown_val )
 }
 
 void
-log2pic_compute_map( REC2_DATA rec, GRID_MAP2 * map )
+log2pic_compute_map( logtools_rec2_data_t rec, logtools_grid_map2_t * map )
 {
   GAUSS_KERNEL     kernel;
   int              i, idx;
@@ -674,18 +679,18 @@ print_usage( void )
 int
 main( int argc, char** argv)
 {
-  GRID_MAP2            map;
+  logtools_grid_map2_t            map;
   char                 bgfilename[MAX_STRING_LENGTH];
-  REC2_DATA            rec;
+  logtools_rec2_data_t            rec;
   int                  i, j, idx;
   BOUNDING_BOX2        bbox;
-  VECTOR2              size;
-  iVECTOR2             isize = {0,0}, istart = {0,0};
+  logtools_vector2_t   size;
+  logtools_ivector2_t             isize = {0,0}, istart = {0,0};
   int                  readbg = FALSE;
   int                  numctr = 0;
-  RPOS2                npos = {0.0, 0.0, 0.0};
-  RPOS2                rpos = {0.0, 0.0, 0.0};
-  RMOVE2               move;
+  logtools_rpos2_t                npos = {0.0, 0.0, 0.0};
+  logtools_rpos2_t                rpos = {0.0, 0.0, 0.0};
+  logtools_rmove2_t               move;
   double               res;
   
   if (argc<3) {

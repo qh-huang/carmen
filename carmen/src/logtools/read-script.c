@@ -15,12 +15,12 @@
 #define MAX_LINE_LENGTH 40000
 
 int
-read_script( char *filename, REC2_DATA *script, int verbose ) {
+read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 
   FILE   *fp;
 
-  RPOS2  rpos, npos = {0.0, 0.0, 0.0};
-  RVEL2  rvel = {0.0, 0.0};
+  logtools_rpos2_t  rpos, npos = {0.0, 0.0, 0.0};
+  logtools_rvel2_t  rvel = {0.0, 0.0};
   
   char inp0[80], inp1[80], inp2[80], sstr[80], secstr[80];
 
@@ -148,9 +148,9 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
   script->entry   =
     (ENTRY_POSITION *) malloc( numEntries * sizeof(ENTRY_POSITION) );
   script->psens  =
-    (POSSENS2_DATA *) malloc( numPositions * sizeof(POSSENS2_DATA) );
+    (logtools_possens2_data_t *) malloc( numPositions * sizeof(logtools_possens2_data_t) );
   script->lsens  =
-    (LASERSENS2_DATA *) malloc( numRLaserScans * sizeof(LASERSENS2_DATA) );
+    (logtools_lasersens2_data_t *) malloc( numRLaserScans * sizeof(logtools_lasersens2_data_t) );
 
   script->numentries = numEntries;
   

@@ -23,7 +23,8 @@ PointInfo arrow[7] = {
 };
 
 double
-metric_to_pixel( double size, GRID_MAP2 * map, enum FILE_TYPE system )
+metric_to_pixel( double size, logtools_grid_map2_t * map,
+		 enum logtools_file_t system )
 {
   if (system==CARMEN) {
     return( 100.0 * size / (double) map->resolution );
@@ -33,10 +34,11 @@ metric_to_pixel( double size, GRID_MAP2 * map, enum FILE_TYPE system )
 }
 
 int
-marker_map_pos_from_robot_pos( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv,
-			       enum FILE_TYPE system )
+marker_map_pos_from_robot_pos( logtools_rpos2_t rpos, logtools_grid_map2_t * map,
+			       logtools_vector2_t * iv,
+			       enum logtools_file_t system )
 {
-  VECTOR2 pos, pos_r, v, vr;
+  logtools_vector2_t pos, pos_r, v, vr;
   int     ret;
   if (system==CARMEN) {
     pos.x = rpos.x * 100.0;
@@ -59,9 +61,11 @@ marker_map_pos_from_robot_pos( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv,
 }
 
 int
-magick_pos_without_rotation( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv )
+magick_pos_without_rotation( logtools_rpos2_t rpos,
+			     logtools_grid_map2_t * map,
+			     logtools_vector2_t * iv )
 {
-  VECTOR2 pos, v;
+  logtools_vector2_t pos, v;
   int     ret;
   pos.x = rpos.x;
   pos.y = rpos.y;
@@ -72,9 +76,10 @@ magick_pos_without_rotation( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv )
 }
 
 int
-magick_pos_from_vector( VECTOR2 pos, GRID_MAP2 * map, VECTOR2 * iv )
+magick_pos_from_vector( logtools_vector2_t pos, logtools_grid_map2_t * map,
+			logtools_vector2_t * iv )
 {
-  VECTOR2 v;
+  logtools_vector2_t v;
   int     ret;
   ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->y = (map->zoom*(map->mapsize.y-v.y-1));
@@ -83,16 +88,16 @@ magick_pos_from_vector( VECTOR2 pos, GRID_MAP2 * map, VECTOR2 * iv )
 }
 
 int
-magick_pos_from_rpos( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 *iv )
+magick_pos_from_rpos( logtools_rpos2_t rpos, logtools_grid_map2_t * map, logtools_vector2_t *iv )
 {
   return(marker_map_pos_from_robot_pos(rpos,map,iv,REC));
 }
 
 
-VECTOR2
-google2vector( LL_COORD ll, int zoom )
+logtools_vector2_t
+google2vector( logtools_ll_coord_t ll, int zoom )
 {
-  VECTOR2  v;
+  logtools_vector2_t  v;
 
   int aa = 256 * (1 << (17 - zoom));
   double pixelsPerLonDegree = (double)aa / 360.0;
@@ -117,9 +122,9 @@ google2vector( LL_COORD ll, int zoom )
 
 void
 ImageMagickDrawPath( Image * image, ImageInfo * image_info,
-		     GRID_MAP2 * map, REC2_DATA * rec, int upto )
+		     logtools_grid_map2_t * map, logtools_rec2_data_t * rec, int upto )
 {
-  VECTOR2           v, vec1, vec2, vstart, vend;
+  logtools_vector2_t           v, vec1, vec2, vstart, vend;
   int               i, idx, plot = FALSE;
   DrawContext       wand;
 #if MagickLibVersion >= 0x600
@@ -128,12 +133,12 @@ ImageMagickDrawPath( Image * image, ImageInfo * image_info,
   DrawInfo          draw_info;
 #endif
   double            size;
-  RPOS2             pos = {0.0, 0.0, 0.0};
-  RMOVE2            nomove = {0.0, 0.0, 0.0};
-  LL_COORD          ll;
-  LL_COORD          llend = {0.0, 0.0};
-  LL_COORD          llstart = {0.0, 0.0};
-  UTM_COORD         utmstart, utmend, utm;
+  logtools_rpos2_t             pos = {0.0, 0.0, 0.0};
+  logtools_rmove2_t            nomove = {0.0, 0.0, 0.0};
+  logtools_ll_coord_t          ll;
+  logtools_ll_coord_t          llend = {0.0, 0.0};
+  logtools_ll_coord_t          llstart = {0.0, 0.0};
+  logtools_utm_coord_t         utmstart, utmend, utm;
   double            northingf, eastingf;
   
 #if MagickLibVersion >= 0x600
@@ -322,8 +327,8 @@ count_dumps_in_marker_line( char * data )
 
 int
 ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
-			  GRID_MAP2 * map, char * data,
-			  enum FILE_TYPE system, int up_to_dump )
+			  logtools_grid_map2_t * map, char * data,
+			  enum logtools_file_t system, int up_to_dump )
 {
 #if MagickLibVersion >= 0x600
   PixelWand       * color;
@@ -332,10 +337,10 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
 #endif
   DrawContext       wand;
   
-  VECTOR2           vec, vec1, vec2, boxsize;
-  VALUE_SET         dash_set = { 0, NULL };
+  logtools_vector2_t           vec, vec1, vec2, boxsize;
+  logtools_value_set_t         dash_set = { 0, NULL };
   int               i, n, ctr, cctr, dctr, pri;
-  RPOS2             pos, pos1, pos2;
+  logtools_rpos2_t             pos, pos1, pos2;
   char            * ptr, * running, * str;
   char              str1[MAX_LINE_LENGTH];
   char              str2[MAX_LINE_LENGTH];
@@ -777,7 +782,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
 }
 
 void
-check_active_markers( iVALUE_SET * active, REC2_DATA * rec, int up_to_entry )
+check_active_markers( logtools_ivalue_set_t * active, logtools_rec2_data_t * rec, int up_to_entry )
 {
   char   dummy[MAX_STRING_LENGTH];
   char   tagstr[MAX_STRING_LENGTH];
@@ -803,7 +808,8 @@ check_active_markers( iVALUE_SET * active, REC2_DATA * rec, int up_to_entry )
 }
 
 void
-copy_probs_to_data( log2pic_image_t * img, GRID_MAP2 * map, iVECTOR2 zsize )
+copy_probs_to_data( log2pic_image_t * img, logtools_grid_map2_t * map,
+		    logtools_ivector2_t zsize )
 {
   GAUSS_KERNEL        kernel;
   int                 i, j, idx, ix, iy;
@@ -863,7 +869,7 @@ copy_probs_to_data( log2pic_image_t * img, GRID_MAP2 * map, iVECTOR2 zsize )
 }
 
 void
-alloc_image_from_data( Image ** image, log2pic_image_t * img, GRID_MAP2 * map )
+alloc_image_from_data( Image ** image, log2pic_image_t * img, logtools_grid_map2_t * map )
 {
   ExceptionInfo       exception;
   GetExceptionInfo( &exception );
@@ -878,10 +884,10 @@ alloc_image_from_data( Image ** image, log2pic_image_t * img, GRID_MAP2 * map )
 
 void
 draw_image_marker( Image * image, ImageInfo * image_info,
-		   GRID_MAP2 * map, REC2_DATA * rec,
+		   logtools_grid_map2_t * map, logtools_rec2_data_t * rec,
 		   int up_to_entry, int up_to_dump )
 {
-  static iVALUE_SET   active;
+  static logtools_ivalue_set_t   active;
   static int          firsttime = TRUE;
   int                 i, idx;
   char                markerstr[MAX_LINE_LENGTH];
@@ -921,10 +927,10 @@ draw_image_marker( Image * image, ImageInfo * image_info,
 }
 
 void
-dump_animation_map( Image * image, ImageInfo * image_info,
-		    log2pic_image_t * img, GRID_MAP2 * map,
-		    iVECTOR2 zsize, REC2_DATA * rec,
-		    int up_to_entry, int up_to_scan, int up_to_dump )
+log2pic_dump_animation_map( Image * image, ImageInfo * image_info,
+			    log2pic_image_t * img, logtools_grid_map2_t * map,
+			    logtools_ivector2_t zsize, logtools_rec2_data_t * rec,
+			    int up_to_entry, int up_to_scan, int up_to_dump )
 {
   double progress;
   copy_probs_to_data( img, map, zsize );
@@ -952,17 +958,17 @@ dump_animation_map( Image * image, ImageInfo * image_info,
 }
 
 void
-log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
+log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_rec2_data_t * rec )
 {
   int                 ok = TRUE;
   int                 i, j, num_dumps, idx, size, ctr = 0, lidx = 0;
   Image             * image = NULL;
   ImageInfo           image_info;
-  iVECTOR2            zsize;
+  logtools_ivector2_t            zsize;
   ExceptionInfo       exception;
   PixelPacket         color;
   log2pic_image_t     img;
-  RPOS2               lastpos = {MAXFLOAT,MAXFLOAT,0};
+  logtools_rpos2_t               lastpos = {MAXFLOAT,MAXFLOAT,0};
   zsize.x = (int) (map->zoom * map->mapsize.x);
   zsize.y = (int) (map->zoom * map->mapsize.y);
   GetExceptionInfo(&exception);
@@ -987,15 +993,16 @@ log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 	idx = rec->entry[i].index;
 	if (rec->entry[i].type==GPS) {
 	  if (ctr++%(settings.anim_skip+1)==0) {
-	    dump_animation_map( image, &image_info, &img,
-				map, zsize, rec, i, idx+1, 0 );
+	    log2pic_dump_animation_map( image, &image_info, &img,
+					map, zsize, rec, i, idx+1, 0 );
 	  }
 	}
       }
     } else {
       if (settings.from==0)
-	dump_animation_map( image, &image_info, &img, map, zsize, rec,
-			    0, 0, 0 );
+	log2pic_dump_animation_map( image, &image_info, &img,
+				    map, zsize, rec,
+				    0, 0, 0 );
       lidx = 0;
       for (i=0; i<rec->numentries; i++) {
 	idx = rec->entry[i].index;
@@ -1009,8 +1016,8 @@ log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 			       rec->lsens[idx].estpos)>settings.anim_step) {
 	      if (idx>=settings.from && idx<=settings.to)
 		if (ctr++%(settings.anim_skip+1)==0) {
-		  dump_animation_map( image, &image_info, &img,
-				      map, zsize, rec, i, idx+1, 0 );
+		  log2pic_dump_animation_map( image, &image_info, &img,
+					      map, zsize, rec, i, idx+1, 0 );
 		}
 	      lastpos = rec->lsens[idx].estpos;
 	    }
@@ -1019,16 +1026,17 @@ log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 	  num_dumps = count_dumps_in_marker_line( rec->marker[idx].datastr );
 	  for (j=0; j<num_dumps; j++) {
 	    if (ctr++%(settings.anim_skip+1)==0) {
-	      dump_animation_map( image, &image_info, &img,
-				  map, zsize, rec, i, lidx, j+1 );
+	      log2pic_dump_animation_map( image, &image_info, &img,
+					  map, zsize, rec, i, lidx, j+1 );
 	    }
 	  }
 	}
       }
       if (rec->numlaserscans>settings.from &&
 	  rec->numlaserscans<settings.to)
-	dump_animation_map( image, &image_info, &img, map, zsize,
-			    rec, rec->numentries, rec->numlaserscans, 0 );
+	log2pic_dump_animation_map( image, &image_info, &img, map, zsize,
+				    rec, rec->numentries, rec->numlaserscans,
+				    0 );
     }
   } else {
     /*************    IMAGE   **************/
@@ -1048,8 +1056,8 @@ log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 	  if (ctr++%(settings.anim_skip+1)==0) {
 	    log2pic_filetemplate_from_filename( settings.filetemplate,
 						settings.outfilename );
-	    dump_animation_map( image, &image_info, &img,
-				map, zsize, rec, i, lidx, j+1 );
+	    log2pic_dump_animation_map( image, &image_info, &img,
+					map, zsize, rec, i, lidx, j+1 );
 	  }
 	}
       }

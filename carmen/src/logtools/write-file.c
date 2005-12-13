@@ -69,7 +69,7 @@ write_script_open( FILE *fpout, unsigned long sec, unsigned long usec )
 }
 
 int
-write_script_file( char *filename, REC2_DATA rec )
+write_script_file( char *filename, logtools_rec2_data_t rec )
 {
   FILE  * iop;
   int     i, k, stop;
@@ -132,7 +132,7 @@ write_script_file( char *filename, REC2_DATA rec )
 }
 
 int
-write_rec2d_file( char *filename, REC2_DATA rec )
+write_rec2d_file( char *filename, logtools_rec2_data_t rec )
 {
   FILE  * iop;
   int     i, k;
@@ -183,7 +183,7 @@ write_rec2d_file( char *filename, REC2_DATA rec )
 }
 
 int
-write_carmen_file( char *filename, REC2_DATA rec )
+write_carmen_file( char *filename, logtools_rec2_data_t rec )
 {
   double    time, starttime = 0.0;
   int       i, k, stop; 
@@ -275,7 +275,7 @@ write_carmen_file( char *filename, REC2_DATA rec )
 }
 
 int
-write_moos_file( char *filename, REC2_DATA rec )
+write_moos_file( char *filename, logtools_rec2_data_t rec )
 {
   FILE          * iop;
   struct tm     * actual_date; 
@@ -361,7 +361,7 @@ write_moos_file( char *filename, REC2_DATA rec )
 
 int
 write_player_file( char *filename __attribute__ ((unused)),
-		   REC2_DATA rec __attribute__ ((unused)) )
+		   logtools_rec2_data_t rec __attribute__ ((unused)) )
 {
   fprintf( stderr,
 	   "# ERROR: writing for player-format currently not supported!\n" );
@@ -369,11 +369,11 @@ write_player_file( char *filename __attribute__ ((unused)),
 }
 
 int
-write_saphira_file( char *filename, REC2_DATA rec, double dist )
+write_saphira_file( char *filename, logtools_rec2_data_t rec, double dist )
 { 
   FILE    * iop;
   int       i, k, fov, cnt = 1;
-  RPOS2     lastpos;
+  logtools_rpos2_t     lastpos;
   
   fprintf( stderr, "# write saphira file %s ...\n", filename );
   if ((iop = fopen( filename, "w")) == 0){
@@ -418,9 +418,9 @@ write_saphira_file( char *filename, REC2_DATA rec, double dist )
 }
   
 int
-write_data2d_file( char * filename, REC2_DATA rec )
+write_data2d_file( char * filename, logtools_rec2_data_t rec )
 {
-  enum FILE_TYPE     out_type = REC;
+  enum logtools_file_t     out_type = REC;
   char               fname[MAX_NAME_LENGTH];
 
   if ( !fnmatch( "script:*", filename, 0) ) {

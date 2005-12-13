@@ -25,7 +25,7 @@ gsm_compare( const void *a, const void *b )
 
 
 void
-placelab_sort_gsm( REC2_DATA * rec )
+placelab_sort_gsm( logtools_rec2_data_t * rec )
 {
   int i;
   for (i=0; i<rec->numgsm; i++) {
@@ -35,9 +35,9 @@ placelab_sort_gsm( REC2_DATA * rec )
 }
 
 int
-read_data2d_file( REC2_DATA * rec, char * filename )
+read_data2d_file( logtools_rec2_data_t * rec, char * filename )
 {
-  enum FILE_TYPE     inp_type = UNKOWN;
+  enum logtools_file_t     inp_type = UNKOWN;
   char               fname[MAX_NAME_LENGTH];
 
     fprintf( stderr, "#####################################################################\n" );
@@ -147,14 +147,14 @@ read_data2d_file( REC2_DATA * rec, char * filename )
 /***********************************************************************/
 
 int
-read_rec2d_file( char *filename, REC2_DATA *rec,  int mode )
+read_rec2d_file( char *filename, logtools_rec2_data_t *rec,  int mode )
 {
   return(load_rec2d_file( filename, rec, REC, mode ));
 }
 
 
 int
-load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
+load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t type, int mode )
 {
 
   char      line[MAX_LINE_LENGTH];
@@ -164,8 +164,8 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   char    * sptr, * iline, * lptr;
   FILE    * iop;
   int       linectr = 0, posctr = 0;
-  int       laserctr = 0, dynctr = 0, estctr = 0;
-  int       gpsctr = 0, compassctr = 0;
+  int       laserctr = 0, dynctr = 0;
+  int       gpsctr = 0;
   int       numEntries = 0, markerctr = 0;
   int       wifictr = 0, gsmctr = 0;
 
@@ -200,8 +200,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
 	  gpsctr++;
 	} else if (!strcmp( command, "NMEA-GGA" )) {
 	  gpsctr++;
-	} else if ( (!strcmp( command, "COMPASS2D" )) ) {
-	  compassctr++;
 	} else if ( (!strcmp( command, "MARK-POS")) ||
 		    (!strcmp( command, "MARKER")) ) {
 	  markerctr++;
@@ -302,9 +300,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
 	    } else if (!strncasecmp( "marker", command, MAX_LINE_LENGTH)) {
 	      markerctr++;
 	      break;
-	    } else if (!strncasecmp( "estimate", command, MAX_LINE_LENGTH)) {
-	      estctr++;
-	      break;
 	    }
 	  }
 	}
@@ -325,8 +320,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       fprintf( stderr, "# found %d laserscans\n", laserctr );
     if (dynctr>0)
       fprintf( stderr, "# found %d dynamic probs\n", dynctr );
-    if (compassctr>0)
-      fprintf( stderr, "# found %d compass pos\n", compassctr );
     if (gpsctr>0)
       fprintf( stderr, "# found %d gps pos\n", gpsctr );
     if (markerctr>0)
@@ -335,15 +328,13 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       fprintf( stderr, "# found %d wifi\n", wifictr );
     if (gsmctr>0)
       fprintf( stderr, "# found %d gsm\n", gsmctr );
-    if (estctr>0)
-      fprintf( stderr, "# found %d estimates\n", estctr );
   }
   
   numEntries =
     posctr + laserctr +
     dynctr + gpsctr +
-    compassctr + markerctr +
-    wifictr + gsmctr + estctr + 1;
+    markerctr +
+    wifictr + gsmctr + 1;
 
   rec->numentries = 0;
 
@@ -354,27 +345,21 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
 
   if (posctr>0) {
     rec->psens =
-      (POSSENS2_DATA *) malloc( posctr * sizeof(POSSENS2_DATA) );
+      (logtools_possens2_data_t *) malloc( posctr * sizeof(logtools_possens2_data_t) );
   } else
     rec->psens = NULL;
 
   if (laserctr>0)
     rec->lsens =
-      (LASERSENS2_DATA *) malloc( laserctr * sizeof(LASERSENS2_DATA) ); 
+      (logtools_lasersens2_data_t *) malloc( laserctr * sizeof(logtools_lasersens2_data_t) ); 
   else
     rec->lsens = NULL;
 
   if (gpsctr>0)
     rec->gps =
-      (GPS_DATA *) malloc( gpsctr * sizeof(GPS_DATA) );
+      (logtools_gps_data_t *) malloc( gpsctr * sizeof(logtools_gps_data_t) );
   else
     rec->gps = NULL;
-
-  if (compassctr>0)
-    rec->compass =
-      (COMPASS3_DATA *) malloc( compassctr * sizeof(COMPASS3_DATA) );
-  else 
-    rec->compass = NULL;
 
   if (markerctr>0)
     rec->marker =
@@ -394,12 +379,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   else 
     rec->wifi = NULL;
   
-  if (estctr>0)
-    rec->est =
-      (EST_DATA *) malloc( estctr * sizeof(EST_DATA) );
-  else 
-    rec->est = NULL;
-  
   numScan    = 0;
   numPos     = 0;
   numDynProb = 0;
@@ -407,11 +386,9 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   rec->numpositions    = 0;
   rec->numlaserscans   = 0;
   rec->numgps          = 0;
-  rec->numcompass      = 0;
   rec->nummarkers      = 0;
   rec->numgsm          = 0;
   rec->numwifi         = 0;
-  rec->numestimates    = 0;
   
   FEnd    = 0;
   linectr = 0;
