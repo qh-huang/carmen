@@ -32,24 +32,19 @@ usage(char *progname, char *fmt, ...)
 {
   va_list args;
 
-  if (fmt != NULL)
-    {
-      fprintf(stderr, "\n[31;1m");
-      va_start(args, fmt);
-      vfprintf(stderr, fmt, args);
-      va_end(args);
-      fprintf(stderr, "[0m\n\n");
-    }
-  else
-    {
-      fprintf(stderr, "\n");
-    }
+  if (fmt != NULL) {
+    fprintf(stderr, "\n[31;1m");
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "[0m\n\n");
+  } else 
+    fprintf(stderr, "\n");
 
-  if (strrchr(progname, '/') != NULL)
-    {
-      progname = strrchr(progname, '/');
-      progname++;
-    }
+  if (strrchr(progname, '/') != NULL) {
+    progname = strrchr(progname, '/');
+    progname++;
+  }
 
   fprintf(stderr, "Usage: %s [variable_name] [new_value]\n", progname);
   fprintf(stderr, "\nTo get module variables, use\n");
@@ -57,9 +52,7 @@ usage(char *progname, char *fmt, ...)
   exit(-1);
 }
 
-/* handler for C^c */
-int 
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
   int param_error;
 
@@ -77,67 +70,55 @@ main(int argc, char** argv)
 
   carmen_param_check_version(argv[0]);
 
-  if (argc == 2) 
-    {
-      
-      param_error = carmen_param_get_string(argv[1], &return_string);
-      carmen_param_handle_error(param_error, usage, argv[0]);
-
-      if (return_string) 
-	{
-	  printf("%s = %s\n", argv[1], return_string);
-	  free(return_string);
-	  exit(0);
-	}
-      else
-	{
-	  printf("Could not retrieve %s from paramServer.\n", argv[1]);
-	  exit(0);
-	}
-    }
-
-  if (argc == 3 && carmen_strcasecmp(argv[2], "all") == 0)
-    {
-      if (carmen_param_get_all(argv[1], &variables, &values, &list_length) < 0)
-	{
-	  IPC_perror("Error retrieving all variables of module");
-	  exit(-1);
-	}
-      max_variable_width = 0;
-      for (index = 0; index < list_length; index++)
-	max_variable_width = carmen_fmax(max_variable_width, strlen(variables[index]));
-
-      if (max_variable_width > 60)
-	max_variable_width = 60;
-
-      max_variable_width += 5;
-      printf("\nVariable list for module [31;1m%s[0m\n", argv[1]);
-      memset(buffer, '-', max_variable_width+15);
-      buffer[max_variable_width+15] = '\0';
-      printf("%s\n", buffer);
-      for (index = 0; index < list_length; index++)
-	{
-	  printf("%s[%dC%s\n", variables[index],
-		 max_variable_width - (int)strlen(variables[index]),
-		 values[index]);
-	  free(variables[index]);
-	  free(values[index]);
-	}
-      free(variables);
-      free(values);
-      printf("\n");
-    }
-  else 
-    {
-      if (carmen_param_set_variable(argv[1], argv[2], &return_string) < 0) 
-	{
-	  IPC_perror("Error setting variable");
-	  exit(-1);
-	}
-      
-      printf("%s = %s\n", argv[1], return_string);
+  if (argc == 2) {
+    param_error = carmen_param_get_string(argv[1], &return_string);
+    carmen_param_handle_error(param_error, usage, argv[0]);
+    
+    if (return_string) {
+      carmen_warn("%s = %s\n", argv[1], return_string);
       free(return_string);
+      exit(0);
+    } else 
+      carmen_die("Could not retrieve %s from paramServer.\n", argv[1]);
+  }
+
+  if (argc == 3 && carmen_strcasecmp(argv[2], "all") == 0) {
+    if (carmen_param_get_all(argv[1], &variables, &values, &list_length) < 0) {
+      IPC_perror("Error retrieving all variables of module");
+      exit(-1);
     }
+    max_variable_width = 0;
+    for (index = 0; index < list_length; index++)
+      max_variable_width = carmen_fmax(max_variable_width, 
+				       strlen(variables[index]));
+    
+    if (max_variable_width > 60)
+      max_variable_width = 60;
+    
+    max_variable_width += 5;
+    printf("\nVariable list for module [31;1m%s[0m\n", argv[1]);
+    memset(buffer, '-', max_variable_width+15);
+    buffer[max_variable_width+15] = '\0';
+    printf("%s\n", buffer);
+    for (index = 0; index < list_length; index++) {
+      printf("%s[%dC%s\n", variables[index],
+	     max_variable_width - (int)strlen(variables[index]),
+	     values[index]);
+      free(variables[index]);
+      free(values[index]);
+    }
+    free(variables);
+    free(values);
+    printf("\n");
+  } else {
+    if (carmen_param_set_variable(argv[1], argv[2], &return_string) < 0) {
+      IPC_perror("Error setting variable");
+      exit(-1);
+    }
+    
+    printf("%s = %s\n", argv[1], return_string);
+    free(return_string);
+  }
 
   return 0;
 }

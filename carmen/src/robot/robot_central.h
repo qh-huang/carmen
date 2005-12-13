@@ -25,8 +25,8 @@
  *
  ********************************************************/
 
-#ifndef ROBOT_H
-#define ROBOT_H
+#ifndef CARMEN_ROBOT_H
+#define CARMEN_ROBOT_H
 
 #include <carmen/base_messages.h>
 
@@ -41,19 +41,23 @@ extern "C" {
   // is available, so ESTIMATES_CONVERGE is the amount of odometry
   // we need to estimate the clock skew
 
-#define        MAX_READINGS                    5
-#define        ESTIMATES_CONVERGE              (MAX_READINGS+25)
+#define      CARMEN_ROBOT_MAX_READINGS         5
+#define      CARMEN_ROBOT_ESTIMATES_CONVERGE   (CARMEN_ROBOT_MAX_READINGS+25)
 
-#define        ALL_STOP                        1
-#define        ALLOW_ROTATE                    2
+#define      CARMEN_ROBOT_ALL_STOP             1
+#define      CARMEN_ROBOT_ALLOW_ROTATE         2
 
-#define      ODOMETRY_AVERAGE          0
-#define      LOCALIZE_AVERAGE          5
+#define      CARMEN_ROBOT_MIN_ALLOWED_VELOCITY 0.03 // cm/s
 
-#define      MIN_ALLOWED_VELOCITY      0.03 // cm/s
+#define      CARMEN_ROBOT_ODOMETRY_AVERAGE     0
+#define      CARMEN_ROBOT_FRONT_LASER_AVERAGE  1
+#define      CARMEN_ROBOT_REAR_LASER_AVERAGE   2
+
+#define      CARMEN_ROBOT_BUMPER_AVERAGE       3
+#define      CARMEN_ROBOT_SONAR_AVERAGE        4
 
 extern carmen_base_odometry_message carmen_robot_latest_odometry;
-extern carmen_base_odometry_message carmen_robot_odometry[MAX_READINGS];
+extern carmen_base_odometry_message carmen_robot_odometry[CARMEN_ROBOT_MAX_READINGS];
 extern int carmen_robot_position_received;
 extern int carmen_robot_converge;
 extern carmen_robot_config_t carmen_robot_config;
@@ -66,16 +70,12 @@ extern double carmen_robot_collision_avoidance_frequency;
     
  /* extern double carmen_robot_laser_bearing_skip_rate; */
 
-extern int carmen_robot_odometry_count; 
-
-extern inline double 
-carmen_robot_get_odometry_skew(void)
-{
-  if(strcmp(carmen_robot_host, carmen_robot_latest_odometry.host) == 0)
-    return 0;  
-  else 
-    return carmen_running_average_report(ODOMETRY_AVERAGE);
-}
+double carmen_robot_get_fraction(double timestamp, double skew,
+				 int *low, int *high);
+int carmen_robot_get_skew(int msg_count, double *skew,
+			  int data_type, char *hostname);
+void carmen_robot_update_skew(int data_type, int *count, double time,
+			      char *hostname);
 
 #ifdef __cplusplus
 }

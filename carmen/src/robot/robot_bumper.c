@@ -31,12 +31,7 @@
 #include "robot_main.h"
 #include "robot_bumper.h"
 
-#define BUMPER_AVERAGE             3
-
-extern int carmen_robot_odometry_count; 
-
 static carmen_base_bumper_message base_bumper;
-static double bumper_local_timestamp;
 static carmen_robot_bumper_message robot_bumper;
 
 static int bumper_count = 0;
@@ -90,59 +85,25 @@ static void construct_bumper_message(carmen_robot_bumper_message *msg,
 void carmen_robot_correct_bumper_and_publish(void) 
 {  
   double bumper_skew;
-  double odometry_skew;
   double fraction;
-  int i, low, high;
+  int low, high;
   
   if(!bumper_ready)
     return;
 
   check_message_data_chunk_sizes();
   
-  if(!bumper_ready) 
+  bumper_ready = carmen_robot_get_skew(bumper_count, &bumper_skew,
+				       CARMEN_ROBOT_BUMPER_AVERAGE, 
+				       base_bumper.host);
+  if (!bumper_ready) {
+    carmen_warn("Waiting for bumper data to accumulate\n");
     return;
-
-  if (strcmp(carmen_robot_host, base_bumper.host) == 0)
-    bumper_skew = 0;
-  else {
-    bumper_skew = carmen_running_average_report(BUMPER_AVERAGE);
-    if (bumper_count < ESTIMATES_CONVERGE) {
-      carmen_warn("Waiting for bumper data to accumulate\n");
-      return;
-    }
   }
 
-  if (carmen_robot_odometry_count < ESTIMATES_CONVERGE) {
-    carmen_warn("Waiting for odometry to accumulate\n");
-    return;
-  }  
+  fraction = carmen_robot_get_fraction(base_bumper.timestamp, bumper_skew,
+				       &low, &high);
 
-  odometry_skew = carmen_robot_get_odometry_skew();
-  
-  low = 0;
-  high = 1;
-  for(i = 0; i < MAX_READINGS; i++) 
-    if (base_bumper.timestamp + bumper_skew <
-	carmen_robot_odometry[i].timestamp + odometry_skew) {
-      if (i == 0) {
-	low = 0;
-	high = 1;
-      } else {
-	low = i-1;
-	high = i;
-      }      
-      break;
-    }
-
-  if (i == MAX_READINGS) {
-    low = i-2;
-    high = i-1;
-  }
-
-  fraction = (base_bumper.timestamp - carmen_robot_odometry[low].timestamp)/
-    (carmen_robot_odometry[high].timestamp - 
-     carmen_robot_odometry[low].timestamp);
-  
   construct_bumper_message(&robot_bumper, low, high, fraction);
     
   IPC_RETURN_TYPE err;
@@ -166,12 +127,8 @@ int carmen_robot_bumper_on()
 
 static void bumper_handler(void)
 {
-  bumper_local_timestamp = carmen_get_time();
-  if(bumper_count <= ESTIMATES_CONVERGE)
-    bumper_count++;
-
-  carmen_running_average_add
-    (BUMPER_AVERAGE, bumper_local_timestamp-base_bumper.timestamp);    
+  carmen_robot_update_skew(CARMEN_ROBOT_BUMPER_AVERAGE, &bumper_count, 
+			   base_bumper.timestamp, base_bumper.host);
   
   bumper_ready=1;  
 }
@@ -188,6 +145,8 @@ void carmen_robot_add_bumper_handler(void)
   carmen_base_subscribe_bumper_message(&base_bumper,
 				       (carmen_handler_t)bumper_handler,
 				       CARMEN_SUBSCRIBE_LATEST);
+
+  carmen_running_average_clear(CARMEN_ROBOT_BUMPER_AVERAGE);
 }
 
 void carmen_robot_add_bumper_parameters(char *progname __attribute__ ((unused)) ) 

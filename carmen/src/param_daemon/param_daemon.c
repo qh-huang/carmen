@@ -45,9 +45,6 @@ typedef struct {
   char *rvalue;
 } carmen_ini_param_t, *carmen_ini_param_p;
 
-static pid_t central_pid = -1;
-static int auto_start_central = 1; 
-
 static int connected = 0;
 
 static char *modules[MAX_NUM_MODULES];
@@ -82,8 +79,6 @@ shutdown_param_server(int signo)
 {
   if (signo == SIGINT) {
     carmen_ipc_disconnect();
-    if (central_pid > 0)
-      kill(central_pid, SIGINT);
     exit(1);
   }
 }
@@ -490,7 +485,6 @@ static void help(char *progname)
 	  progname);
   fprintf
     (stderr, " --alphabetize\talphabetize parameters when listing\n"
-     " --central\tdo not autostart central\n"
      " --robot=ROBOT\tuse parameters for ROBOT\n"     
      "\n\n"
      "[map_filename] and [ini filename] are both optional arguments. \n"
@@ -526,7 +520,6 @@ read_commandline(int argc, char **argv)
   static struct option long_options[] = {
     {"help", 0, 0, 0},
     {"robot", 1, NULL, 0},
-    {"no_autostart_central", 0, &auto_start_central, 0},
     {"alphabetize", 0, &alphabetize, 1},
     {0, 0, 0, 0}
   };
@@ -565,9 +558,6 @@ read_commandline(int argc, char **argv)
       break;
     case 'a':
       alphabetize = 1;
-      break;
-    case 'c':
-      auto_start_central = 0;
       break;
     case 'h':
       help(argv[0]);
@@ -1236,44 +1226,6 @@ initialize_param_ipc(void)
   return 0;
 }
 
-static void
-fork_central(void)
-{
-  char *path;
-  int path_length = 0;
-  
-  if (getenv("PATH") != NULL)
-    path_length = strlen(getenv("PATH"));
-  path_length += strlen(":./:../../bin/");
-  if (getenv("CARMEN_HOME") != NULL) {
-    path_length += strlen(getenv("CARMEN_HOME"));
-    path_length += strlen("/bin:");
-  }
-  path_length += 1;
-
-  path = (char *)calloc(path_length+1, sizeof(char));
-
-  if (getenv("PATH") != NULL)
-    strcat(path, getenv("PATH"));
-  strcat(path, ":./:../../bin/");
-  if (getenv("CARMEN_HOME") != NULL) {
-    strcat(path, ":");
-    strcat(path, getenv("CARMEN_HOME"));
-    strcat(path, "/bin");
-  }
-  
-  carmen_warn("Starting central...\n");
-  central_pid = fork();
-  if (central_pid == 0) {
-    setenv("PATH", path, 1);
-    execlp("central", NULL, NULL);
-    carmen_die_syserror("Could not exec central: %s", path);
-  }
-  sleep(1);
-  if (central_pid == -1)
-    carmen_die_syserror("Could not fork to start central");
-}
-
 int 
 main(int argc, char **argv)
 {
@@ -1286,9 +1238,6 @@ main(int argc, char **argv)
 
   read_parameters_from_file();
 
-  if (auto_start_central)
-    fork_central();
-  
   carmen_ipc_initialize(argc, argv);
 
   connected = 1;

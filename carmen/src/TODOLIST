@@ -1,3 +1,25 @@
+process control
+
+log file tools
+
+Directory structure (especially mapserver)
+  map/log file extensions: .cmf, .clf
+  
+parameter handling
+
+viewers
+
+laser module/messages
+   Add error messages when laser fails to connect.
+
+Test programs 
+   Localize, navigator
+
+Robot convergence on same host
+IPC message size test
+Hmaps
+Command shell
+
 - Fix imlib detection, fix ar making in makefile
 
 

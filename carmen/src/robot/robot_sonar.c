@@ -31,10 +31,7 @@
 #include "robot_main.h"
 #include "robot_sonar.h"
 
-#define        SONAR_AVERAGE             3
-
 static carmen_base_sonar_message base_sonar;
-static double sonar_local_timestamp;
 static carmen_robot_sonar_message robot_sonar;
 
 static int sonar_count = 0;
@@ -97,55 +94,24 @@ void carmen_robot_correct_sonar_and_publish(void)
 {
   
   double sonar_skew;
-  double odometry_skew;
   double fraction;
-  int i, low, high;
+  int low, high;
   IPC_RETURN_TYPE err;
 
   if(!sonar_ready) 
     return;
 
-  if (strcmp(carmen_robot_host, base_sonar.host) == 0)
-    sonar_skew = 0;
-  else 
-    sonar_skew = carmen_running_average_report(SONAR_AVERAGE);
-
-  odometry_skew = carmen_robot_get_odometry_skew();
-  if (sonar_count < ESTIMATES_CONVERGE) {
+  sonar_ready = carmen_robot_get_skew(sonar_count, &sonar_skew, 
+				      CARMEN_ROBOT_SONAR_AVERAGE, 
+				      base_sonar.host);
+  if (!sonar_ready) {
     carmen_warn("Waiting for sonar data to accumulate\n");
     return;
   }
-  
-  if (carmen_robot_odometry_count < ESTIMATES_CONVERGE) {
-    carmen_warn("Waiting for odometry to accumulate\n");
-    sonar_ready = 0;
-    return;
-  }  
 
-  low = 0;
-  high = 1;
-  for(i = 0; i < MAX_READINGS; i++) 
-    if (base_sonar.timestamp + sonar_skew <
-	carmen_robot_odometry[i].timestamp + odometry_skew) {
-      if (i == 0) {
-	low = 0;
-	high = 1;
-      } else {
-	low = i-1;
-	high = i;
-      }      
-      break;
-    }
+  fraction = carmen_robot_get_fraction(base_sonar.timestamp, sonar_skew,
+				       &low, &high);
 
-  if (i == MAX_READINGS) {
-    low = i-2;
-    high = i-1;
-  }
-
-  fraction = (base_sonar.timestamp - carmen_robot_odometry[low].timestamp)/
-    (carmen_robot_odometry[high].timestamp - 
-     carmen_robot_odometry[low].timestamp);
-  
   construct_sonar_message(&robot_sonar, low, high, fraction);
 
   err = IPC_publishData(CARMEN_ROBOT_SONAR_NAME, &robot_sonar);
@@ -174,13 +140,10 @@ static void sonar_handler(void)
   double min_dist;
   
   check_message_data_chunk_sizes();
-  
-  sonar_local_timestamp = carmen_get_time();
-  if(sonar_count <= ESTIMATES_CONVERGE)
-    sonar_count++;
 
-  carmen_running_average_add(SONAR_AVERAGE, sonar_local_timestamp-
-			     base_sonar.timestamp);
+  carmen_robot_update_skew(CARMEN_ROBOT_SONAR_AVERAGE, &sonar_count, 
+			   base_sonar.timestamp, base_sonar.host);
+  
   memcpy(robot_sonar.ranges, base_sonar.range, robot_sonar.num_sonars * 
 	 sizeof(double));
   memcpy(robot_sonar.positions, base_sonar.positions, robot_sonar.num_sonars * 
@@ -230,10 +193,10 @@ static void sonar_handler(void)
     }
     
     
-    if(max_velocity<=0 && max_velocity<MIN_ALLOWED_VELOCITY)
+    if(max_velocity<=0 && max_velocity<CARMEN_ROBOT_MIN_ALLOWED_VELOCITY)
       max_velocity=0.0;
     if(max_velocity<=0 && carmen_robot_latest_odometry.tv>0.0)
-      carmen_robot_stop_robot(ALLOW_ROTATE);
+      carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
   }
 
   sonar_ready=1;
@@ -261,6 +224,8 @@ void carmen_robot_add_sonar_handler(void)
   carmen_base_subscribe_sonar_message(&base_sonar,
 				    (carmen_handler_t)sonar_handler,
 				    CARMEN_SUBSCRIBE_LATEST);
+
+  carmen_running_average_clear(CARMEN_ROBOT_SONAR_AVERAGE);
 }
 
 void carmen_robot_add_sonar_parameters(char *progname __attribute__ ((unused)) ) 

@@ -34,19 +34,14 @@
 #include "robot_central.h"
 
 carmen_robot_config_t carmen_robot_config;
-char *carmen_robot_host;
 carmen_base_odometry_message carmen_robot_latest_odometry;
-carmen_base_odometry_message carmen_robot_odometry[MAX_READINGS];
-
+carmen_base_odometry_message carmen_robot_odometry[CARMEN_ROBOT_MAX_READINGS];
 double carmen_robot_collision_avoidance_frequency = 10.0;
-double turn_before_driving_if_heading_bigger_than = M_PI/2;
 
-int carmen_robot_odometry_count = 0;
-
-static double current_time;
-
-static double odometry_local_timestamp[MAX_READINGS];
-
+static char *robot_host;
+static double turn_before_driving_if_heading_bigger_than = M_PI/2;
+static int odometry_count = 0;
+static double odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS];
 static int use_laser = 1;
 static int use_sonar = 1;
 static int use_bumper = 0;
@@ -74,13 +69,84 @@ static int following_trajectory = 0;
 
 static void publish_vector_status(double distance, double angle);
 
-inline double 
-carmen_robot_get_odometry_skew(void)
+static inline double get_odometry_skew(void)
 {
-  if(strcmp(carmen_robot_host, carmen_robot_latest_odometry.host) == 0)
+  if(strcmp(robot_host, carmen_robot_latest_odometry.host) == 0)
     return 0;  
   else 
-    return carmen_running_average_report(ODOMETRY_AVERAGE);
+    return carmen_running_average_report(CARMEN_ROBOT_ODOMETRY_AVERAGE);
+}
+
+int carmen_robot_get_skew(int msg_count, double *skew,
+			   int data_type, char *hostname)
+{
+  if (msg_count < CARMEN_ROBOT_ESTIMATES_CONVERGE) 
+    return 0;
+
+  if (strcmp(robot_host, hostname) == 0) 
+    *skew = 0;
+  else
+    *skew = carmen_running_average_report(data_type);
+
+  if (odometry_count < CARMEN_ROBOT_ESTIMATES_CONVERGE) {
+    carmen_warn("Waiting for odometry to accumulate\n");
+    return 0;
+  }
+
+  return 1;
+}
+
+void carmen_robot_update_skew(int data_type, int *count, double time,
+			      char *hostname)
+{
+  if (strcmp(robot_host, hostname) == 0) 
+    *count = CARMEN_ROBOT_ESTIMATES_CONVERGE;
+  
+  if(*count <= CARMEN_ROBOT_ESTIMATES_CONVERGE)
+    *count++;
+
+  carmen_running_average_add(data_type, carmen_get_time() - time);
+}
+
+double carmen_robot_get_fraction(double timestamp, double skew,
+				 int *low, int *high)
+{
+  double fraction;
+  double corrected_timestamp;
+  double low_timestamp, high_timestamp;
+  double odometry_skew;
+  int i;
+
+  corrected_timestamp = timestamp+skew;
+  odometry_skew = get_odometry_skew();
+
+  *low = 0;
+  *high = 1;
+  for(i = 0; i < CARMEN_ROBOT_MAX_READINGS; i++) 
+    if (corrected_timestamp < carmen_robot_odometry[i].timestamp + 
+	odometry_skew) {
+      if (i == 0) {
+	*low = 0;
+	*high = 1;
+      } else {
+	*low = i-1;
+	*high = i;
+      }      
+      break;
+    }
+
+  if (i == CARMEN_ROBOT_MAX_READINGS) {
+    *low = i-2;
+    *high = i-1;
+  }
+
+  low_timestamp = carmen_robot_odometry[*low].timestamp + odometry_skew;
+  high_timestamp = carmen_robot_odometry[*high].timestamp + odometry_skew;
+
+  fraction = (corrected_timestamp - low_timestamp)/
+    (high_timestamp - low_timestamp);
+
+  return fraction;
 }
 
 double carmen_robot_interpolate_heading(double head1, double head2, 
@@ -139,7 +205,7 @@ void carmen_robot_send_base_velocity_command(void)
 void carmen_robot_stop_robot(int how)
 {
   command_tv = 0.0;
-  if (how == ALL_STOP)
+  if (how == CARMEN_ROBOT_ALL_STOP)
     command_rv = 0.0;
   if (following_vector || following_trajectory)
     command_rv = 0.0;
@@ -154,19 +220,23 @@ static void base_odometry_handler(void)
 {
   int i;
 
-  carmen_robot_odometry_count++;
+  if (strcmp(robot_host, carmen_robot_latest_odometry.host) == 0)
+    odometry_count = CARMEN_ROBOT_ESTIMATES_CONVERGE;
+  else
+    odometry_count++;
 
   carmen_warn("o");
 
-  for(i = 0; i < MAX_READINGS - 1; i++) {
+  for(i = 0; i < CARMEN_ROBOT_MAX_READINGS - 1; i++) {
     carmen_robot_odometry[i] = carmen_robot_odometry[i + 1];
     odometry_local_timestamp[i] = odometry_local_timestamp[i + 1];
   }
-  carmen_robot_odometry[MAX_READINGS - 1] = carmen_robot_latest_odometry;
-  odometry_local_timestamp[MAX_READINGS - 1] = carmen_get_time();
+  carmen_robot_odometry[CARMEN_ROBOT_MAX_READINGS - 1] = 
+    carmen_robot_latest_odometry;
+  odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS - 1] = carmen_get_time();
 
-  carmen_running_average_add(ODOMETRY_AVERAGE, 
-			     odometry_local_timestamp[MAX_READINGS - 1]- 
+  carmen_running_average_add(CARMEN_ROBOT_ODOMETRY_AVERAGE, 
+			     odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS - 1]- 
 			     carmen_robot_latest_odometry.timestamp);
 
   if (collision_avoidance) {
@@ -174,7 +244,7 @@ static void base_odometry_handler(void)
    } else if (carmen_robot_latest_odometry.tv < 0) {
     } else if (carmen_robot_bumper_on()) {
       fprintf(stderr, "S");
-      carmen_robot_stop_robot(ALL_STOP);
+      carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
       command_tv = 0;
       command_rv = 0;
     }
@@ -257,7 +327,7 @@ static void follow_vector(void)
     command_tv = 0;
     command_rv = 0;
     following_vector = 0;		
-    carmen_robot_stop_robot(ALL_STOP);
+    carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
     publish_vector_status(0, 0);
     return;
   }
@@ -340,7 +410,7 @@ static void follow_trajectory_3d(void)
     command_tv = 0;
     command_rv = 0;
     following_trajectory = 0;		
-    carmen_robot_stop_robot(ALL_STOP);
+    carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
     publish_vector_status(0, 0);
     return;
   }
@@ -489,7 +559,7 @@ static int initialize_robot_ipc(void)
 
 void carmen_robot_shutdown(int x __attribute__ ((unused)))
 {
-  carmen_robot_stop_robot(ALL_STOP);
+  carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
 }
 
 void  carmen_robot_usage(char *progname, char *fmt, ...) 
@@ -583,9 +653,9 @@ static int read_robot_parameters(int argc, char **argv)
 
 int carmen_robot_start(int argc, char **argv)
 {
-  carmen_robot_host = carmen_get_host();
+  robot_host = carmen_get_host();
   
-  carmen_running_average_clear(ODOMETRY_AVERAGE);
+  carmen_running_average_clear(CARMEN_ROBOT_ODOMETRY_AVERAGE);
   
   if (read_robot_parameters(argc, argv) < 0)
     return -1;
@@ -611,11 +681,10 @@ int carmen_robot_start(int argc, char **argv)
 
 int carmen_robot_run(void)
 {
-  current_time = carmen_get_time();
-  if (current_time - time_of_last_command > robot_timeout) {
+  if (carmen_get_time() - time_of_last_command > robot_timeout) {
     if (command_tv != 0.0) {
       carmen_warn("Command timed out. Stopping robot.\n");
-      carmen_robot_stop_robot(ALL_STOP);
+      carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
     }
   } 
   else if (following_vector) 

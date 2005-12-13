@@ -153,7 +153,7 @@ typedef struct {
 typedef carmen_param_response_string_message carmen_param_variable_change_message;
 
 #define CARMEN_PARAM_VARIABLE_CHANGE_NAME    "carmen_param_variable_change"
-#define CARMEN_PARAM_VARIABLE_CHANGE_FMT     "{double, string, string, string, string, int"
+#define CARMEN_PARAM_VARIABLE_CHANGE_FMT     "{double, string, string, string, string, int}"
 
 typedef struct {
   double timestamp;
