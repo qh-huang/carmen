@@ -700,9 +700,9 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
     return;
 
   /* incorporate the laser position stamp */
-  robot_position.x = laser->robot_location.x;
-  robot_position.y = laser->robot_location.y;
-  robot_position.theta = laser->robot_location.theta;
+  robot_position.x = laser->robot_pose.x;
+  robot_position.y = laser->robot_pose.y;
+  robot_position.theta = laser->robot_pose.theta;
   carmen_localize_incorporate_odometry(filter, robot_position);
 
   /* incorporate the laser scan */

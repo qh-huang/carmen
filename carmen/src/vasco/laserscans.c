@@ -336,11 +336,11 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_logger_file_p 
       mark = next_word(mark);
       sscanf(mark, "%lf", &robot_frontlaser->laser_location.theta);
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_location.x);
+      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.x);
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_location.y);
+      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.y);
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_location.theta);
+      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.theta);
       return robot_frontlaser;
     } else if ((frontlaser_offset_flag || max_range_flag) &&
 	       (strcmp(message_name, "PARAM") == 0)) {

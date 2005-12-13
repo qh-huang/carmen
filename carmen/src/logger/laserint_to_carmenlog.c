@@ -156,9 +156,9 @@ int main(int argc, char **argv)
 				front_laser.laser_location.theta = 
 				  odometry.theta;
 
- 				front_laser.robot_location.x = odometry.x;
-				front_laser.robot_location.y = odometry.y;
-				front_laser.robot_location.theta = 
+ 				front_laser.robot_pose.x = odometry.x;
+				front_laser.robot_pose.y = odometry.y;
+				front_laser.robot_pose.theta = 
 				  odometry.theta;
 
 				if(first) {

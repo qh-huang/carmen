@@ -64,11 +64,11 @@ static void construct_bumper_message(carmen_robot_bumper_message *msg,
 {
   int i;
 
-  msg->robot_location.x=carmen_robot_odometry[low].x + fraction *
+  msg->robot_pose.x=carmen_robot_odometry[low].x + fraction *
     (carmen_robot_odometry[high].x - carmen_robot_odometry[low].x);
-  msg->robot_location.y= carmen_robot_odometry[low].y + fraction *
+  msg->robot_pose.y= carmen_robot_odometry[low].y + fraction *
     (carmen_robot_odometry[high].y - carmen_robot_odometry[low].y);
-  msg->robot_location.theta=carmen_robot_interpolate_heading
+  msg->robot_pose.theta=carmen_robot_interpolate_heading
     (carmen_robot_odometry[high].theta, 
      carmen_robot_odometry[low].theta, fraction);
 

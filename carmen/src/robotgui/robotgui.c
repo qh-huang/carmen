@@ -210,9 +210,9 @@ save_postscript_screenshot(void)
     theta = front_laser.laser_location.theta +
       carmen_degrees_to_radians(i) - M_PI_2;
     range = front_laser.range[i];
-    laser_x[i] = front_laser.laser_location.x - front_laser.robot_location.x + 
+    laser_x[i] = front_laser.laser_location.x - front_laser.robot_pose.x + 
       cos(theta) * range;
-    laser_y[i] = front_laser.laser_location.y - front_laser.robot_location.y +
+    laser_y[i] = front_laser.laser_location.y - front_laser.robot_pose.y +
       sin(theta) * range;
     laser_x[i] = doc->width / 2.0 + laser_x[i] / 500.0 * 2.0;
     laser_y[i] = doc->height / 2.0 + laser_y[i] / 500.0 * 2.0;
@@ -221,10 +221,10 @@ save_postscript_screenshot(void)
   carmen_ps_draw_poly(doc, 1, laser_x, laser_y, front_laser.num_readings, 0);
   carmen_ps_draw_poly(doc, 0, laser_x, laser_y, front_laser.num_readings, 0);
 
-  coslength = cos(front_laser.robot_location.theta) / 2.0 * length;
-  coswidth = cos(front_laser.robot_location.theta) / 2.0 * width;
-  sinlength = sin(front_laser.robot_location.theta) / 2.0 * length;
-  sinwidth = sin(front_laser.robot_location.theta) / 2.0 * width;
+  coslength = cos(front_laser.robot_pose.theta) / 2.0 * length;
+  coswidth = cos(front_laser.robot_pose.theta) / 2.0 * width;
+  sinlength = sin(front_laser.robot_pose.theta) / 2.0 * length;
+  sinwidth = sin(front_laser.robot_pose.theta) / 2.0 * width;
   
   rect_x[0] = doc->width / 2.0 + (coslength - sinwidth) / 500.0 * 2.0; 
   rect_y[0] = doc->height / 2.0 + (sinlength + coswidth) / 500.0 * 2.0;
@@ -240,9 +240,9 @@ save_postscript_screenshot(void)
   carmen_ps_draw_poly(doc, 0, rect_x, rect_y, 4, 1);
   carmen_ps_draw_line(doc, doc->width / 2.0, doc->height / 2.0, 
 	       doc->width / 2.0 + length * 0.75 / 500.0 * 2.0 * 
-	       cos(front_laser.robot_location.theta),
+	       cos(front_laser.robot_pose.theta),
 	       doc->height / 2.0 + length * 0.75 / 500.0 * 2.0 * 
-	       sin(front_laser.robot_location.theta));
+	       sin(front_laser.robot_pose.theta));
   carmen_ps_close(doc);
   carmen_verbose("Generated %s\n", filename);
   screenshot_number++;
@@ -509,19 +509,19 @@ range_to_xy(carmen_robot_laser_message *laser, GdkPoint *laser_poly,
     theta = laser->laser_location.theta + 
       M_PI * i / (double)(laser->num_readings - 1) - M_PI / 2.0;
     laser_poly[i].x = width_2 + ((laser->laser_location.x - 
-				  laser->robot_location.x) + 
+				  laser->robot_pose.x) + 
 				 cos(theta) * laser->range[i]) * scale;
     laser_poly[i].y = height_2 - ((laser->laser_location.y - 
-				   laser->robot_location.y) + 
+				   laser->robot_pose.y) + 
 				  sin(theta) * laser->range[i]) * scale;
     if(i > 0)
       laser_dist[i] = hypot(laser_poly[i - 1].x - laser_poly[i].x, 
 			    laser_poly[i - 1].y - laser_poly[i].y);
   }
   laser_poly[laser->num_readings].x = width_2 + 
-    (laser->laser_location.x - laser->robot_location.x) * scale;
+    (laser->laser_location.x - laser->robot_pose.x) * scale;
   laser_poly[laser->num_readings].y = height_2 - 
-    (laser->laser_location.y - laser->robot_location.y) * scale;
+    (laser->laser_location.y - laser->robot_pose.y) * scale;
 }
 
 static void 
@@ -650,9 +650,9 @@ static void draw_sonar_arcs(GdkPixmap *pixmap)
   for(i=0; i<sonar.num_sonars; i++)
     {
       radius=(int)(sonar.ranges[i]*scale);
-      x=width_2+scale*(sonar.positions[i].x - sonar.robot_location.x)-
+      x=width_2+scale*(sonar.positions[i].x - sonar.robot_pose.x)-
 	radius;
-      y=height_2-scale*(sonar.positions[i].y - sonar.robot_location.y)-
+      y=height_2-scale*(sonar.positions[i].y - sonar.robot_pose.y)-
 	radius;
       w=radius*2;
       h=radius*2;
@@ -719,10 +719,10 @@ draw_robot_sonar(GdkPixmap *pixmap, carmen_robot_sonar_message *sonar_msg)
 		 length * scale, length * scale, 0, 360 * 64);  
   }
   else {
-    coslength = cos(sonar_msg->robot_location.theta) / 2.0 * scale * length;
-    coswidth = cos(sonar_msg->robot_location.theta) / 2.0 * scale * width;
-    sinlength = sin(sonar_msg->robot_location.theta) / 2.0 * scale * length;
-    sinwidth = sin(sonar_msg->robot_location.theta) / 2.0 * scale * width;
+    coslength = cos(sonar_msg->robot_pose.theta) / 2.0 * scale * length;
+    coswidth = cos(sonar_msg->robot_pose.theta) / 2.0 * scale * width;
+    sinlength = sin(sonar_msg->robot_pose.theta) / 2.0 * scale * length;
+    sinwidth = sin(sonar_msg->robot_pose.theta) / 2.0 * scale * width;
     
     rect_robot[0].x = width_2 + coslength - sinwidth; 
     rect_robot[0].y = height_2 - sinlength - coswidth;
@@ -741,9 +741,9 @@ draw_robot_sonar(GdkPixmap *pixmap, carmen_robot_sonar_message *sonar_msg)
     gdk_draw_polygon(pixmap, drawing_gc, FALSE, rect_robot, 4);
   }
   gdk_draw_line(pixmap, drawing_gc, width_2, height_2, 
-		width_2 + cos(sonar_msg->robot_location.theta) * 
+		width_2 + cos(sonar_msg->robot_pose.theta) * 
 		length / 2.0 * scale,
-		height_2 - sin(sonar_msg->robot_location.theta) *
+		height_2 - sin(sonar_msg->robot_pose.theta) *
 		length / 2.0 * scale);
 }
 
@@ -760,9 +760,9 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
 
   /* Draw turning axis as red plus */
   gdk_gc_set_foreground (drawing_gc, &carmen_red);
-  x_1 = width_2 + sin(laser_msg->robot_location.theta) * 
+  x_1 = width_2 + sin(laser_msg->robot_pose.theta) * 
     laser_msg->turn_axis * scale;
-  y_1 = height_2 + cos(laser_msg->robot_location.theta) * 
+  y_1 = height_2 + cos(laser_msg->robot_pose.theta) * 
     laser_msg->turn_axis * scale;
   gdk_draw_line(pixmap, drawing_gc, x_1 - 5, y_1, x_1 + 5, y_1);
   gdk_draw_line(pixmap, drawing_gc, x_1, y_1 - 5, x_1, y_1 + 5);
@@ -782,10 +782,10 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
 		 length * scale, length * scale, 0, 360 * 64);  
   }
   else {
-    coslength = cos(laser_msg->robot_location.theta) / 2.0 * scale * length;
-    coswidth = cos(laser_msg->robot_location.theta) / 2.0 * scale * width;
-    sinlength = sin(laser_msg->robot_location.theta) / 2.0 * scale * length;
-    sinwidth = sin(laser_msg->robot_location.theta) / 2.0 * scale * width;
+    coslength = cos(laser_msg->robot_pose.theta) / 2.0 * scale * length;
+    coswidth = cos(laser_msg->robot_pose.theta) / 2.0 * scale * width;
+    sinlength = sin(laser_msg->robot_pose.theta) / 2.0 * scale * length;
+    sinwidth = sin(laser_msg->robot_pose.theta) / 2.0 * scale * width;
     
     rect_robot[0].x = width_2 + coslength - sinwidth; 
     rect_robot[0].y = height_2 - sinlength - coswidth;
@@ -804,9 +804,9 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
     gdk_draw_polygon(pixmap, drawing_gc, FALSE, rect_robot, 4);
   }
   gdk_draw_line(pixmap, drawing_gc, width_2, height_2, 
-		width_2 + cos(laser_msg->robot_location.theta) * 
+		width_2 + cos(laser_msg->robot_pose.theta) * 
 		length / 2.0 * scale,
-		height_2 - sin(laser_msg->robot_location.theta) *
+		height_2 - sin(laser_msg->robot_pose.theta) *
 		length / 2.0 * scale);
   if (show_velocity && 
       fabs(laser_msg->tv) < 0.001 && fabs(laser_msg->rv) > .00001) 
@@ -824,18 +824,18 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
       radius = 1.0/carmen_normalize_theta(laser_msg->rv);
 
       if (radius > 0) {
-	top_left.x = width_2+cos(laser_msg->robot_location.theta+M_PI/2)*
+	top_left.x = width_2+cos(laser_msg->robot_pose.theta+M_PI/2)*
 	  (radius+width/2.0)*scale-radius*scale;
-	top_left.y = height_2-sin(laser_msg->robot_location.theta+M_PI/2)*
+	top_left.y = height_2-sin(laser_msg->robot_pose.theta+M_PI/2)*
 	  (radius+width/2.0)*scale-radius*scale;
-	angle = carmen_normalize_theta(laser_msg->robot_location.theta-M_PI/2);
+	angle = carmen_normalize_theta(laser_msg->robot_pose.theta-M_PI/2);
       } else {
 	radius = fabs(radius);
-	top_left.x = width_2+cos(laser_msg->robot_location.theta-M_PI/2)*
+	top_left.x = width_2+cos(laser_msg->robot_pose.theta-M_PI/2)*
 	  (radius+width/2.0)*scale-radius*scale;
-	top_left.y = height_2-sin(laser_msg->robot_location.theta-M_PI/2)*
+	top_left.y = height_2-sin(laser_msg->robot_pose.theta-M_PI/2)*
 	  (radius+width/2.0)*scale-radius*scale;
-	angle = carmen_normalize_theta(laser_msg->robot_location.theta);
+	angle = carmen_normalize_theta(laser_msg->robot_pose.theta);
       }
 
       if (angle < 0)
@@ -848,18 +848,18 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
 
       if (radius > 0) {
 	radius += width;
-	top_left.x = width_2+cos(laser_msg->robot_location.theta+M_PI/2)*
+	top_left.x = width_2+cos(laser_msg->robot_pose.theta+M_PI/2)*
 	  (radius-width/2.0)*scale-radius*scale;
-	top_left.y = height_2-sin(laser_msg->robot_location.theta+M_PI/2)*
+	top_left.y = height_2-sin(laser_msg->robot_pose.theta+M_PI/2)*
 	  (radius-width/2.0)*scale-radius*scale;
-	angle = carmen_normalize_theta(laser_msg->robot_location.theta-M_PI/2);
+	angle = carmen_normalize_theta(laser_msg->robot_pose.theta-M_PI/2);
       } else {
 	radius = fabs(radius) + width;
-	top_left.x = width_2+cos(laser_msg->robot_location.theta-M_PI/2)*
+	top_left.x = width_2+cos(laser_msg->robot_pose.theta-M_PI/2)*
 	  (radius-width/2.0)*scale-radius*scale;
-	top_left.y = height_2-sin(laser_msg->robot_location.theta-M_PI/2)*
+	top_left.y = height_2-sin(laser_msg->robot_pose.theta-M_PI/2)*
 	  (radius-width/2.0)*scale-radius*scale;
-	angle = carmen_normalize_theta(laser_msg->robot_location.theta);
+	angle = carmen_normalize_theta(laser_msg->robot_pose.theta);
       }
 
       if (angle < 0)
@@ -871,19 +871,19 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
 
     } else if (show_velocity && fabs(laser_msg->tv) > 0.001) {
       gdk_gc_set_foreground(drawing_gc, &carmen_green);
-      p1.x = width_2 + cos(laser_msg->robot_location.theta+M_PI/2)*width/2.0*scale*1.2;
-      p1.y = height_2 - sin(laser_msg->robot_location.theta+M_PI/2)*width/2.0*scale*1.2;
+      p1.x = width_2 + cos(laser_msg->robot_pose.theta+M_PI/2)*width/2.0*scale*1.2;
+      p1.y = height_2 - sin(laser_msg->robot_pose.theta+M_PI/2)*width/2.0*scale*1.2;
 
       p2 = p1;
-      p2.x += cos(laser_msg->robot_location.theta)*100*scale;
-      p2.y -= sin(laser_msg->robot_location.theta)*100*scale;
+      p2.x += cos(laser_msg->robot_pose.theta)*100*scale;
+      p2.y -= sin(laser_msg->robot_pose.theta)*100*scale;
       gdk_draw_line(pixmap, drawing_gc, p1.x, p1.y, p2.x, p2.y);
 
-      p1.x = width_2 + cos(laser_msg->robot_location.theta-M_PI/2)*width/2.0*scale*1.2;
-      p1.y = height_2 - sin(laser_msg->robot_location.theta-M_PI/2)*width/2.0*scale*1.2;
+      p1.x = width_2 + cos(laser_msg->robot_pose.theta-M_PI/2)*width/2.0*scale*1.2;
+      p1.y = height_2 - sin(laser_msg->robot_pose.theta-M_PI/2)*width/2.0*scale*1.2;
       p2 = p1;
-      p2.x += cos(laser_msg->robot_location.theta)*100*scale;
-      p2.y -= sin(laser_msg->robot_location.theta)*100*scale;
+      p2.x += cos(laser_msg->robot_pose.theta)*100*scale;
+      p2.y -= sin(laser_msg->robot_pose.theta)*100*scale;
       gdk_draw_line(pixmap, drawing_gc, p1.x, p1.y, p2.x, p2.y);
     }
   if (show_vector && fabs(vector.vector_distance) > 0) {
@@ -892,9 +892,9 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
     p1.y = height_2;
     
     p2 = p1;
-    p2.x += cos(laser_msg->robot_location.theta+vector.vector_angle)*
+    p2.x += cos(laser_msg->robot_pose.theta+vector.vector_angle)*
       vector.vector_distance*scale;
-    p2.y -= sin(laser_msg->robot_location.theta+vector.vector_angle)*
+    p2.y -= sin(laser_msg->robot_pose.theta+vector.vector_angle)*
       vector.vector_distance*scale;    
     gdk_draw_line(pixmap, drawing_gc, p1.x, p1.y, p2.x, p2.y);
 

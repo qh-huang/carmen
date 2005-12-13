@@ -315,9 +315,9 @@ int read_message(int message_num, int publish)
 	   &frontlaser.laser_location.x,
 	   &frontlaser.laser_location.y, 
 	   &frontlaser.laser_location.theta, 
-	   &frontlaser.robot_location.x,
-	   &frontlaser.robot_location.y, 
-	   &frontlaser.robot_location.theta, 
+	   &frontlaser.robot_pose.x,
+	   &frontlaser.robot_pose.y, 
+	   &frontlaser.robot_pose.theta, 
 	   &frontlaser.timestamp,
 	   frontlaser.host, &playback_timestamp);
     if (!print_timestamp)
@@ -351,9 +351,9 @@ int read_message(int message_num, int publish)
 	   &rearlaser.laser_location.x,
 	   &rearlaser.laser_location.y, 
 	   &rearlaser.laser_location.theta, 
-	   &rearlaser.robot_location.x,
-	   &rearlaser.robot_location.y, 
-	   &rearlaser.robot_location.theta, 
+	   &rearlaser.robot_pose.x,
+	   &rearlaser.robot_pose.y, 
+	   &rearlaser.robot_pose.theta, 
 	   &rearlaser.timestamp,
 	   rearlaser.host, &playback_timestamp);
     if (!print_timestamp)
