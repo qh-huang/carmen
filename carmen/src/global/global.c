@@ -1509,7 +1509,7 @@ void carmen_publish_heartbeat(char *module_name)
   
   msg.module_name = carmen_new_string(module_name);
   msg.pid = getpid();
-  strcpy(msg.hostname, carmen_get_tenchar_host_name());
+  msg.hostname = carmen_get_host();
   msg.timestamp = carmen_get_time();
   
   err = IPC_defineMsg(CARMEN_HEARTBEAT_NAME, IPC_VARIABLE_LENGTH,
