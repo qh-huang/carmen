@@ -191,9 +191,9 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
   static char  * running, * valptr;
 
   float          fov;
-  double         angleDiff, distance, signal;
+  double         angleDiff;
   long           sec, usec;
-  int            i, l, len, nLas, nVal, tag1, tag2, tag3, tag4, antenna, count;
+  int            i, l, len, nLas, nVal;
 
   static LASER_PROPERTIES2  lprop;
   static int                firsttime = TRUE;
@@ -243,29 +243,6 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
       rec->psens[rec->numpositions].rvel.rv        = atof(str5);
 
       rec->numpositions++;
-    }
-    
-  } else if (!strncmp( command, "POS-CORR", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld: %s %s %s",
-		dummy, &sec, &usec, str1, str2, str3 ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = POS_CORR;
-      rec->entry[rec->numentries].index  = rec->numposcorr;
-      rec->numentries++;
-      
-      rec->poscorr[rec->numposcorr].time.tv_sec    = sec;
-      rec->poscorr[rec->numposcorr].time.tv_usec   = usec;
-      
-      rec->poscorr[rec->numposcorr].x         = atof(str1);
-      rec->poscorr[rec->numposcorr].y         = atof(str2);
-      rec->poscorr[rec->numposcorr].o         = deg2rad(atof(str3));
-      
-      rec->numposcorr++;
     }
     
   } else if (!strncmp( command, "GSM-E2EMM", MAX_CMD_LENGTH )) {
@@ -422,41 +399,6 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
       
     }
     
-  } else if (!strcmp( command, "CORR-POS")) {
-    
-    if (sscanf( line, "%s %ld %ld: %s %s %s",
-		dummy, &sec, &usec, str1, str2, str3 ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = CORR_POSITION;
-      rec->entry[rec->numentries].index  = rec->numcpositions;
-      rec->numentries++;
-	  
-      rec->cpsens[rec->numcpositions].time.tv_sec    = sec;
-      rec->cpsens[rec->numcpositions].time.tv_usec   = usec;
-      
-      rec->cpsens[rec->numcpositions].rpos.x         = atof(str1);
-      rec->cpsens[rec->numcpositions].rpos.y         = atof(str2);
-      rec->cpsens[rec->numcpositions].rpos.o         = deg2rad(atof(str3));
-      
-      rec->cpsens[rec->numcpositions].rvel.tv        = 0.0;
-      rec->cpsens[rec->numcpositions].rvel.rv        = 0.0;
-      
-      rec->numcpositions++;
-      
-    }
-    
-  } else if (!strcmp( command, "CORR-PARAM")) {
-    
-    if (sscanf( line, "%s %s %s %s %s",
-		dummy, str1, str2, str3, str4 ) == EOF) {
-      
-      return(FALSE);
-      
-    }
     
   } else if (!strncmp( command, "MARK-POS", MAX_CMD_LENGTH )) {
     
@@ -543,79 +485,6 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
       }
 
       rec->nummarkers++;
-      
-    }
-    
-  } else if (!strncmp( command, "RFID", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld: %x %x %x %x %d %d",
-		dummy, &sec, &usec, &tag1, &tag2, &tag3, &tag4,
-		&antenna, &count ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = RFID_TAG;
-      rec->entry[rec->numentries].index  = rec->numrfid;
-      rec->numentries++;
-      
-      rec->rfid[rec->numrfid].time.tv_sec  = sec;
-      rec->rfid[rec->numrfid].time.tv_usec = usec;
-
-      rec->rfid[rec->numrfid].type    = ALIEN;
-      rec->rfid[rec->numrfid].tag     = 
-	(((unsigned long long int) tag1) << 48) +
-	(((unsigned long long int) tag2) << 32) +
-	(((unsigned long long int) tag3) << 16) +
-	((unsigned long long int) tag4);
-      
-      rec->rfid[rec->numrfid].antenna  = antenna;
-      rec->rfid[rec->numrfid].count    = count;
-      rec->rfid[rec->numrfid].distance = 0.0;
-      rec->rfid[rec->numrfid].signal   = 0.0;
-
-      if (rec->numpositions>0)
-	rec->rfid[rec->numrfid].estpos =
-	  rec->psens[rec->numpositions-1].rpos;
-      else
-	rec->rfid[rec->numrfid].estpos = npos;
-
-      rec->numrfid++;
-      
-    }
-    
-  } else if (!strncmp( command, "RFID-SIEMENS", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld: %d %lf %lf",
-		dummy, &sec, &usec, &tag1, &distance, &signal ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = RFID_TAG;
-      rec->entry[rec->numentries].index  = rec->numrfid;
-      rec->numentries++;
-
-
-      rec->rfid[rec->numrfid].time.tv_sec  = sec;
-      rec->rfid[rec->numrfid].time.tv_usec = usec;
-
-      rec->rfid[rec->numrfid].type     = SIEMENS;
-      rec->rfid[rec->numrfid].tag      =  (unsigned long long int) tag1;
-      rec->rfid[rec->numrfid].antenna  = 0;
-      rec->rfid[rec->numrfid].count    = 0;
-      rec->rfid[rec->numrfid].distance = distance;
-      rec->rfid[rec->numrfid].signal   = signal;
-
-      if (rec->numpositions>0)
-	rec->rfid[rec->numrfid].estpos =
-	  rec->psens[rec->numpositions-1].rpos;
-      else
-	rec->rfid[rec->numrfid].estpos = npos;
-
-      rec->numrfid++;
       
     }
     
@@ -802,32 +671,6 @@ rec2_parse_line( char *line, REC2_DATA *rec, int alloc, int mode )
       
       rec->numlaserscans++;
       
-    }
-    
-  } else if (!strcmp( command, "HELI-POS") ){
-
-    if (sscanf( line, "%s %ld %ld: %s %s %s %s %s %s",
-		dummy, &sec, &usec, str1, str2, str3, str4, str5, str6 ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-
-      rec->entry[rec->numentries].type   = HELI_POS;
-      rec->entry[rec->numentries].index  = rec->numpositions;
-      rec->numentries++;
-      
-      rec->psens3d[rec->numpositions3d].time.tv_sec    = sec;
-      rec->psens3d[rec->numpositions3d].time.tv_usec   = usec;
-      
-      rec->psens3d[rec->numpositions3d].rpos.pos.x    = atof(str1);
-      rec->psens3d[rec->numpositions3d].rpos.pos.y    = atof(str2);
-      rec->psens3d[rec->numpositions3d].rpos.pos.z    = atof(str3);
-      rec->psens3d[rec->numpositions3d].rpos.rot.x    = atof(str4);
-      rec->psens3d[rec->numpositions3d].rpos.rot.y    = atof(str5);
-      rec->psens3d[rec->numpositions3d].rpos.rot.z    = atof(str6);
-
-      rec->numpositions3d++;
     }
     
 

@@ -7,9 +7,10 @@
 #include <string.h>
 
 #include <carmen/logtools.h>
+#include <carmen/logtools_graphics.h>
 #include "log2pic.h"
 
-SETTINGS_TYPE  settings = {
+log2pic_settings_t  settings = {
   /* enum FORMAT_TYPE     format; */
   GRAPHICS,
   /* int       display_arrow; */
@@ -278,7 +279,7 @@ grid_line( iVECTOR2 start, iVECTOR2 end, GRID_LINE *line ) {
 }
      
 int
-map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v )
+log2pic_map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v )
 {
   v->x = (map->center.x + (pos.x-map->offset.x)/settings.resolution_x);
   v->y = (map->center.y + (pos.y-map->offset.y)/settings.resolution_y);
@@ -296,36 +297,36 @@ map_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, VECTOR2 *v )
 }
 
 int
-map_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, VECTOR2 *v )
+log2pic_map_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, VECTOR2 *v )
 {
   VECTOR2 pos;
   pos.x = rpos.x;
   pos.y = rpos.y;
-  return(map_pos_from_vec2( pos, map, v));
+  return(log2pic_map_pos_from_vec2( pos, map, v));
 }
 
 int
-imap_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, iVECTOR2 *iv )
+log2pic_imap_pos_from_vec2( VECTOR2 pos, GRID_MAP2 *map, iVECTOR2 *iv )
 {
   VECTOR2 v;
-  int ret = map_pos_from_vec2( pos, map, &v );
+  int ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->x = (int)v.x;
   iv->y = (int)v.y;
   return(ret);
 }
 
 int
-imap_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, iVECTOR2 *iv )
+log2pic_imap_pos_from_rpos( RPOS2 rpos, GRID_MAP2 *map, iVECTOR2 *iv )
 {
   VECTOR2 v;
-  int ret = map_pos_from_rpos( rpos, map, &v );
+  int ret = log2pic_map_pos_from_rpos( rpos, map, &v );
   iv->x = (int)v.x;
   iv->y = (int)v.y;
   return(ret);
 }
 
 void
-simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel )
+log2pic_simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel )
 {
   int x, y, k, hk;
   double ksum;
@@ -359,8 +360,8 @@ simple_convolve_map( GRID_MAP2 *map, GAUSS_KERNEL kernel )
 }
 
 void
-map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
-		    double max_range, double max_usable  )
+log2pic_map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
+			    double max_range, double max_usable  )
 {
   static int            first_time = TRUE; 
   static GRID_LINE      line;
@@ -387,7 +388,7 @@ map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
 					     (map->resolution),
 					     nomove,
 					     data.laser.angle[j] );
-	    imap_pos_from_vec2( abspt, map, &end );
+	    log2pic_imap_pos_from_vec2( abspt, map, &end );
 	    if (data.dynamic!=NULL) {
 	      map->maphit[end.x][end.y] += data.dynamic->prob[j];
 	    } else {
@@ -399,16 +400,16 @@ map_integrate_scan( GRID_MAP2 * map, LASERSENS2_DATA data,
 	  if (data.laser.val[j] > max_range ) {
 	    abspt = compute_laser_abs_point( data.estpos, max_range, nomove,
 					     data.laser.angle[j] );
-	    imap_pos_from_vec2( abspt, map, &end );
+	    log2pic_imap_pos_from_vec2( abspt, map, &end );
 	  } else {
 	    abspt = compute_laser_abs_point( data.estpos,
 					     data.laser.val[j]+
 					     (map->resolution),
 					     nomove,
 					     data.laser.angle[j] );
-	    imap_pos_from_vec2( abspt, map, &end );
+	    log2pic_imap_pos_from_vec2( abspt, map, &end );
 	  }
-	  imap_pos_from_rpos( data.estpos, map, &start );
+	  log2pic_imap_pos_from_rpos( data.estpos, map, &start );
 	  //grid_line( start, end, &line );
 	  fast_grid_line( start, end, &line );
 	  for (i=0;i<line.numgrids;i++) {
@@ -501,7 +502,7 @@ printUnknown( FILE *fp, int n)
 }
 
 void
-write_gnuplot_data( GRID_MAP2 *map )
+log2pic_write_gnuplot_data( GRID_MAP2 *map )
 {
   FILE    * ofp;
   int       x, y;
@@ -536,7 +537,7 @@ rpos2_length( RPOS2 pos1, RPOS2 pos2 )
 
 
 void
-map_compute_probs( GRID_MAP2 * map, double unknown_val )
+log2pic_map_compute_probs( GRID_MAP2 * map, double unknown_val )
 {
   int     x, y, occ_cells, free_cells;
   double  odds, logodds, s_prob = 0.0, d_prob = 0.0;
@@ -576,7 +577,7 @@ map_compute_probs( GRID_MAP2 * map, double unknown_val )
 }
 
 void
-compute_map( REC2_DATA rec, GRID_MAP2 * map )
+log2pic_compute_map( REC2_DATA rec, GRID_MAP2 * map )
 {
   GAUSS_KERNEL     kernel;
   int              i, idx;
@@ -584,25 +585,25 @@ compute_map( REC2_DATA rec, GRID_MAP2 * map )
     idx = rec.entry[i].index;
     if (rec.entry[i].type==LASER_VALUES) {
       if (rec.lsens[idx].id==settings.laser_id) {
-	map_integrate_scan( map, rec.lsens[idx], settings.max_range,
-			    settings.usable_range );
+	log2pic_map_integrate_scan( map, rec.lsens[idx], settings.max_range,
+				    settings.usable_range );
       }
     }
   }
   if (settings.endpoints) {
-    map_compute_probs( map, 0.0 );
+    log2pic_map_compute_probs( map, 0.0 );
   } else {
-    map_compute_probs( map, settings.unknown_val );
+    log2pic_map_compute_probs( map, settings.unknown_val );
   }
 
   if (settings.convolve) {
     kernel = compute_gauss_kernel( settings.kernel_size );
-    simple_convolve_map( map, kernel );
+    log2pic_simple_convolve_map( map, kernel );
   }
 }   
 
 void
-filetemplate_from_filename( char * filetemplate, char * filename )
+log2pic_filetemplate_from_filename( char * filetemplate, char * filename )
 {
   char    template[MAX_STRING_LENGTH];
   char  * ptr;
@@ -616,7 +617,7 @@ filetemplate_from_filename( char * filetemplate, char * filename )
 }
 
 char *
-dump_filename( void )
+log2pic_dump_filename( void )
 {
   static char filename[MAX_STRING_LENGTH];
   static int ctr = 0;
@@ -945,7 +946,7 @@ main( int argc, char** argv)
     settings.bgfile = TRUE;
     fprintf( stderr, "#\n" );
     fprintf( stderr, "# INFO: read background image %s ... \n", bgfilename );
-    read_image_file( bgfilename, &(settings.background) );
+    log2pic_read_image_file( bgfilename, &(settings.background) );
     fprintf( stderr, "#\n" );
     fprintf( stderr, "# INFO: size of image %d x %d\n",
 	     settings.background.width,
@@ -1069,11 +1070,11 @@ main( int argc, char** argv)
   
   switch (settings.format) {
   case GNUPLOT:
-    compute_map( rec, &map );
-    write_gnuplot_data( &map );
+    log2pic_compute_map( rec, &map );
+    log2pic_write_gnuplot_data( &map );
     break;
   case GRAPHICS:
-    write_image_magick_map( &map, &rec );
+    log2pic_write_image_magick_map( &map, &rec );
     break;
   }
   

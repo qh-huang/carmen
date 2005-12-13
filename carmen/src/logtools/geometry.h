@@ -130,20 +130,4 @@ typedef struct {
   VECTOR2     point1;
 } LINE2;
 
-typedef struct {
-  int         start;
-  int         end;
-} EDGEREF;
-
-typedef struct {
-  int              numedges;
-  EDGEREF        * edge;
-} EDGEREF_SET;
-
-
-typedef struct {
-  int                numpoints;
-  POINT2           * pt;
-} POLYGON;
-
 #endif

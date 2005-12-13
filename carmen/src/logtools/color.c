@@ -10,6 +10,7 @@
 #include <ctype.h>
 
 #include <carmen/logtools.h>
+#include <carmen/logtools_graphics.h>
 
 YUV
 rgb_to_yuv( RGB color )

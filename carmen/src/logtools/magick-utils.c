@@ -9,6 +9,7 @@
 #include <wand/magick_wand.h>
 
 #include <carmen/logtools.h>
+#include <carmen/logtools_graphics.h>
 #include "log2pic.h"
 
 PointInfo arrow[7] = {
@@ -51,7 +52,7 @@ marker_map_pos_from_robot_pos( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv,
     pos.x = pos_r.x + settings.rotation_center.x;
     pos.y = pos_r.y + settings.rotation_center.y;
   }
-  ret = map_pos_from_vec2( pos, map, &v );
+  ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->y = (map->zoom*(map->mapsize.y-v.y-1));
   iv->x = (map->zoom*v.x);
   return(ret);
@@ -64,7 +65,7 @@ magick_pos_without_rotation( RPOS2 rpos, GRID_MAP2 * map, VECTOR2 * iv )
   int     ret;
   pos.x = rpos.x;
   pos.y = rpos.y;
-  ret = map_pos_from_vec2( pos, map, &v );
+  ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->y = (map->zoom*(map->mapsize.y-v.y-1));
   iv->x = (map->zoom*v.x);
   return(ret);
@@ -75,7 +76,7 @@ magick_pos_from_vector( VECTOR2 pos, GRID_MAP2 * map, VECTOR2 * iv )
 {
   VECTOR2 v;
   int     ret;
-  ret = map_pos_from_vec2( pos, map, &v );
+  ret = log2pic_map_pos_from_vec2( pos, map, &v );
   iv->y = (map->zoom*(map->mapsize.y-v.y-1));
   iv->x = (map->zoom*v.x);
   return(ret);
@@ -802,19 +803,19 @@ check_active_markers( iVALUE_SET * active, REC2_DATA * rec, int up_to_entry )
 }
 
 void
-copy_probs_to_data( IMAGE_TYPE * img, GRID_MAP2 * map, iVECTOR2 zsize )
+copy_probs_to_data( log2pic_image_t * img, GRID_MAP2 * map, iVECTOR2 zsize )
 {
   GAUSS_KERNEL        kernel;
   int                 i, j, idx, ix, iy;
   double              c;
   if (settings.endpoints) {
-    map_compute_probs( map, 0.0 );
+    log2pic_map_compute_probs( map, 0.0 );
   } else {
-    map_compute_probs( map, settings.unknown_val );
+    log2pic_map_compute_probs( map, settings.unknown_val );
   }
   if (settings.convolve) {
     kernel = compute_gauss_kernel( settings.kernel_size );
-    simple_convolve_map( map, kernel );
+    log2pic_simple_convolve_map( map, kernel );
   }
   for (i=0;i<zsize.x;i++) {
     for (j=0;j<zsize.y;j++) {
@@ -862,7 +863,7 @@ copy_probs_to_data( IMAGE_TYPE * img, GRID_MAP2 * map, iVECTOR2 zsize )
 }
 
 void
-alloc_image_from_data( Image ** image, IMAGE_TYPE * img, GRID_MAP2 * map )
+alloc_image_from_data( Image ** image, log2pic_image_t * img, GRID_MAP2 * map )
 {
   ExceptionInfo       exception;
   GetExceptionInfo( &exception );
@@ -921,7 +922,7 @@ draw_image_marker( Image * image, ImageInfo * image_info,
 
 void
 dump_animation_map( Image * image, ImageInfo * image_info,
-		    IMAGE_TYPE * img, GRID_MAP2 * map,
+		    log2pic_image_t * img, GRID_MAP2 * map,
 		    iVECTOR2 zsize, REC2_DATA * rec,
 		    int up_to_entry, int up_to_scan, int up_to_dump )
 {
@@ -933,7 +934,7 @@ dump_animation_map( Image * image, ImageInfo * image_info,
   } else {
     draw_image_marker( image, image_info, map, rec, up_to_entry, up_to_dump );
   }
-  strcpy( (image->filename), dump_filename() );
+  strcpy( (image->filename), log2pic_dump_filename() );
   fprintf( stderr, "# write image in file %s ... ",
 	   image->filename );
   WriteImage( image_info, image );
@@ -951,7 +952,7 @@ dump_animation_map( Image * image, ImageInfo * image_info,
 }
 
 void
-write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
+log2pic_write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 {
   int                 ok = TRUE;
   int                 i, j, num_dumps, idx, size, ctr = 0, lidx = 0;
@@ -960,7 +961,7 @@ write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
   iVECTOR2            zsize;
   ExceptionInfo       exception;
   PixelPacket         color;
-  IMAGE_TYPE          img;
+  log2pic_image_t     img;
   RPOS2               lastpos = {MAXFLOAT,MAXFLOAT,0};
   zsize.x = (int) (map->zoom * map->mapsize.x);
   zsize.y = (int) (map->zoom * map->mapsize.y);
@@ -979,8 +980,8 @@ write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
   
   if (settings.animation) {
     /*************  ANIMATION **************/
-    filetemplate_from_filename( settings.filetemplate,
-				settings.outfilename );
+    log2pic_filetemplate_from_filename( settings.filetemplate,
+					settings.outfilename );
     if (settings.gpspath) {
       for (i=0; i<rec->numentries; i++) {
 	idx = rec->entry[i].index;
@@ -1001,9 +1002,9 @@ write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 	if (rec->entry[i].type==LASER_VALUES) {
 	  if (rec->lsens[idx].id==settings.laser_id) {
 	    lidx = idx+1;
-	    map_integrate_scan( map, rec->lsens[idx],
-				settings.max_range,
-				settings.usable_range );
+	    log2pic_map_integrate_scan( map, rec->lsens[idx],
+					settings.max_range,
+					settings.usable_range );
 	    if (rpos2_distance(lastpos,
 			       rec->lsens[idx].estpos)>settings.anim_step) {
 	      if (idx>=settings.from && idx<=settings.to)
@@ -1036,16 +1037,17 @@ write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
       idx = rec->entry[i].index;
       if (rec->entry[i].type==LASER_VALUES) {
         if (rec->lsens[idx].id==settings.laser_id) {
-	  map_integrate_scan( map, rec->lsens[idx], settings.max_range,
-			      settings.usable_range );
+	  log2pic_map_integrate_scan( map, rec->lsens[idx],
+				      settings.max_range,
+				      settings.usable_range );
 	}
 	lidx = idx;
       } else if (rec->entry[i].type==MARKER) {
 	num_dumps = count_dumps_in_marker_line( rec->marker[idx].datastr );
 	for (j=0; j<num_dumps; j++) {
 	  if (ctr++%(settings.anim_skip+1)==0) {
-	    filetemplate_from_filename( settings.filetemplate,
-					settings.outfilename );
+	    log2pic_filetemplate_from_filename( settings.filetemplate,
+						settings.outfilename );
 	    dump_animation_map( image, &image_info, &img,
 				map, zsize, rec, i, lidx, j+1 );
 	  }
@@ -1071,7 +1073,7 @@ write_image_magick_map( GRID_MAP2 * map, REC2_DATA * rec )
 }
 
 void
-read_image_file( char * filename, BG_IMAGE_TYPE * img )
+log2pic_read_image_file( char * filename, log2pic_background_image_t * img )
 {
   ExceptionInfo                  exception;
   Image                        * image;

@@ -135,7 +135,7 @@ int
 write_rec2d_file( char *filename, REC2_DATA rec )
 {
   FILE  * iop;
-  int     i, k, tag1, tag2, tag3, tag4;
+  int     i, k;
   
   fprintf( stderr, "# write rec file %s ...\n", filename );
   if ((iop = fopen( filename, "w")) == 0){
@@ -167,53 +167,11 @@ write_rec2d_file( char *filename, REC2_DATA rec )
 	       rec.psens[rec.entry[i].index].rvel.tv,
 	       rec.psens[rec.entry[i].index].rvel.rv );
       break;
-    case CORR_POSITION:
-      fprintf( iop, "CORR-POS %11ld %7ld: %.5f %.5f %.5f %.5f %.5f\n",
-	       rec.cpsens[rec.entry[i].index].time.tv_sec,
-	       rec.cpsens[rec.entry[i].index].time.tv_usec,
-	       rec.cpsens[rec.entry[i].index].rpos.x,
-	       rec.cpsens[rec.entry[i].index].rpos.y,
-	       rad2deg(rec.cpsens[rec.entry[i].index].rpos.o),
-	       rec.cpsens[rec.entry[i].index].rvel.tv,
-	       rec.cpsens[rec.entry[i].index].rvel.rv );
-      break;
-    case COMPASS:
-      fprintf( iop, "COMPASS3D %11ld %7ld: %.3f %.3f %.3f\n",
-	       rec.compass[rec.entry[i].index].time.tv_sec,
-	       rec.compass[rec.entry[i].index].time.tv_usec,
-	       rad2deg(rec.compass[rec.entry[i].index].rx),
-	       rad2deg(rec.compass[rec.entry[i].index].ry),
-	       rad2deg(rec.compass[rec.entry[i].index].rz) );
-      break;
-    case POS_CORR:
-      fprintf( iop, "POS-CORR %11ld %7ld: %.3f %.3f %.3f\n",
-	       rec.poscorr[rec.entry[i].index].time.tv_sec,
-	       rec.poscorr[rec.entry[i].index].time.tv_usec,
-	       rec.poscorr[rec.entry[i].index].x,
-	       rec.poscorr[rec.entry[i].index].y,
-	       rad2deg(rec.poscorr[rec.entry[i].index].o) );
-      break;
     case MARKER:
       fprintf( iop, "MARKER %11ld %7ld: %s\n",
 	       rec.marker[rec.entry[i].index].time.tv_sec,
 	       rec.marker[rec.entry[i].index].time.tv_usec,
 	       rec.marker[rec.entry[i].index].datastr );
-      break;
-    case RFID_TAG:
-      tag1 = (int) ((rec.rfid[rec.entry[i].index].tag >> 48));
-      tag2 = (int) ((rec.rfid[rec.entry[i].index].tag >> 32) & 0xffff );
-      tag3 = (int) ((rec.rfid[rec.entry[i].index].tag >> 16) & 0xffff );
-      tag4 = (int) ((rec.rfid[rec.entry[i].index].tag) & 0xffff );
-      fprintf( iop,
-	       "RFID %11ld %7ld: %s%s%s%x %s%s%s%x %s%s%s%x %s%s%s%x %d %d\n",
-	       rec.rfid[rec.entry[i].index].time.tv_sec,
-	       rec.rfid[rec.entry[i].index].time.tv_usec,
-	       tag1<0xfff?"0":"", tag1<0xff?"0":"", tag1<0xf?"0":"", tag1,
-	       tag2<0xfff?"0":"", tag2<0xff?"0":"", tag2<0xf?"0":"", tag2,
-	       tag3<0xfff?"0":"", tag3<0xff?"0":"", tag3<0xf?"0":"", tag3,
-	       tag4<0xfff?"0":"", tag4<0xff?"0":"", tag4<0xf?"0":"", tag4,
-	       rec.rfid[rec.entry[i].index].antenna,
-	       rec.rfid[rec.entry[i].index].count );
       break;
     case UNKNOWN:
       break;

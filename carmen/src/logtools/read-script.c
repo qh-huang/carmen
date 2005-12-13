@@ -42,7 +42,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
   LASER_PROPERTIES2  lprop[2];
   
   int numPositions      = 0;
-  int numCorrPositions  = 0;
   int numSonarScans     = 0;
   int numLaserScans     = 0;
   int numRLaserScans    = 0;
@@ -97,10 +96,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
 	numPositions++;
 	if (fscanf(fp, "%s %s %s", inp0, inp1, inp2 ) == EOF)
 	  FileEnd = TRUE;
-      } else if (!strcmp( command, "position:") ){
-	numCorrPositions++;
-	if (fscanf(fp, "%s %s %s", inp0, inp1, inp2 ) == EOF)
-	  FileEnd = TRUE;
       } else if (!strcmp( command, "@SENS") ){
 	numTimes++;
 	if (fscanf(fp, "%d-%d-%d %d:%d:%s",
@@ -148,14 +143,12 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
 
   rewind( fp );
 
-  numEntries = numPositions + numCorrPositions + numRLaserScans;
+  numEntries = numPositions + numRLaserScans;
   
   script->entry   =
     (ENTRY_POSITION *) malloc( numEntries * sizeof(ENTRY_POSITION) );
   script->psens  =
     (POSSENS2_DATA *) malloc( numPositions * sizeof(POSSENS2_DATA) );
-  script->cpsens =
-    (POSSENS2_DATA *) malloc( numCorrPositions * sizeof(POSSENS2_DATA) );
   script->lsens  =
     (LASERSENS2_DATA *) malloc( numRLaserScans * sizeof(LASERSENS2_DATA) );
 
@@ -165,7 +158,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
     fprintf( stderr, "#####################################################################\n" );
     fprintf( stderr, "# found %d times\n", numTimes );    
     fprintf( stderr, "# found %d positions\n", numPositions );    
-    fprintf( stderr, "# found %d corr positions\n", numCorrPositions );    
     fprintf( stderr, "# found %d sonar scans\n", numSonarScans );    
     fprintf( stderr, "# found %d laser scans\n", numLaserScans );
     fprintf( stderr, "# found %d real laser scans\n", numRLaserScans );
@@ -175,7 +167,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
 
   cnt               = 0;
   numPositions      = 0;
-  numCorrPositions  = 0;
   numRLaserScans    = 0;
   numSonarScans     = 0;
   numLaserScans     = 0;
@@ -444,31 +435,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
 	}
 	
 	
-        /* ***************************************************************
-           ***************************************************************
-	   **                                                           **
-	   **                                                           **
-	   **                 CORR POSITION                             **
-	   **                                                           **
-	   **                                                           **
-	   ***************************************************************
-	   *************************************************************** */
-
-      } else if (!strcmp( command, "position:") ){
-	if (fscanf(fp, "%s %s %s", inp0, inp1, inp2 ) == EOF)
-	  FileEnd = TRUE;
-	else {
-	  script->entry[cnt].type  = CORR_POSITION;
-	  script->entry[cnt].index = numCorrPositions;
-	  rpos.x = atof( inp0 );
-	  rpos.y = atof( inp1 );
-	  rpos.o = deg2rad(atof(inp2));
-	  script->cpsens[numCorrPositions].time = curTime;
-	  script->cpsens[numCorrPositions].rpos = rpos;
-	  script->cpsens[numCorrPositions].rvel = rvel;
-	  numCorrPositions++;
-	  cnt++;
-	}
       } else {
 	if (!(command[0]=='%')){
 	  /*
@@ -486,7 +452,6 @@ read_script( char *filename, REC2_DATA *script, int verbose ) {
 
   script->numentries    = cnt;
   script->numpositions  = numPositions;
-  script->numcpositions = numCorrPositions;
   script->numlaserscans = numRLaserScans;
   script->nummarkers    = 0;
   

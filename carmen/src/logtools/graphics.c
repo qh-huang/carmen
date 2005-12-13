@@ -12,8 +12,7 @@
 #include <stdarg.h>
 
 #include <carmen/logtools.h>
-
-int color = 0;
+#include <carmen/logtools_graphics.h>
 
 draw_function_t d_fct = NULL;
 

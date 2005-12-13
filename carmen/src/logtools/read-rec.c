@@ -152,19 +152,21 @@ read_rec2d_file( char *filename, REC2_DATA *rec,  int mode )
   return(load_rec2d_file( filename, rec, REC, mode ));
 }
 
+
 int
 load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
 {
 
   char      line[MAX_LINE_LENGTH];
-  int       FEnd, numPos, numCorrPos, numScan, numDynProb;
+  int       FEnd, numPos, numScan, numDynProb;
   char      dummy[MAX_CMD_LENGTH];
   char      command[MAX_CMD_LENGTH];
   char    * sptr, * iline, * lptr;
   FILE    * iop;
-  int       linectr = 0, corrposctr = 0, posctr = 0, poscorrctr = 0;
-  int       laserctr = 0, dynctr = 0, estctr = 0, gpsctr = 0, compassctr = 0;
-  int       numEntries = 0, markerctr = 0, rfidctr = 0, pos3dctr = 0;
+  int       linectr = 0, posctr = 0;
+  int       laserctr = 0, dynctr = 0, estctr = 0;
+  int       gpsctr = 0, compassctr = 0;
+  int       numEntries = 0, markerctr = 0;
   int       wifictr = 0, gsmctr = 0;
 
   fprintf( stderr, "# read file %s ...\n", filename );
@@ -187,40 +189,27 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       else{
 	if (!strcmp( command, "POS" )) {
 	  posctr++;
-	} else if (!strcmp( command, "CORR-POS" )) {
-	  corrposctr++;
-	} else if (!strcmp( command, "POS-CORR" )) {
-	  poscorrctr++;
 	} else if ( (!strcmp( command, "LASER" ))       ||
 		    (!strcmp( command, "LASER-RANGE" )) ||
 		    (!strcmp( command, "LASER-SCAN" ))  ||
 		    (!strcmp( command, "CARMEN-LASER" )) ) {
 	  laserctr++;
-	} else if (!strcmp( command, "HELI-POS" )) {
-	  pos3dctr++;
 	} else if (!strcmp( command, "DYNAMIC-PROB" )) {
 	  dynctr++;
 	} else if (!strcmp( command, "GPS" )) {
 	  gpsctr++;
 	} else if (!strcmp( command, "NMEA-GGA" )) {
 	  gpsctr++;
-	} else if ( (!strcmp( command, "COMPASS2D" )) ||
-		    (!strcmp( command, "COMPASS3D" )) ) {
+	} else if ( (!strcmp( command, "COMPASS2D" )) ) {
 	  compassctr++;
 	} else if ( (!strcmp( command, "MARK-POS")) ||
 		    (!strcmp( command, "MARKER")) ) {
 	  markerctr++;
-	} else if ( (!strcmp( command, "RFID")) ||
-		    (!strcmp( command, "RFID-SIEMENS")) ) {
-	  rfidctr++;
 	} else if ( !strcmp( command, "WIFI") ||
 		    !strcmp( command, "WIFI-DIST") ) {
 	  wifictr++;
 	} else if ( !strcmp( command, "GSM-E2EMM") ) {
 	  gsmctr++;
-	} else if ( (!strcmp( command, "RFID")) ||
-		    (!strcmp( command, "RFID-SIEMENS")) ) {
-	  rfidctr++;
 	}
 	fgets(command,sizeof(command),iop);
       }
@@ -334,12 +323,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       fprintf( stderr, "# found %d positions\n", posctr );
     if (laserctr>0)
       fprintf( stderr, "# found %d laserscans\n", laserctr );
-    if (pos3dctr>0)
-      fprintf( stderr, "# found %d positions3d\n", pos3dctr );
-    if (poscorrctr>0)
-      fprintf( stderr, "# found %d pos corr\n", poscorrctr );
-    if (corrposctr>0)
-      fprintf( stderr, "# found %d corr pos\n", corrposctr );
     if (dynctr>0)
       fprintf( stderr, "# found %d dynamic probs\n", dynctr );
     if (compassctr>0)
@@ -348,8 +331,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       fprintf( stderr, "# found %d gps pos\n", gpsctr );
     if (markerctr>0)
       fprintf( stderr, "# found %d marker\n", markerctr );
-    if (rfidctr>0)
-      fprintf( stderr, "# found %d rfid\n", rfidctr );
     if (wifictr>0)
       fprintf( stderr, "# found %d wifi\n", wifictr );
     if (gsmctr>0)
@@ -359,8 +340,9 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   }
   
   numEntries =
-    posctr + poscorrctr + corrposctr + laserctr + dynctr +
-    gpsctr + compassctr + markerctr + rfidctr + pos3dctr +
+    posctr + laserctr +
+    dynctr + gpsctr +
+    compassctr + markerctr +
     wifictr + gsmctr + estctr + 1;
 
   rec->numentries = 0;
@@ -375,24 +357,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
       (POSSENS2_DATA *) malloc( posctr * sizeof(POSSENS2_DATA) );
   } else
     rec->psens = NULL;
-
-  if (pos3dctr>0) {
-    rec->psens3d =
-      (POSSENS3_DATA *) malloc( pos3dctr * sizeof(POSSENS3_DATA) );
-  } else
-    rec->psens3d = NULL;
-
-  if (corrposctr>0)
-    rec->cpsens =
-      (POSSENS2_DATA *) malloc( corrposctr * sizeof(POSSENS2_DATA) ); 
-  else
-    rec->cpsens = NULL;
-
-  if (poscorrctr>0)
-    rec->poscorr =
-      (POS_CORR2_DATA *) malloc( poscorrctr * sizeof(POS_CORR2_DATA) ); 
-  else
-    rec->poscorr = NULL;
 
   if (laserctr>0)
     rec->lsens =
@@ -418,12 +382,6 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   else 
     rec->marker = NULL;
   
-  if (rfidctr>0)
-    rec->rfid =
-      (RFID_DATA *) malloc( rfidctr * sizeof(RFID_DATA) );
-  else 
-    rec->rfid = NULL;
-  
   if (gsmctr>0)
     rec->gsm =
       (GSM_DATA *) malloc( gsmctr * sizeof(GSM_DATA) );
@@ -444,18 +402,13 @@ load_rec2d_file( char *filename, REC2_DATA *rec, enum FILE_TYPE type, int mode )
   
   numScan    = 0;
   numPos     = 0;
-  numCorrPos = 0;
   numDynProb = 0;
 
   rec->numpositions    = 0;
-  rec->numpositions3d  = 0;
-  rec->numposcorr      = 0;
-  rec->numcpositions   = 0;
   rec->numlaserscans   = 0;
   rec->numgps          = 0;
   rec->numcompass      = 0;
   rec->nummarkers      = 0;
-  rec->numrfid         = 0;
   rec->numgsm          = 0;
   rec->numwifi         = 0;
   rec->numestimates    = 0;
