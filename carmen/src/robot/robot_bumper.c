@@ -104,20 +104,21 @@ void carmen_robot_correct_bumper_and_publish(void)
 
   if (strcmp(carmen_robot_host, base_bumper.host) == 0)
     bumper_skew = 0;
-  else 
+  else {
     bumper_skew = carmen_running_average_report(BUMPER_AVERAGE);
-
-  odometry_skew = carmen_robot_get_odometry_skew();
-  if (bumper_count < ESTIMATES_CONVERGE) {
-    carmen_warn("Waiting for bumper data to accumulate\n");
-    return;
+    if (bumper_count < ESTIMATES_CONVERGE) {
+      carmen_warn("Waiting for bumper data to accumulate\n");
+      return;
+    }
   }
-  
+
   if (carmen_robot_odometry_count < ESTIMATES_CONVERGE) {
     carmen_warn("Waiting for odometry to accumulate\n");
     return;
   }  
 
+  odometry_skew = carmen_robot_get_odometry_skew();
+  
   low = 0;
   high = 1;
   for(i = 0; i < MAX_READINGS; i++) 

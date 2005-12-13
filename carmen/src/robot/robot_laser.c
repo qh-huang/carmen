@@ -306,7 +306,7 @@ laser_frontlaser_handler(void)
     carmen_robot_config.width / 2.0 + carmen_robot_config.side_dist;
   robot_front_laser.turn_axis = 1e6;
   robot_front_laser.timestamp = front_laser.timestamp;
-  strncpy(robot_front_laser.host, front_laser.host, 10);
+  robot_front_laser.host = front_laser.host;
 
   max_velocity = carmen_robot_config.max_t_vel;
 
