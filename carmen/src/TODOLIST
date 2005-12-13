@@ -1,9 +1,11 @@
-process control
+velocity fields of odometry message out of simulator
+
+ process control
 
 log file tools
 
 Directory structure (especially mapserver)
-  map/log file extensions: .cmf, .clf
+  map/log file extensions: .cmf, .clf\
   
 parameter handling
 
@@ -15,13 +17,11 @@ laser module/messages
 Test programs 
    Localize, navigator
 
-Robot convergence on same host
 IPC message size test
 Hmaps
 Command shell
 
 - Fix imlib detection, fix ar making in makefile
-
 
 - robotgraph -- when turning to face a point, and the network goes out, robot
 keeps turning for 1-3 secs. Why?

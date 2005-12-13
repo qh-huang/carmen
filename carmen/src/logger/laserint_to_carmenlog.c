@@ -151,9 +151,9 @@ int main(int argc, char **argv)
 					fscanf(fp, "%d", &temp1);
 					front_laser.range[i] = temp1/100.0;
 				}
-				front_laser.laser_location.x = odometry.x;
-				front_laser.laser_location.y = odometry.y;
-				front_laser.laser_location.theta = 
+				front_laser.laser_pose.x = odometry.x;
+				front_laser.laser_pose.y = odometry.y;
+				front_laser.laser_pose.theta = 
 				  odometry.theta;
 
  				front_laser.robot_pose.x = odometry.x;

@@ -330,11 +330,11 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_logger_file_p 
 	sscanf(mark, "%f", &robot_frontlaser->range[i]);
       }
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_location.x);
+      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.x);
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_location.y);
+      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.y);
       mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_location.theta);
+      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.theta);
       mark = next_word(mark);
       sscanf(mark, "%lf", &robot_frontlaser->robot_pose.x);
       mark = next_word(mark);
@@ -462,9 +462,9 @@ static gint load_scan(gpointer p) {
 	  carmen_test_alloc(scan_list);
 	}
       }
-      scan_list[num_scans].x = front_laser->laser_location.x;
-      scan_list[num_scans].y = front_laser->laser_location.y;
-      scan_list[num_scans].theta = front_laser->laser_location.theta;
+      scan_list[num_scans].x = front_laser->laser_pose.x;
+      scan_list[num_scans].y = front_laser->laser_pose.y;
+      scan_list[num_scans].theta = front_laser->laser_pose.theta;
       scan_list[num_scans].num_readings = front_laser->num_readings;
       scan_list[num_scans].range = front_laser->range;
       num_scans++;

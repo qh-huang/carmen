@@ -344,6 +344,9 @@ int carmen_laser_run(void)
 			laser4_stalled);
     last_alive = current_time;
   }
+
+  carmen_publish_heartbeat("laser");
+
   return 0;
 }
 

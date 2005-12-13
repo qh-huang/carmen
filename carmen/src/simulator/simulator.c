@@ -439,6 +439,8 @@ publish_readings(void)
 		      CARMEN_BASE_SONAR_NAME);
     }
 
+  carmen_publish_heartbeat("simulator");
+
   return 1;
 }
 
@@ -610,12 +612,11 @@ int main(int argc, char** argv)
 
   while (1) {
     carmen_ipc_sleep(simulator_conf.real_time);
-    if (!simulator_conf.sync_mode)
-      {
-	if (use_robot)
-	  carmen_robot_run();
-	publish_readings();
-      }
+    if (!simulator_conf.sync_mode) {
+      if (use_robot)
+	carmen_robot_run();
+      publish_readings();
+    }
   }
 
   carmen_simulator_clear_objects();

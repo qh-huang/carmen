@@ -692,5 +692,7 @@ int carmen_robot_run(void)
   else if (following_trajectory)
     follow_trajectory_3d();
 
+  carmen_publish_heartbeat("robot");
+
   return 1;
 }

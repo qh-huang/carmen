@@ -312,9 +312,9 @@ int read_message(int message_num, int publish)
 	line_ptr++;
     }
     sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", 
-	   &frontlaser.laser_location.x,
-	   &frontlaser.laser_location.y, 
-	   &frontlaser.laser_location.theta, 
+	   &frontlaser.laser_pose.x,
+	   &frontlaser.laser_pose.y, 
+	   &frontlaser.laser_pose.theta, 
 	   &frontlaser.robot_pose.x,
 	   &frontlaser.robot_pose.y, 
 	   &frontlaser.robot_pose.theta, 
@@ -348,9 +348,9 @@ int read_message(int message_num, int publish)
 	line_ptr++;
     }
     sscanf(line_ptr, "%lf %lf %lf %lf %lf %lf %lf %s %lf\n", 
-	   &rearlaser.laser_location.x,
-	   &rearlaser.laser_location.y, 
-	   &rearlaser.laser_location.theta, 
+	   &rearlaser.laser_pose.x,
+	   &rearlaser.laser_pose.y, 
+	   &rearlaser.laser_pose.theta, 
 	   &rearlaser.robot_pose.x,
 	   &rearlaser.robot_pose.y, 
 	   &rearlaser.robot_pose.theta, 

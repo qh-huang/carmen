@@ -237,17 +237,17 @@ carmen_localize_correct_laser(carmen_robot_laser_message *laser,
   double dx, dy;
   double dtheta;
 
-  dx = laser->laser_location.x - globalpos->odometrypos.x;
-  dy = laser->laser_location.y - globalpos->odometrypos.y;
-  dtheta = laser->laser_location.theta - globalpos->odometrypos.theta;
+  dx = laser->laser_pose.x - globalpos->odometrypos.x;
+  dy = laser->laser_pose.y - globalpos->odometrypos.y;
+  dtheta = laser->laser_pose.theta - globalpos->odometrypos.theta;
 
   dt = sqrt(dx * dx + dy * dy);
-  backwards = (dx * cos(laser->laser_location.theta) + 
-	       dy * sin(laser->laser_location.theta) < 0);
+  backwards = (dx * cos(laser->laser_pose.theta) + 
+	       dy * sin(laser->laser_pose.theta) < 0);
 
   /* The dr1/dr2 code becomes unstable if dt is too small. */
   if(dt < 0.05) {
-    dr1 = carmen_normalize_theta(laser->laser_location.theta - 
+    dr1 = carmen_normalize_theta(laser->laser_pose.theta - 
 				 globalpos->odometrypos.theta) / 2.0;
     dr2 = dr1;
   } else {
@@ -261,11 +261,11 @@ carmen_localize_correct_laser(carmen_robot_laser_message *laser,
     }
   if(backwards) 
     dt = -dt;
-  laser->laser_location.x = globalpos->globalpos.x + dt * 
+  laser->laser_pose.x = globalpos->globalpos.x + dt * 
     cos(globalpos->globalpos.theta + dr1);
-  laser->laser_location.y = globalpos->globalpos.y + dt * 
+  laser->laser_pose.y = globalpos->globalpos.y + dt * 
     sin(globalpos->globalpos.theta + dr1);
-  laser->laser_location.theta = 
+  laser->laser_pose.theta = 
     carmen_normalize_theta(globalpos->globalpos.theta + dr1 + dr2);
 }
 

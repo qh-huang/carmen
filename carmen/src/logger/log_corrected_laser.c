@@ -31,8 +31,8 @@ void robot_frontlaser_handler(carmen_robot_laser_message *frontlaser)
   carmen_localize_correct_laser(frontlaser, localize_msg);
 
   for(i = 0; i < frontlaser->num_readings; i++) {
-    x = frontlaser->laser_location.x+cos(-M_PI/2 + M_PI*i/180.0 + frontlaser->laser_location.theta)*frontlaser->range[i];
-    y = frontlaser->laser_location.y+sin(-M_PI/2 + M_PI*i/180.0 + frontlaser->laser_location.theta)*frontlaser->range[i];
+    x = frontlaser->laser_pose.x+cos(-M_PI/2 + M_PI*i/180.0 + frontlaser->laser_pose.theta)*frontlaser->range[i];
+    y = frontlaser->laser_pose.y+sin(-M_PI/2 + M_PI*i/180.0 + frontlaser->laser_pose.theta)*frontlaser->range[i];
     carmen_logger_fprintf(outfile, "%.2f %.2f\n", x, y);
   }
 }

@@ -64,7 +64,7 @@ typedef struct {
   int num_readings;
   float *range;
   char *tooclose;
-  carmen_point_t laser_location; //position of the center of the laser
+  carmen_point_t laser_pose; //position of the center of the laser
   carmen_point_t robot_pose; //position of the center of the robot
   double tv, rv;
   double forward_safety_dist, side_safety_dist;

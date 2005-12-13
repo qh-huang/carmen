@@ -90,8 +90,8 @@ robot_frontlaser_handler(void)
 static void
 robot_rearlaser_handler(void)
 {
-  front_laser.laser_location.x *= 100.0;
-  front_laser.laser_location.y *= 100.0;
+  front_laser.laser_pose.x *= 100.0;
+  front_laser.laser_pose.y *= 100.0;
 
   received_rear_laser = 1;
   new_rear_laser = 1;
@@ -207,12 +207,12 @@ save_postscript_screenshot(void)
   carmen_test_alloc(laser_y);
 
   for(i = 0; i < front_laser.num_readings; i++) {
-    theta = front_laser.laser_location.theta +
+    theta = front_laser.laser_pose.theta +
       carmen_degrees_to_radians(i) - M_PI_2;
     range = front_laser.range[i];
-    laser_x[i] = front_laser.laser_location.x - front_laser.robot_pose.x + 
+    laser_x[i] = front_laser.laser_pose.x - front_laser.robot_pose.x + 
       cos(theta) * range;
-    laser_y[i] = front_laser.laser_location.y - front_laser.robot_pose.y +
+    laser_y[i] = front_laser.laser_pose.y - front_laser.robot_pose.y +
       sin(theta) * range;
     laser_x[i] = doc->width / 2.0 + laser_x[i] / 500.0 * 2.0;
     laser_y[i] = doc->height / 2.0 + laser_y[i] / 500.0 * 2.0;
@@ -506,12 +506,12 @@ range_to_xy(carmen_robot_laser_message *laser, GdkPoint *laser_poly,
   double theta;
 
   for(i = 0; i < laser->num_readings; i++) {
-    theta = laser->laser_location.theta + 
+    theta = laser->laser_pose.theta + 
       M_PI * i / (double)(laser->num_readings - 1) - M_PI / 2.0;
-    laser_poly[i].x = width_2 + ((laser->laser_location.x - 
+    laser_poly[i].x = width_2 + ((laser->laser_pose.x - 
 				  laser->robot_pose.x) + 
 				 cos(theta) * laser->range[i]) * scale;
-    laser_poly[i].y = height_2 - ((laser->laser_location.y - 
+    laser_poly[i].y = height_2 - ((laser->laser_pose.y - 
 				   laser->robot_pose.y) + 
 				  sin(theta) * laser->range[i]) * scale;
     if(i > 0)
@@ -519,9 +519,9 @@ range_to_xy(carmen_robot_laser_message *laser, GdkPoint *laser_poly,
 			    laser_poly[i - 1].y - laser_poly[i].y);
   }
   laser_poly[laser->num_readings].x = width_2 + 
-    (laser->laser_location.x - laser->robot_pose.x) * scale;
+    (laser->laser_pose.x - laser->robot_pose.x) * scale;
   laser_poly[laser->num_readings].y = height_2 - 
-    (laser->laser_location.y - laser->robot_pose.y) * scale;
+    (laser->laser_pose.y - laser->robot_pose.y) * scale;
 }
 
 static void 
@@ -581,9 +581,9 @@ update_polygons(int received_laser, carmen_robot_laser_message *laser_msg,
 
   /* update odometry */
   *last_odom = *current_odom;
-  current_odom->x = laser_msg->laser_location.x;
-  current_odom->y = laser_msg->laser_location.y;
-  current_odom->theta = laser_msg->laser_location.theta;
+  current_odom->x = laser_msg->laser_pose.x;
+  current_odom->y = laser_msg->laser_pose.y;
+  current_odom->theta = laser_msg->laser_pose.theta;
 
 }
 

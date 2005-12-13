@@ -111,15 +111,15 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 	      carmen_robot_odometry[low].rv);
 
   if(rear)
-    msg->laser_location.theta = msg->robot_pose.theta + M_PI;
+    msg->laser_pose.theta = msg->robot_pose.theta + M_PI;
   else
-    msg->laser_location.theta = msg->robot_pose.theta;
-  msg->laser_location.theta = 
-    carmen_normalize_theta(msg->laser_location.theta);
-  msg->laser_location.x = msg->robot_pose.x + offset * 
-    cos(msg->laser_location.theta);
-  msg->laser_location.y = msg->robot_pose.y + offset * 
-    sin(msg->laser_location.theta);
+    msg->laser_pose.theta = msg->robot_pose.theta;
+  msg->laser_pose.theta = 
+    carmen_normalize_theta(msg->laser_pose.theta);
+  msg->laser_pose.x = msg->robot_pose.x + offset * 
+    cos(msg->laser_pose.theta);
+  msg->laser_pose.y = msg->robot_pose.y + offset * 
+    sin(msg->laser_pose.theta);
 }
 
 void 

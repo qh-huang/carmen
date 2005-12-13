@@ -141,9 +141,9 @@ carmen_logger_write_frontlaser(carmen_robot_laser_message *frontlaser, carmen_lo
   for(i = 0; i < frontlaser->num_readings; i++)
     carmen_logger_fprintf(outfile, "%.2f ", frontlaser->range[i]);
   carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", 
-			frontlaser->laser_location.x, 
-			frontlaser->laser_location.y, 
-			frontlaser->laser_location.theta, 
+			frontlaser->laser_pose.x, 
+			frontlaser->laser_pose.y, 
+			frontlaser->laser_pose.theta, 
 			frontlaser->robot_pose.x,
 			frontlaser->robot_pose.y, 
 			frontlaser->robot_pose.theta, 
@@ -162,9 +162,9 @@ carmen_logger_write_rearlaser(carmen_robot_laser_message *rearlaser,
   for(i = 0; i < rearlaser->num_readings; i++)
     carmen_logger_fprintf(outfile, "%.2f ", rearlaser->range[i]);
   carmen_logger_fprintf(outfile, "%f %f %f %f %f %f %f %s %f\n", 
-			rearlaser->laser_location.x, 
-			rearlaser->laser_location.y, 
-			rearlaser->laser_location.theta, 
+			rearlaser->laser_pose.x, 
+			rearlaser->laser_pose.y, 
+			rearlaser->laser_pose.theta, 
 			rearlaser->robot_pose.x,
 			rearlaser->robot_pose.y, 
 			rearlaser->robot_pose.theta, 
