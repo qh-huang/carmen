@@ -239,18 +239,26 @@ void  set_laser_config_structure(sick_laser_p laser,
   if (laser->settings.type == LMS) {
     config->laser_type = SICK_LMS;
     config->maximum_range = 81.92;
-    config->accuracy = 0.01; /* I need to look up this value in the SICK specs */
+
+    if (laser->settings.range_res == MM)
+      config->accuracy = 0.035;  /* 5cm in cm mode, 35mm in mm mode */
+    else
+      config->accuracy = 0.05;   /* 5cm in cm mode, 35mm in mm mode */
   }
   else if (laser->settings.type == PLS) {
     config->laser_type = SICK_PLS;
     config->maximum_range = 50.0;
-    config->accuracy = 0.1; /* I need to look up this value in the SICK specs */
+    config->accuracy = 0.15; /* I need to look up this value in the SICK specs */
   }
   else { 
     // if unknown, assume LMS
     config->laser_type = SICK_LMS;
     config->maximum_range = 81.92;
-    config->accuracy = 0.01; /* I need to look up this value in the SICK specs */
+
+    if (laser->settings.range_res == MM)
+      config->accuracy = 0.035;  /* 5cm in cm mode, 35mm in mm mode */
+    else
+      config->accuracy = 0.05;   /* 5cm in cm mode, 35mm in mm mode */
   }
 
   if (laser->settings.laser_num == 181 ) {
