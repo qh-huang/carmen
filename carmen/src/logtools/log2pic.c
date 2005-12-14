@@ -732,7 +732,7 @@ void
 print_usage( void )
 {
   fprintf(stderr,
-	  "\nusage: rec2pic [options] <LOG-FILE> <PIC-FILE>\n"
+	  "\nusage: log2pic [options] <LOG-FILE> <PIC-FILE>\n"
 	  "  -anim-step <STEP-SIZE>:    min distance between scans (in cm)\n"
 	  "  -anim-skip <NUM>:          skip NUM animation dumps (0: no skip\n"
 	  "  -animation:                write sep. pics for animation\n"
