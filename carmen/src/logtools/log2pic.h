@@ -37,7 +37,8 @@ typedef struct {
 
 enum log2pic_format_t {
   GRAPHICS,
-  GNUPLOT,
+  PLOT2D,
+  PLOT3D,
   CARMEN_MAP
 };
   

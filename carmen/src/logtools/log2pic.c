@@ -503,7 +503,34 @@ printUnknown( FILE *fp, int n)
 }
 
 void
-log2pic_write_gnuplot_data( logtools_grid_map2_t *map )
+log2pic_write_plot2d_data( logtools_log_data_t *rec )
+{
+  int       i, j;
+  FILE    * ofp;
+
+  if ((ofp = fopen( settings.outfilename, "w")) == 0){
+    fprintf(stderr, "# ERROR: can't write data file %s\n",
+	    settings.outfilename );
+    return;
+  }
+  
+  fprintf(stderr, "# INFO: write 2d data file %s\n",
+	  settings.outfilename );
+  for (i=0; i<rec->numlaserscans; i++) {
+    if (rec->lsens[i].id==settings.laser_id) {
+      for (j=0;j<rec->lsens[i].laser.numvalues;j++) {
+	if (rec->lsens[i].laser.val[j]<settings.max_range) {
+	  fprintf(ofp, "%f %f\n", 
+		  rec->lsens[i].coord[j].abspt.x,
+		  rec->lsens[i].coord[j].abspt.y );
+	}
+      }
+    }
+  }
+}
+
+void
+log2pic_write_plot3d_data( logtools_grid_map2_t *map )
 {
   FILE    * ofp;
   int       x, y;
@@ -749,7 +776,6 @@ print_usage( void )
 	  "  -endpoints:                use endpoints instead of beams\n"
 	  "  -free-prob:                probability for free observation\n"
 	  "  -from <NUM>:               start animation with scan NUM\n"
-	  "  -gnuplot:                  save in gnuplot data format\n"
 	  "  -gps-path:                 draw gps points\n"
 	  "  -id <ID>:                  set laser number\n"
 	  "  -kernel-size <NUM>:        size of the gaussian kernel (>0 and odd)\n"
@@ -759,6 +785,8 @@ print_usage( void )
 	  "  -pathcolor <COLORNAME>:    color of the robot path\n"
 	  "  -pathwidth <WIDTH>:        width of the robot path\n"
 	  "  -start-pose <X><Y><O>:     start pose of the robot\n"
+	  "  -plot2d:                   save as 2d data file\n"
+	  "  -plot3d:                   save map as 3d data file\n"
 	  "  -pos-start <X><Y>:         pos of lower left bg-corner\n"
 	  "  -rear-laser:               use rear laser instead of front laser\n"
 	  "  -res   <RES> <RES>:        resolution of the map\n"
@@ -827,8 +855,10 @@ main( int argc, char** argv)
       settings.laser_id = atoi(argv[++i]);
     } else if (!strcmp(argv[i],"-rear-laser")) {
       settings.flip = TRUE;
-    } else if (!strcmp(argv[i],"-gnuplot")) {
-      settings.format = GNUPLOT;  
+    } else if (!strcmp(argv[i],"-plot2d")) {
+      settings.format = PLOT2D;  
+    } else if (!strcmp(argv[i],"-plot3d")) {
+      settings.format = PLOT3D;  
     } else if (!strcmp(argv[i],"-gps-path")) {
       settings.gpspath = TRUE;
     } else if (!strcmp(argv[i],"-utm-correct")) {
@@ -1199,9 +1229,12 @@ main( int argc, char** argv)
   fprintf( stderr, "#####################################################################\n" );
   
   switch (settings.format) {
-  case GNUPLOT:
+  case PLOT2D:
+    log2pic_write_plot2d_data( &rec );
+    break;
+  case PLOT3D:
     log2pic_compute_map( rec, &map );
-    log2pic_write_gnuplot_data( &map );
+    log2pic_write_plot3d_data( &map );
     break;
   case GRAPHICS:
     log2pic_write_image_magick_map( &map, &rec );
