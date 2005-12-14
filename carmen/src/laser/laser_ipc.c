@@ -18,9 +18,9 @@ void publish_laser_alive(int front_stalled, int rear_stalled,
   carmen_laser_alive_message msg;
 
   msg.frontlaser_stalled = front_stalled;
-  msg.rearlaser_stalled = rear_stalled;
-  msg.laser3_stalled = laser3_stalled;
-  msg.laser4_stalled = laser4_stalled;
+  msg.rearlaser_stalled  = rear_stalled;
+  msg.laser3_stalled     = laser3_stalled;
+  msg.laser4_stalled     = laser4_stalled;
 
   err = IPC_publishData(CARMEN_LASER_ALIVE_NAME, &msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_LASER_ALIVE_NAME);
@@ -35,7 +35,7 @@ void publish_laser_message(sick_laser_p laser,
   int i;
 
   msg.host = carmen_get_host();
-  msg.num_readings = laser->numvalues - 1;
+  msg.num_readings = laser->numvalues - 1; 
   msg.timestamp = laser->timestamp;
   msg.config = *config;
   
@@ -49,12 +49,12 @@ void publish_laser_message(sick_laser_p laser,
   msg.range = range_buffer[laser->settings.laser_num];
 
   if( laser->settings.laser_flipped == 0)  {
-    for(i = 0; i < laser->numvalues - 1; i++)
+    for(i = 0; i < msg.num_readings; i++)
       msg.range[i] = laser->range[i] / 100.0;
   }
   else {      
-    for(i = 0; i < laser->numvalues - 1; i++)
-      msg.range[i] = laser->range[laser->numvalues-2-i] / 100.0;
+    for(i = 0; i < msg.num_readings; i++)
+      msg.range[i] = laser->range[msg.num_readings-1-i] / 100.0;
   }
 
   if(laser->settings.use_remission == 1) {
@@ -83,8 +83,6 @@ void publish_laser_message(sick_laser_p laser,
     msg.num_remission = 0;
     msg.remission = NULL ;
   }
-
-
 
   switch(laser->settings.laser_num) {
   case CARMEN_FRONT_LASER_NUM:
