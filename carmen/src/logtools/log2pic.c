@@ -381,7 +381,9 @@ log2pic_map_integrate_scan( logtools_grid_map2_t * map, logtools_lasersens2_data
   if (first_time) {
     max_num_linepoints =
       3 * ( max_range / map->resolution );
-    line.grid = (logtools_ivector2_t *) malloc( max_num_linepoints * sizeof(logtools_ivector2_t) );
+    line.grid =
+      (logtools_ivector2_t *) malloc( max_num_linepoints *
+				      sizeof(logtools_ivector2_t) );
     first_time = FALSE;
   }
 

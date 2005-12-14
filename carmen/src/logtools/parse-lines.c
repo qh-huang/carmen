@@ -606,7 +606,6 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 	  
       rec->lsens[rec->numlaserscans].id                 = 0;
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
-
       rec->lsens[rec->numlaserscans].coord              = NULL;
 
       if (alloc) {

@@ -13,8 +13,6 @@
 
 #include "log2pic.h"
 
-
-
 PointInfo arrow[7] = {
   { -1.0, -0.15 }, 
   {  0.2, -0.15 },
@@ -814,9 +812,10 @@ void
 copy_probs_to_data( log2pic_image_t * img, logtools_grid_map2_t * map,
 		    logtools_ivector2_t zsize )
 {
-  logtools_gauss_kernel_t        kernel;
-  int                 i, j, idx, ix, iy;
-  double              c;
+  logtools_gauss_kernel_t      kernel;
+  int                          i, j, idx, ix, iy;
+  double                       c;
+  
   if (settings.endpoints) {
     log2pic_map_compute_probs( map, 0.0 );
   } else {
@@ -862,9 +861,10 @@ copy_probs_to_data( log2pic_image_t * img, logtools_grid_map2_t * map,
 	  c = 1.0-map->mapprob[ix][map->mapsize.y-iy-1];
 	  if (c<0.0)
 	    c = 0.0;
-	  img->pixel[idx*3]     = c;
-	  img->pixel[idx*3+1]   = c;
-	  img->pixel[idx*3+2]   = c;
+	  img->pixel[idx*4]     = 1.0; 
+	  img->pixel[idx*4+1]   = c;
+	  img->pixel[idx*4+2]   = c;
+	  img->pixel[idx*4+3]   = c;
 	}
       }
     }
