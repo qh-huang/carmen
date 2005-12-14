@@ -241,9 +241,10 @@ laser_frontlaser_handler(void)
   memcpy(robot_front_laser.range, front_laser.range, 
 	 robot_front_laser.num_readings * sizeof(float));
   memset(robot_front_laser.tooclose, 0, robot_front_laser.num_readings);
-
   memcpy(robot_front_laser.remission, front_laser.remission, 
 	 robot_front_laser.num_remissions * sizeof(float));
+
+  robot_front_laser.config = front_laser.config;
 
 
   if (carmen_get_time() - time_since_last_process < 
@@ -422,6 +423,8 @@ laser_rearlaser_handler(void)
   memset(robot_rear_laser.tooclose, 0, robot_rear_laser.num_readings);
   memcpy(robot_rear_laser.remission, rear_laser.remission, 
 	 robot_rear_laser.num_remissions * sizeof(float));
+
+  robot_rear_laser.config = rear_laser.config;
 
   if (carmen_get_time() - time_since_last_process < 
       1.0/carmen_robot_collision_avoidance_frequency)
