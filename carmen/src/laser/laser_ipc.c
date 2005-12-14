@@ -59,7 +59,7 @@ void publish_laser_message(sick_laser_p laser,
 
   if(laser->settings.use_remission == 1) {
 
-    if(msg.num_remission != allocremsize[laser->settings.laser_num]) {
+    if(msg.num_remissions != allocremsize[laser->settings.laser_num]) {
       remission_buffer[laser->settings.laser_num] = 
 	realloc(remission_buffer[laser->settings.laser_num],
 		msg.num_readings * sizeof(float));
@@ -69,18 +69,18 @@ void publish_laser_message(sick_laser_p laser,
     msg.remission = remission_buffer[laser->settings.laser_num];
     
     
-    msg.num_remission = msg.num_readings;
+    msg.num_remissions = msg.num_readings;
     if( laser->settings.laser_flipped == 0)  {
-      for(i = 0; i < msg.num_remission; i++) 
+      for(i = 0; i < msg.num_remissions; i++) 
 	msg.remission[i] = laser->remission[i];
     }
     else {
-      for(i = 0; i < msg.num_remission; i++)
-	msg.remission[i] = laser->remission[msg.num_remission-1-i];
+      for(i = 0; i < msg.num_remissions; i++)
+	msg.remission[i] = laser->remission[msg.num_remissions-1-i];
     }      
   }
   else {
-    msg.num_remission = 0;
+    msg.num_remissions = 0;
     msg.remission = NULL ;
   }
 

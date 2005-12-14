@@ -57,7 +57,7 @@ typedef struct {
   carmen_laser_laser_config_t config;
   int num_readings;
   float *range;
-  int num_remission;
+  int num_remissions;
   float *remission;
 } carmen_laser_laser_message;
 
@@ -82,30 +82,6 @@ typedef struct {
 
 #define      CARMEN_LASER_ALIVE_NAME            "carmen_laser_alive"
 #define      CARMEN_LASER_ALIVE_FMT             "{int,int,int,int}"
-
-
-/* #define      CARMEN_LASER_REMISSION_INVALID_VALUE         -1 */
-
-/* typedef struct { */
-/*   double timestamp; */
-/*   char *host; */
-/*   int num_readings; */
-/*   float *range; */
-/*   float *remission; */
-/* } carmen_laser_remission_message; */
-
-/* #define      CARMEN_LASER_FRONTLASER_REMISSION_NAME       "carmen_laser_frontlaser_remission" */
-/* #define      CARMEN_LASER_FRONTLASER_REMISSION_FMT        "{double,string,int,<float:3>,<float:3>}" */
-
-/* #define      CARMEN_LASER_REARLASER_REMISSION_NAME        "carmen_laser_rearlaser_remission" */
-/* #define      CARMEN_LASER_REARLASER_REMISSION_FMT         "{double,string,int,<float:3>,<float:3>}" */
-
-/* #define      CARMEN_LASER_LASER3_REMISSION_NAME           "carmen_laser_laser3_remission" */
-/* #define      CARMEN_LASER_LASER3_REMISSION_FMT            "{double,string,int,<float:3>,<float:3>}" */
-
-/* #define      CARMEN_LASER_LASER4_REMISSION_NAME           "carmen_laser_laser4_remission" */
-/* #define      CARMEN_LASER_LASER4_REMISSION_FMT            "{double,string,int,<float:3>,<float:3>}" */
-
 
 
 #ifdef __cplusplus
