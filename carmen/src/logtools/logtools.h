@@ -359,8 +359,8 @@ void          mdfree(void *tip, int ndim);
 int                      logtools_read_logfile( logtools_log_data_t * rec,
 						char * filename );
 
-int                      logtools_write_logfile( char * filename,
-						 logtools_log_data_t rec );
+int                      logtools_write_logfile( logtools_log_data_t * rec,
+						 char * filename );
 
 /****************************************************************************/
 
