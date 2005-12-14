@@ -64,6 +64,8 @@ typedef struct {
   int num_readings;
   float *range;
   char *tooclose;
+  int num_remissions;
+  float *remission;
   carmen_point_t laser_pose; //position of the center of the laser
   carmen_point_t robot_pose; //position of the center of the robot
   double tv, rv;
@@ -72,10 +74,10 @@ typedef struct {
 } carmen_robot_laser_message;
 
 #define      CARMEN_ROBOT_FRONTLASER_NAME       "carmen_robot_frontlaser"
-#define      CARMEN_ROBOT_FRONTLASER_FMT        "{double,string,int,<float:3>,<char:3>,{double,double,double},{double,double,double},double,double,double,double,double}"
+#define      CARMEN_ROBOT_FRONTLASER_FMT        "{double,string,int,<float:3>,<char:3>,int,<float:6>,{double,double,double},{double,double,double},double,double,double,double,double}"
 
 #define      CARMEN_ROBOT_REARLASER_NAME        "carmen_robot_rearlaser"
-#define      CARMEN_ROBOT_REARLASER_FMT         "{double,string,int,<float:3>,<char:3>,double,double,double,double,double,double,double,double,double,double,double}"
+#define      CARMEN_ROBOT_REARLASER_FMT         "{double,string,int,<float:3>,<char:3>,int,<float:6>,double,double,double,double,double,double,double,double,double,double,double}"
 
 typedef struct {
   double timestamp;

@@ -171,6 +171,12 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
     robot_laser.tooclose = 
       (char *)calloc(robot_laser.num_readings, sizeof(char));
     carmen_test_alloc(robot_laser.tooclose);   
+
+    robot_laser.num_remissions = laser.num_remissions;
+    robot_laser.remission = 
+      (float *)calloc(robot_laser.num_remissions, sizeof(float));
+    carmen_test_alloc(robot_laser.remission);
+
     
     first = 0;
   } else if(robot_laser.num_readings != laser.num_readings) {
@@ -182,6 +188,12 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
     robot_laser.tooclose = (char *)realloc
       (robot_laser.tooclose, sizeof(char) * robot_laser.num_readings);
     carmen_test_alloc(robot_laser.tooclose);
+
+    robot_laser.num_remissions = laser.num_remissions;
+    robot_laser.remission = 
+      (float *)realloc(robot_laser.remission, 
+		       sizeof(float) * robot_laser.num_remissions);
+    carmen_test_alloc(robot_laser.remission);
   }
 
   if (laser_ptr == &front_laser) {
@@ -229,6 +241,9 @@ laser_frontlaser_handler(void)
   memcpy(robot_front_laser.range, front_laser.range, 
 	 robot_front_laser.num_readings * sizeof(float));
   memset(robot_front_laser.tooclose, 0, robot_front_laser.num_readings);
+
+  memcpy(robot_front_laser.remission, front_laser.remission, 
+	 robot_front_laser.num_remissions * sizeof(float));
 
 
   if (carmen_get_time() - time_since_last_process < 
@@ -405,6 +420,8 @@ laser_rearlaser_handler(void)
   memcpy(robot_rear_laser.range, rear_laser.range, 
 	 robot_rear_laser.num_readings * sizeof(float));
   memset(robot_rear_laser.tooclose, 0, robot_rear_laser.num_readings);
+  memcpy(robot_rear_laser.remission, rear_laser.remission, 
+	 robot_rear_laser.num_remissions * sizeof(float));
 
   if (carmen_get_time() - time_since_last_process < 
       1.0/carmen_robot_collision_avoidance_frequency)
