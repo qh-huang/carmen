@@ -2,7 +2,7 @@
 
 #define        MAX_LINE_LENGTH           100000
 
-carmen_FILE *infile = NULL;
+carmen_FILE *logfile = NULL;
 carmen_logfile_index_p logfile_index = NULL;
 
 double playback_starttime = 0.0;
@@ -23,7 +23,7 @@ carmen_base_odometry_message odometry;
 carmen_simulator_truepos_message truepos;
 carmen_robot_laser_message laser1, laser2, laser3, laser4;
 carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4;
-
+carmen_localize_globalpos_message globalpos;
 
 void print_playback_status(void)
 {
@@ -114,6 +114,27 @@ void register_ipc_messages(void)
                       CARMEN_ROBOT_REARLASER_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_REARLASER_NAME);
 
+  err = IPC_defineMsg(CARMEN_LASER_FRONTLASER_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_FRONTLASER_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_FRONTLASER_NAME);
+
+  err = IPC_defineMsg(CARMEN_LASER_REARLASER_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_REARLASER_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_REARLASER_NAME);
+
+  err = IPC_defineMsg(CARMEN_LASER_LASER3_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_LASER3_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER3_NAME);
+
+  err = IPC_defineMsg(CARMEN_LASER_LASER4_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_LASER4_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER4_NAME);
+
+  err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LOCALIZE_GLOBALPOS_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_LOCALIZE_GLOBALPOS_NAME);
+
   carmen_subscribe_message(CARMEN_PLAYBACK_COMMAND_NAME, 
                            CARMEN_PLAYBACK_COMMAND_FMT,
                            NULL, sizeof(carmen_playback_command_message),
@@ -190,7 +211,7 @@ int read_message(int message_num, int publish)
   static double last_update = 0;
   double current_time;
 
-  carmen_logfile_read_line(logfile_index, infile, message_num, 
+  carmen_logfile_read_line(logfile_index, logfile, message_num, 
 			   MAX_LINE_LENGTH, line);
   current_pos = carmen_next_word(line);
 
@@ -341,10 +362,10 @@ int main(int argc, char **argv)
   read_parameters(argc, argv);
   signal(SIGINT, shutdown_playback_module);
   
-  infile = carmen_fopen(argv[1], "r");
-  if(infile == NULL)
+  logfile = carmen_fopen(argv[1], "r");
+  if(logfile == NULL)
     carmen_die("Error: could not open file %s for reading.\n", argv[1]);
-  logfile_index = carmen_logfile_index_messages(infile);
+  logfile_index = carmen_logfile_index_messages(logfile);
   main_playback_loop();
   return 0;
 }

@@ -8,3 +8,4 @@ tape*
 *log
 log_timestamp_repair
 log_corrected_laser
+test_logfileread

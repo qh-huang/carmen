@@ -2,8 +2,6 @@
 #include <carmen/carmen_stdio.h>
 #include <carmen/readlog.h>
 
-#define        MAX_LINE_LENGTH           10000
-
 long int carmen_logfile_uncompressed_length(carmen_FILE *infile)
 {
   unsigned char buffer[10000];
