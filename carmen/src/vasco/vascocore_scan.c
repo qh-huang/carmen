@@ -40,10 +40,10 @@ vascocore_copy_scan( carmen_laser_laser_message     scan,
   //  data->fov  = M_PI;
   // delta = data->fov / (double) (scan.num_readings-1);
 
-  data->fov =  carmen_laser_get_fov(scan.num_readings);
-  delta = carmen_laser_get_angle_increment(scan.num_readings);
+  data->fov =  scan.config.fov; //carmen_laser_get_fov(scan.num_readings);
+  delta = scan.config.angular_resolution; //carmen_laser_get_angle_increment(scan.num_readings);
 
-  start = - M_PI_2;
+  start = scan.config.start_angle; //- M_PI_2;
   for (i=0;i<scan.num_readings; i++) {
     data->val[i] = (double) scan.range[i];
     data->angle[i] = start + i*delta;

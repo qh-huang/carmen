@@ -228,9 +228,10 @@ void center_map() {
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
 
-    //    angle_delta = M_PI / (double)(num_readings_per_scan-1);
+    // fix me!!
+    angle_delta = M_PI / (double)(num_readings_per_scan-1);
 
-    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
+    //    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
 
     for (reading = 0; reading < num_readings_per_scan; reading++) {
 
@@ -429,7 +430,7 @@ static gint load_logfile_end(gpointer p) {
 static gint load_scan(gpointer p) {
 
   carmen_robot_laser_message *front_laser = NULL;
-  int array_length = *((int *) p);  
+  int array_length = *((int *) p);
   int cancel = 0;
 
   g_mutex_lock(laserscans_mutex);

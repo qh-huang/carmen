@@ -189,10 +189,11 @@ static gint scan_to_egrid(gpointer scan_num) {
     if (!(scan_mask && (scan_mask[scan] == 0))) {
 
       carmen_mapper_update_evidence_grid(egrid,
-				       egrid_scan_list[scan].x,
-				       egrid_scan_list[scan].y,
-				       egrid_scan_list[scan].theta,
-				       180, egrid_scan_list[scan].range);
+					 egrid_scan_list[scan].x,
+					 egrid_scan_list[scan].y,
+					 egrid_scan_list[scan].theta,
+					 egrid_scan_list[scan].num_readings, 
+					 egrid_scan_list[scan].range);
       if (scan % 10 == 0) {
 	gtk_progress_set_percentage(GTK_PROGRESS(egrid_progress_bar),
 				    scan / (double) egrid_num_scans);
@@ -257,9 +258,10 @@ static void egrid_size() {
 
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
-
-    //    angle_delta = M_PI / (double)(num_readings_per_scan-1);
-    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
+    
+    // fix me!!!
+    angle_delta = M_PI / (double)(num_readings_per_scan-1);
+    //    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
 
     for (reading = 0; reading < num_readings_per_scan; reading++) {
 
