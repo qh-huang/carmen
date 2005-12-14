@@ -43,6 +43,7 @@ typedef struct {
   char *variable_name;
   char *lvalue;
   char *rvalue;
+  int expert;
 } carmen_ini_param_t, *carmen_ini_param_p;
 
 static int connected = 0;
@@ -173,7 +174,7 @@ check_param_space()
 }
 
 static void
-set_param(char *lvalue, char *rvalue)
+set_param(char *lvalue, char *rvalue, int expert)
 {
   int param_index;
   char module[255], variable[255];
@@ -222,9 +223,13 @@ set_param(char *lvalue, char *rvalue)
   carmen_test_alloc(param_list[param_index].rvalue);
 
   strcpy(param_list[param_index].rvalue, rvalue);	    
-  carmen_verbose("Added %s %s : %s = %s\n", 
+
+  param_list[param_index].expert = expert;
+
+  carmen_verbose("Added %s %s%s: %s = %s \n", 
 		 param_list[param_index].module_name,
-		 param_list[param_index].variable_name, 
+		 param_list[param_index].variable_name,
+		 param_list[param_index].expert ? " (expert)" : "",
 		 param_list[param_index].lvalue, 
 		 param_list[param_index].rvalue); 
 
@@ -297,6 +302,7 @@ read_parameters_from_file(void)
   char lvalue[255], rvalue[MAX_VARIABLE_LENGTH];
   int found_matching_robot = 0;
   int found_desired_robot = 0;
+  int expert = 0;
   int line_length;
   int count;
 
@@ -394,23 +400,30 @@ read_parameters_from_file(void)
     }
     
     if (lvalue[0] == '[') {
-      if (lvalue[1] == '*')
+      if (strcspn(lvalue+1,"]") == 6 && !carmen_strncasecmp(lvalue+1, "expert", 6)) {
 	found_matching_robot = 1;
-      else if (selected_robot) {
-	if (strlen(lvalue) < strlen(selected_robot) + 2)
-	  found_matching_robot = 0;
-	else if (lvalue[strlen(selected_robot)+1] != ']') 
-	  found_matching_robot = 0;
-	else if (carmen_strncasecmp
-		 (lvalue+1, selected_robot, strlen(selected_robot)) == 0) {
+	expert = 1;
+      }
+      else {
+	expert = 0;
+	if (lvalue[1] == '*')
 	  found_matching_robot = 1;
-	  found_desired_robot = 1;
-	} else
-	  found_matching_robot = 0;
+	else if (selected_robot) {
+	  if (strlen(lvalue) < strlen(selected_robot) + 2)
+	    found_matching_robot = 0;
+	  else if (lvalue[strlen(selected_robot)+1] != ']') 
+	    found_matching_robot = 0;
+	  else if (carmen_strncasecmp
+		   (lvalue+1, selected_robot, strlen(selected_robot)) == 0) {
+	    found_matching_robot = 1;
+	    found_desired_robot = 1;
+	  } else
+	    found_matching_robot = 0;
+	}
       }
     }
     else if(token_num == 2 && found_matching_robot == 1) 
-      set_param(lvalue, rvalue);
+      set_param(lvalue, rvalue, expert);
   } /* End of while (!feof(fp)) */
   
   fclose(fp);
@@ -1012,12 +1025,12 @@ static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     {
       sprintf(buffer, "%s_%s", query.module_name, query.variable_name);
       if (query.value != NULL && query.value[0] != '\0')	       
-	set_param(buffer, query.value);
+	set_param(buffer, query.value, 0);
       param_index = lookup_name(buffer);  
     } 
   else 
     {
-      set_param(query.variable_name, query.value);
+      set_param(query.variable_name, query.value, 0);
       param_index = lookup_name(query.variable_name);  
     }
   /* Respond with the new value */
