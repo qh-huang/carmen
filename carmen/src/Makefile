@@ -4,7 +4,7 @@ include Makefile.conf
 
 PACKAGES = ipc global param_daemon base laser camera \
 	   robot simulator robotgui joystick logger mapserver vasco \
-	   localize navigator linemapping
+	   localize navigator linemapping hmap
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
 
