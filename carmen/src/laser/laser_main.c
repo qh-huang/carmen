@@ -246,19 +246,19 @@ void  set_laser_config_structure(sick_laser_p laser,
 
   if (laser->settings.type == LMS) {
     config->laser_type = SICK_LMS;
-    config->maximum_range = 81.0;
-    config->accuracy = 0.01;
+    config->maximum_range = 81.92;
+    config->accuracy = 0.01; /* I need to look up this value in the SICK specs */
   }
   else if (laser->settings.type == PLS) {
     config->laser_type = SICK_PLS;
     config->maximum_range = 50.0;
-    config->accuracy = 0.1;
+    config->accuracy = 0.1; /* I need to look up this value in the SICK specs */
   }
   else { 
     // if unknown, assume LMS
     config->laser_type = SICK_LMS;
-    config->maximum_range = 81.0;
-    config->accuracy = 0.01;
+    config->maximum_range = 81.92;
+    config->accuracy = 0.01; /* I need to look up this value in the SICK specs */
   }
 
   if (laser->settings.laser_num == 181 ) {
@@ -294,6 +294,21 @@ void  set_laser_config_structure(sick_laser_p laser,
   else   if (laser->settings.laser_num == 101 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0);
     config->fov  = carmen_degrees_to_radians(100.0);
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else   if (laser->settings.laser_num == 400 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.25);
+    config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else   if (laser->settings.laser_num == 200 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.5);
+    config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else   if (laser->settings.laser_num == 100 ) {
+    config->angular_resolution = carmen_degrees_to_radians(1.0);
+    config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
   else {
