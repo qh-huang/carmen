@@ -1020,7 +1020,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
 
       prog_name = carmen_extract_filename(argv[0]);
 
-      if (!strcmp(prog_name, param_list[index].module) ||
+      if (!strncmp(prog_name, param_list[index].module, strlen(param_list[index].module)) ||
 	  !strcmp(prog_name, "simulator") || !strcmp(prog_name, "base"))  // hack
 	owner = 1;
       else
