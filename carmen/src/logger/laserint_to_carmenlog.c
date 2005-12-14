@@ -26,15 +26,10 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include <ctype.h>
-
-#include "logger_io.h"
+#include "writelog.h"
 
 #define LINE_SIZE 3000
 char line[LINE_SIZE], line2[LINE_SIZE];
-
-int carmen_logger_nogz;
-int carmen_playback_nogz;
 
 carmen_base_odometry_message odometry;
 double odometry_timestamp;
@@ -44,7 +39,7 @@ carmen_robot_laser_message front_laser;
 double front_laser_timestamp;
 int current_front_laser = 0;
 
-void get_all_params(FILE *outfile)
+void get_all_params(carmen_FILE *outfile)
 {
   char **variables, **values;
   int list_length;
@@ -59,7 +54,7 @@ void get_all_params(FILE *outfile)
   robot_name = carmen_param_get_robot();
   carmen_param_get_modules(&modules, &num_modules);
 
-  carmen_logger_write_robot_name(robot_name, outfile);
+  carmen_logwrite_write_robot_name(robot_name, outfile);
   free(robot_name);
 
   carmen_param_get_paramserver_host(&hostname);
@@ -70,7 +65,7 @@ void get_all_params(FILE *outfile)
       exit(-1);
     }
     for(index = 0; index < list_length; index++) {
-      carmen_logger_write_param(modules[module_index], variables[index], 
+      carmen_logwrite_write_param(modules[module_index], variables[index], 
 				values[index], carmen_get_time(), 
 				hostname, outfile, carmen_get_time());
       free(variables[index]);
@@ -87,7 +82,7 @@ void get_all_params(FILE *outfile)
 int main(int argc, char **argv)
 {
   FILE *fp;
-  carmen_logger_file_p outfile;
+  carmen_FILE *outfile;
   int m, d, y, h, min, temp1, temp2, i;
   float s;
   int type_id;
@@ -109,16 +104,16 @@ int main(int argc, char **argv)
     fprintf(stderr, "Error: could not open file %s for reading.\n", argv[1]);
     exit(1);
   }
-	outfile = carmen_logger_fopen(argv[2], "r");
+	outfile = carmen_fopen(argv[2], "r");
 	if (outfile != NULL) {
 		fprintf(stderr, "Overwrite %s? ", argv[2]);
 		scanf("%c", &key);
 		if (toupper(key) != 'Y')
 			exit(-1);
-		carmen_logger_fclose(outfile);
+		carmen_fclose(outfile);
 	}
 
-  outfile = carmen_logger_fopen(argv[2], "w");
+  outfile = carmen_fopen(argv[2], "w");
   if(outfile == NULL) {
     fprintf(stderr, "Error: could not open file %s for writing.\n", argv[2]);
     exit(1);
@@ -131,8 +126,8 @@ int main(int argc, char **argv)
 	front_laser.host = carmen_get_host();
 	odometry.host = carmen_get_host();
 
-	carmen_logger_write_header(outfile);
-	carmen_logger_write_robot_name("beesoft", outfile);
+	carmen_logwrite_write_header(outfile);
+	carmen_logwrite_write_robot_name("beesoft", outfile);
   get_all_params(outfile);
 
   while(!feof(fp)) {
@@ -175,7 +170,7 @@ int main(int argc, char **argv)
 
 				front_laser.timestamp = front_laser_timestamp;
 				
-				carmen_logger_write_frontlaser(&front_laser, outfile, front_laser_timestamp);
+				carmen_logwrite_write_robot_laser(&front_laser, 1, outfile, front_laser_timestamp);
 	  
 				current_front_laser++;
       }
@@ -201,7 +196,7 @@ int main(int argc, char **argv)
 					odometry_timestamp = last_odometry_timestamp;
 
 				type_id = ODOM_ID;
- 				carmen_logger_write_odometry(&odometry, outfile, odometry_timestamp); 
+ 				carmen_logwrite_write_odometry(&odometry, outfile, odometry_timestamp); 
 
 				current_odometry++;
       }
@@ -210,6 +205,6 @@ int main(int argc, char **argv)
   }
 
   fclose(fp);
-  carmen_logger_fclose(outfile);
+  carmen_fclose(outfile);
   return 0;
 }

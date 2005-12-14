@@ -55,6 +55,8 @@ extern "C" {
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
 #include <float.h>
@@ -110,7 +112,8 @@ extern "C" {
 
 #include <carmen/logger.h>
 #include <carmen/logger_messages.h>
-#include <carmen/logger_io.h>
+#include <carmen/writelog.h>
+#include <carmen/readlog.h>
 #include <carmen/playback_interface.h>
 #include <carmen/playback_messages.h>
 

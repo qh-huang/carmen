@@ -28,6 +28,9 @@
 #include <carmen/carmen_graphics.h>
 
 GdkGC *rewind_gc, *stop_gc, *play_gc, *ffwd_gc;
+GtkWidget *playback_speed_widget_label, *playback_speed_widget;
+int speed_pending_update = 0;
+double playback_speed = 1.0;
 
 void Redraw(GtkWidget *widget, GdkEventExpose *event, char *data);
 void Send_Command(GtkWidget *widget, char *data);
@@ -37,6 +40,44 @@ static void delete_event(GtkWidget *widget, GdkEvent *event, gpointer data)
   widget = widget; event = event; data = data;
 
   gtk_main_quit ();
+}
+
+static void speed_changed(GtkWidget *w, gpointer data __attribute__ ((unused)))
+{
+  char *value;
+
+  value = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
+  
+  speed_pending_update++;
+  if (speed_pending_update > 0)
+    gtk_label_set_pattern(GTK_LABEL(playback_speed_widget_label),
+			  "___________________________________________");
+  else
+    gtk_label_set_pattern(GTK_LABEL(playback_speed_widget_label), "");
+}
+
+static void params_save(GtkWidget *w __attribute__ ((unused)),
+			GdkEvent *event,
+			gpointer pntr __attribute__ ((unused)))
+{
+  if((event->key.keyval == gdk_keyval_from_name("Enter")) ||
+     (event->key.keyval == gdk_keyval_from_name("Return"))) {
+    gchar *value = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
+    playback_speed = atof(value);
+
+    speed_pending_update = 0;    
+    gtk_label_set_pattern(GTK_LABEL(playback_speed_widget_label), "");
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_SET_SPEED, 
+			    0, playback_speed);
+  }
+}
+
+static gint 
+updateIPC(gpointer *data __attribute__ ((unused))) 
+{
+  carmen_ipc_sleep(0.01);
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
+  return 1;
 }
 
 int main(int argc, char *argv[]) 
@@ -71,7 +112,7 @@ int main(int argc, char *argv[])
   }  
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_usize(window, 335, 50);
+  gtk_widget_set_usize(window, 425, 50);
   gtk_signal_connect (GTK_OBJECT (window), "destroy", 
                       GTK_SIGNAL_FUNC (gtk_main_quit), 
                       "WM destroy");
@@ -84,7 +125,22 @@ int main(int argc, char *argv[])
   hbox = gtk_hbox_new(0, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
   gtk_container_add(GTK_CONTAINER(window), hbox);
-  
+
+  playback_speed_widget_label = gtk_label_new("Speed");
+  playback_speed_widget = gtk_entry_new_with_max_length(5);
+  gtk_entry_set_text(GTK_ENTRY(playback_speed_widget), "1.0");
+  gtk_editable_select_region( GTK_EDITABLE(playback_speed_widget), 0, GTK_ENTRY (playback_speed_widget)->text_length);
+  gtk_signal_connect(GTK_OBJECT(playback_speed_widget), "changed",
+		     GTK_SIGNAL_FUNC(speed_changed), NULL);
+  gtk_signal_connect(GTK_OBJECT(playback_speed_widget), "key_press_event",
+		     GTK_SIGNAL_FUNC(params_save), NULL);
+  gtk_box_pack_start(GTK_BOX (hbox), playback_speed_widget_label, 
+		     FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX (hbox), playback_speed_widget, FALSE, FALSE, 5);
+  gtk_widget_set_usize(playback_speed_widget, 50, 30);
+  gtk_widget_show(playback_speed_widget);
+  gtk_widget_show(playback_speed_widget_label);
+
   rrwd = gtk_button_new();
   rrwd_darea = gtk_drawing_area_new();
   gtk_widget_set_usize(rrwd_darea, 30, 40);
@@ -169,6 +225,8 @@ int main(int argc, char *argv[])
 		     (GtkSignalFunc)Send_Command, "RESET");
 
   gtk_widget_show_all(window);
+  
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
 
   gtk_main();
   return 0;
@@ -273,17 +331,21 @@ void Redraw (GtkWidget *widget __attribute__ ((unused)),
 void Send_Command(GtkWidget *widget __attribute__ ((unused)), char *data) 
 {
   if (strcmp(data, "Stop") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_STOP, 0);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_STOP, 0, playback_speed);
   else if (strcmp(data, "Play") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_PLAY, 0);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_PLAY, 0, playback_speed);
   else if (strcmp(data, "RRW") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_REWIND, 100);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_REWIND, 100, 
+			    playback_speed);
   else if (strcmp(data, "RW") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_RWD_SINGLE, 1);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_RWD_SINGLE, 1, 
+			    playback_speed);
   else if (strcmp(data, "FFWD") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_FORWARD, 100);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_FORWARD, 100, 
+			    playback_speed);
   else if (strcmp(data, "FWD") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_FWD_SINGLE, 1);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_FWD_SINGLE, 1, 
+			    playback_speed);
   else if (strcmp(data, "RESET") == 0)
-    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_RESET, 0);
+    carmen_playback_command(CARMEN_PLAYBACK_COMMAND_RESET, 0, playback_speed);
 }

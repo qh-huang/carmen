@@ -242,7 +242,8 @@ void carmen_write_data_message(BYTE_ARRAY callData, int data_length,
 }
 
 static void
-carmen_generic_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, void *clientData)
+carmen_generic_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+		       void *clientData)
 {
   IPC_RETURN_TYPE err = IPC_OK;
   IPC_CONTEXT_PTR context;
@@ -254,7 +255,7 @@ carmen_generic_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, void *clientDat
   /* NEW LOGGER BEGIN */
   if(outfile != NULL)
     carmen_write_data_message(callData, IPC_dataLength(msgRef), 
-			   mark->message_name);
+			      mark->message_name);
   /* NEW LOGGER END */
 
   i = 0;
@@ -340,8 +341,9 @@ carmen_disable_handlers(void)
 
 void 
 carmen_subscribe_message(char *message_name, char *message_fmt, 
-		      void *message_mem, int message_size, 
-		      carmen_handler_t handler, carmen_subscribe_t subscribe_how)
+			 void *message_mem, int message_size, 
+			 carmen_handler_t handler, 
+			 carmen_subscribe_t subscribe_how)
 {
   IPC_RETURN_TYPE err = IPC_OK;
   IPC_CONTEXT_PTR context;
@@ -388,8 +390,10 @@ carmen_subscribe_message(char *message_name, char *message_fmt,
     carmen_test_alloc(mark->callback);
 
     /* allocate message memory if necessary */
-    if(message_mem)
+    if(message_mem) {
       mark->callback[mark->num_callbacks - 1].data = message_mem;
+      memset(message_mem, 0, message_size);
+    }
     else {
       mark->callback[mark->num_callbacks - 1].data = calloc(1, message_size);
       carmen_test_alloc(mark->callback[mark->num_callbacks - 1].data);

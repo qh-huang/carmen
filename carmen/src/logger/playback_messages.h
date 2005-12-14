@@ -39,13 +39,15 @@ extern "C" {
 #define    CARMEN_PLAYBACK_COMMAND_REWIND       4
 #define    CARMEN_PLAYBACK_COMMAND_FWD_SINGLE   5
 #define    CARMEN_PLAYBACK_COMMAND_RWD_SINGLE   6
+#define    CARMEN_PLAYBACK_COMMAND_SET_SPEED    7
 
 typedef struct {
   int cmd, arg;
+  float speed;
 } carmen_playback_command_message;
 
 #define CARMEN_PLAYBACK_COMMAND_NAME     "carmen_playback_command"
-#define CARMEN_PLAYBACK_COMMAND_FMT      "{int,int}"
+#define CARMEN_PLAYBACK_COMMAND_FMT      "{int,int,float}"
 
 #endif
 

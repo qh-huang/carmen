@@ -27,7 +27,7 @@
 
 #include <carmen/carmen.h>
 
-void carmen_playback_command(int command, int argument)
+void carmen_playback_command(int command, int argument, float speed)
 {
   IPC_RETURN_TYPE err;
   carmen_playback_command_message playback_msg;
@@ -45,6 +45,7 @@ void carmen_playback_command(int command, int argument)
 
   playback_msg.cmd = command;
   playback_msg.arg = argument;
+  playback_msg.speed = speed;
 
   err = IPC_publishData(CARMEN_PLAYBACK_COMMAND_NAME, &playback_msg);
   carmen_test_ipc(err, "Could not publish", CARMEN_PLAYBACK_COMMAND_NAME);

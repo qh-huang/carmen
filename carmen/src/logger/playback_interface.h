@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-void carmen_playback_command(int pCommand, int pArgument);
+void carmen_playback_command(int pCommand, int pArgument, float speed);
 
 #ifdef __cplusplus
 }
