@@ -30,17 +30,9 @@
 
 #include <carmen/laser_messages.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-double 
-carmen_laser_get_fov(int num_beams);
-
-double 
-carmen_laser_get_angle_increment(int num_beams);
-
+/* #ifdef __cplusplus */
+/* extern "C" { */
+/* #endif */
 
 void
 carmen_laser_subscribe_frontlaser_message(carmen_laser_laser_message *laser,
@@ -78,38 +70,8 @@ carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how);
 
-// *** REI - START *** //
-void
-carmen_laser_subscribe_frontlaser_remission_message(carmen_laser_remission_message *laser,
-					  carmen_handler_t handler,
-					  carmen_subscribe_t subscribe_how);
-void
-carmen_laser_subscribe_rearlaser_remission_message(carmen_laser_remission_message *laser,
-					 carmen_handler_t handler,
-					 carmen_subscribe_t subscribe_how);
-void 
-carmen_laser_subscribe_laser1_remission_message(carmen_laser_remission_message *laser, 
-						carmen_handler_t handler, 
-						carmen_subscribe_t subscribe_how); 
-
-void 
-carmen_laser_subscribe_laser2_remission_message(carmen_laser_remission_message *laser, 
-						carmen_handler_t handler, 
-						carmen_subscribe_t subscribe_how); 
-
-void 
-carmen_laser_subscribe_laser3_remission_message(carmen_laser_remission_message *laser, 
-						carmen_handler_t handler, 
-						carmen_subscribe_t subscribe_how); 
-
-void 
-carmen_laser_subscribe_laser4_remission_message(carmen_laser_remission_message *laser, 
-						carmen_handler_t handler, 
-						carmen_subscribe_t subscribe_how); 
-// *** REI - END *** //
-
-#ifdef __cplusplus
-}
-#endif
+/* #ifdef __cplusplus */
+/* } */
+/* #endif */
 
 #endif

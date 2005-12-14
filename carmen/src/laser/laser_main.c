@@ -5,6 +5,9 @@
 #include "laser_messages.h"
 
 sick_laser_t laser1, laser2, laser3, laser4;
+
+carmen_laser_laser_config_t laser1_config, laser2_config, laser3_config, laser4_config;
+
 int use_laser1 = 0, use_laser2 = 0;
 int use_laser3 = 0, use_laser4 = 0;
 int quit_signal = 0;
@@ -238,6 +241,78 @@ void read_parameters(int argc, char **argv)
   }
 }
 
+void  set_laser_config_structure(sick_laser_p laser,
+				 carmen_laser_laser_config_t* config) {
+
+  if (laser->settings.type == LMS) {
+    config->laser_type = SICK_LMS;
+    config->maximum_range = 81.0;
+    config->accuracy = 0.01;
+  }
+  else if (laser->settings.type == PLS) {
+    config->laser_type = SICK_PLS;
+    config->maximum_range = 50.0;
+    config->accuracy = 0.1;
+  }
+  else { 
+    // if unknown, assume LMS
+    config->laser_type = SICK_LMS;
+    config->maximum_range = 81.0;
+    config->accuracy = 0.01;
+  }
+
+  if (laser->settings.laser_num == 181 ) {
+    config->angular_resolution = carmen_degrees_to_radians(1.0); 
+    config->fov  = M_PI;
+    config->start_angle = -0.5*M_PI;
+  } 
+  else  if (laser->settings.laser_num == 361 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.5); 
+    config->fov  = M_PI;
+    config->start_angle = -0.5*M_PI;
+  } 
+  else   if (laser->settings.laser_num == 180 ) {
+    config->angular_resolution = carmen_degrees_to_radians(1.0);
+    config->fov  = M_PI - config->angular_resolution;
+    config->start_angle = -0.5*M_PI;
+  } 
+  else   if (laser->settings.laser_num == 360 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.5);
+    config->fov  = M_PI - config->angular_resolution;
+    config->start_angle = -0.5*M_PI;
+  } 
+  else   if (laser->settings.laser_num == 401 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.25);
+    config->fov  = carmen_degrees_to_radians(100.0);
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else   if (laser->settings.laser_num == 201 ) {
+    config->angular_resolution = carmen_degrees_to_radians(0.5);
+    config->fov  = carmen_degrees_to_radians(100.0);
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else   if (laser->settings.laser_num == 101 ) {
+    config->angular_resolution = carmen_degrees_to_radians(1.0);
+    config->fov  = carmen_degrees_to_radians(100.0);
+    config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
+  } 
+  else {
+    config->angular_resolution = 0.0;
+    config->fov  = 0.0;
+    config->start_angle = 0.0;
+  }
+
+  if (laser->settings.use_remission == 1 && 
+      laser->settings.range_dist == REMISSION_DIRECT) 
+    config->remission_mode = DIRECT;
+  else   if (laser->settings.use_remission == 1 && 
+      laser->settings.range_dist == REMISSION_NORM) 
+    config->remission_mode = NORMALIZED;
+  else
+    config->remission_mode = OFF;
+
+}
+
 int carmen_laser_start(int argc, char **argv)
 {
   /* initialize laser messages */
@@ -250,6 +325,11 @@ int carmen_laser_start(int argc, char **argv)
   set_default_parameters(&laser4, CARMEN_LASER4_NUM);
   read_parameters(argc, argv);
   
+  set_laser_config_structure(&laser1, &laser1_config);
+  set_laser_config_structure(&laser2, &laser2_config);
+  set_laser_config_structure(&laser3, &laser3_config);
+  set_laser_config_structure(&laser4, &laser4_config);
+
   /* start lasers, and start publishing scans */
   if(use_laser1)
     sick_start_laser(&laser1);
@@ -293,7 +373,7 @@ int carmen_laser_run(void)
   if(use_laser1) {
     sick_handle_laser(&laser1);
     if(laser1.new_reading)
-      publish_laser_message(&laser1);   
+      publish_laser_message(&laser1, &laser1_config);   
     laser1_stalled = (current_time - laser1.timestamp > 1.0);
     //**
 	//fprintf(stderr, "time: %.1f",current_time - laser1.timestamp);
@@ -307,7 +387,7 @@ int carmen_laser_run(void)
   if(use_laser2) {
     sick_handle_laser(&laser2);
     if(laser2.new_reading)
-      publish_laser_message(&laser2);
+      publish_laser_message(&laser2, &laser2_config);
     laser2_stalled = (current_time - laser2.timestamp > 1.0);
     if(print_stats) 
       fprintf(stderr, "L2: %s(%.1f%% full) ", laser2_stalled ?
@@ -318,7 +398,7 @@ int carmen_laser_run(void)
   if(use_laser3) {
     sick_handle_laser(&laser3);
     if(laser3.new_reading)
-      publish_laser_message(&laser3);   
+      publish_laser_message(&laser3, &laser3_config);   
     laser3_stalled = (current_time - laser3.timestamp > 1.0);
     if(print_stats) 
       fprintf(stderr, "L3: %s(%.1f%% full) ", laser3_stalled ?
@@ -328,7 +408,7 @@ int carmen_laser_run(void)
   if(use_laser4) {
     sick_handle_laser(&laser4);
     if(laser4.new_reading)
-      publish_laser_message(&laser4);   
+      publish_laser_message(&laser4, &laser4_config);   
     laser4_stalled = (current_time - laser4.timestamp > 1.0);
     if(print_stats) 
       fprintf(stderr, "L4: %s(%.1f%% full) ", laser4_stalled ?

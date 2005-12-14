@@ -42,11 +42,11 @@ static double start_time = 0.0;
 
 
 static GdkColor gradient[256];
-static int use_laser_remission_messages = 0;
-static carmen_laser_remission_message laser_rem;
-static float REMISSION_MAX_VALUE = 0.0;
-static float REMISSION_MIN_VALUE = 100000000.0;
-static int remission_min_max_count = 10;
+//static int use_laser_remission_messages = 0;
+/* static carmen_laser_remission_message laser_rem; */
+/* static float REMISSION_MAX_VALUE = 0.0; */
+/* static float REMISSION_MIN_VALUE = 100000000.0; */
+/* static int remission_min_max_count = 10; */
 
 static void
 setup_colors(void) 
@@ -97,7 +97,7 @@ Expose_Event(GtkWidget *widget __attribute__ ((unused)),
 static void 
 Redraw(void)
 {
-  float origin_x, origin_y, x = 0, y = 0, last_x, last_y, angle, scale;
+  float origin_x, origin_y, x = 0, y = 0,  angle, scale;
   int i;
   static GdkGC *Drawing_GC = NULL;
   static GdkPixmap *pixmap = NULL;
@@ -107,18 +107,9 @@ Redraw(void)
 
 
   int numreadings;
-  int rem_col;
   float *laserrange = NULL;
-  float rem_max = 0, rem_min = 10000000000.0;
-  if(use_laser_remission_messages) {
-    numreadings = laser_rem.num_readings;
-	laserrange = laser_rem.range;
-  }
-  else {
-    numreadings = laser.num_readings;
-	laserrange = laser.range;
-  }
-
+  numreadings = laser.num_readings;
+  laserrange = laser.range;
 
   if(Drawing_GC == NULL) {
     carmen_graphics_setup_colors();
@@ -177,51 +168,8 @@ Redraw(void)
     /* connect nearby laser points with lines */
     gdk_gc_set_line_attributes(Drawing_GC, 2, GDK_LINE_SOLID,
 			       GDK_CAP_NOT_LAST, GDK_JOIN_MITER);
-
-
-    if(use_laser_remission_messages && remission_min_max_count > 0 && laser_rem.remission[0] != CARMEN_LASER_REMISSION_INVALID_VALUE) {
-	  remission_min_max_count--;
-      for(i = 0; i < numreadings; i++) {
-	    if(laser_rem.remission[i] < 32767.0 && laser_rem.remission[i] > rem_max)
-		  rem_max = laser_rem.remission[i];
-	    else if(laser_rem.remission[i] < rem_min) 
-		  rem_min = laser_rem.remission[i];
-	  }
-
-      if(rem_max > REMISSION_MAX_VALUE) REMISSION_MAX_VALUE = rem_max;
-      if(rem_min < REMISSION_MIN_VALUE) REMISSION_MIN_VALUE = rem_min;
-      fprintf(stderr, "remission min, max = %.1f, %.1f\n", rem_min, rem_max);
-	}
-
-	else gdk_gc_set_foreground(Drawing_GC, &carmen_blue);
-
-    for(i = 0; i < numreadings; i++) {
-      last_x = x;
-      last_y = y;
-      angle = i / (float)(numreadings - 1) * M_PI;
-      x = laserrange[i] * cos(angle);
-      y = laserrange[i] * sin(angle);
-
-    if(use_laser_remission_messages && i > 0 && laser_rem.remission[0] != CARMEN_LASER_REMISSION_INVALID_VALUE) {
-      rem_col = ((laser_rem.remission[i-1] - REMISSION_MIN_VALUE) / (REMISSION_MAX_VALUE-REMISSION_MIN_VALUE)) * 255;
-//	  fprintf(stderr, "%d ", rem_col);
-	  if(rem_col>255) rem_col = 255;
-      gdk_gc_set_foreground(Drawing_GC, &(gradient[rem_col]));
-	}
-
-      if(i > 0 && hypot(x - last_x, y - last_y) < .20)
-	    gdk_draw_line(pixmap, Drawing_GC, 
-		      origin_x + last_x * scale,
-		      origin_y - last_y * scale,
-		      origin_x + x * scale,
-		      origin_y - y * scale);
-
-	  else if(use_laser_remission_messages && i > 0 && laser_rem.remission[0] != CARMEN_LASER_REMISSION_INVALID_VALUE) 
-       gdk_draw_point(pixmap, Drawing_GC, origin_x + x * scale, origin_y - y * scale);
-
-	}
-    free(poly);
-  }
+    free(poly); 
+  } 
 
   if(laser_count % 10 == 0 || laser_count < 10)
     framerate = laser_count / (carmen_get_time() - start_time);
@@ -322,11 +270,6 @@ main(int argc, char **argv)
   if (carmen_find_param_pair("range")) {
     laser_range = atof(carmen_param_pair("range"));
   }
-
-  if (carmen_find_param("remission")) 
-    use_laser_remission_messages = 1;
-  else
-    use_laser_remission_messages = 0;
   
   if (carmen_find_param("flaser") || carmen_find_param("frontlaser") || carmen_find_param("laser1")) 
     laser_num  = 0;
@@ -339,59 +282,29 @@ main(int argc, char **argv)
   else
     laser_num  = 0;
   
-  if(use_laser_remission_messages) {
-    switch(laser_num) {
-    case 0:
-      carmen_laser_subscribe_frontlaser_remission_message(&laser_rem,
-							  (carmen_handler_t)
-							  laser_handler,
-							  CARMEN_SUBSCRIBE_LATEST);
-      break;
-    case 1:
-      carmen_laser_subscribe_rearlaser_remission_message(&laser_rem,
-							 (carmen_handler_t)
-							 laser_handler,
-							 CARMEN_SUBSCRIBE_LATEST);
-      break;
-    case 2:
-      carmen_laser_subscribe_laser3_remission_message(&laser_rem,
-						      (carmen_handler_t)
-						      laser_handler,
-						      CARMEN_SUBSCRIBE_LATEST);
-      break;
-    case 3:
-      carmen_laser_subscribe_laser4_remission_message(&laser_rem,
-						      (carmen_handler_t)
-						      laser_handler,
-						      CARMEN_SUBSCRIBE_LATEST);
-      break;
-    }
-  } 
-  else {
     
-    if(laser_num == 0) 
-      carmen_laser_subscribe_frontlaser_message(&laser,
-						(carmen_handler_t)
-						laser_handler,
-						CARMEN_SUBSCRIBE_LATEST);
-    else if(laser_num == 1) 
-      carmen_laser_subscribe_rearlaser_message(&laser,
+  if(laser_num == 0) 
+    carmen_laser_subscribe_frontlaser_message(&laser,
+					      (carmen_handler_t)
+					      laser_handler,
+					      CARMEN_SUBSCRIBE_LATEST);
+  else if(laser_num == 1) 
+    carmen_laser_subscribe_rearlaser_message(&laser,
 					       (carmen_handler_t)
-					       laser_handler,
-					       CARMEN_SUBSCRIBE_LATEST);
-    else if(laser_num == 2) 
-      carmen_laser_subscribe_laser3_message(&laser,
-					    (carmen_handler_t)
-					    laser_handler,
-					    CARMEN_SUBSCRIBE_LATEST);
+					     laser_handler,
+					     CARMEN_SUBSCRIBE_LATEST);
+  else if(laser_num == 2) 
+    carmen_laser_subscribe_laser3_message(&laser,
+					  (carmen_handler_t)
+					  laser_handler,
+					  CARMEN_SUBSCRIBE_LATEST);
     
-    else if(laser_num == 3) 
-      carmen_laser_subscribe_laser4_message(&laser,
-					    (carmen_handler_t)
+  else if(laser_num == 3) 
+    carmen_laser_subscribe_laser4_message(&laser,
+					  (carmen_handler_t)
 					    laser_handler,
-					    CARMEN_SUBSCRIBE_LATEST);
-    
-  }
+					  CARMEN_SUBSCRIBE_LATEST);
+  
   signal(SIGINT, shutdown_laserview);
   start_time = carmen_get_time();
   start_graphics(argc, argv);
