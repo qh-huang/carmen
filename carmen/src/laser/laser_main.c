@@ -176,9 +176,7 @@ void read_parameters(int argc, char **argv)
   carmen_param_t laser1_params[] = {
     {"laser", "front_laser_type", CARMEN_PARAM_STRING, &str1, 0, NULL},
     {"laser", "front_laser_resolution", CARMEN_PARAM_DOUBLE, &res1, 0, NULL},
-    /* remission values - start */
     {"laser", "front_laser_use_remission", CARMEN_PARAM_STRING, &rem1, 0, NULL},
-    /* remission values - stop */
     {"laser", "front_laser_baud", CARMEN_PARAM_INT, 
      &laser1.settings.set_baudrate, 0, NULL},
     {"laser", "front_laser_flipped", CARMEN_PARAM_INT, 
@@ -186,25 +184,19 @@ void read_parameters(int argc, char **argv)
   carmen_param_t laser2_params[] = {
     {"laser", "rear_laser_type", CARMEN_PARAM_STRING, &str2, 0, NULL},
     {"laser", "rear_laser_resolution", CARMEN_PARAM_DOUBLE, &res2, 0, NULL},
-    /* remission values - start */
     {"laser", "rear_laser_use_remission", CARMEN_PARAM_STRING, &rem2, 0, NULL},
-    /* remission values - stop */
     {"laser", "rear_laser_baud", CARMEN_PARAM_INT, 
      &laser2.settings.set_baudrate, 0, NULL}};
   carmen_param_t laser3_params[] = {
     {"laser", "laser3_type", CARMEN_PARAM_STRING, &str3, 0, NULL},
     {"laser", "laser3_resolution", CARMEN_PARAM_DOUBLE, &res3, 0, NULL},
-    /* remission values - start */
     {"laser", "laser3_use_remission", CARMEN_PARAM_STRING, &rem3, 0, NULL},
-    /* remission values - stop */
     {"laser", "laser3_baud", CARMEN_PARAM_INT, 
      &laser3.settings.set_baudrate, 0, NULL}};
   carmen_param_t laser4_params[] = {
     {"laser", "laser4_type", CARMEN_PARAM_STRING, &str4, 0, NULL},
     {"laser", "laser4_resolution", CARMEN_PARAM_DOUBLE, &res4, 0, NULL},
-    /* remission values - start */
     {"laser", "laser4_use_remission", CARMEN_PARAM_STRING, &rem4, 0, NULL},
-    /* remission values - stop */
     {"laser", "laser4_baud", CARMEN_PARAM_INT, 
      &laser4.settings.set_baudrate, 0, NULL}};
 
