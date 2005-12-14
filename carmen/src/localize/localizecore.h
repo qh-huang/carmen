@@ -114,9 +114,11 @@ void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filt
 				   carmen_point_t odometry_position);
 
 void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
-				carmen_localize_map_p map, int num_readings, 
-				float *range, double forward_offset, 
-				int backwards);
+				       carmen_localize_map_p map, int num_readings, 
+				       float *range, double forward_offset, 
+				       double angular_resolution,
+				       double first_beam_angle,
+				       int backwards);
 
 void carmen_localize_resample(carmen_localize_particle_filter_p filter);
 
@@ -124,14 +126,19 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
 		  carmen_robot_laser_message *laser, double forward_offset,
 		  int backwards);
 
-void carmen_localize_laser_scan_gd(int num_readings, float *range, 
-			    carmen_point_p laser_pos, double forward_offset,
-			    carmen_localize_map_p map, int laser_skip);
+void carmen_localize_laser_scan_gd(int num_readings, float *range,
+				   double angular_resolution,
+				   double first_beam_angle,
+				   carmen_point_p laser_pos, double forward_offset,
+				   carmen_localize_map_p map, int laser_skip);
 
 void carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
-			carmen_localize_summary_p summary, carmen_localize_map_p map,
-			int num_readings, float *range, double forward_offset,
-			int backwards);
+			       carmen_localize_summary_p summary, 
+			       carmen_localize_map_p map,
+			       int num_readings, float *range, double forward_offset,
+			       double angular_resolution,
+			       double first_beam_angle,
+			       int backwards);
 
 #ifdef __cplusplus
 }

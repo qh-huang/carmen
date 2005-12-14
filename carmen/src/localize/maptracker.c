@@ -520,15 +520,15 @@ inline void ray_filled(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
 }
 
 void compute_expected_scan(carmen_map_p map, float x, float y, float theta,
-			   float *range, int num_readings)
+			   float *range, int num_readings,
+			   double angular_resolution,
+			   double first_beam_angle)
 {
   float angle, angle_diff;
   int hit_x, hit_y;
   int i;
 
-  angle = theta - M_PI_2;
-  //  angle_diff = M_PI / (float)(num_readings - 1);
-  angle_diff =  carmen_laser_get_angle_increment(num_readings);
+  angle = theta + first_beam_angle;
   for(i = 0; i < num_readings; i++) {
     ray_trace(map, 
 	      x / map->config.resolution,
@@ -538,7 +538,7 @@ void compute_expected_scan(carmen_map_p map, float x, float y, float theta,
 	      &hit_x, &hit_y, 0.25);
     range[i] = hypot(hit_x * map->config.resolution - x,
 		     hit_y * map->config.resolution - y);
-    angle += angle_diff;
+    angle += angular_resolution;
   }
 }
 
@@ -550,8 +550,6 @@ static void redraw(void)
   int i, width = drawing_area->allocation.width;
   float angle, p;
   int disagree;
-  float laser_angle_inc;
-  laser_angle_inc  = carmen_laser_get_angle_increment(sensor.num_readings);
   
   if(back_pixmap == NULL)
     back_pixmap = gdk_pixmap_new(drawing_area->window, width, height, -1);
@@ -586,9 +584,8 @@ static void redraw(void)
     else
       gdk_gc_set_foreground(gc, &carmen_blue);
       
-    angle = sensor.pose.theta - M_PI_2 + 
-      i * laser_angle_inc;
-    //i / (float)(sensor.num_readings - 1) * M_PI;
+    angle = sensor.pose.theta + sensor.config.start_angle + 
+      i * sensor.config.angular_resolution;
     x = (sensor.pose.x + sensor.range[i] * cos(angle)) / 
       map.config.resolution;
     y = height - 1 - (sensor.pose.y + sensor.range[i] * sin(angle)) / 
@@ -621,19 +618,20 @@ gint expose_event(GtkWidget *widget __attribute__ ((unused)),
 }
 
 void incorporate_laser_difference(float *actual, float *expected, 
-				  int num_readings, float x, float y, 
-				  float theta, carmen_map_p diff_map)
+				  int num_readings, 
+				  double angular_resolution,
+				  double first_beam_angle,
+				  float x, float y, float theta, 
+				  carmen_map_p diff_map)
 {
   int i, x1, y1, x2, y2, x3, y3;
   float angle, cangle, sangle;
   float wall_thickness = 0.2;
-  float laser_angle_inc;
-  laser_angle_inc  = carmen_laser_get_angle_increment(num_readings);
 
   for(i = 0; i < num_readings; i++)
     if(expected[i] < 5.0 && actual[i] < 20.0 && 
        actual[i] - expected[i] > 0.5) {
-      angle = theta - M_PI_2 + i * laser_angle_inc; 
+      angle = theta + first_beam_angle + i * angular_resolution; 
       //i / ((float)num_readings - 1.0) * M_PI;
       cangle = cos(angle); sangle = sin(angle);
       

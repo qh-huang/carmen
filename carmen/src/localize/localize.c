@@ -106,6 +106,7 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
   }
   sensor.num_readings = laser->num_readings;
   sensor.laser_skip = filter->param->laser_skip;
+  sensor.config = laser->config;
   sensor.range = laser->range;
   sensor.mask = filter->laser_mask;
   err = IPC_publishData(CARMEN_LOCALIZE_SENSOR_NAME, &sensor);
@@ -172,8 +173,12 @@ void robot_frontlaser_handler(carmen_robot_laser_message *flaser)
 	       filter->param->front_laser_offset, 0);
   if(filter->initialized) {
     carmen_localize_summarize(filter, &summary, &map, 
-		       flaser->num_readings, flaser->range, 
-		       filter->param->front_laser_offset, 0);
+			      flaser->num_readings, 
+			      flaser->range, 
+			      filter->param->front_laser_offset,
+			      flaser->config.angular_resolution,
+			      flaser->config.start_angle, 
+			      0);
     publish_globalpos(&summary);
     publish_particles(filter, &summary);
     publish_sensor(filter, &summary, flaser, 1);

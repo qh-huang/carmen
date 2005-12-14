@@ -96,6 +96,7 @@ typedef struct {
 typedef struct {
   double timestamp;
   char *host;
+  carmen_laser_laser_config_t config;
   int num_readings, laser_skip;
   float *range;
   char *mask;
@@ -104,7 +105,7 @@ typedef struct {
 } carmen_localize_sensor_message;
 
 #define CARMEN_LOCALIZE_SENSOR_NAME "carmen_localize_sensor"
-#define CARMEN_LOCALIZE_SENSOR_FMT  "{double,string,int,int,<float:3>,<char:3>,{double,double,double},int}"
+#define CARMEN_LOCALIZE_SENSOR_FMT  "{double,string,{int,double,double,double,double,double,int},int,int,<float:4>,<char:4>,{double,double,double},int}"
 
 typedef struct {
   double timestamp;

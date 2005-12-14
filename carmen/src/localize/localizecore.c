@@ -209,10 +209,6 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   carmen_point_t point;
   queue_node_p mark;
   
-  float laser_angle_inc;
-  laser_angle_inc  = carmen_laser_get_angle_increment(laser->num_readings);
-  
-
   fprintf(stderr, "\rDoing global localization... (%.1f%% complete)", 0.0);
   filter->initialized = 0;
   /* copy laser scan into temporary memory */
@@ -223,8 +219,8 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
 
   /* do all calculations in map coordinates */
   for(i = 0; i < laser->num_readings; i++) {
-    //    angle = -M_PI_2 + i / (float)(laser->num_readings - 1) * M_PI;
-    angle = -M_PI_2 + i * laser_angle_inc;
+    angle = laser->config.start_angle + 
+      i * laser->config.angular_resolution;
 
     laser_x[i] = (filter->param->front_laser_offset + 
 		  laser->range[i] * cos(angle)) / map->config.resolution;
@@ -279,9 +275,13 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
       point.x = filter->particles[i].x;
       point.y = filter->particles[i].y;
       point.theta = filter->particles[i].theta;
-      carmen_localize_laser_scan_gd(laser->num_readings, laser->range, &point, 
-			     filter->param->front_laser_offset, map,
-			     filter->param->laser_skip);
+      carmen_localize_laser_scan_gd(laser->num_readings, laser->range, 
+				    laser->config.angular_resolution,
+				    laser->config.start_angle,
+				    &point, 
+				    filter->param->front_laser_offset, 
+				    map,
+				    filter->param->laser_skip);
       filter->particles[i].x = point.x;
       filter->particles[i].y = point.y;
       filter->particles[i].theta = point.theta;
@@ -503,20 +503,19 @@ static int global_mode_test(carmen_localize_particle_filter_p filter)
 /* incorporate a single laser scan into the paritcle filter */
 
 void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
-				carmen_localize_map_p map, int num_readings, 
-				float *range, double forward_offset,
-				int backwards)
+				       carmen_localize_map_p map, int num_readings, 
+				       float *range, double forward_offset, 
+				       double angular_resolution,
+				       double first_beam_angle,
+				       int backwards)
 {
   float angle, *laser_x, *laser_y, p_x, p_y, ctheta, stheta;
   float log_small_prob = log(SMALL_PROB);
   float global_log_small_prob = log_small_prob * 
     filter->param->global_evidence_weight;
   float log_min_wall_prob = log(filter->param->min_wall_prob);
-  int i, j, x, y, robot_x, robot_y, count[361];
-
-  float laser_angle_inc;
-  laser_angle_inc  = carmen_laser_get_angle_increment(num_readings);
-
+  int i, j, x, y, robot_x, robot_y;
+  int count[num_readings]; 
 
   /* reset the weights back to even */
   for(i = 0; i < filter->param->num_particles; i++)
@@ -528,8 +527,7 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
   laser_y = (float *)calloc(num_readings, sizeof(float));
   carmen_test_alloc(laser_y);
   for(i = 0; i < num_readings; i++) {
-    //    angle = -M_PI_2 + i / (float)(num_readings - 1) * M_PI;
-    angle = -M_PI_2 + i * laser_angle_inc;
+    angle = first_beam_angle + i * angular_resolution;
 
     laser_x[i] = (forward_offset + range[i] * cos(angle)) / 
       map->config.resolution;
@@ -707,8 +705,11 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
 
   /* incorporate the laser scan */
   carmen_localize_incorporate_laser(filter, map, laser->num_readings, 
-			     laser->range, forward_offset, backwards);
-
+				    laser->range, forward_offset, 
+				    laser->config.angular_resolution,
+				    laser->config.start_angle,
+				    backwards);
+  
   /* check if it is time to resample */
   if(filter->param->use_sensor && 
      filter->distance_travelled > filter->param->update_distance) {
@@ -718,19 +719,14 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
   }
 }
 
-void carmen_localize_laser_scan_gd(int num_readings, float *range, 
-			    carmen_point_p laser_pos, double forward_offset,
-			    carmen_localize_map_p map, int laser_skip)
+void carmen_localize_laser_scan_gd(int num_readings, float *range,
+				   double angular_resolution,
+				   double first_beam_angle,
+				   carmen_point_p laser_pos, double forward_offset,
+				   carmen_localize_map_p map, int laser_skip)
 {
   float grad_x, grad_y, grad_theta, range_x, range_y, theta;
   int x_l, y_l, count = 0, i;
-
-  float laser_angle_inc;
-  
-  float laser_fov;
-
-  laser_fov = carmen_laser_get_fov(num_readings);
-  laser_angle_inc  = carmen_laser_get_angle_increment(num_readings);
   
   do {
     grad_x = 0;
@@ -738,8 +734,7 @@ void carmen_localize_laser_scan_gd(int num_readings, float *range,
     grad_theta = 0;
     for(i = 0; i < num_readings; i += laser_skip) {
 
-      //     theta = laser_pos->theta - M_PI_2 + i / (float)num_readings * M_PI;
-      theta = laser_pos->theta - M_PI_2 + i * laser_angle_inc;
+      theta = laser_pos->theta + first_beam_angle + i * angular_resolution;
 
       range_x = range[i] * cos(theta);
       range_y = range[i] * sin(theta);
@@ -771,18 +766,19 @@ void carmen_localize_laser_scan_gd(int num_readings, float *range,
 }
 
 void carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
-			carmen_localize_summary_p summary, carmen_localize_map_p map,
-			int num_readings, float *range, double forward_offset,
-			int backwards)
+			       carmen_localize_summary_p summary, 
+			       carmen_localize_map_p map,
+			       int num_readings, float *range, 
+			       double angular_resolution,
+			       double first_beam_angle,
+			       double forward_offset,
+			       int backwards)
 {
   float mean_x, mean_y, mean_theta_x, mean_theta_y, angle;
   float diff_x, diff_y, diff_theta, std_x, std_y, std_theta, xy_cov;
   float *weights, max_weight = filter->particles[0].weight;
   float total_weight = 0;
   int i, x, y;
-
-  float laser_angle_inc;
-  laser_angle_inc  = carmen_laser_get_angle_increment(num_readings);
 
   summary->converged = !filter->global_mode;
 
@@ -836,8 +832,12 @@ void carmen_localize_summarize(carmen_localize_particle_filter_p filter,
   summary->xy_cov = sqrt(xy_cov / filter->param->num_particles);
 
   if(filter->param->do_scanmatching)
-    carmen_localize_laser_scan_gd(summary->num_readings, range, &summary->mean, 
-			   forward_offset, map, 1);
+    carmen_localize_laser_scan_gd(summary->num_readings, 
+				  range, 
+				  angular_resolution,
+				  first_beam_angle,
+				  &summary->mean, 
+				  forward_offset, map, 1);
 
   /* compute mean scan */
   summary->num_readings = num_readings;
@@ -845,18 +845,16 @@ void carmen_localize_summarize(carmen_localize_particle_filter_p filter,
     summary->mean_scan[i].range = range[i];
     summary->mean_scan[i].mask = filter->laser_mask[i];
     if(backwards) {
-      angle = summary->mean.theta + M_PI - 
-	M_PI_2 + i * laser_angle_inc;
-      //M_PI_2 + i / ((float)num_readings - 1) * M_PI;
+      angle = summary->mean.theta + M_PI +
+	first_beam_angle + i * angular_resolution;
       summary->mean_scan[i].x = summary->mean.x - forward_offset *
 	cos(summary->mean.theta) + cos(angle) * range[i];
       summary->mean_scan[i].y = summary->mean.y - forward_offset *
 	sin(summary->mean.theta) + sin(angle) * range[i];
     }
     else {
-      angle = summary->mean.theta - 
-	M_PI_2 + i * laser_angle_inc;
-      //	M_PI_2 + i / ((float)num_readings - 1) * M_PI;
+      angle = summary->mean.theta + 
+	first_beam_angle + i * angular_resolution;
       summary->mean_scan[i].x = summary->mean.x + forward_offset *
 	cos(summary->mean.theta) + cos(angle) * range[i];
       summary->mean_scan[i].y = summary->mean.y + forward_offset *
