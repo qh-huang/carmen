@@ -1,4 +1,4 @@
-/* utm2ll.c - convert Universal Transverse Mercator into latitude & longitude
+/* logtools_utm2ll.c - convert Universal Transverse Mercator into latitude & longitude
 **
 ** Partially based on code by Chuck Gantz <chuck.gantz@globalstar.com>.
 ** 
@@ -40,7 +40,7 @@
 #define ABS(x) ((x)>=0?(x):(-x))
 
 logtools_ll_coord_t
-utm2ll( logtools_utm_coord_t utm )
+logtools_utm2ll( logtools_utm_coord_t utm )
 {
   logtools_ll_coord_t ll;
   double x, y;

@@ -1,6 +1,20 @@
 #ifndef UXTOOLS_DEFINES_H
 #define UXTOOLS_H
 
+#define ANGLE_0_25_DEG_IN_RAD 0.00436332312998582394
+
+#define READ_MODE_SILENT    0x00
+#define READ_MODE_VERBOSE   0x01
+#define READ_MODE_DONT_STOP 0x02
+
+#define FILE_SCRIPT_EXT              ".script"
+#define FILE_CARMEN_EXT              ".clf"
+#define FILE_REC_EXT                 ".rec"
+#define FILE_MOOS_EXT                ".alog"
+#define FILE_PLAYER_EXT              ".plf"
+#define FILE_SAPHIRA_EXT             ".2d"
+#define FILE_PLACELAB_EXT            ".plab"
+
 #define GSM_ALLOC_STEP                 1000
 #define MAX_LINE_LENGTH               65536
 #define MAX_CMD_LENGTH                 2048

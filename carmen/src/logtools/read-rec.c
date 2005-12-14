@@ -13,29 +13,10 @@
 #include <carmen/logtools.h>
 
 #include "defines.h"
+#include "internal.h"
 
 int
-gsm_compare( const void *a, const void *b )
-{
-  static GSM_CELL_INFO v1, v2;
-  v1 = *(const GSM_CELL_INFO *)a; 
-  v2 = *(const GSM_CELL_INFO *)b;
-  return(v1.rxl<v2.rxl);
-}
-
-
-void
-placelab_sort_gsm( logtools_rec2_data_t * rec )
-{
-  int i;
-  for (i=0; i<rec->numgsm; i++) {
-    qsort( rec->gsm[i].cell, rec->gsm[i].numcells,
-	   sizeof(GSM_CELL_INFO), gsm_compare );
-  }
-}
-
-int
-read_data2d_file( logtools_rec2_data_t * rec, char * filename )
+logtools_read_logfile( logtools_log_data_t * rec, char * filename )
 {
   enum logtools_file_t     inp_type = UNKOWN;
   char               fname[MAX_NAME_LENGTH];
@@ -147,27 +128,30 @@ read_data2d_file( logtools_rec2_data_t * rec, char * filename )
 /***********************************************************************/
 
 int
-read_rec2d_file( char *filename, logtools_rec2_data_t *rec,  int mode )
+read_rec2d_file( char *filename, logtools_log_data_t *rec,  int mode )
 {
   return(load_rec2d_file( filename, rec, REC, mode ));
 }
 
 
 int
-load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t type, int mode )
+load_rec2d_file( char *filename, logtools_log_data_t *rec,
+		 enum logtools_file_t type, int mode )
 {
 
   char      line[MAX_LINE_LENGTH];
-  int       FEnd, numPos, numScan, numDynProb;
+  int       FEnd, numPos, numScan;
   char      dummy[MAX_CMD_LENGTH];
   char      command[MAX_CMD_LENGTH];
   char    * sptr, * iline, * lptr;
   FILE    * iop;
-  int       linectr = 0, posctr = 0;
-  int       laserctr = 0, dynctr = 0;
+  int       linectr = 0;
+  int       posctr = 0;
+  int       laserctr = 0;
   int       gpsctr = 0;
-  int       numEntries = 0, markerctr = 0;
-  int       wifictr = 0, gsmctr = 0;
+  int       numEntries = 0;
+  int       markerctr = 0;
+  int       wifictr = 0;
 
   fprintf( stderr, "# read file %s ...\n", filename );
   if ((iop = fopen( filename, "r")) == 0){
@@ -194,8 +178,6 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
 		    (!strcmp( command, "LASER-SCAN" ))  ||
 		    (!strcmp( command, "CARMEN-LASER" )) ) {
 	  laserctr++;
-	} else if (!strcmp( command, "DYNAMIC-PROB" )) {
-	  dynctr++;
 	} else if (!strcmp( command, "GPS" )) {
 	  gpsctr++;
 	} else if (!strcmp( command, "NMEA-GGA" )) {
@@ -206,14 +188,12 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
 	} else if ( !strcmp( command, "WIFI") ||
 		    !strcmp( command, "WIFI-DIST") ) {
 	  wifictr++;
-	} else if ( !strcmp( command, "GSM-E2EMM") ) {
-	  gsmctr++;
+	  fgets(command,sizeof(command),iop);
 	}
-	fgets(command,sizeof(command),iop);
       }
     } while (!FEnd);
     break;
-
+    
   case CARMEN:
     do{
       linectr++;
@@ -291,10 +271,7 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
 	  sscanf( sptr, "%[^=]", command );
 	  if (!strncasecmp( "type", command, MAX_LINE_LENGTH)) {
 	    sscanf( sptr, "%[^=]=%[^|]", dummy, command );
-	    if (!strncasecmp( "gsm", command, MAX_LINE_LENGTH)) {
-	      gsmctr++;
-	      break;
-	    } else if (!strncasecmp( "gps", command, MAX_LINE_LENGTH)) {
+	    if (!strncasecmp( "gps", command, MAX_LINE_LENGTH)) {
 	      gpsctr++;
 	      break;
 	    } else if (!strncasecmp( "marker", command, MAX_LINE_LENGTH)) {
@@ -310,36 +287,34 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
     fprintf( stderr, "ERROR: unknown file-type!\n" );
     return(FALSE);
 
-  }
-  
+    }
+
+    
   if (mode && READ_MODE_VERBOSE) {
     fprintf( stderr, "#####################################################################\n" );
     if (posctr>0)
       fprintf( stderr, "# found %d positions\n", posctr );
     if (laserctr>0)
       fprintf( stderr, "# found %d laserscans\n", laserctr );
-    if (dynctr>0)
-      fprintf( stderr, "# found %d dynamic probs\n", dynctr );
     if (gpsctr>0)
       fprintf( stderr, "# found %d gps pos\n", gpsctr );
     if (markerctr>0)
       fprintf( stderr, "# found %d marker\n", markerctr );
     if (wifictr>0)
       fprintf( stderr, "# found %d wifi\n", wifictr );
-    if (gsmctr>0)
-      fprintf( stderr, "# found %d gsm\n", gsmctr );
   }
   
   numEntries =
-    posctr + laserctr +
-    dynctr + gpsctr +
+    posctr +
+    laserctr +
+    gpsctr +
     markerctr +
-    wifictr + gsmctr + 1;
+    wifictr + 1;
 
   rec->numentries = 0;
 
   rec->entry   =
-    (ENTRY_POSITION *) malloc( numEntries * sizeof(ENTRY_POSITION) );
+    (logtools_entry_position_t *) malloc( numEntries * sizeof(logtools_entry_position_t) );
 
   rewind(iop);
 
@@ -363,31 +338,23 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
 
   if (markerctr>0)
     rec->marker =
-      (MARKER_DATA *) malloc( markerctr * sizeof(MARKER_DATA) );
+      (logtools_marker_data_t *) malloc( markerctr * sizeof(logtools_marker_data_t) );
   else 
     rec->marker = NULL;
   
-  if (gsmctr>0)
-    rec->gsm =
-      (GSM_DATA *) malloc( gsmctr * sizeof(GSM_DATA) );
-  else 
-    rec->gsm = NULL;
-   
   if (wifictr>0)
     rec->wifi =
-      (WIFI_DATA *) malloc( wifictr * sizeof(WIFI_DATA) );
+      (logtools_wifi_data_t *) malloc( wifictr * sizeof(logtools_wifi_data_t) );
   else 
     rec->wifi = NULL;
   
   numScan    = 0;
   numPos     = 0;
-  numDynProb = 0;
 
   rec->numpositions    = 0;
   rec->numlaserscans   = 0;
   rec->numgps          = 0;
   rec->nummarkers      = 0;
-  rec->numgsm          = 0;
   rec->numwifi         = 0;
   
   FEnd    = 0;
@@ -445,7 +412,6 @@ load_rec2d_file( char *filename, logtools_rec2_data_t *rec, enum logtools_file_t
 	}
       } while (placelab_parse_line( line, rec, TRUE, TRUE ));
     }
-    placelab_sort_gsm( rec );
     break;
 
   default:

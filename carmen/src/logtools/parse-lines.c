@@ -12,10 +12,12 @@
 #include <carmen/logtools.h>
 
 #include "defines.h"
+#include "internal.h"
+
 double round(double x);
 
 void
-rec2_parse_wifi_line( char * line, WIFI_DATA * data )
+rec2_parse_wifi_line( char * line, logtools_wifi_data_t * data )
 { 
   static char       dmy[MAX_LINE_LENGTH];
   static char       cmd[MAX_LINE_LENGTH];
@@ -67,105 +69,8 @@ rec2_parse_wifi_line( char * line, WIFI_DATA * data )
   }
 }
  
-/*
-void
-rec2_parse_gsm_cell_line_content( char * line, GSM_CELL_INFO * data )
-{ 
-  static char       dmy[MAX_LINE_LENGTH];
-  static char       cmd[MAX_LINE_LENGTH];
-  static char       str[MAX_LINE_LENGTH];
-  static char       buf[MAX_LINE_LENGTH];
-  char            * running, * ptr;
-  int               ctr;
-  running = line; ctr = 0;
-  while ((ptr=strtok_r( ctr==0?running:NULL, ",",(char **) &buf))!=NULL) {
-    sscanf( ptr, "%[^=]", str ); sscanf( str, "%s", cmd );
-    if (!strncasecmp( "mcc", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->mcc = atoi(str);
-    } else if (!strncasecmp( "mnc", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->mnc = atoi(str);
-    } else if (!strncasecmp( "lac", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->lac = strtol(str, (char **)NULL, 16);
-    } else if (!strncasecmp( "cid", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->cid = strtol(str, (char **)NULL, 16);
-    } else if (!strncasecmp( "bsic", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->bsic = strtol(str, (char **)NULL, 16);
-    } else if (!strncasecmp( "ch", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->ch = atoi(str);
-    } else if (!strncasecmp( "rxl", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->rxl = atoi(str);
-    } else if (!strncasecmp( "c1", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->c1 = atoi(str);
-    } else if (!strncasecmp( "c2", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^,]", dmy, str );
-      data->c2 = atoi(str);
-    }
-    ctr++;
-  }
-}
-
-void
-rec2_parse_gsm_cell_line( char * line, GSM_DATA * data )
-{
-  int i;
-  static char       dmy[MAX_LINE_LENGTH];
-  static char       str[MAX_LINE_LENGTH];
-  static char       buf[MAX_LINE_LENGTH];
-  static char     * run, * ptr;
-  run = line;
-  for (i=0; i<data->numcells; i++) {
-    ptr=strtok_r( i==0?run:NULL, ")",(char **) &buf);
-    sscanf( ptr, "%[^(](%[^)]", dmy, str );
-    rec2_parse_gsm_cell_line( str,  &(data->cell[i]) );
-  }
-}
-
 int
-rec2_parse_gsm_line( char * string,  GSM_DATA * data )
-{
-  char              buffer1[MAX_LINE_LENGTH];
-  char              buffer2[MAX_LINE_LENGTH];
-  char              command[MAX_LINE_LENGTH];
-  char              dummy[MAX_LINE_LENGTH];
-  char              str[MAX_LINE_LENGTH];
-  char            * ptr, * running;
-  int               numnbors, ctr = 0;
-
-  sscanf( string, "%[^[][%[^]]", dummy, buffer1 );
-  running = buffer1;
-  while ((ptr=strtok_r( ctr==0?running:NULL, ";",(char **) &buffer2))!=NULL) {
-    sscanf( ptr, "%[^=]", str ); sscanf( str, "%s", command ); 
-    if (!strncasecmp( "cell", command, MAX_CMD_LENGTH)) { 
-      sscanf( ptr, "%[^(](%[^)]", dummy, str );
-      rec2_parse_gsm_cell_line( str,  &(data->cell) );
-    } else if (!strncasecmp( "neighbors", command, 9)) {
-      sscanf( command, "neighbors(%d)", &numnbors );
-      if (numnbors>0) {
-	sscanf( ptr, "%[^{]{%[^}]", dummy, str );
-	data->numneighbors = numnbors;
-	data->neighbor =
-	  (GSM_CELL_INFO *) malloc( data->numneighbors *
-				    sizeof(GSM_CELL_INFO) );
-	rec2_parse_gsm_nbors_line( str, data );
-      }
-      strcpy( command, "" );
-    }
-    ctr++;
-  }
-  return(0);
-}
-*/
-
-int
-rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
+rec2_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 {
   static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
 
@@ -195,7 +100,7 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
   long           sec, usec;
   int            i, l, len, nLas, nVal;
 
-  static LASER_PROPERTIES2  lprop;
+  static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
 
 
@@ -243,29 +148,6 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->psens[rec->numpositions].rvel.rv        = atof(str5);
 
       rec->numpositions++;
-    }
-    
-  } else if (!strncmp( command, "GSM-E2EMM", MAX_CMD_LENGTH )) {
-    
-    if (sscanf( line, "%s %ld %ld",
-		dummy, &sec, &usec ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      rec->entry[rec->numentries].type   = GSM;
-      rec->entry[rec->numentries].index  = rec->numgsm;
-      rec->numentries++;
-
-      rec->gsm[rec->numgsm].time.tv_sec  = sec;
-      rec->gsm[rec->numgsm].time.tv_usec = usec;
-      //      if (rec2_parse_gsm_line(line, &(rec->gsm[rec->numgsm]))) {
-      //	return(FALSE);
-      //      }
-      
-      rec->numgsm++;
-      
     }
     
   } else if (!strncmp( command, "WIFI", MAX_CMD_LENGTH )) {
@@ -461,7 +343,6 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->lsens[rec->numlaserscans].laser.time.tv_usec = usec;
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
       rec->lsens[rec->numlaserscans].coord              = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
 
       if (alloc) {
 	rec->lsens[rec->numlaserscans].laser.val =
@@ -522,7 +403,6 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->lsens[rec->numlaserscans].laser.time.tv_usec = usec;
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
       rec->lsens[rec->numlaserscans].coord              = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
 
       if (alloc) {
 	rec->lsens[rec->numlaserscans].laser.val =
@@ -593,7 +473,6 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       }
       
       rec->lsens[rec->numlaserscans].coord             = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
       
       if (nVal==360 || nVal==180)
 	angleDiff = lprop.fov.delta / (double) (nVal);
@@ -630,56 +509,6 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
     }
     
 
-  } else if (!strcmp( command, "DYNAMIC-PROB") ){
-    
-    /*
-       ***************************************************************
-       ***************************************************************
-       **                                                           **
-       **                                                           **
-       **                 HUMAN PROBABILITY                         **
-       **                                                           **
-       **                                                           **
-       ***************************************************************
-       ***************************************************************
-    */
-    
-    if (sscanf( line, "%s %ld %ld %d %d %f:",
-		dummy, &sec, &usec, &nLas, &nVal, &fov ) == EOF) {
-      
-      return(FALSE);
-      
-    } else {
-      
-      if ( rec->numlaserscans>0 &&
-	   rec->lsens[rec->numlaserscans-1].id==nLas ) {
-	if (alloc && rec->lsens[rec->numlaserscans-1].dynamic==NULL) {
-	  rec->lsens[rec->numlaserscans-1].dynamic =
-	    (DISTRIBUTION *) malloc( sizeof(DISTRIBUTION) );
-	  rec->lsens[rec->numlaserscans-1].dynamic->prob =
-	    (double *) malloc( nVal * sizeof(double) );
-	  rec->lsens[rec->numlaserscans-1].dynamic->numprobs = nVal;
-	}
-	running = line;
-	strtok( running, " ");
-	strtok( NULL, " ");
-	strtok( NULL, " ");
-	strtok( NULL, " ");
-	strtok( NULL, " ");
-	strtok( NULL, " ");
-	for ( i=0; i<nVal ;i++) {
-	  valptr = strtok( NULL, " ");
-	  if (valptr==NULL) {
-	    return(FALSE);
-	  } else {
-	    rec->lsens[rec->numlaserscans-1].dynamic->prob[i] =
-	      atof(valptr);
-	  }
-	}
-	
-      }
-    }
-    
   } else {
     
     if (!(command[0]=='#' || command[0]=='*')) {
@@ -695,7 +524,7 @@ rec2_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 }
 
 int
-carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
+carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 {
   static char    markerstr[MAX_LINE_LENGTH];
   static char    command[MAX_CMD_LENGTH];
@@ -713,7 +542,7 @@ carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
   double         angleDiff, time;
   int            i, l, nVal;
 
-  static LASER_PROPERTIES2  lprop;
+  static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
 
 
@@ -779,7 +608,6 @@ carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
 
       rec->lsens[rec->numlaserscans].coord              = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
 
       if (alloc) {
 	rec->lsens[rec->numlaserscans].laser.val =
@@ -841,7 +669,6 @@ carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
 
       rec->lsens[rec->numlaserscans].coord              = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
 
       if (alloc) {
 	rec->lsens[rec->numlaserscans].laser.val =
@@ -928,7 +755,7 @@ carmen_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 }
 
 int
-moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
+moos_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 {
   static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    command[MAX_CMD_LENGTH];
@@ -938,7 +765,7 @@ moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
   double         angleDiff, time, fov;
   int            i, nVal;
 
-  static LASER_PROPERTIES2  lprop;
+  static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
 
 
@@ -1026,7 +853,6 @@ moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
       rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
 
       rec->lsens[rec->numlaserscans].coord              = NULL;
-      rec->lsens[rec->numlaserscans].dynamic            = NULL;
       
       if (alloc) {
 	rec->lsens[rec->numlaserscans].laser.val =
@@ -1082,7 +908,7 @@ moos_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 enum PLAYER_COMMANDS { LASER, POS, OTHER };
 
 int
-player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
+player_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 {
   static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    dummy[MAX_CMD_LENGTH];
@@ -1091,7 +917,7 @@ player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
   int            i, nVal;
   enum PLAYER_COMMANDS command;
   
-  static LASER_PROPERTIES2  lprop;
+  static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
   static float              laser[MAX_NUM_LASER_BEAMS];
 
@@ -1168,7 +994,6 @@ player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
     
     rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
     rec->lsens[rec->numlaserscans].coord              = NULL;
-    rec->lsens[rec->numlaserscans].dynamic            = NULL;
     
     if (alloc) {
       rec->lsens[rec->numlaserscans].laser.val =
@@ -1221,7 +1046,7 @@ player_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 }
 
 int
-saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
+saphira_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 {
   static logtools_rpos2_t   npos = {0.0, 0.0, 0.0};
   static char    command[MAX_CMD_LENGTH];
@@ -1234,7 +1059,7 @@ saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
   double         angleDiff;
   int            i, v;
 
-  static LASER_PROPERTIES2  lprop;
+  static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
   static int                cur_robot_id;
   static int                laser_num_values = 181;
@@ -1332,7 +1157,6 @@ saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
     rec->lsens[rec->numlaserscans].laser.numvalues    = v;
 
     rec->lsens[rec->numlaserscans].coord              = NULL;
-    rec->lsens[rec->numlaserscans].dynamic            = NULL;
 
     if (alloc) {
       rec->lsens[rec->numlaserscans].laser.val =
@@ -1383,74 +1207,7 @@ saphira_parse_line( char *line, logtools_rec2_data_t *rec, int alloc, int mode )
 }
 
 void
-placelab_parse_gsm_cell_line( char * line, GSM_CELL_INFO * data,
-			      struct timeval  * time)
-{ 
-  static char       dmy[MAX_LINE_LENGTH];
-  static char       cmd[MAX_LINE_LENGTH];
-  static char       str[MAX_LINE_LENGTH];
-  static char       buf[MAX_LINE_LENGTH];
-  char            * running, * ptr;
-  int               ctr;
-  double            tf;
-  running = line; ctr = 0;
-  data->cellidx = -2;
-  while ((ptr=strtok_r( ctr==0?running:NULL, "|",(char **) &buf))!=NULL) {
-    sscanf( ptr, "%[^=]", str ); sscanf( str, "%s", cmd );
-    if (!strncasecmp( "mcc", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->mcc = atoi(str);
-    } else if (!strncasecmp( "mnc", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->mnc = atoi(str);
-    } else if (!strncasecmp( "areaid", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->lac = atoi(str);
-    } else if (!strncasecmp( "cellid", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->cid = atoi(str);
-    } else if (!strncasecmp( "channel", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->ch = atoi(str);
-    } else if (!strncasecmp( "signal", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->rxl = atoi(str);
-      if (data->dev == GSM_DEV_MODEM && data->rxl < 0)
-	data->rxl *= -1.0;
-    } else if (!strncasecmp( "bsic", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      data->bsic = atoi(str);
-    } else if (!strncasecmp( "gsmtype", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      if (!strncasecmp( "channel", str, MAX_CMD_LENGTH )) {
-	data->type = GSM_CHANNEL_TYPE;
-      } else if (!strncasecmp( "cell", str, MAX_CMD_LENGTH )) {
-	data->type = GSM_CELL_TYPE;
-      } else {
-	data->type = GSM_UNKNOWN_TYPE;
-      }
-    } else if (!strncasecmp( "devicename", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      if (!strncasecmp( "SonyEricssonGM28", str, MAX_CMD_LENGTH )) {
-	data->dev = GSM_DEV_MODEM;
-	if (data->rxl < 0)
-	  data->rxl *= -1.0;
-      } else {
-	data->dev = GSM_DEV_UNKNOWN;
-      }
-    } else if (!strncasecmp( "time", cmd, MAX_LINE_LENGTH)) {
-      sscanf( ptr, "%[^=]=%[^|]", dmy, str );
-      tf = atof(str);
-      time->tv_sec = (int) (tf/1000.0);
-      time->tv_usec = (int) ((tf-(time->tv_sec*1000.0))*1000.0);
-    }
-    ctr++;
-  }
-}
-
-
-void
-placelab_parse_marker_line( char * line, MARKER_DATA * data ){
+placelab_parse_marker_line( char * line, logtools_marker_data_t * data ){
   static char       dmy[MAX_LINE_LENGTH];
   static char       cmd[MAX_LINE_LENGTH];
   static char       str[MAX_LINE_LENGTH];
@@ -1554,30 +1311,7 @@ placelab_parse_gps_line( char * line, logtools_gps_data_t * data )
 }
 
 int
-plab_same_cell( GSM_CELL_INFO * cell1, GSM_CELL_INFO * cell2 )
-{
-  if ( (cell1->cid == cell2->cid) &&
-       (cell1->lac == cell2->lac) &&
-       (cell1->mnc == cell2->mnc) &&
-       (cell1->mcc == cell2->mcc) )
-    return TRUE;
-  return FALSE;
-}
-
-int
-plab_unknown_cell( GSM_CELL_INFO * cell, GSM_DATA * data )
-{
-  int i;
-  for (i=0; i<data->numcells;i++) {
-    if (plab_same_cell(cell, &(data->cell[i]))) {
-      return FALSE;
-    }
-  }
-  return TRUE;
-}
-
-int
-placelab_parse_line( char *line, logtools_rec2_data_t *rec,
+placelab_parse_line( char *line, logtools_log_data_t *rec,
 		     int alloc __attribute__ ((unused)), int mode )
 {
   char  * ptr, * running;
@@ -1586,8 +1320,6 @@ placelab_parse_line( char *line, logtools_rec2_data_t *rec,
   static char    buf[MAX_LINE_LENGTH];
   static char    command[MAX_CMD_LENGTH];
   static char    dummy[MAX_CMD_LENGTH];
-  static GSM_CELL_INFO   cell;
-  static struct timeval time;
   static int     continuous = TRUE;
   
   running = line;
@@ -1598,11 +1330,7 @@ placelab_parse_line( char *line, logtools_rec2_data_t *rec,
     sscanf( ptr, "%[^=]", command );
     if (!strncasecmp( "type", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^|]", dummy, command );
-      if (!strncasecmp( "gsm", command, MAX_LINE_LENGTH)) {
-	rec->entry[rec->numentries].type   = GSM;
-	rec->entry[rec->numentries].index  = rec->numgsm;
-	break;
-      } else if (!strncasecmp( "gps", command, MAX_LINE_LENGTH)) {
+      if (!strncasecmp( "gps", command, MAX_LINE_LENGTH)) {
 	rec->entry[rec->numentries].type   = GPS;
 	rec->entry[rec->numentries].index  = rec->numgps;
 	break;
@@ -1639,29 +1367,6 @@ placelab_parse_line( char *line, logtools_rec2_data_t *rec,
       rec->numgps++;
       rec->numentries++;
       continuous = FALSE;
-      return(TRUE);
-      break;
-    case GSM:
-      placelab_parse_gsm_cell_line( cline, &cell, &time );
-      if (rec->numgsm>0 &&
-	  (time.tv_sec==rec->gsm[rec->numgsm-1].time.tv_sec) &&
-	  (time.tv_sec==rec->gsm[rec->numgsm-1].time.tv_sec) &&
-	  plab_unknown_cell( &cell, &(rec->gsm[rec->numgsm-1]) ) &&
-	  continuous ) {
-	rec->gsm[rec->numgsm-1].cell[rec->gsm[rec->numgsm-1].numcells] = cell;
-	rec->gsm[rec->numgsm-1].numcells++;
-      } else {
-	rec->gsm[rec->numgsm].cell =
-	  (GSM_CELL_INFO *) malloc( MAX_NUM_GSM_NEIGHBORS *
-				    sizeof(GSM_CELL_INFO) );
-	rec->gsm[rec->numgsm].cell[0]      = cell;
-	rec->gsm[rec->numgsm].numcells     = 1;
-	rec->gsm[rec->numgsm].time         = time;
-	rec->gsm[rec->numgsm].gpsidx       = rec->numgps;
-	rec->numgsm++;
-	rec->numentries++;
-	continuous = TRUE;
-      }
       return(TRUE);
       break;
     default:

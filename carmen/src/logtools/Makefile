@@ -9,7 +9,7 @@ MODULE_COMMENT = "Log Tool"
 
 CFLAGS += 
 IFLAGS += 
-LFLAGS += `/usr/bin/Wand-config --libs` -L/usr/X11R6/lib -llogtools
+LFLAGS += `/usr/bin/Wand-config --libs` -L/usr/X11R6/lib -lmap_io -lmap_interface -llogtools -lglobal -lipc
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \
 	  write-file.c parse-lines.c correction.c graphics.c \

@@ -15,7 +15,7 @@
 #define MAX_LINE_LENGTH 40000
 
 int
-read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
+read_script( char *filename, logtools_log_data_t *script, int verbose ) {
 
   FILE   *fp;
 
@@ -39,14 +39,12 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 
   double angleDiff;
 
-  LASER_PROPERTIES2  lprop[2];
+  logtools_laser_prop2_t  lprop[2];
   
   int numPositions      = 0;
   int numSonarScans     = 0;
   int numLaserScans     = 0;
   int numRLaserScans    = 0;
-  int numHumanProb      = 0;
-  int numDynamicProb    = 0;
   int numTimes          = 0;
   int numEntries        = 0;
 
@@ -119,20 +117,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 	  numRLaserScans++;
 	if (numValues2>0)
 	  numRLaserScans++;
-      } else if (!strcmp( command, "#P_HUMAN") ){
-        numHumanProb++;
-	if (fscanf(fp, "%d %d:", &numValues1, &numValues2) == EOF)
-	    FileEnd = TRUE;
-	else {
-	  fgets( line, MAX_LINE_LENGTH,fp );
-	}
-      } else if (!strcmp( command, "#DYNAMIC") ){
-        numDynamicProb++;
-	if (fscanf(fp, "%d %d:", &numValues1, &numValues2) == EOF)
-	    FileEnd = TRUE;
-	else {
-	  fgets( line, MAX_LINE_LENGTH,fp );
-	}
       } else {
 	fgets(command,sizeof(command),fp);
       }
@@ -146,7 +130,7 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
   numEntries = numPositions + numRLaserScans;
   
   script->entry   =
-    (ENTRY_POSITION *) malloc( numEntries * sizeof(ENTRY_POSITION) );
+    (logtools_entry_position_t *) malloc( numEntries * sizeof(logtools_entry_position_t) );
   script->psens  =
     (logtools_possens2_data_t *) malloc( numPositions * sizeof(logtools_possens2_data_t) );
   script->lsens  =
@@ -161,7 +145,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
     fprintf( stderr, "# found %d sonar scans\n", numSonarScans );    
     fprintf( stderr, "# found %d laser scans\n", numLaserScans );
     fprintf( stderr, "# found %d real laser scans\n", numRLaserScans );
-    fprintf( stderr, "# found %d human probability\n", numHumanProb );
     fprintf( stderr, "#####################################################################\n" );
   }
 
@@ -170,7 +153,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
   numRLaserScans    = 0;
   numSonarScans     = 0;
   numLaserScans     = 0;
-  numHumanProb      = 0;
 
   curTime.tv_sec = 0;
   curTime.tv_usec = 0;
@@ -293,7 +275,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 	    }
 
 	    script->lsens[numRLaserScans].coord            = NULL;
-	    script->lsens[numRLaserScans].dynamic          = NULL;
 
 	    script->lsens[numRLaserScans].laser.time       = curTime;
 	    script->lsens[numRLaserScans].id               = 0;
@@ -336,7 +317,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 	    }
 	  
 	    script->lsens[numRLaserScans].coord            = NULL;
-	    script->lsens[numRLaserScans].dynamic          = NULL;
 
 	    script->lsens[numRLaserScans].laser.time       = curTime;
 	    script->lsens[numRLaserScans].id               = 1;
@@ -364,76 +344,6 @@ read_script( char *filename, logtools_rec2_data_t *script, int verbose ) {
 	    cnt++;
 	  }
 	}
-	
-      } else if (!strcmp( command, "#DYNAMIC") ||
-		 !strcmp( command, "#DYNAMIC-PROB")){
-	
-        /* ***************************************************************
-           ***************************************************************
-	   **                                                           **
-	   **                                                           **
-	   **                 HUMAN PROBABILITY                         **
-	   **                                                           **
-	   **                                                           **
-	   ***************************************************************
-	   *************************************************************** */
-
-	if (fscanf(fp, "%d %d:", &numValues1, &numValues2) == EOF)
-	  FileEnd = TRUE;
-	else {
-
-	  if ( numValues1>0 ) {	
-	    if (lastFScan!=-1) {
-	      script->lsens[lastFScan].dynamic =
-		(DISTRIBUTION *) malloc( sizeof(DISTRIBUTION) );
-	      script->lsens[lastFScan].dynamic->prob =
-		(double *) malloc( numValues1 * sizeof(double) );
-	      script->lsens[lastFScan].dynamic->numprobs = numValues1;
-	      for ( i=0; i<numValues1 ;i++) {
-		if (fscanf(fp, "%s", inp0) == EOF) {
-		  FileEnd = TRUE;
-		  break;
-		} else {
-		  script->lsens[lastFScan].dynamic->prob[i] = atof(inp0);
-		}
-	      }
-	    } else {
-	      for ( i=0; i<numValues1 ;i++) {
-		if (fscanf(fp, "%s", inp0) == EOF) {
-		  FileEnd = TRUE;
-		  break;
-		}
-	      }
-	    }
-	    numHumanProb++;
-	  }
-	  if ( numValues2>0 ) {
-	    if (lastRScan!=-1) {
-	      script->lsens[lastRScan].dynamic =
-		(DISTRIBUTION *) malloc( sizeof(DISTRIBUTION) );
-	      script->lsens[lastRScan].dynamic->prob =
-		(double *) malloc( numValues2 * sizeof(double) );
-	      script->lsens[lastRScan].dynamic->numprobs = numValues2;
-	      for ( i=0; i<numValues2 ;i++) {
-		if (fscanf(fp, "%s", inp0) == EOF) {
-		  FileEnd = TRUE;
-		  break;
-		} else {
-		  script->lsens[lastRScan].dynamic->prob[i] = atof(inp0);
-		}
-	      }
-	    } else {
-	      for ( i=0; i<numValues2 ;i++) {
-		if (fscanf(fp, "%s", inp0) == EOF) {
-		  FileEnd = TRUE;
-		  break;
-		}
-	      }
-	    }
-	    numHumanProb++;
-	  }
-	}
-	
 	
       } else {
 	if (!(command[0]=='%')){

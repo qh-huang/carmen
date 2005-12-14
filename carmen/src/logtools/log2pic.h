@@ -37,7 +37,8 @@ typedef struct {
 
 enum log2pic_format_t {
   GRAPHICS,
-  GNUPLOT
+  GNUPLOT,
+  CARMEN_MAP
 };
   
 typedef struct {
@@ -117,10 +118,10 @@ char *
 log2pic_dump_filename( void );
 
 void
-log2pic_write_image_magick_map( logtools_grid_map2_t *map, logtools_rec2_data_t *rec );
+log2pic_write_image_magick_map( logtools_grid_map2_t *map, logtools_log_data_t *rec );
 
 void
-log2pic_simple_convolve_map( logtools_grid_map2_t *map, GAUSS_KERNEL kernel );
+log2pic_simple_convolve_map( logtools_grid_map2_t *map, logtools_gauss_kernel_t kernel );
 
 void
 log2pic_read_image_file( char * filename, log2pic_background_image_t * img );

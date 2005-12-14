@@ -11,7 +11,7 @@
 #include "defines.h"
 
 char *
-str_get_valstr( char *str )
+logtools_str_get_valstr( char *str )
 {
   char   * ptr;
   int      n, i = 0;
@@ -24,7 +24,7 @@ str_get_valstr( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_valstr(&(str[i+1])));
+	return(logtools_str_get_valstr(&(str[i+1])));
       }
     } else if(str[i]=='(') {
       ptr = rindex(str,')');
@@ -32,7 +32,7 @@ str_get_valstr( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_valstr(&(str[i+1])));
+	return(logtools_str_get_valstr(&(str[i+1])));
       }
     } else if(str[i]=='[') {
       ptr = rindex(str,']');
@@ -40,7 +40,7 @@ str_get_valstr( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_valstr(&(str[i+1])));
+	return(logtools_str_get_valstr(&(str[i+1])));
       }
     } else if(str[i]==' '||str[i]=='\t') {
       i++;
@@ -62,7 +62,7 @@ str_get_valstr( char *str )
 }
 
 char *
-str_get_str( char *str )
+logtools_str_get_str( char *str )
 {
   char   * ptr;
   int      n, i = 0;
@@ -75,7 +75,7 @@ str_get_str( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_str(&(str[i+1])));
+	return(logtools_str_get_str(&(str[i+1])));
       }
     } else if(str[i]=='(') {
       ptr = rindex(str,')');
@@ -83,7 +83,7 @@ str_get_str( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_str(&(str[i+1])));
+	return(logtools_str_get_str(&(str[i+1])));
       }
     } else if(str[i]=='[') {
       ptr = rindex(str,']');
@@ -91,7 +91,7 @@ str_get_str( char *str )
 	return(NULL);
       } else {
 	ptr[0]='\0';
-	return(str_get_str(&(str[i+1])));
+	return(logtools_str_get_str(&(str[i+1])));
       }
     } else {
       return(&(str[i]));
@@ -102,7 +102,7 @@ str_get_str( char *str )
 
 
 int
-str_get_numbers( char *str, int num, ... )
+logtools_str_get_numbers( char *str, int num, ... )
 {
   int          n, i = 0;
   va_list      argp;

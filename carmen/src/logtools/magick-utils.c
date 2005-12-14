@@ -10,7 +10,10 @@
 
 #include <carmen/logtools.h>
 #include <carmen/logtools_graphics.h>
+
 #include "log2pic.h"
+
+
 
 PointInfo arrow[7] = {
   { -1.0, -0.15 }, 
@@ -50,7 +53,7 @@ marker_map_pos_from_robot_pos( logtools_rpos2_t rpos, logtools_grid_map2_t * map
   if (fabs(settings.rotation_angle)>MIN_ROTATION) {
     vr.x = pos.x - settings.rotation_center.x;
     vr.y = pos.y - settings.rotation_center.y;
-    pos_r = rotate_vector2( vr, settings.rotation_angle );
+    pos_r = logtools_rotate_vector2( vr, settings.rotation_angle );
     pos.x = pos_r.x + settings.rotation_center.x;
     pos.y = pos_r.y + settings.rotation_center.y;
   }
@@ -122,7 +125,7 @@ google2vector( logtools_ll_coord_t ll, int zoom )
 
 void
 ImageMagickDrawPath( Image * image, ImageInfo * image_info,
-		     logtools_grid_map2_t * map, logtools_rec2_data_t * rec, int upto )
+		     logtools_grid_map2_t * map, logtools_log_data_t * rec, int upto )
 {
   logtools_vector2_t           v, vec1, vec2, vstart, vend;
   int               i, idx, plot = FALSE;
@@ -169,10 +172,10 @@ ImageMagickDrawPath( Image * image, ImageInfo * image_info,
     if (settings.utm_correct) {
       llstart.longitude = settings.posstart.x;
       llstart.latitude  = settings.posstart.y;
-      utmstart = ll2utm( llstart );	
+      utmstart = logtools_ll2utm( llstart );	
       llend.longitude = settings.posstart.x + settings.background.width  * settings.resolution_x;
       llend.latitude  = settings.posstart.y + settings.background.height * settings.resolution_y;
-      utmend   = ll2utm( llend );
+      utmend   = logtools_ll2utm( llend );
     }
     if (settings.google_correct) {
       llstart.longitude = settings.posstart.x;
@@ -191,7 +194,7 @@ ImageMagickDrawPath( Image * image, ImageInfo * image_info,
 	  if (settings.utm_correct) {
 	    ll.longitude = rec->gps[idx].longitude;
 	    ll.latitude  = rec->gps[idx].latitude;
-	    utm = ll2utm( ll );
+	    utm = logtools_ll2utm( ll );
 	    northingf =
 	      ( utm.northing - utmstart.northing ) / ( utmend.northing-utmstart.northing );
 	    eastingf =
@@ -280,7 +283,7 @@ ImageMagickDrawPath( Image * image, ImageInfo * image_info,
       DrawSetStrokeWidth( wand, 1.0 );
       size = metric_to_pixel( ROBOT_SIZE/2.0, map, REC );
       DrawCircle( wand, vec1.x, vec1.y, vec1.x+size, vec1.y+size );
-      v = compute_laser_abs_point( pos, ROBOT_SIZE/1.8, nomove, 0.0 );
+      v = logtools_compute_laser_points( pos, ROBOT_SIZE/1.8, nomove, 0.0 );
       magick_pos_from_vector( v, map, &vec2 );
       DrawLine( wand, vec1.x, vec1.y, vec2.x, vec2.y );
     }
@@ -403,12 +406,12 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "color", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strncpy( stdcolor, str, MAX_CMD_LENGTH );
     } else if (!strncasecmp( "strokecolor", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strncpy( strokecolor, str, MAX_CMD_LENGTH );
     } else if (!strncasecmp( "strokedash", command, MAX_LINE_LENGTH)) {
@@ -433,47 +436,47 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "textundercolor", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strncpy( textundercolor, str, MAX_CMD_LENGTH );
     } else if (!strncasecmp( "font", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strncpy( fontname, str, MAX_CMD_LENGTH );
     } else if (!strncasecmp( "opacity", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	opacity = atof(str);
     } else if (!strncasecmp( "orientation", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	orientation = deg2rad(atof(str));
     } else if (!strncasecmp( "strokeopacity", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strokeopacity = atof(str);
     } else if (!strncasecmp( "strokewidth", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strokewidth = atof(str); 
     } else if (!strncasecmp( "strokepattern", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	strncpy( strokepattern, str, MAX_CMD_LENGTH );
     } else if (!strncasecmp( "fontsize", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr(str1);
+      str = logtools_str_get_valstr(str1);
       if (str!=NULL)
 	fontsize = atof(str);
     } else if (!strncasecmp( "point", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      if (str_get_numbers( str1, 2, &(pos.x), &(pos.y) ) == 2 ) {
+      if (logtools_str_get_numbers( str1, 2, &(pos.x), &(pos.y) ) == 2 ) {
 	marker_map_pos_from_robot_pos( pos, map, &vec, system );
 	DrawPushGraphicContext( wand );
 	{
@@ -497,7 +500,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "rectangle", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      if (str_get_numbers( str1, 4, &(pos1.x), &(pos1.y),
+      if (logtools_str_get_numbers( str1, 4, &(pos1.x), &(pos1.y),
 			   &(pos2.x), &(pos2.y) ) == 4 ) {
 	pos.x   = (pos2.x+pos1.x)/2.0;
 	pos.y   = (pos2.y+pos1.y)/2.0;
@@ -544,7 +547,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "line", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      if (str_get_numbers( str1, 4, &(pos1.x), &(pos1.y),
+      if (logtools_str_get_numbers( str1, 4, &(pos1.x), &(pos1.y),
 			   &(pos2.x), &(pos2.y) ) == 4 ) {
 	marker_map_pos_from_robot_pos( pos1, map, &vec1, system );
 	marker_map_pos_from_robot_pos( pos2, map, &vec2, system );
@@ -574,7 +577,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "text", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      str = str_get_valstr( str1 );
+      str = logtools_str_get_valstr( str1 );
       sscanf( str, "%[^,],%[^,],%[^:]", str2, str3, str4 );
       pos.x = atof( str2 );
       pos.y = atof( str3 );
@@ -642,7 +645,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       pri++;
   } else if (!strncasecmp( "circle", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      n = str_get_numbers( str1, 3, &(pos.x), &(pos.y), &val );
+      n = logtools_str_get_numbers( str1, 3, &(pos.x), &(pos.y), &val );
       if (n>=2) {
 	if (n==3) {
 	  size  = metric_to_pixel( val/(2.0*sqrt(2)), map, system );
@@ -718,7 +721,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
       }
     } else if (!strncasecmp( "arrow", command, MAX_LINE_LENGTH)) {
       sscanf( ptr, "%[^=]=%[^:]", dummy, str1 );
-      n = str_get_numbers( str1, 3, &(pos.x), &(pos.y), &val );
+      n = logtools_str_get_numbers( str1, 3, &(pos.x), &(pos.y), &val );
       if (n>=2) {
 	if (n==3) {
 	  size  = metric_to_pixel( val/2.3, map, system );
@@ -782,7 +785,7 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
 }
 
 void
-check_active_markers( logtools_ivalue_set_t * active, logtools_rec2_data_t * rec, int up_to_entry )
+check_active_markers( logtools_ivalue_set_t * active, logtools_log_data_t * rec, int up_to_entry )
 {
   char   dummy[MAX_STRING_LENGTH];
   char   tagstr[MAX_STRING_LENGTH];
@@ -811,7 +814,7 @@ void
 copy_probs_to_data( log2pic_image_t * img, logtools_grid_map2_t * map,
 		    logtools_ivector2_t zsize )
 {
-  GAUSS_KERNEL        kernel;
+  logtools_gauss_kernel_t        kernel;
   int                 i, j, idx, ix, iy;
   double              c;
   if (settings.endpoints) {
@@ -820,7 +823,7 @@ copy_probs_to_data( log2pic_image_t * img, logtools_grid_map2_t * map,
     log2pic_map_compute_probs( map, settings.unknown_val );
   }
   if (settings.convolve) {
-    kernel = compute_gauss_kernel( settings.kernel_size );
+    kernel = logtools_compute_gauss_kernel( settings.kernel_size );
     log2pic_simple_convolve_map( map, kernel );
   }
   for (i=0;i<zsize.x;i++) {
@@ -884,7 +887,7 @@ alloc_image_from_data( Image ** image, log2pic_image_t * img, logtools_grid_map2
 
 void
 draw_image_marker( Image * image, ImageInfo * image_info,
-		   logtools_grid_map2_t * map, logtools_rec2_data_t * rec,
+		   logtools_grid_map2_t * map, logtools_log_data_t * rec,
 		   int up_to_entry, int up_to_dump )
 {
   static logtools_ivalue_set_t   active;
@@ -929,7 +932,7 @@ draw_image_marker( Image * image, ImageInfo * image_info,
 void
 log2pic_dump_animation_map( Image * image, ImageInfo * image_info,
 			    log2pic_image_t * img, logtools_grid_map2_t * map,
-			    logtools_ivector2_t zsize, logtools_rec2_data_t * rec,
+			    logtools_ivector2_t zsize, logtools_log_data_t * rec,
 			    int up_to_entry, int up_to_scan, int up_to_dump )
 {
   double progress;
@@ -958,7 +961,7 @@ log2pic_dump_animation_map( Image * image, ImageInfo * image_info,
 }
 
 void
-log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_rec2_data_t * rec )
+log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_log_data_t * rec )
 {
   int                 ok = TRUE;
   int                 i, j, num_dumps, idx, size, ctr = 0, lidx = 0;
@@ -1012,8 +1015,8 @@ log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_rec2_data_t
 	    log2pic_map_integrate_scan( map, rec->lsens[idx],
 					settings.max_range,
 					settings.usable_range );
-	    if (rpos2_distance(lastpos,
-			       rec->lsens[idx].estpos)>settings.anim_step) {
+	    if (logtools_rpos2_distance(lastpos,
+				rec->lsens[idx].estpos)>settings.anim_step) {
 	      if (idx>=settings.from && idx<=settings.to)
 		if (ctr++%(settings.anim_skip+1)==0) {
 		  log2pic_dump_animation_map( image, &image_info, &img,

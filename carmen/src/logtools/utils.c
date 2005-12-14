@@ -98,7 +98,7 @@ timeDiff( struct timeval  t1, struct timeval t2)
 
 
 logtools_vector2_t
-rotate_vector2( logtools_vector2_t p, double rot )
+logtools_rotate_vector2( logtools_vector2_t p, double rot )
 {
   logtools_vector2_t v;
   v.x = p.x*cos(rot)-p.y*sin(rot);
@@ -107,7 +107,7 @@ rotate_vector2( logtools_vector2_t p, double rot )
 }
 
 logtools_vector2_t
-rotate_and_translate_vector2( logtools_vector2_t p, double rot,
+logtools_rotate_and_translate_vector2( logtools_vector2_t p, double rot,
 			      logtools_vector2_t trans )
 {
   logtools_vector2_t v;
@@ -123,7 +123,7 @@ vector2_distance( logtools_vector2_t p1, logtools_vector2_t p2 ) {
 }
   
 double
-vector2_length( logtools_vector2_t v1 )
+logtools_vector2_length( logtools_vector2_t v1 )
 {
   return( sqrt( (v1.x*v1.x) + (v1.y*v1.y) ) );
 }
@@ -153,16 +153,16 @@ random_gauss( void )
 }
 
 double
-gauss_function( double x, double mu, double sigma )
+logtools_gauss_function( double x, double mu, double sigma )
 {
  return( (1/sqrt(2.0*M_PI*sigma*sigma)) *
 	 exp(-(((x-mu)*(x-mu))/(2*sigma*sigma))) );  
 }
 
-GAUSS_KERNEL
-compute_gauss_kernel_with_function( int length )
+logtools_gauss_kernel_t
+logtools_compute_gauss_kernel_with_function( int length )
 {
-  GAUSS_KERNEL kernel;
+  logtools_gauss_kernel_t kernel;
   
   int center = (length-1) / 2;
   double sigma = sqrt( length/(2*M_PI) );
@@ -171,15 +171,15 @@ compute_gauss_kernel_with_function( int length )
   kernel.len = length;
   kernel.val = (double *) malloc( length * sizeof(double) );
   for (i=0;i<length;i++) {
-    kernel.val[i] = gauss_function( (i-center), 0.0, sigma );
+    kernel.val[i] = logtools_gauss_function( (i-center), 0.0, sigma );
   }
   return(kernel);
 }
 
-GAUSS_KERNEL
-compute_gauss_kernel(int length )
+logtools_gauss_kernel_t
+logtools_compute_gauss_kernel(int length )
 {
-  GAUSS_KERNEL  kernel;
+  logtools_gauss_kernel_t  kernel;
   int i, j, *store, sum = 0;
   store = (int *) malloc( length*sizeof(int) );
   store[0] = 1;
@@ -229,7 +229,7 @@ compute_orientation_diff( double start, double end ) {
 }
 
 logtools_rmove2_t
-compute_movement2_between_rpos2( logtools_rpos2_t start, logtools_rpos2_t end )
+logtools_movement2_between_rpos2( logtools_rpos2_t start, logtools_rpos2_t end )
 {
   logtools_rmove2_t move;
 
@@ -248,7 +248,7 @@ compute_movement2_between_rpos2( logtools_rpos2_t start, logtools_rpos2_t end )
 }
 
 logtools_rpos2_t
-compute_rpos2_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
+logtools_rpos2_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
   logtools_rpos2_t end;
   if ( (move.forward==0.0) && (move.sideward==0.0) && (move.rotation==0.0) )
     return (start);
@@ -259,7 +259,7 @@ compute_rpos2_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
 }
 
 logtools_rpos2_t
-compute_rpos2_backwards_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
+logtools_rpos2_backwards_with_movement2( logtools_rpos2_t start, logtools_rmove2_t move ) {
   logtools_rpos2_t end;
   if ( (move.forward==0.0) && (move.sideward==0.0) && (move.rotation==0.0) )
     return (start);
@@ -342,14 +342,7 @@ sick_laser_angle_diff( int num, double fov )
 }
 
 double
-kl_distance( GAUSSIAN g1, GAUSSIAN g2 )
-{
-  return( 0.5 * ( log( g2.sigma / g1.sigma ) - 1 + ( g1.sigma / g2.sigma ) +
-		 ( (g1.mu-g2.mu)*(g1.mu-g2.mu) / g2.sigma ) ) );
-}
-
-double
-rpos2_distance( logtools_rpos2_t p1, logtools_rpos2_t p2 )
+logtools_rpos2_distance( logtools_rpos2_t p1, logtools_rpos2_t p2 )
 {
   return sqrt( (p1.x-p2.x)*(p1.x-p2.x) +
 	       (p1.y-p2.y)*(p1.y-p2.y) );
@@ -591,7 +584,8 @@ gps_degree_decimal( double degree_minute, char orient )
 }
 
 logtools_vector2_t
-compute_laser_abs_point( logtools_rpos2_t rpos, double val, logtools_rmove2_t offset, double angle )
+logtools_compute_laser_points( logtools_rpos2_t rpos, double val,
+			       logtools_rmove2_t offset, double angle )
 {
   logtools_vector2_t abspt;
   abspt.x =
@@ -605,38 +599,38 @@ compute_laser_abs_point( logtools_rpos2_t rpos, double val, logtools_rmove2_t of
 
 
 
-LASER_COORD2
+logtools_laser_coord2_t
 compute_laser2d_coord( logtools_lasersens2_data_t lsens, int i )
 {
   double        val;
-  LASER_COORD2  coord;
+  logtools_laser_coord2_t  coord;
   logtools_rpos2_t         rpos, npos;
 
-  rpos  = compute_rpos2_with_movement2( lsens.estpos,
+  rpos  = logtools_rpos2_with_movement2( lsens.estpos,
 					lsens.laser.offset );
   npos.x = 0.0;
   npos.y = 0.0;
   npos.o = 0.0;
 
   val = lsens.laser.val[i];
-  coord.relpt = compute_laser_abs_point( npos, val,
-					 lsens.laser.offset,
-					 lsens.laser.angle[i] );
-  coord.abspt = compute_laser_abs_point( rpos, val,
-					 lsens.laser.offset,
-					 lsens.laser.angle[i] );
+  coord.relpt = logtools_compute_laser_points( npos, val,
+					       lsens.laser.offset,
+					       lsens.laser.angle[i] );
+  coord.abspt = logtools_compute_laser_points( rpos, val,
+					       lsens.laser.offset,
+					       lsens.laser.angle[i] );
   return(coord);
 }
 
 void
-compute_rec2d_coordpts( logtools_rec2_data_t *rec )
+logtools_compute_coordpts( logtools_log_data_t *rec )
 {
   int i, j;
   for (j=0;j<rec->numlaserscans;j++) {
     if (rec->lsens[j].coord==NULL) {
       rec->lsens[j].coord =
-	(LASER_COORD2 *) malloc( rec->lsens[j].laser.numvalues *
-				 sizeof(LASER_COORD2) );
+	(logtools_laser_coord2_t *) malloc( rec->lsens[j].laser.numvalues *
+				 sizeof(logtools_laser_coord2_t) );
       for (i=0;i<rec->lsens[j].laser.numvalues;i++) {
 	rec->lsens[j].coord[i] = compute_laser2d_coord(rec->lsens[j], i);
       }

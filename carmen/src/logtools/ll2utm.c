@@ -1,4 +1,4 @@
-/* ll2utm.c - convert latitude & longitude into Universal Transverse Mercator
+/* logtools_ll2utm.c - convert latitude & longitude into Universal Transverse Mercator
 **
 ** Partially based on code by Chuck Gantz <chuck.gantz@globalstar.com>.
 **
@@ -39,7 +39,7 @@
 static char utm_letter( double latitude );
 
 logtools_utm_coord_t
-ll2utm( logtools_ll_coord_t ll )
+logtools_ll2utm( logtools_ll_coord_t ll )
 {
   double lat_rad, long_rad;
   double long_origin, long_origin_rad;
