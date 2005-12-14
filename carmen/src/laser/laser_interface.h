@@ -30,9 +30,9 @@
 
 #include <carmen/laser_messages.h>
 
-/* #ifdef __cplusplus */
-/* extern "C" { */
-/* #endif */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void
 carmen_laser_subscribe_frontlaser_message(carmen_laser_laser_message *laser,
@@ -70,8 +70,8 @@ carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how);
 
-/* #ifdef __cplusplus */
-/* } */
-/* #endif */
+#ifdef __cplusplus
+}
+#endif
 
 #endif
