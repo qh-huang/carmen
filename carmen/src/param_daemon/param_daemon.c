@@ -630,8 +630,10 @@ read_commandline(int argc, char **argv)
 
   if (!param_filename) {
     for (index = 0; default_list[index]; index++) {
-      if (carmen_file_exists(default_list[index]))
+      if (carmen_file_exists(default_list[index])) {
 	param_filename = default_list[index];
+	break;
+      }
     }
   }
 
