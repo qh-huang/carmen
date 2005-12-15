@@ -563,7 +563,7 @@ carmen_simulator_add_robot(char *program_name, char *robot_central)
     carmen_localize_subscribe_globalpos_message
       (NULL, (carmen_handler_t)globalpos_handler, CARMEN_SUBSCRIBE_LATEST);
   carmen_param_set_module(NULL);
-  carmen_param_get_double("robot_width", &(object_list[num_objects].width));
+  carmen_param_get_double("robot_width", &(object_list[num_objects].width), NULL);
 
   object_list[num_objects].type = CARMEN_SIMULATOR_OTHER_ROBOT;
   object_list[num_objects].is_robot = 1;

@@ -63,13 +63,13 @@ char *carmen_param_get_robot(void);
 int carmen_param_get_modules(char ***modules, int *num_modules);
 char *carmen_param_get_module(void);
 int carmen_param_get_paramserver_host(char **hostname);
-int carmen_param_get_all(char *module, char ***variables, char ***values, 
+int carmen_param_get_all(char *module, char ***variables, char ***values, int **expert,
 			 int *list_length);
-int carmen_param_get_int(char *variable, int *return_value);
-int carmen_param_get_double(char *variable, double *return_value);
-int carmen_param_get_onoff(char *variable, int *return_value);
-int carmen_param_get_string(char *variable, char **return_value);
-int carmen_param_get_filename(char *variable, char  **return_value);
+int carmen_param_get_int(char *variable, int *return_value, int *expert);
+int carmen_param_get_double(char *variable, double *return_value, int *expert);
+int carmen_param_get_onoff(char *variable, int *return_value, int *expert);
+int carmen_param_get_string(char *variable, char **return_value, int *expert);
+int carmen_param_get_filename(char *variable, char  **return_value, int *expert);
 
 void carmen_param_set_module(char *new_module_name);
 int carmen_param_set_variable(char *variable, char *new_value, 

@@ -128,7 +128,7 @@ initialize_sonar_message(carmen_base_sonar_message *sonar)
   double sensor_angle;
 
   carmen_param_set_module("robot");
-  carmen_param_get_double("sensor_angle", &sensor_angle);
+  carmen_param_get_double("sensor_angle", &sensor_angle, NULL);
   
   sonar->sensor_angle = sensor_angle;
   sonar->timestamp = 0.0;

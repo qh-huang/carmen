@@ -1566,7 +1566,7 @@ navigator_graphics_init(int argc, char *argv[],
 		     FALSE, FALSE, 0);
   sync_mode_button = gtk_toggle_button_new_with_label ("Sync Mode");
   carmen_param_set_module(NULL);
-  carmen_param_get_onoff("simulator_sync_mode", &sync_mode_var);
+  carmen_param_get_onoff("simulator_sync_mode", &sync_mode_var, NULL);
   carmen_param_subscribe_onoff("simulator", "sync_mode", NULL,
 			       (carmen_param_change_handler_t)
 			       sync_mode_change_handler);

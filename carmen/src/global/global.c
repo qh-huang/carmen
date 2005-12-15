@@ -413,8 +413,8 @@ char *carmen_get_host(void)
       setenv("HOST", hostname, 1);
     }
   }
-  return getenv("HOST");
 
+  return getenv("HOST");
 }
 
 carmen_default_message *carmen_default_message_create(void)

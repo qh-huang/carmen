@@ -316,8 +316,8 @@ carmen_param_get_modules(char ***modules, int *num_modules)
 }
 
 int
-carmen_param_get_all(char *module, char ***variables, char ***values, 
-		     int *list_length)
+carmen_param_get_all(char *module, char ***variables, char ***values,
+		     int **expert, int *list_length)
 {
   IPC_RETURN_TYPE err;
 
@@ -362,6 +362,11 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
 	  *values = (char **)calloc(*list_length, sizeof(char *));
 	  carmen_test_alloc(*values);
 	}
+      if (expert)
+	{
+	  *expert = (int *)calloc(*list_length, sizeof(int));
+	  carmen_test_alloc(*expert);
+	}
       for (index = 0; index < response->list_length; index++)
 	{
 	  if (variables)
@@ -378,6 +383,9 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
 	      carmen_test_alloc((*values)[index]);
 	      strcpy((*values)[index], response->values[index]);
 	    }
+	  if (expert)
+	    (*expert)[index] = response->expert[index];
+
 	} /* End of for (index = 0; index < response->list_length ...*/
     }
   
@@ -398,7 +406,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
 
 
 int
-carmen_param_get_int(char *variable, int *return_value)
+carmen_param_get_int(char *variable, int *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -455,7 +463,9 @@ carmen_param_get_int(char *variable, int *return_value)
 
   if (response->status == CARMEN_PARAM_OK) 
     {
-      *return_value = response->value;  
+      *return_value = response->value;
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -464,7 +474,7 @@ carmen_param_get_int(char *variable, int *return_value)
 }
 
 int
-carmen_param_get_double(char *variable, double *return_value)
+carmen_param_get_double(char *variable, double *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -520,7 +530,9 @@ carmen_param_get_double(char *variable, double *return_value)
 
   if (response->status == CARMEN_PARAM_OK) 
     {
-      *return_value = response->value;  
+      *return_value = response->value;
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -530,7 +542,7 @@ carmen_param_get_double(char *variable, double *return_value)
 }
 
 int
-carmen_param_get_onoff(char *variable, int *return_value)
+carmen_param_get_onoff(char *variable, int *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -587,6 +599,8 @@ carmen_param_get_onoff(char *variable, int *return_value)
   if (response->status == CARMEN_PARAM_OK) 
     {
       *return_value = response->value;  
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -596,7 +610,7 @@ carmen_param_get_onoff(char *variable, int *return_value)
 }
 
 int
-carmen_param_get_string(char *variable, char **return_value)
+carmen_param_get_string(char *variable, char **return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -654,6 +668,8 @@ carmen_param_get_string(char *variable, char **return_value)
       *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
       carmen_test_alloc(*return_value);
       strcpy(*return_value, response->value);
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -664,7 +680,7 @@ carmen_param_get_string(char *variable, char **return_value)
 }
 
 int
-carmen_param_get_filename(char *variable, char **return_value)
+carmen_param_get_filename(char *variable, char **return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -724,6 +740,8 @@ carmen_param_get_filename(char *variable, char **return_value)
       *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
       carmen_test_alloc(*return_value);
       strcpy(*return_value, response->value);
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -733,7 +751,7 @@ carmen_param_get_filename(char *variable, char **return_value)
 }
 
 int
-carmen_param_get_directory(char *variable, char **return_value)
+carmen_param_get_directory(char *variable, char **return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -793,6 +811,8 @@ carmen_param_get_directory(char *variable, char **return_value)
       *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
       carmen_test_alloc(*return_value);
       strcpy(*return_value, response->value);
+      if (expert)
+	*expert = response->expert;
       free(response);
       return 1;
     }
@@ -983,6 +1003,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
   int err = 0;
   int last_command_line_arg;
   char *prog_name;
+  int expert;
 
   last_command_line_arg = carmen_read_commandline_parameters(argc, argv);
 
@@ -1007,45 +1028,45 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
 	{
 	case CARMEN_PARAM_INT:
 	  err = carmen_param_get_int(param_list[index].variable, 
-				     param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %d\n", param_list[index].module,
-			 param_list[index].variable, 
+				     param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %d\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "",
 			 *((int *)(param_list[index].user_variable)));
 	  break;
 	case CARMEN_PARAM_DOUBLE:
 	  err = carmen_param_get_double(param_list[index].variable, 
-					param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %f\n", param_list[index].module,
-			 param_list[index].variable, 
+					param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %f\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "", 
 			 *((double *)(param_list[index].user_variable)));
 	  break;
 	case CARMEN_PARAM_ONOFF:
 	  err = carmen_param_get_onoff(param_list[index].variable,
-				       param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %s\n", param_list[index].module,
-			 param_list[index].variable, 
+				       param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "",
 			 (*((int *)(param_list[index].user_variable)) == 0 ? 
 			  "off" : "on"));
 	  break;
 	case CARMEN_PARAM_STRING:
 	  err = carmen_param_get_string(param_list[index].variable, 
-					param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %s\n", param_list[index].module,
-			 param_list[index].variable, 
+					param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "",
 			 (*(char **)(param_list[index].user_variable)));
 	  break;
 	case CARMEN_PARAM_FILE:
 	  err = carmen_param_get_filename(param_list[index].variable, 
-					  param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %s\n", param_list[index].module,
-			 param_list[index].variable, 
+					  param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "",
 			 (*(char **)(param_list[index].user_variable)));
 	  break;
 	case CARMEN_PARAM_DIR:
 	  err = carmen_param_get_directory(param_list[index].variable, 
-					   param_list[index].user_variable);
-	  carmen_verbose("%s_%s : %s\n", param_list[index].module,
-			 param_list[index].variable, 
+					   param_list[index].user_variable, &expert);
+	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+			 param_list[index].variable, expert ? "[expert]" : "",
 			 (*(char **)(param_list[index].user_variable)));
 	  break;
 	} /* switch (param_list[index].type) */
@@ -1646,6 +1667,8 @@ carmen_param_load_paramfile(char *filename, char *param_set)
       {
 	if (param[1] == '*')
 	  skipping = 0;
+	else if (strcspn(param+1,"]") == 6 && !carmen_strncasecmp(param+1, "expert", 6))
+	  skipping = 0;
 	else if (param_set != NULL && 
 	    carmen_strncasecmp(param+1, param_set, strlen(param_set)) == 0)
 	  skipping = 0;	    
@@ -1655,7 +1678,7 @@ carmen_param_load_paramfile(char *filename, char *param_set)
       }
     else if(token_num == 2 && !skipping) 
       {
-	param_err = carmen_param_get_string(param, &dummy);
+	param_err = carmen_param_get_string(param, &dummy, NULL);
 	if (param_err >= 0)
 	  carmen_warn("Overwriting parameter %s from %s: new value = %s.\n",
 		      param, carmen_extract_filename(filename), value);	  

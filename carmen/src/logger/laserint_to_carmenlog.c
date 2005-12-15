@@ -59,7 +59,7 @@ void get_all_params(carmen_FILE *outfile)
 
   carmen_param_get_paramserver_host(&hostname);
   for (module_index = 0; module_index < num_modules; module_index++) {
-    if(carmen_param_get_all(modules[module_index], &variables, &values, 
+    if(carmen_param_get_all(modules[module_index], &variables, &values, NULL,
 			    &list_length) < 0) {
       IPC_perror("Error retrieving all variables of module");
       exit(-1);

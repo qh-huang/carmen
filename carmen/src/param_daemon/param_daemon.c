@@ -804,7 +804,9 @@ get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       response.variables = calloc(num_variables, sizeof(char *));
       carmen_test_alloc(response.variables);
       response.values = (char **)calloc(num_variables, sizeof(char *));
-      carmen_test_alloc(response.variables);
+      carmen_test_alloc(response.values);
+      response.expert = (int *)calloc(num_variables, sizeof(int));
+      carmen_test_alloc(response.expert);
       for (param_index = 0; param_index < num_params; param_index++)
 	{
 	  if (carmen_strcasecmp(param_list[param_index].module_name, 
@@ -838,6 +840,7 @@ get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	  carmen_test_alloc(response.values[variable_count]);
 	  strcpy(response.values[variable_count], 
 		 param_list[param_index].rvalue);
+	  response.expert[variable_count] = param_list[param_index].expert;
 	}
     } /* End of if (num_variables < 0) */
 
@@ -876,6 +879,7 @@ get_param_int(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     response.value = strtol(param_list[param_index].rvalue, &endptr, 0);
     if (endptr == param_list[param_index].rvalue) 
       response.status = CARMEN_PARAM_NOT_INT;
+    response.expert = param_list[param_index].expert;
   }
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_INT_NAME, &response);
@@ -913,6 +917,7 @@ get_param_double(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       response.value = (double)strtod(param_list[param_index].rvalue, &endptr);
       if (endptr == param_list[param_index].rvalue) 
 	response.status = CARMEN_PARAM_NOT_DOUBLE;
+      response.expert = param_list[param_index].expert;
     }
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_DOUBLE_NAME, &response);
@@ -958,6 +963,7 @@ get_param_onoff(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	    response.value = 0;
 	  else 
 	    response.status = CARMEN_PARAM_NOT_ONOFF;
+	  response.expert = param_list[param_index].expert;
 	}
     }
 
@@ -993,8 +999,10 @@ get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       response.status = CARMEN_PARAM_NOT_FOUND;
       response.value = NULL;
     }
-  else
+  else {
     response.value = param_list[param_index].rvalue;
+    response.expert = param_list[param_index].expert;
+  }
   
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);

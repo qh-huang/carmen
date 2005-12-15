@@ -428,7 +428,7 @@ read_parameters(int argc, char **argv)
     nav_config.goal_size = robot_config.approach_dist;
   }
 
-  carmen_param_get_onoff("cheat", &cheat);
+  carmen_param_get_onoff("cheat", &cheat, NULL);
 }
 
 int main(int argc, char **argv)
@@ -491,7 +491,7 @@ int main(int argc, char **argv)
        CARMEN_SUBSCRIBE_LATEST);
   }
   
-  if (carmen_param_get_string("init_goal", &goal_string) == 1) {
+  if (carmen_param_get_string("init_goal", &goal_string, NULL) == 1) {
     sscanf(goal_string, "%d %d", &x, &y);
     carmen_navigator_goal(x, y);
   }

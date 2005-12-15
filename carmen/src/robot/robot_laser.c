@@ -528,11 +528,11 @@ carmen_robot_add_laser_parameters(char *progname)
 {
   int error;
 
-  error = carmen_param_get_double("frontlaser_offset",&frontlaser_offset);
+  error = carmen_param_get_double("frontlaser_offset",&frontlaser_offset, NULL);
   carmen_param_handle_error(error, carmen_robot_usage, progname);
-  error = carmen_param_get_double("rearlaser_offset", &rearlaser_offset);
+  error = carmen_param_get_double("rearlaser_offset", &rearlaser_offset, NULL);
   carmen_param_handle_error(error, carmen_robot_usage, progname);
   carmen_param_get_double("laser_bearing_skip_rate",
-			  &carmen_robot_laser_bearing_skip_rate);
+			  &carmen_robot_laser_bearing_skip_rate, NULL);
 }
 

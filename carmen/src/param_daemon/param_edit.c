@@ -44,9 +44,12 @@ static char **modules;
 static int num_modules;
 static GtkWidget *statusbar;
 static int status_message_max_size = 60;
+static GtkWidget *notebook;
 
 /* per module */
 static char ***variables, ***values;
+static int **expert;
+static int view_expert = 0;
 static int *num_params;
 static GtkWidget ***labels, ***entries, ****radio_buttons;
 static int **update_param_mask;
@@ -56,6 +59,10 @@ static char ini_filename[1024];
 static GtkWidget *file_window = NULL;
 static GtkWidget *file_dialog = NULL;
 static GtkWidget *file_dialog_label = NULL;
+
+
+static GtkWidget *notebook_init();
+
 
 static void check_status_message(char *checked_message, const char *message) {
 
@@ -162,6 +169,8 @@ static void params_init() {
   carmen_test_alloc(variables);
   values = (char ***) calloc(num_modules, sizeof(void *));
   carmen_test_alloc(values);
+  expert = (int **) calloc(num_modules, sizeof(void *));
+  carmen_test_alloc(expert);
   num_params = (int *) calloc(num_modules, sizeof(int));
   carmen_test_alloc(num_params);
   update_param_mask = (int **) calloc(num_modules, sizeof(int *));
@@ -170,7 +179,7 @@ static void params_init() {
   carmen_test_alloc(num_param_mask);
 
   for (m = 0; m < num_modules; m++) {
-    carmen_param_get_all(modules[m], variables + m, values + m,
+    carmen_param_get_all(modules[m], variables + m, values + m, expert + m,
 			 num_params + m);
     update_param_mask[m] = (int *) calloc(num_params[m], sizeof(int));
     carmen_test_alloc(update_param_mask[m]);
@@ -491,6 +500,19 @@ static void window_destroy(GtkWidget *w __attribute__ ((unused)),
   gtk_main_quit();
 }
 
+static void view_expert_params() {
+
+  int i, cur_page;
+
+  view_expert = !view_expert;
+  cur_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+  for (i = 0; i < num_modules; i++)
+    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), 0);
+  notebook_init();
+  gtk_widget_show_all(notebook);
+  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), cur_page);
+}
+
 static GtkWidget *menubar_init(GtkWidget *window) {
 
   GtkItemFactory *item_factory;
@@ -502,6 +524,8 @@ static GtkWidget *menubar_init(GtkWidget *window) {
     {"/File/_Save ini", "<control>S", file_window_popup, 0, NULL},
     {"/File/", NULL, NULL, 0, "<Separator>"},
     {"/File/_Quit", "<control>Q", window_destroy, 0, NULL},
+    {"/_View", NULL, NULL, 0, "<Branch>"},
+    {"/View/_Expert Params", "<control>S", view_expert_params, 0, "<ToggleItem>"}
   };
 
   nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -575,11 +599,10 @@ static void radio_button_toggled(GtkWidget *radio_button, gpointer data)
 
 static GtkWidget *notebook_init() {
 
-  GtkWidget *notebook, *scrolled_window, *vbox, *hbox, *hbox2, *table, *tab;
+  GtkWidget *scrolled_window, *vbox, *hbox, *hbox2, *table, *tab;
   int m, p;
   carmen_param_id *param_id;
 
-  notebook = gtk_notebook_new();
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
   gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_LEFT);
   labels = (GtkWidget ***) calloc(num_modules, sizeof(void *));
@@ -605,6 +628,8 @@ static GtkWidget *notebook_init() {
     radio_buttons[m] = (GtkWidget ***) calloc(num_params[m], sizeof(void *));
     carmen_test_alloc(radio_buttons[m]);
     for (p = 0; p < num_params[m]; p++) {
+      if (expert[m][p] && !view_expert)
+	continue;
       labels[m][p] = gtk_label_new(variables[m][p]);
       gtk_table_attach_defaults(GTK_TABLE(table), labels[m][p],
 				0, 1, p, p + 1);
@@ -697,6 +722,7 @@ static void gui_init() {
 
   vbox = gtk_vbox_new(FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), menubar_init(window), FALSE, TRUE, 0);
+  notebook = gtk_notebook_new();
   gtk_box_pack_start(GTK_BOX(vbox), notebook_init(), TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), statusbar_init(), FALSE, TRUE, 3);
 

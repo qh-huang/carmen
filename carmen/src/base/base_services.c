@@ -133,7 +133,7 @@ read_base_services_parameters()
   int error;
 
   carmen_param_set_module("base");
-  error = carmen_param_get_string("type", &base_type);
+  error = carmen_param_get_string("type", &base_type, NULL);
   if (error < 0)
     carmen_die("Error in getting base type from parameter server : %s\n"
 	       "Are you sure there's a definition for base_type in "

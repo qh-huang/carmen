@@ -71,7 +71,7 @@ int main(int argc, char** argv)
   carmen_param_check_version(argv[0]);
 
   if (argc == 2) {
-    param_error = carmen_param_get_string(argv[1], &return_string);
+    param_error = carmen_param_get_string(argv[1], &return_string, NULL);
     carmen_param_handle_error(param_error, usage, argv[0]);
     
     if (return_string) {
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   }
 
   if (argc == 3 && carmen_strcasecmp(argv[2], "all") == 0) {
-    if (carmen_param_get_all(argv[1], &variables, &values, &list_length) < 0) {
+    if (carmen_param_get_all(argv[1], &variables, &values, NULL, &list_length) < 0) {
       IPC_perror("Error retrieving all variables of module");
       exit(-1);
     }

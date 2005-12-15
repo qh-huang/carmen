@@ -84,11 +84,12 @@ typedef struct {
   int list_length;
   char **variables;
   char **values;
+  int *expert;
   carmen_param_status_t status;
 } carmen_param_response_all_message;
 
 #define CARMEN_PARAM_RESPONSE_ALL_NAME     "carmen_param_respond_all"
-#define CARMEN_PARAM_RESPONSE_ALL_FMT "{double, string, string, int, <string:4>, <string:4>, int}"
+#define CARMEN_PARAM_RESPONSE_ALL_FMT "{double, string, string, int, <string:4>, <string:4>, <int:4>, int}"
 
 typedef struct {
   double timestamp;
@@ -96,11 +97,12 @@ typedef struct {
   char *module_name;
   char *variable_name;
   int value;
+  int expert;
   carmen_param_status_t status;
 } carmen_param_response_int_message;
 
 #define CARMEN_PARAM_RESPONSE_INT_NAME    "carmen_param_respond_int"
-#define CARMEN_PARAM_RESPONSE_INT_FMT     "{double, string, string, string, int, int}"
+#define CARMEN_PARAM_RESPONSE_INT_FMT     "{double, string, string, string, int, int, int}"
 
 typedef struct {
   double timestamp;
@@ -108,11 +110,12 @@ typedef struct {
   char *module_name;
   char *variable_name;
   double value;
+  int expert;
   carmen_param_status_t status;
 } carmen_param_response_double_message;
 
 #define CARMEN_PARAM_RESPONSE_DOUBLE_NAME    "carmen_param_respond_double"
-#define CARMEN_PARAM_RESPONSE_DOUBLE_FMT     "{double, string, string, string, double, int}"
+#define CARMEN_PARAM_RESPONSE_DOUBLE_FMT     "{double, string, string, string, double, int, int}"
 
 typedef struct {
   double timestamp;
@@ -120,11 +123,12 @@ typedef struct {
   char *module_name;
   char *variable_name;
   int value;
+  int expert;
   carmen_param_status_t status;
 } carmen_param_response_onoff_message;
 
 #define CARMEN_PARAM_RESPONSE_ONOFF_NAME    "carmen_param_respond_onoff"
-#define CARMEN_PARAM_RESPONSE_ONOFF_FMT     "{double, string, string, string, int, int}"
+#define CARMEN_PARAM_RESPONSE_ONOFF_FMT     "{double, string, string, string, int, int, int}"
 
 typedef struct {
   double timestamp;
@@ -132,11 +136,12 @@ typedef struct {
   char *module_name;
   char *variable_name;
   char *value;
+  int expert;
   carmen_param_status_t status;
 } carmen_param_response_string_message;
 
 #define CARMEN_PARAM_RESPONSE_STRING_NAME    "carmen_param_respond_string"
-#define CARMEN_PARAM_RESPONSE_STRING_FMT     "{double, string, string, string, string, int}"
+#define CARMEN_PARAM_RESPONSE_STRING_FMT     "{double, string, string, string, string, int, int}"
 
 
 typedef struct {
@@ -153,7 +158,7 @@ typedef struct {
 typedef carmen_param_response_string_message carmen_param_variable_change_message;
 
 #define CARMEN_PARAM_VARIABLE_CHANGE_NAME    "carmen_param_variable_change"
-#define CARMEN_PARAM_VARIABLE_CHANGE_FMT     "{double, string, string, string, string, int}"
+#define CARMEN_PARAM_VARIABLE_CHANGE_FMT     "{double, string, string, string, string, int, int}"
 
 typedef struct {
   double timestamp;
