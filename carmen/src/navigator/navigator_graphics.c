@@ -334,15 +334,15 @@ static GtkItemFactoryEntry menu_items[] = {
   { "/File/sep1",     NULL,          NULL, 0, "<Separator>" },
   { "/File/_Quit",     "<control>Q",  gtk_main_quit, 0, NULL },
   { "/_Maps",         NULL,          NULL, 0, "<Branch>" },
-  { "/Maps/Map",      "<control>M", switch_display, CARMEN_NAVIGATOR_MAP_v, 
+  { "/Maps/_Map",      "<control>M", switch_display, CARMEN_NAVIGATOR_MAP_v, 
     "<RadioItem>"},
-  { "/Maps/Utility",  NULL, switch_display, CARMEN_NAVIGATOR_UTILITY_v,
+  { "/Maps/_Utility",  NULL, switch_display, CARMEN_NAVIGATOR_UTILITY_v,
     "/Maps/Map"},
-  { "/Maps/Costs",    NULL, switch_display, CARMEN_NAVIGATOR_COST_v,  
+  { "/Maps/_Costs",    NULL, switch_display, CARMEN_NAVIGATOR_COST_v,  
     "/Maps/Map"},
-  { "/Maps/Likelihood", NULL, switch_display, CARMEN_LOCALIZE_LMAP_v,  
+  { "/Maps/_Likelihood", NULL, switch_display, CARMEN_LOCALIZE_LMAP_v,  
     "/Maps/Map"},
-  { "/Maps/Global Likelihood", NULL, switch_display, CARMEN_LOCALIZE_GMAP_v,  
+  { "/Maps/_Global Likelihood", NULL, switch_display, CARMEN_LOCALIZE_GMAP_v,  
     "/Maps/Map"},
   { "/_Display",         NULL,          NULL, 0, "<Branch>" },
   { "/Display/Track Robot",   NULL, switch_localize_display, 1, 
@@ -674,6 +674,9 @@ navigator_graphics_display_config
 
 static void switch_display(GtkWidget *w __attribute__ ((unused)), 
 			   carmen_navigator_map_t new_display) {
+  if (display == new_display)
+    return;
+  
   navigator_get_map(new_display);
 }
 
@@ -825,11 +828,11 @@ static void draw_gaussians(GtkMapViewer *the_map_view,
 
 static void draw_lasers(GtkMapViewer *the_map_view, double pixel_size)
 {
-  int dot_size;
+  double dot_size;
   int index;
   carmen_world_point_t particle;
   double angle;
-
+  
   dot_size = 3*pixel_size;
 
   if (!nav_panel_config->show_lasers)
@@ -892,7 +895,7 @@ static void draw_robot_shape(GtkMapViewer *the_map_view,
     robot_radius = robot_config->width/2.0;
     if (robot_radius < pixel_size*5)
       robot_radius = pixel_size*5;
-    
+
     carmen_map_graphics_draw_circle(the_map_view, colour, filled, 
 				    location, robot_radius);
     return;
@@ -1658,6 +1661,14 @@ navigator_graphics_display_map(float *data, carmen_navigator_map_t type)
   case CARMEN_NAVIGATOR_UTILITY_v: 
     strcpy(name, "Utility");
     flags = CARMEN_GRAPHICS_RESCALE | CARMEN_GRAPHICS_INVERT;
+    break;
+  case CARMEN_LOCALIZE_LMAP_v: 
+    strcpy(name, "Likelihood Map");
+    flags = CARMEN_GRAPHICS_RESCALE;
+    break;
+  case CARMEN_LOCALIZE_GMAP_v: 
+    strcpy(name, "Global Likelihood Map");
+    flags = CARMEN_GRAPHICS_RESCALE;
     break;
   default:
     return;
