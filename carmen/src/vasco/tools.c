@@ -56,8 +56,8 @@ void shift_scans(double x, double y) {
 
   for (scan = scan_range_min; scan <= scan_range_max; scan++) {
     if (scan_mask[scan]) {
-      scan_list[scan].x += x;
-      scan_list[scan].y += y;
+      scan_list[scan].laser_pose.x += x;
+      scan_list[scan].laser_pose.y += y;
     }
   }
 }
@@ -90,23 +90,23 @@ void rotate_scans(double radians) {
     return;
   }
 
-  x_1 = scan_list[scan_range_mid].x;
-  y_1 = scan_list[scan_range_mid].y;
+  x_1 = scan_list[scan_range_mid].laser_pose.x;
+  y_1 = scan_list[scan_range_mid].laser_pose.y;
 
   for (scan = scan_range_min; scan <= scan_range_max; scan++) {
 
     if (scan_mask[scan]) {
 
-      x_2 = scan_list[scan].x;
-      y_2 = scan_list[scan].y;
+      x_2 = scan_list[scan].laser_pose.x;
+      y_2 = scan_list[scan].laser_pose.y;
 
       d = hypot(x_2 - x_1, y_2 - y_1);
       alpha = atan2(y_2 - y_1, x_2 - x_1);    
     
-      scan_list[scan].x = x_1 + d * cos(alpha + radians);
-      scan_list[scan].y = y_1 + d * sin(alpha + radians);
-      scan_list[scan].theta =
-	carmen_normalize_theta(scan_list[scan].theta + radians);
+      scan_list[scan].laser_pose.x = x_1 + d * cos(alpha + radians);
+      scan_list[scan].laser_pose.y = y_1 + d * sin(alpha + radians);
+      scan_list[scan].laser_pose.theta =
+	carmen_normalize_theta(scan_list[scan].laser_pose.theta + radians);
     }
   }
 }
@@ -120,11 +120,11 @@ void rotate_scans_by_motion(int x, int y) {
   x_2 = (x / (double) MIN(canvas_width, canvas_height)) * map_width;
   y_2 = (1 - (y / (double) MIN(canvas_width, canvas_height))) * map_height;
 
-  alpha1 = atan2(y_1 - scan_list[scan_range_mid].y,
-		 x_1 - scan_list[scan_range_mid].x);
+  alpha1 = atan2(y_1 - scan_list[scan_range_mid].laser_pose.y,
+		 x_1 - scan_list[scan_range_mid].laser_pose.x);
 
-  alpha2 = atan2(y_2 - scan_list[scan_range_mid].y,
-		 x_2 - scan_list[scan_range_mid].x);
+  alpha2 = atan2(y_2 - scan_list[scan_range_mid].laser_pose.y,
+		 x_2 - scan_list[scan_range_mid].laser_pose.x);
 
   /*
   printf("rotate_scans_by_motion: alpha1 = %g, alpha2 = %g\n",
@@ -219,11 +219,11 @@ void bend_scans_by_motion(int x, int y) {
   x_2 = (x / (double) MIN(canvas_width, canvas_height)) * map_width;
   y_2 = (1 - (y / (double) MIN(canvas_width, canvas_height))) * map_height;
 
-  alpha1 = atan2(y_1 - scan_list[scan_range_min].y,
-		 x_1 - scan_list[scan_range_min].x);
+  alpha1 = atan2(y_1 - scan_list[scan_range_min].laser_pose.y,
+		 x_1 - scan_list[scan_range_min].laser_pose.x);
 
-  alpha2 = atan2(y_2 - scan_list[scan_range_min].y,
-		 x_2 - scan_list[scan_range_min].x);
+  alpha2 = atan2(y_2 - scan_list[scan_range_min].laser_pose.y,
+		 x_2 - scan_list[scan_range_min].laser_pose.x);
 
   //  printf("bend_scans_by_motion((%.2f, %.2f) -> (%.2f, %.2f))\n",
   //	 x_1, y_1, x_2, y_2);

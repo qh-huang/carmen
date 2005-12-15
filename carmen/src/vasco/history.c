@@ -27,8 +27,9 @@
 
 #include "history.h"
 #include "laserscans.h"
+#include <carmen/robot_messages.h>
 
-carmen_laser_scan_p scan_list_history[HISTORY_SIZE];
+carmen_robot_laser_message* scan_list_history[HISTORY_SIZE];
 int history_pos = 0;
 static int *scan_mask_history[HISTORY_SIZE];
 static int scan_display_ratio_history[HISTORY_SIZE];
@@ -41,7 +42,7 @@ void history_init() {
 
   for (i = 0; i < HISTORY_SIZE; i++) {
     scan_list_history[i] =
-      (carmen_laser_scan_p) calloc(num_scans, sizeof(carmen_laser_scan_t));
+      (carmen_robot_laser_message*) calloc(num_scans, sizeof(carmen_robot_laser_message));
     carmen_test_alloc(scan_list_history[i]);
   }
 }
@@ -57,7 +58,7 @@ void history_shutdown() {
 void history_restore() {
 
   memcpy(scan_list, scan_list_history[history_pos],
-	 num_scans * sizeof(carmen_laser_scan_t));
+	 num_scans * sizeof(carmen_robot_laser_message));
 }
 
 void history_undo(GtkWidget *w __attribute__ ((unused)),
@@ -77,7 +78,7 @@ void history_undo(GtkWidget *w __attribute__ ((unused)),
     if (history_pos < 0)
       history_pos += HISTORY_SIZE;
     memcpy(scan_list, scan_list_history[history_pos],
-	   num_scans * sizeof(carmen_laser_scan_t));
+	   num_scans * sizeof(carmen_robot_laser_message));
     if (scan_mask_history[history_pos])
       memcpy(scan_mask, scan_mask_history[history_pos],
 	     num_scans * sizeof(int));
@@ -104,7 +105,7 @@ void history_redo(GtkWidget *w __attribute__ ((unused)),
     history_pos++;
     history_pos %= HISTORY_SIZE;
     memcpy(scan_list, scan_list_history[history_pos],
-	   num_scans * sizeof(carmen_laser_scan_t));
+	   num_scans * sizeof(carmen_robot_laser_message));
     if (scan_mask_history[history_pos])
       memcpy(scan_mask, scan_mask_history[history_pos],
 	     num_scans * sizeof(int)); 
@@ -135,7 +136,7 @@ void history_add() {
   }
 
   memcpy(scan_list_history[history_pos], scan_list,
-	 num_scans * sizeof(carmen_laser_scan_t));
+	 num_scans * sizeof(carmen_robot_laser_message));
   if (scan_mask_history[history_pos])
     free(scan_mask_history[history_pos]);
   if (scan_mask) {

@@ -31,6 +31,7 @@
 #include "tools.h"
 #include "history.h"
 #include <carmen/carmen_stdio.h>
+#include <carmen/robot_messages.h>
 
 /********** Laser Scans **********/
 
@@ -41,7 +42,7 @@ char logfilename[1024];
 //carmen_logger_file_p logfile;
 carmen_FILE* logfile;
 
-carmen_laser_scan_p scan_list = NULL;
+carmen_robot_laser_message* scan_list = NULL;
 int num_scans = 0;
 int *scan_mask = NULL;
 int scan_range_min = 0;
@@ -88,9 +89,9 @@ static void display_scan(int scan, scan_type type) {
   px = py = 0.0;
   num_readings_per_scan = scan_list[0].num_readings;
 
-  x = scan_list[scan].x;
-  y = scan_list[scan].y;
-  theta = scan_list[scan].theta;
+  x = scan_list[scan].laser_pose.x;
+  y = scan_list[scan].laser_pose.y;
+  theta = scan_list[scan].laser_pose.theta;
 
   if (type == SCAN_NORMAL)
     gdk_gc_set_foreground(drawing_gc, &gdkcolor_black);
@@ -215,17 +216,17 @@ void center_map() {
 
   num_readings_per_scan = scan_list[0].num_readings;
 
-  minx = maxx = scan_list[0].x;
-  miny = maxy = scan_list[0].y;
+  minx = maxx = scan_list[0].laser_pose.x;
+  miny = maxy = scan_list[0].laser_pose.y;
 
   for (scan = 0; scan < num_scans; scan++) {
 
     if (scan_mask && (scan_mask[scan] == 0))
       continue;
 
-    x = scan_list[scan].x;
-    y = scan_list[scan].y;
-    theta = scan_list[scan].theta;
+    x = scan_list[scan].laser_pose.x;
+    y = scan_list[scan].laser_pose.y;
+    theta = scan_list[scan].laser_pose.theta;
 
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
@@ -274,8 +275,8 @@ void center_map() {
   map_height *= 1.3;
 
   for (scan = 0; scan < num_scans; scan++) {
-    scan_list[scan].x += origin_offset_x;
-    scan_list[scan].y += origin_offset_y;
+    scan_list[scan].laser_pose.x += origin_offset_x;
+    scan_list[scan].laser_pose.y += origin_offset_y;
   }
 
   /*
@@ -377,8 +378,8 @@ static gint load_logfile_end(gpointer p) {
     gtk_idle_add(load_logfile, NULL);
   }  
   else {
-    scan_list = (carmen_laser_scan_p) realloc(scan_list, num_scans * 
-					    sizeof(carmen_laser_scan_t));
+    scan_list = (carmen_robot_laser_message*) realloc(scan_list, num_scans * 
+					      sizeof(carmen_robot_laser_message));
     carmen_test_alloc(scan_list);
     sprintf(buf, "Loading logfile...read %d scans", num_scans);
     status_print(buf, "laserscans");
@@ -455,21 +456,22 @@ static gint load_scan(gpointer p) {
       if(num_scans >= array_length) {
 	array_length += 1000;
 	if (scan_list) {
-	  scan_list = (carmen_laser_scan_p)
-            realloc(scan_list, array_length * sizeof(carmen_laser_scan_t));
+	  scan_list = (carmen_robot_laser_message*)
+            realloc(scan_list, array_length * sizeof(carmen_robot_laser_message));
 	  carmen_test_alloc(scan_list);
 	}
 	else {
-	  scan_list = (carmen_laser_scan_p)
-	    calloc(array_length, sizeof(carmen_laser_scan_t));
+	  scan_list = (carmen_robot_laser_message*)
+	    calloc(array_length, sizeof(carmen_robot_laser_message));
 	  carmen_test_alloc(scan_list);
 	}
       }
-      scan_list[num_scans].x = front_laser->laser_pose.x;
-      scan_list[num_scans].y = front_laser->laser_pose.y;
-      scan_list[num_scans].theta = front_laser->laser_pose.theta;
+      scan_list[num_scans].laser_pose.x = front_laser->laser_pose.x;
+      scan_list[num_scans].laser_pose.y = front_laser->laser_pose.y;
+      scan_list[num_scans].laser_pose.theta = front_laser->laser_pose.theta;
       scan_list[num_scans].num_readings = front_laser->num_readings;
       scan_list[num_scans].range = front_laser->range;
+      scan_list[num_scans].config = front_laser->config;
       num_scans++;
       free(front_laser->tooclose);
       free(front_laser);
@@ -577,7 +579,10 @@ int save_logfile() {
     for (j = 0; j < scan_list[i].num_readings; j++)
       carmen_fprintf(logfile, " %.2f", scan_list[i].range[j]);
     carmen_fprintf(logfile, " %.6f %.6f %.6f %.6f %.6f %.6f\n",	
-		   scan_list[i].x, scan_list[i].y, scan_list[i].theta, 0.0, 0.0, 0.0);
+		   scan_list[i].laser_pose.x, 
+		   scan_list[i].laser_pose.y, 
+		   scan_list[i].laser_pose.theta, 
+		   0.0, 0.0, 0.0);
   }
 
   carmen_fprintf(logfile, "\n");
@@ -789,12 +794,12 @@ void scan_range_buf_recall(int num) {
 void laser_scans_update() {
 
   rotate_scans(carmen_normalize_theta
-	       (scan_list_history[history_pos][scan_range_min].theta -
-		scan_list[scan_range_min].theta));
-  shift_scans(scan_list_history[history_pos][scan_range_min].x -
-	      scan_list[scan_range_min].x,
-	      scan_list_history[history_pos][scan_range_min].y -
-	      scan_list[scan_range_min].y);
+	       (scan_list_history[history_pos][scan_range_min].laser_pose.theta -
+		scan_list[scan_range_min].laser_pose.theta));
+  shift_scans(scan_list_history[history_pos][scan_range_min].laser_pose.x -
+	      scan_list[scan_range_min].laser_pose.x,
+	      scan_list_history[history_pos][scan_range_min].laser_pose.y -
+	      scan_list[scan_range_min].laser_pose.y);
 
   center_map();
   history_add();

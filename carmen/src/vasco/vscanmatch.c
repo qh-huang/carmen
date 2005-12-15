@@ -80,19 +80,21 @@ static gint scan_match(gpointer first) {
     return FALSE;
   }
 
+  laserscan.config = scan_list[scan].config;
   laserscan.num_readings = scan_list[scan].num_readings;
   laserscan.range = scan_list[scan].range;
   laserscan.timestamp = 0.0;
   strcpy(laserscan.host, "");
-  pos.x = scan_list[scan].x;
-  pos.y = scan_list[scan].y;
-  pos.theta = scan_list[scan].theta;
+  pos.x = scan_list[scan].laser_pose.x;
+  pos.y = scan_list[scan].laser_pose.y;
+  pos.theta = scan_list[scan].laser_pose.theta;
 
   cpos = vascocore_scan_match(laserscan, pos);
 
-  scan_list[scan].x = cpos.x;
-  scan_list[scan].y = cpos.y;
-  scan_list[scan].theta = cpos.theta;
+  scan_list[scan].laser_pose = cpos;
+/*   scan_list[scan].x = cpos.x; */
+/*   scan_list[scan].y = cpos.y; */
+/*   scan_list[scan].theta = cpos.theta; */
 
   scan++;
 

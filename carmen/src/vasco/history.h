@@ -32,7 +32,7 @@
 
 #define HISTORY_SIZE 10
 
-extern carmen_laser_scan_p scan_list_history[];
+extern carmen_robot_laser_message* scan_list_history[];
 extern int history_pos;
 
 void history_init();

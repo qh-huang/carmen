@@ -29,10 +29,11 @@
 #define laserscans_h
 
 #include <carmen/carmen_graphics.h>
+#include <carmen/robot_messages.h>
 
 extern char logfilename[];
 
-extern carmen_laser_scan_p scan_list;
+extern carmen_robot_laser_message* scan_list;
 extern int num_scans;
 extern int *scan_mask;
 extern int scan_range_min, scan_range_mid, scan_range_max;

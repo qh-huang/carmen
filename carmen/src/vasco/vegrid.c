@@ -36,7 +36,8 @@ int making_egrid = 0;
 GMutex *egrid_mutex = NULL;
 
 static evidence_grid *egrid = NULL;
-static carmen_laser_scan_p egrid_scan_list = NULL;
+//static carmen_laser_scan_p egrid_scan_list = NULL;
+static carmen_robot_laser_message* egrid_scan_list = NULL;
 static int egrid_num_scans = 0;
 
 static char egrid_filename[1024];
@@ -189,9 +190,9 @@ static gint scan_to_egrid(gpointer scan_num) {
     if (!(scan_mask && (scan_mask[scan] == 0))) {
 
       carmen_mapper_update_evidence_grid(egrid,
-					 egrid_scan_list[scan].x,
-					 egrid_scan_list[scan].y,
-					 egrid_scan_list[scan].theta,
+					 egrid_scan_list[scan].laser_pose.x,
+					 egrid_scan_list[scan].laser_pose.y,
+					 egrid_scan_list[scan].laser_pose.theta,
 					 egrid_scan_list[scan].num_readings, 
 					 egrid_scan_list[scan].range);
       if (scan % 10 == 0) {
@@ -243,8 +244,8 @@ static void egrid_size() {
   double angle_delta;
 
   scan = 0;
-  maxx = minx = egrid_scan_list[0].x;
-  maxy = miny = egrid_scan_list[0].y;
+  maxx = minx = egrid_scan_list[0].laser_pose.x;
+  maxy = miny = egrid_scan_list[0].laser_pose.y;
   num_readings_per_scan = egrid_scan_list[0].num_readings;
 
   for (scan = 0; scan < egrid_num_scans; scan++) {
@@ -252,9 +253,9 @@ static void egrid_size() {
     if (scan_mask && (scan_mask[scan] == 0))
       continue;
 
-    x = egrid_scan_list[scan].x;
-    y = egrid_scan_list[scan].y;
-    theta = egrid_scan_list[scan].theta;
+    x = egrid_scan_list[scan].laser_pose.x;
+    y = egrid_scan_list[scan].laser_pose.y;
+    theta = egrid_scan_list[scan].laser_pose.theta;
 
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
@@ -297,9 +298,9 @@ static void egrid_size() {
 						 egrid_params[DOWNSAMPLE]) +
 				egrid_params[BORDER]);
 
-  egrid_offset_x = (maxx - egrid_scan_list[0].x) / egrid_params[RESOLUTION] +
+  egrid_offset_x = (maxx - egrid_scan_list[0].laser_pose.x) / egrid_params[RESOLUTION] +
     egrid_params[BORDER] * egrid_params[RESOLUTION];
-  egrid_offset_y = (maxy - egrid_scan_list[0].y) / egrid_params[RESOLUTION] +
+  egrid_offset_y = (maxy - egrid_scan_list[0].laser_pose.y) / egrid_params[RESOLUTION] +
     egrid_params[BORDER] * egrid_params[RESOLUTION];
 }
 
@@ -324,13 +325,13 @@ static gint scans_to_egrid(gpointer p __attribute__ ((unused))) {
   egrid_num_scans = num_scans;
 
   if (!egrid_scan_list) {
-    egrid_scan_list = (carmen_laser_scan_p)
-      calloc(egrid_num_scans, sizeof(carmen_laser_scan_t));
+    egrid_scan_list = (carmen_robot_laser_message*)
+      calloc(egrid_num_scans, sizeof(carmen_robot_laser_message));
     carmen_test_alloc(egrid_scan_list);
   }
 
   memcpy(egrid_scan_list, scan_list,
-	 egrid_num_scans * sizeof(carmen_laser_scan_t));
+	 egrid_num_scans * sizeof(carmen_robot_laser_message));
 
   strncpy(egrid_origin, logfilename, 1023);
 
@@ -407,7 +408,7 @@ void egrid_dialog_popup(GtkWidget *w __attribute__ ((unused)),
   if (!egrid_dialog)
     egrid_dialog_init();
 
-  egrid_params[START_ANGLE] = scan_list[0].theta;
+  egrid_params[START_ANGLE] = scan_list[0].laser_pose.theta;
 
   for (param = 0; param < NUM_EGRID_PARAMS; param++) {
     if (param == START_ANGLE)
