@@ -44,7 +44,7 @@ static char **modules;
 static int num_modules;
 static GtkWidget *statusbar;
 static int status_message_max_size = 60;
-static GtkWidget *notebook;
+static GtkWidget *notebook, **basic_tables, **expert_tables, **separators, **vboxes;
 
 /* per module */
 static char ***variables, ***values;
@@ -500,17 +500,29 @@ static void window_destroy(GtkWidget *w __attribute__ ((unused)),
   gtk_main_quit();
 }
 
-static void view_expert_params() {
+static void view_expert_params(int xview) {
 
-  int i, cur_page;
+  int i;
 
-  view_expert = !view_expert;
-  cur_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-  for (i = 0; i < num_modules; i++)
-    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), 0);
-  notebook_init();
-  gtk_widget_show_all(notebook);
-  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), cur_page);
+  view_expert = xview;
+
+  for(i = 0; i < num_modules; i++) {
+    if (view_expert) {
+      gtk_widget_show_all(expert_tables[i]);
+      gtk_widget_show(separators[i]);
+    }
+    else {
+      gtk_widget_hide(expert_tables[i]);
+      gtk_widget_hide(separators[i]);
+      gtk_widget_hide(vboxes[i]);
+      gtk_widget_show(vboxes[i]);
+    }
+  }
+}
+
+static void toggle_view() {
+
+  view_expert_params(!view_expert);
 }
 
 static GtkWidget *menubar_init(GtkWidget *window) {
@@ -525,7 +537,7 @@ static GtkWidget *menubar_init(GtkWidget *window) {
     {"/File/", NULL, NULL, 0, "<Separator>"},
     {"/File/_Quit", "<control>Q", window_destroy, 0, NULL},
     {"/_View", NULL, NULL, 0, "<Branch>"},
-    {"/View/_Expert Params", "<control>S", view_expert_params, 0, "<ToggleItem>"}
+    {"/View/_Expert Params", "<control>S", toggle_view, 0, "<ToggleItem>"}
   };
 
   nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -599,8 +611,8 @@ static void radio_button_toggled(GtkWidget *radio_button, gpointer data)
 
 static GtkWidget *notebook_init() {
 
-  GtkWidget *scrolled_window, *vbox, *hbox, *hbox2, *table, *tab;
-  int m, p;
+  GtkWidget *scrolled_window, *vbox, *vbox2, *hbox, *hbox2, *tab;
+  int m, p, num_basic_params, num_expert_params, basic_cnt, expert_cnt;
   carmen_param_id *param_id;
 
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
@@ -611,15 +623,38 @@ static GtkWidget *notebook_init() {
   carmen_test_alloc(entries);
   radio_buttons = (GtkWidget ****) calloc(num_modules, sizeof(void *));
   carmen_test_alloc(radio_buttons);
+  basic_tables = (GtkWidget **) calloc(num_modules, sizeof(void *));
+  carmen_test_alloc(basic_tables);
+  expert_tables = (GtkWidget **) calloc(num_modules, sizeof(void *));
+  carmen_test_alloc(expert_tables);
+  separators = (GtkWidget **) calloc(num_modules, sizeof(void *));
+  carmen_test_alloc(separators);
+  vboxes = (GtkWidget **) calloc(num_modules, sizeof(void *));
+  carmen_test_alloc(vboxes);
 
   for (m = 0; m < num_modules; m++) {
     scrolled_window = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
 				   GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
     vbox = gtk_vbox_new(FALSE, 0);
+    vbox2 = gtk_vbox_new(FALSE, 0);
+    vboxes[m] = vbox;
     hbox = gtk_hbox_new(FALSE, 0);
-    table = gtk_table_new(num_params[m], 2, FALSE);
-    gtk_table_set_col_spacings(GTK_TABLE(table), TABLE_COLUMN_SPACINGS);
+    separators[m] = gtk_hseparator_new();
+
+    num_basic_params = 0;
+    num_expert_params = 0;
+    for (p = 0; p < num_params[m]; p++) {
+      if (expert[m][p])
+	num_expert_params++;
+      else
+	num_basic_params++;
+    }
+    basic_tables[m] = gtk_table_new(num_basic_params, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(basic_tables[m]), TABLE_COLUMN_SPACINGS);
+    expert_tables[m] = gtk_table_new(num_expert_params, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(expert_tables[m]), TABLE_COLUMN_SPACINGS);
+
     tab = gtk_label_new(modules[m]);
     labels[m] = (GtkWidget **) calloc(num_params[m], sizeof(void *));
     carmen_test_alloc(labels[m]);
@@ -627,12 +662,17 @@ static GtkWidget *notebook_init() {
     carmen_test_alloc(entries[m]);
     radio_buttons[m] = (GtkWidget ***) calloc(num_params[m], sizeof(void *));
     carmen_test_alloc(radio_buttons[m]);
+
+    basic_cnt = 0;
+    expert_cnt = 0;
     for (p = 0; p < num_params[m]; p++) {
-      if (expert[m][p] && !view_expert)
-	continue;
       labels[m][p] = gtk_label_new(variables[m][p]);
-      gtk_table_attach_defaults(GTK_TABLE(table), labels[m][p],
-				0, 1, p, p + 1);
+      if (expert[m][p])
+	gtk_table_attach_defaults(GTK_TABLE(expert_tables[m]), labels[m][p],
+				  0, 1, expert_cnt, expert_cnt + 1);
+      else
+	gtk_table_attach_defaults(GTK_TABLE(basic_tables[m]), labels[m][p],
+				  0, 1, basic_cnt, basic_cnt + 1);
       if (!carmen_strncasecmp(values[m][p], "on", strlen(values[m][p])) ||
 	  !carmen_strncasecmp(values[m][p], "off", strlen(values[m][p]))) {
 	radio_buttons[m][p] = (GtkWidget **) calloc(2, sizeof(void *));
@@ -653,7 +693,6 @@ static GtkWidget *notebook_init() {
 			   FALSE, FALSE, 10);
 	gtk_box_pack_start(GTK_BOX(hbox2), radio_buttons[m][p][1],
 			   FALSE, FALSE, 10);
-	gtk_table_attach_defaults(GTK_TABLE(table), hbox2, 1, 2, p, p + 1);
 	param_id = (carmen_param_id *)calloc(1, sizeof(carmen_param_id));
 	carmen_test_alloc(param_id);
 	param_id->m = m;
@@ -670,12 +709,19 @@ static GtkWidget *notebook_init() {
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][1]),
 			   "key_press_event", GTK_SIGNAL_FUNC(params_save),
 			   NULL);
+
+	if (expert[m][p]) {
+	  gtk_table_attach_defaults(GTK_TABLE(expert_tables[m]), hbox2, 1, 2, expert_cnt, expert_cnt + 1);
+	  expert_cnt++;
+	}
+	else {
+	  gtk_table_attach_defaults(GTK_TABLE(basic_tables[m]), hbox2, 1, 2, basic_cnt, basic_cnt + 1);
+	  basic_cnt++;
+	}
       }
       else {
 	entries[m][p] = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(entries[m][p]), values[m][p]);
-	gtk_table_attach_defaults(GTK_TABLE(table), entries[m][p],
-				  1, 2, p, p + 1);
 	param_id = (carmen_param_id *)calloc(1, sizeof(carmen_param_id));
 	carmen_test_alloc(param_id);
 	param_id->m = m;
@@ -685,9 +731,21 @@ static GtkWidget *notebook_init() {
 			   (gpointer) param_id);
 	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "key_press_event",
 			   GTK_SIGNAL_FUNC(params_save), NULL);
+
+	if (expert[m][p]) {
+	  gtk_table_attach_defaults(GTK_TABLE(expert_tables[m]), entries[m][p], 1, 2, expert_cnt, expert_cnt + 1);
+	  expert_cnt++;
+	}
+	else {
+	  gtk_table_attach_defaults(GTK_TABLE(basic_tables[m]), entries[m][p], 1, 2, basic_cnt, basic_cnt + 1);
+	  basic_cnt++;
+	}
       }
     }
-    gtk_box_pack_start(GTK_BOX(hbox), table, TRUE, TRUE, 20);
+    gtk_box_pack_start(GTK_BOX(vbox2), basic_tables[m], TRUE, TRUE, 10);
+    gtk_box_pack_start(GTK_BOX(vbox2), separators[m], TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox2), expert_tables[m], TRUE, TRUE, 20);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox2, FALSE, FALSE, 20);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 20);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window),
 					  vbox);
@@ -729,6 +787,13 @@ static void gui_init() {
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
   gtk_widget_show_all(window);
+
+  while(gtk_events_pending()) {
+    gtk_main_iteration_do(TRUE);
+    usleep(10000);
+  }
+
+  view_expert_params(0);
 }
 
 static gint updateIPC(gpointer *data __attribute__ ((unused))) {
