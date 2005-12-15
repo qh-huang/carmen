@@ -294,9 +294,18 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
     sin(simulator_config->true_pose.theta);
   point.t_vel = simulator_config->tv;
   point.r_vel = simulator_config->rv;
-    
+
   laser->num_readings = laser_config->num_lasers;
-  carmen_geometry_generate_laser_data(laser->range, &point, -M_PI/2, M_PI/2, 
+  laser->config.maximum_range = laser_config->max_range;
+  laser->config.fov           = laser_config->fov;
+  laser->config.start_angle   = -0.5*M_PI;
+  laser->config.angular_resolution = laser_config->angular_resolution;
+  laser->config.laser_type = SIMULATED_LASER;
+  laser->config.accuracy = 0; 
+  laser->config.remission_mode = OFF;
+
+  carmen_geometry_generate_laser_data(laser->range, &point, laser->config.start_angle, 
+				      laser->config.start_angle+laser->config.fov, 
 				      laser_config->num_lasers, 
 				      &(simulator_config->map));
 

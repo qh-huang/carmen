@@ -444,6 +444,86 @@ publish_readings(void)
   return 1;
 }
 
+
+void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg) {
+  
+  lasercfg->angular_resolution = carmen_degrees_to_radians(lasercfg->angular_resolution);
+  
+  if (lasercfg->fov > M_PI - carmen_degrees_to_radians(1) && 
+      lasercfg->fov < M_PI + carmen_degrees_to_radians(1) ) {    
+    lasercfg->fov = M_PI;    
+  }
+  else if (lasercfg->fov > 0.5*M_PI - carmen_degrees_to_radians(1) && 
+	   lasercfg->fov < 0.5*M_PI + carmen_degrees_to_radians(1) ) {    
+    lasercfg->fov = 0.5*M_PI;    
+  }
+  else if (lasercfg->fov > carmen_degrees_to_radians(100) - carmen_degrees_to_radians(1) && 
+	   lasercfg->fov < carmen_degrees_to_radians(100) + carmen_degrees_to_radians(1) ) {    
+    lasercfg->fov = carmen_degrees_to_radians(100);    
+  }
+  else
+    lasercfg->fov = M_PI;    
+  
+  if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(1)  &&
+      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(1)) {
+    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
+  } 
+  else if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(0.5)  &&
+      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(0.5)) {
+    lasercfg->angular_resolution = carmen_degrees_to_radians(0.5);
+  } 
+  else if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(0.25)  &&
+      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(0.25)) {
+    lasercfg->angular_resolution = carmen_degrees_to_radians(0.25);
+  } 
+  else
+    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
+  
+
+  if (lasercfg->fov == M_PI) {
+    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+      lasercfg->num_lasers = 181;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+      lasercfg->num_lasers = 361;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
+      carmen_die("Invalid laser configuration! fov=PI and resolution=0.25 deg is impossible with SICKs\n");
+    }    
+    else carmen_die("Invalid laser configuration!\n");
+  }
+  else if (lasercfg->fov == carmen_degrees_to_radians(100)) {
+    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+      lasercfg->num_lasers = 101;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+      lasercfg->num_lasers = 201;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
+      lasercfg->num_lasers = 401;
+    }    
+    else carmen_die("Invalid laser configuration!\n");
+  }
+  else if (lasercfg->fov == 0.5*M_PI) {
+    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+      lasercfg->num_lasers = 91;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+      lasercfg->num_lasers = 181;
+    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
+      lasercfg->num_lasers = 361;
+    }    
+    else 
+      carmen_die("Invalid laser configuration!\n");
+  }
+  else
+    carmen_die("Invalid laser configuration!\n");
+
+  lasercfg->start_angle = -0.5*lasercfg->fov;
+
+  
+/*   carmen_warn("laser_res  =%lf\n",carmen_radians_to_degrees(lasercfg->angular_resolution)); */
+/*   carmen_warn("laser_start=%lf\n",carmen_radians_to_degrees(lasercfg->start_angle)); */
+/*   carmen_warn("laser_fov  =%lf\n",carmen_radians_to_degrees(lasercfg->fov)); */
+/*   carmen_warn("laser_num  =%d\n", lasercfg->num_lasers); */
+
+}
+
 static void
 read_parameters(int argc, char *argv[], 
 		carmen_simulator_config_t *config)
@@ -478,8 +558,10 @@ read_parameters(int argc, char *argv[],
      &(config->front_laser_config.max_range), 1, NULL},
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.offset), 1, NULL},
-    {"simulator", "num_readings", CARMEN_PARAM_INT, 
-     &(config->front_laser_config.num_lasers), 0, NULL},
+    {"laser", "front_laser_fov", CARMEN_PARAM_DOUBLE,
+     &(config->front_laser_config.fov), 0, NULL}, 
+    {"laser", "front_laser_resolution", CARMEN_PARAM_DOUBLE,
+     &(config->front_laser_config.angular_resolution), 0, NULL}, 
     {"simulator", "laser_probability_of_random_max",
      CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.prob_of_random_max), 1, NULL},
@@ -494,8 +576,10 @@ read_parameters(int argc, char *argv[],
      &(config->rear_laser_config.max_range), 1, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.offset), 1, NULL},
-    {"simulator", "num_readings", CARMEN_PARAM_INT, 
-     &(config->rear_laser_config.num_lasers), 0, NULL},
+    {"laser", "rear_laser_fov", CARMEN_PARAM_DOUBLE,
+     &(config->rear_laser_config.fov), 0, NULL}, 
+    {"laser", "rear_laser_resolution", CARMEN_PARAM_DOUBLE,
+     &(config->rear_laser_config.angular_resolution), 0, NULL}, 
     {"simulator", "laser_probability_of_random_max",
      CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.prob_of_random_max), 1, NULL},
@@ -556,9 +640,15 @@ read_parameters(int argc, char *argv[],
 	(offset_string, config->sonar_config.offsets,
 	 config->sonar_config.num_sonars);
     }
+
+  fill_laser_config_data( &(config->front_laser_config) );
+
+  if(config->use_rear_laser)
+    fill_laser_config_data( &(config->rear_laser_config) );
+  
 }
 
-/* main */
+
 int main(int argc, char** argv)
 {
   carmen_simulator_config_t simulator_conf;

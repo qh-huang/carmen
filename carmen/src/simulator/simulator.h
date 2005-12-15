@@ -43,6 +43,9 @@ typedef struct {
   double prob_of_random_max;
   int num_lasers;
   double offset;
+  double angular_resolution;
+  double fov;
+  double start_angle;
 } carmen_simulator_laser_config_t;
 
 typedef struct {
