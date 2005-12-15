@@ -318,7 +318,7 @@ carmen_read_commandline_parameters(int argc, char **argv)
     {
       if (argv[i][0] != '-') {
 
-	if (i < last_commandline_arg-1) {
+	if (i < last_commandline_arg && i+1 < argc) {
 	  tmp_arg1 = argv[i];
 	  memmove(argv+i, argv+i+1, (argc-i-1)*sizeof(char *));
 	  argv[argc-1] = tmp_arg1;
