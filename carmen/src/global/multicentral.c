@@ -218,6 +218,7 @@ void *test_central_thread(void *ptr)
       }
     }
   } while(1);
+  return NULL;
 }
 
 void carmen_multicentral_start_central_check(carmen_centrallist_p centrallist)
