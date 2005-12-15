@@ -3,13 +3,16 @@ include ../Makefile.conf
 MODULE_NAME = "LOGTOOLS"
 MODULE_COMMENT = "Log tools, like the famous log2pic"
 
-		echo "WAND_CFLAGS     = `$(WAND_CONFIG) --cflags ` -DUSE_WAND" >> $(VARS); \
-		echo "WAND_CXXFLAGS   = `$(WAND_CONFIG) --cppflags `" >> $(VARS); \
-		echo "WAND_LIBS       = `$(WAND_CONFIG) --libs`" >> $(VARS); \
+#		echo "WAND_CFLAGS     = `$(WAND_CONFIG) --cflags ` -DUSE_WAND" >> $(VARS); \
+#		echo "WAND_CXXFLAGS   = `$(WAND_CONFIG) --cppflags `" >> $(VARS); \
+#		echo "WAND_LIBS       = `$(WAND_CONFIG) --libs`" >> $(VARS); \
 
-CFLAGS += 
+WAND_CFLAGS = `/usr/bin/pkg-config --cflags ImageMagick++`
+WAND_LDFLAGS = `/usr/bin/pkg-config --libs ImageMagick++`
+
+CFLAGS += $(WAND_CFLAGS)
 IFLAGS += 
-LFLAGS += `/usr/bin/Wand-config --libs` -L/usr/X11R6/lib -lmap_io -lmap_interface -llogtools -lglobal -lipc
+LFLAGS += $(WAND_LDFLAGS) -L/usr/X11R6/lib -lmap_io -lmap_interface -llogtools -lglobal -lipc
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \
 	  write-file.c parse-lines.c correction.c graphics.c \
