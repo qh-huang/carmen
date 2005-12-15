@@ -466,11 +466,11 @@ void
 carmen_simulator_initialize_object_model(int argc, char *argv[])
 {
   carmen_param_t param_list[] = {
-    {"simulator", "person_leg_width", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"simulator", "person_leg_width", CARMEN_PARAM_DOUBLE,
      &leg_width, 1, NULL},
-    {"simulator", "person_dist_from_robot", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"simulator", "person_dist_from_robot", CARMEN_PARAM_DOUBLE,
      &min_dist_from_robot, 1, NULL},
-    {"simulator", "person_speed", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"simulator", "person_speed", CARMEN_PARAM_DOUBLE,
      &person_speed, 1, NULL}};
 
   int num_items = sizeof(param_list)/sizeof(param_list[0]);

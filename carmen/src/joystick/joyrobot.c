@@ -53,9 +53,9 @@ void read_parameters(int argc, char **argv)
   carmen_param_t param_list[] = {
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, &max_tv, 1, NULL},
     {"robot", "max_r_vel", CARMEN_PARAM_DOUBLE, &max_rv, 1, NULL},
-    {"joystick", "deadspot", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"joystick", "deadspot", CARMEN_PARAM_ONOFF,
      &deadzone, 1, NULL},
-    {"joystick", "deadspot_size", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"joystick", "deadspot_size", CARMEN_PARAM_DOUBLE,
      &deadzone_size, 1, NULL}};
 
   num_items = sizeof(param_list)/sizeof(param_list[0]);

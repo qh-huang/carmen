@@ -350,20 +350,6 @@ int register_ipc_messages(void)
 
 void read_parameters(int argc, char **argv, carmen_localize_param_p param)
 {
-  param->min_wall_prob = 0.25;
-  param->outlier_fraction = 0.90;
-  param->update_distance = 0.20;
-  param->laser_skip = 3;
-  param->do_scanmatching = 0;
-  param->constrain_to_map = 0;
-  param->occupied_prob = 0.5;
-  param->lmap_std = 0.3;
-  param->global_lmap_std = 0.6;
-  param->global_evidence_weight = 0.01;
-  param->global_distance_threshold = 2.0;
-  param->global_test_samples = 100000;
-  param->use_sensor = 1;
-
   carmen_param_t param_list[] = {
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &param->front_laser_offset, 0, NULL},
@@ -374,35 +360,35 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
     {"localize", "num_particles", CARMEN_PARAM_INT, 
      &param->num_particles, 0, NULL},
     {"localize", "max_range", CARMEN_PARAM_DOUBLE, &param->max_range, 1, NULL},
-    {"localize", "min_wall_prob", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "min_wall_prob", CARMEN_PARAM_DOUBLE, 
      &param->min_wall_prob, 0, NULL},
-    {"localize", "outlier_fraction", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "outlier_fraction", CARMEN_PARAM_DOUBLE, 
      &param->outlier_fraction, 0, NULL},
-    {"localize", "update_distance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "update_distance", CARMEN_PARAM_DOUBLE, 
      &param->update_distance, 0, NULL},
-    {"localize", "laser_skip", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT,
+    {"localize", "laser_skip", CARMEN_PARAM_INT,
      &param->laser_skip, 1, NULL},
-    {"localize", "do_scanmatching", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"localize", "do_scanmatching", CARMEN_PARAM_ONOFF,
      &param->do_scanmatching, 1, NULL},
-    {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT, 
+    {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF, 
      &param->constrain_to_map, 1, NULL},
     {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &param->odom_a1, 1, NULL},
     {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &param->odom_a2, 1, NULL},
     {"localize", "odom_a3", CARMEN_PARAM_DOUBLE, &param->odom_a3, 1, NULL},
     {"localize", "odom_a4", CARMEN_PARAM_DOUBLE, &param->odom_a4, 1, NULL},
-    {"localize", "occupied_prob", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "occupied_prob", CARMEN_PARAM_DOUBLE, 
      &param->occupied_prob, 0, NULL},
-    {"localize", "lmap_std", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "lmap_std", CARMEN_PARAM_DOUBLE, 
      &param->lmap_std, 0, NULL},
-    {"localize", "global_lmap_std", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "global_lmap_std", CARMEN_PARAM_DOUBLE, 
      &param->global_lmap_std, 0, NULL},
-    {"localize", "global_evidence_weight", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "global_evidence_weight", CARMEN_PARAM_DOUBLE, 
      &param->global_evidence_weight, 0, NULL},
-    {"localize", "global_distance_threshold", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"localize", "global_distance_threshold", CARMEN_PARAM_DOUBLE, 
      &param->global_distance_threshold, 1, NULL},
-    {"localize", "global_test_samples", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT,
+    {"localize", "global_test_samples", CARMEN_PARAM_INT,
      &param->global_test_samples, 1, NULL},
-    {"localize", "use_sensor", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"localize", "use_sensor", CARMEN_PARAM_ONOFF,
      &param->use_sensor, 0, NULL}
   };
 

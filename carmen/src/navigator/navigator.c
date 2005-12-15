@@ -367,13 +367,6 @@ read_parameters(int argc, char **argv)
 {
   int num_items;
 
-  nav_config.num_lasers_to_use = 360;
-  nav_config.update_map = 1;
-  nav_config.max_range = 50;
-  nav_config.replan_frequency = 5;
-  nav_config.smooth_path = 1;
-  nav_config.dont_integrate_odometry = 0;
-
   carmen_param_t param_list[] = {
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, 
      &robot_config.max_t_vel, 1, NULL},
@@ -401,17 +394,17 @@ read_parameters(int argc, char **argv)
     {"navigator", "goal_theta_tolerance", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_theta_tolerance, 1, NULL},
 
-    {"navigator", "num_lasers", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
+    {"navigator", "num_lasers", CARMEN_PARAM_INT, 
      &nav_config.num_lasers_to_use, 1, NULL},
-    {"navigator", "update_map", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT, 
+    {"navigator", "update_map", CARMEN_PARAM_ONOFF, 
      &nav_config.update_map, 1, NULL},
-    {"navigator", "max_laser_range", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
+    {"navigator", "max_laser_range", CARMEN_PARAM_INT, 
      &nav_config.max_range, 1, NULL},
-    {"navigator", "replan_frequency", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"navigator", "replan_frequency", CARMEN_PARAM_DOUBLE, 
      &nav_config.replan_frequency, 1, NULL},
-    {"navigator", "smooth_path", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT, 
+    {"navigator", "smooth_path", CARMEN_PARAM_ONOFF, 
      &nav_config.smooth_path, 1, NULL},
-    {"navigator", "dont_integrate_odometry", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"navigator", "dont_integrate_odometry", CARMEN_PARAM_ONOFF,
      &nav_config.dont_integrate_odometry, 1, NULL}
   };
 

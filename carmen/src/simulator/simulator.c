@@ -451,29 +451,14 @@ read_parameters(int argc, char *argv[],
   char *offset_string;
   int num_items;
 
-  config->delta_t = 0.172;
-  config->real_time = 0.172;
-  config->sync_mode = 0;
-  config->front_laser_config.num_lasers = 181;
-  config->front_laser_config.prob_of_random_max = .0001;
-  config->front_laser_config.prob_of_random_reading = .0001;
-  config->front_laser_config.variance = .001;
-  config->rear_laser_config.num_lasers = 181;
-  config->rear_laser_config.prob_of_random_max = .0001;
-  config->rear_laser_config.prob_of_random_reading = .0001;
-  config->rear_laser_config.variance = .001;
-  config->sonar_config.prob_of_random_max = .01;
-  config->sonar_config.prob_of_random_reading = .005;
-  config->sonar_config.variance = .05;
-
   carmen_param_t param_list[]= {
-    {"simulator", "dt", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"simulator", "dt", CARMEN_PARAM_DOUBLE,
      &(config->delta_t), 1, NULL},
-    {"simulator", "time", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"simulator", "time", CARMEN_PARAM_DOUBLE,
      &(config->real_time), 1, NULL},
-    {"simulator", "sync_mode", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"simulator", "sync_mode", CARMEN_PARAM_ONOFF,
      &(config->sync_mode), 1, NULL},
-    {"simulator", "use_robot", CARMEN_PARAM_ONOFF | CARMEN_PARAM_EXPERT,
+    {"simulator", "use_robot", CARMEN_PARAM_ONOFF,
      &use_robot, 1, NULL},
     {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &(config->odom_a1), 1, NULL},
     {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &(config->odom_a2), 1, NULL},
@@ -493,15 +478,15 @@ read_parameters(int argc, char *argv[],
      &(config->front_laser_config.max_range), 1, NULL},
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.offset), 1, NULL},
-    {"simulator", "num_readings", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
+    {"simulator", "num_readings", CARMEN_PARAM_INT, 
      &(config->front_laser_config.num_lasers), 0, NULL},
     {"simulator", "laser_probability_of_random_max",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+     CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.prob_of_random_max), 1, NULL},
     {"simulator", "laser_probability_of_random_reading",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+     CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.prob_of_random_reading), 1, NULL},
-    {"simulator", "laser_sensor_variance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"simulator", "laser_sensor_variance", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.variance), 1, NULL}};
 
   carmen_param_t param_list_rear_laser[] = {
@@ -509,15 +494,15 @@ read_parameters(int argc, char *argv[],
      &(config->rear_laser_config.max_range), 1, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.offset), 1, NULL},
-    {"simulator", "num_readings", CARMEN_PARAM_INT | CARMEN_PARAM_EXPERT, 
+    {"simulator", "num_readings", CARMEN_PARAM_INT, 
      &(config->rear_laser_config.num_lasers), 0, NULL},
     {"simulator", "laser_probability_of_random_max",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+     CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.prob_of_random_max), 1, NULL},
     {"simulator", "laser_probability_of_random_reading",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+     CARMEN_PARAM_DOUBLE,
      &(config->rear_laser_config.prob_of_random_reading), 1, NULL},
-    {"simulator", "laser_sensor_variance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"simulator", "laser_sensor_variance", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.variance), 1, NULL}};
 
   carmen_param_t param_list_sonar[] = {
@@ -530,12 +515,12 @@ read_parameters(int argc, char *argv[],
     {"robot", "sonar_offsets", CARMEN_PARAM_STRING, 
      &offset_string, 1, NULL},
     {"simulator", "sonar_probability_of_random_max",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+     CARMEN_PARAM_DOUBLE,
      &(config->sonar_config.prob_of_random_max), 1, NULL},
     {"simulator", "sonar_probability_of_random_reading",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+     CARMEN_PARAM_DOUBLE, 
      &(config->sonar_config.prob_of_random_reading), 1, NULL},
-    {"simulator", "sonar_sensor_variance", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT, 
+    {"simulator", "sonar_sensor_variance", CARMEN_PARAM_DOUBLE, 
      &(config->sonar_config.variance), 1, NULL} };
   
   num_items = sizeof(param_list)/sizeof(param_list[0]);

@@ -626,14 +626,14 @@ static int read_robot_parameters(int argc, char **argv)
      &carmen_robot_config.allow_rear_motion, 1, NULL},
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &use_laser, 1, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, NULL},
-    {"robot", "timeout", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"robot", "timeout", CARMEN_PARAM_DOUBLE,
      &robot_timeout, 1, NULL},
     {"robot", "collision_avoidance", CARMEN_PARAM_ONOFF, 
      &collision_avoidance, 1, NULL},
-    {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+    {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE,
      &carmen_robot_collision_avoidance_frequency, 1, NULL},
     {"robot", "turn_before_driving_if_heading_bigger_than",
-     CARMEN_PARAM_DOUBLE | CARMEN_PARAM_EXPERT,
+     CARMEN_PARAM_DOUBLE,
      &turn_before_driving_if_heading_bigger_than, 1, NULL}
   };
 

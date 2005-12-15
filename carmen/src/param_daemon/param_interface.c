@@ -396,6 +396,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
     }
   free(response->variables);
   free(response->values);
+  free(response->expert);
   free(response);
 
   if (status == CARMEN_PARAM_OK)
