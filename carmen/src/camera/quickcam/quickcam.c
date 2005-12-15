@@ -179,25 +179,25 @@ void read_parameters(int argc, char **argv)
 
   carmen_param_set_module("camera");
   if (!useautosharpen) {
-    if (carmen_param_get_int("sharpenstrength", &sharpenstrength) < 0)
+    if (carmen_param_get_int("sharpenstrength", &sharpenstrength,NULL) < 0)
       carmen_die("camera_sharpenstrength must be specified or "
 		 "carmen_useautosharpen\nmust be turned on\n");
   }
   if (!useautoshutter) {
-    if (carmen_param_get_int("shutterlength", &shutterlength) < 0)
+    if (carmen_param_get_int("shutterlength", &shutterlength,NULL) < 0)
       carmen_die("camera_shutterlength must be specified or "
 		 "carmen_useautoshutter\nmust be turned on\n");
   }
   if (!useagc) {
-    if (carmen_param_get_int("gain", &gain) < 0)
+    if (carmen_param_get_int("gain", &gain,NULL) < 0)
       carmen_die("camera_gain must be specified or carmen_useagc\n"
 		 "must be turned on\n");
   }
   if(carmen_strcasecmp(awbmode, "Custom") == 0) {
-    if (carmen_param_get_int("awbred", &awbred) < 0)
+    if (carmen_param_get_int("awbred", &awbred,NULL) < 0)
       carmen_die("camera_awbred must be specified or carmen_awbmode\n"
 		 "cannot be set to custom.\n");
-    if (carmen_param_get_int("awbblue", &awbblue) < 0)
+    if (carmen_param_get_int("awbblue", &awbblue,NULL) < 0)
       carmen_die("camera_awbblue must be specified or carmen_awbmode\n"
 		 "cannot be set to custom.\n");
   }
