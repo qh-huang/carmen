@@ -194,7 +194,9 @@ static gint scan_to_egrid(gpointer scan_num) {
 					 egrid_scan_list[scan].laser_pose.y,
 					 egrid_scan_list[scan].laser_pose.theta,
 					 egrid_scan_list[scan].num_readings, 
-					 egrid_scan_list[scan].range);
+					 egrid_scan_list[scan].range,
+					 egrid_scan_list[scan].config.angular_resolution,
+					 egrid_scan_list[scan].config.start_angle);
       if (scan % 10 == 0) {
 	gtk_progress_set_percentage(GTK_PROGRESS(egrid_progress_bar),
 				    scan / (double) egrid_num_scans);
@@ -260,13 +262,11 @@ static void egrid_size() {
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
     
-    // fix me!!!
-    angle_delta = M_PI / (double)(num_readings_per_scan-1);
-    //    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
+    angle_delta = egrid_scan_list[scan].config.angular_resolution;
 
     for (reading = 0; reading < num_readings_per_scan; reading++) {
 
-      rtheta = theta - M_PI_2 + reading * angle_delta;
+      rtheta = theta + egrid_scan_list[scan].config.start_angle + reading * angle_delta;
       rd = egrid_scan_list[scan].range[reading];
 
       if (rd < max_range) {

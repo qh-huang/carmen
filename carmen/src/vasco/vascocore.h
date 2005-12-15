@@ -149,6 +149,7 @@ carmen_point_t vascocore_scan_match( carmen_laser_laser_message scan,
 
 carmen_point_t
 vascocore_scan_match_general(int num_readings, float *range, float *angle,
+			     double fov,
 			     carmen_point_t pos, int first);
 
 #endif /* ifdef BD_UTILS_H */

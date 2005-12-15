@@ -37,13 +37,10 @@ vascocore_copy_scan( carmen_laser_laser_message     scan,
   
   data->time = scan.timestamp;
 
-  //  data->fov  = M_PI;
-  // delta = data->fov / (double) (scan.num_readings-1);
+  data->fov =  scan.config.fov;
+  delta = scan.config.angular_resolution; 
+  start = scan.config.start_angle; 
 
-  data->fov =  scan.config.fov; //carmen_laser_get_fov(scan.num_readings);
-  delta = scan.config.angular_resolution; //carmen_laser_get_angle_increment(scan.num_readings);
-
-  start = scan.config.start_angle; //- M_PI_2;
   for (i=0;i<scan.num_readings; i++) {
     data->val[i] = (double) scan.range[i];
     data->angle[i] = start + i*delta;
@@ -149,6 +146,7 @@ vascocore_scan_match( carmen_laser_laser_message scan, carmen_point_t pos )
 
 void
 vascocore_copy_scan_general(int num_readings, float *range, float *angle,
+			    double fov,
 			    carmen_vascocore_extd_laser_t *data)
 {
   int       i;
@@ -159,11 +157,12 @@ vascocore_copy_scan_general(int num_readings, float *range, float *angle,
     data->val[i] = range[i];
     data->angle[i] = angle[i];
   }
-  data->fov = M_PI;
+  data->fov = fov;
 }
 
 carmen_point_t
 vascocore_scan_match_general(int num_readings, float *range, float *angle,
+			     double fov,
 			     carmen_point_t pos, int first)
 {
   static carmen_point_t  lastpos;
@@ -174,7 +173,9 @@ vascocore_scan_match_general(int num_readings, float *range, float *angle,
   p = hpos( carmen_vascocore_history.ptr );
 
   vascocore_copy_scan_general(num_readings, range,
-			      angle, &(carmen_vascocore_history.data[p]));
+			      angle, 
+			      fov,
+			      &(carmen_vascocore_history.data[p]));
   
   if(first) {
     /* THE FIRST SCAN WILL BE MAPPED TO 0/0 */

@@ -111,7 +111,9 @@ void carmen_mapper_free_evidence_grid(evidence_grid *grid)
 void carmen_mapper_update_evidence_grid(evidence_grid *grid, 
 					double laser_x, double laser_y,
 					double laser_theta, int num_readings,
-					float *laser_range)
+					float *laser_range,
+					double angular_resolution,
+					double first_beam_angle)
 {
   int i;
   int x1int, y1int, x2int, y2int, current_x, current_y, x_diff, y_diff;
@@ -142,8 +144,9 @@ void carmen_mapper_update_evidence_grid(evidence_grid *grid,
 
   x1int = (int)floor(laser_x);
   y1int = (int)floor(laser_y);
-  theta = laser_theta - M_PI / 2.0;
-  delta_theta = M_PI / (double)(num_readings-1);
+
+  theta = laser_theta + first_beam_angle;
+  delta_theta = angular_resolution;
 
   for(i = 0; i < num_readings; i++) {
     if(laser_range[i] < LASER_RANGE_LIMIT) {
@@ -207,7 +210,9 @@ void carmen_mapper_update_evidence_grid_general(evidence_grid *grid,
 						double laser_x, double laser_y,
 						double laser_theta, int num_readings,
 						float *laser_range,
-						float *laser_angle)
+						float *laser_angle,
+						double angular_resolution,
+						double first_beam_angle)
 {
   int i;
   int x1int, y1int, x2int, y2int, current_x, current_y, x_diff, y_diff;
@@ -238,8 +243,9 @@ void carmen_mapper_update_evidence_grid_general(evidence_grid *grid,
 
   x1int = (int)floor(laser_x);
   y1int = (int)floor(laser_y);
-  theta = laser_theta - M_PI / 2.0;
-  delta_theta = M_PI / (double)(num_readings-1);
+
+  theta = laser_theta + first_beam_angle;
+  delta_theta = angular_resolution;
 
   for(i = 0; i < num_readings; i++) {
     if(laser_range[i] < LASER_RANGE_LIMIT) {

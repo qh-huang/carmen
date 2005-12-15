@@ -119,11 +119,12 @@ static void display_scan(int scan, scan_type type) {
   /*printf("x = %g, y = %g, theta = %g, lx = %g, ly = %g\n", dbug*/
   /*	   x, y, theta, lx, ly); dbug*/
 
-  angle_delta = M_PI / (double)(num_readings_per_scan-1);
+  angle_delta = scan_list[scan].config.angular_resolution;
   
+
   for (reading = 0; reading < num_readings_per_scan; reading++) {
     
-    rtheta = theta - M_PI_2 + reading * angle_delta;
+    rtheta = theta + scan_list[scan].config.start_angle + reading * angle_delta;
     rd = scan_list[scan].range[reading];
     rx = lx + rd * cos(rtheta);
     ry = ly + rd * sin(rtheta);
@@ -231,14 +232,11 @@ void center_map() {
     lx = x + frontlaser_offset * cos(theta);
     ly = y + frontlaser_offset * sin(theta);    
 
-    // fix me!!
-    angle_delta = M_PI / (double)(num_readings_per_scan-1);
-
-    //    angle_delta = carmen_laser_get_angle_increment(num_readings_per_scan);
+    angle_delta = scan_list[scan].config.angular_resolution;
 
     for (reading = 0; reading < num_readings_per_scan; reading++) {
 
-      rtheta = theta - M_PI_2 + reading * angle_delta;
+      rtheta = theta + scan_list[scan].config.start_angle + reading * angle_delta;
       rd = scan_list[scan].range[reading];
 
       if (rd < max_range) {
