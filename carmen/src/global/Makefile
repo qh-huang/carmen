@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-LFLAGS += -lipc
+LFLAGS += -lipc -lparam_interface
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
@@ -13,14 +13,15 @@ MODULE_NAME = "GLOBAL"
 MODULE_COMMENT = "CARMEN global functions"
 
 SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
-	  carmen-config.c keyctrl.c
+	  carmen-config.c keyctrl.c multicentral.c test_multicentral.c
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
-	  	  carmen.h serial.h keyctrl.h
+	  	  carmen.h serial.h keyctrl.h multicentral.h
 PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
-		   libkeyctrl.a
-PUBLIC_BINARIES = carmen-config
+		   libkeyctrl.a libmulticentral.a
+PUBLIC_BINARIES = carmen-config 
 TARGETS = libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
-	  carmen-config libkeyctrl.a
+	  carmen-config libkeyctrl.a libmulticentral.a \
+	  test_multicentral
 
 CHECK_CONFIG = $(shell if [ -f carmen-config.c ]; then echo "1"; fi;)
 
@@ -67,6 +68,10 @@ libartwrap.a:		artwrap.o
 libserial.a:		serial.o
 
 libkeyctrl.a:   	keyctrl.o
+
+libmulticentral.a:	multicentral.o
+
+test_multicentral:	test_multicentral.o libmulticentral.a libglobal.a
 
 global_test: 		global_test.o libglobal.a
 
