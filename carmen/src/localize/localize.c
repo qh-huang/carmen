@@ -116,8 +116,10 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
 
 /* process initialization messages */
 
-void carmen_localize_initialize_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-				 void *clientData __attribute__ ((unused)))
+void carmen_localize_initialize_handler(MSG_INSTANCE msgRef, 
+					BYTE_ARRAY callData,
+					void *clientData 
+					__attribute__ ((unused)))
 {
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
@@ -172,13 +174,10 @@ void robot_frontlaser_handler(carmen_robot_laser_message *flaser)
   carmen_localize_run(filter, &map, flaser, 
 	       filter->param->front_laser_offset, 0);
   if(filter->initialized) {
-    carmen_localize_summarize(filter, &summary, &map, 
-			      flaser->num_readings, 
-			      flaser->range, 
-			      filter->param->front_laser_offset,
+    carmen_localize_summarize(filter, &summary, &map, flaser->num_readings, 
+			      flaser->range, filter->param->front_laser_offset,
 			      flaser->config.angular_resolution,
-			      flaser->config.start_angle, 
-			      0);
+			      flaser->config.start_angle, 0);
     publish_globalpos(&summary);
     publish_particles(filter, &summary);
     publish_sensor(filter, &summary, flaser, 1);
@@ -398,7 +397,8 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
 
 /* create localize specific maps */
 
-void create_localize_map(carmen_localize_map_t *map, carmen_localize_param_p param)
+void create_localize_map(carmen_localize_map_t *map, 
+			 carmen_localize_param_p param)
 {
   carmen_map_t raw_map;
   

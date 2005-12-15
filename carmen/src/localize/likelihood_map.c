@@ -271,9 +271,9 @@ void carmen_localize_write_distance_map_to_ppm(char *filename,
 
 /* Writes a likelihood map out to a ppm file */
 
-void carmen_localizewrite_likelihood_map_to_ppm(char *filename, 
-						carmen_localize_map_p map,
-						float **prob)
+void carmen_localize_write_likelihood_map_to_ppm(char *filename, 
+						 carmen_localize_map_p map,
+						 float **prob)
 {
   FILE *fp;
   int i, j;
