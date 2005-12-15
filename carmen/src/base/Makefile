@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = scoutlib pioneerlib orclib
+SUBDIRS = scoutlib pioneerlib orclib rflexlib
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
@@ -17,7 +17,7 @@ PUBLIC_BINARIES =
 
 TARGETS = libbase_interface.a base_test base_main.o 
 
-TARGETS += scout pioneer orc
+TARGETS += scout pioneer orc rflex
 
 # rules
 
@@ -31,6 +31,8 @@ pioneer: base_main.o pioneerlib/libpioneer.a
 
 orc: base_main.o orclib/liborc.a 
 
+rflex: base_main.o rflexlib/librflex.a
+
 scoutlib/libscout.a: 
 	$(MAKE) -C scoutlib 
 
@@ -39,5 +41,8 @@ pioneerlib/libpioneer.a:
 
 orclib/liborc.a: 
 	$(MAKE) -C orclib
+
+rflexlib/librflex.a: 
+	$(MAKE) -C rflexlib
 
 include ../Makefile.rules

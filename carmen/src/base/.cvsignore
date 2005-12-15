@@ -2,3 +2,5 @@ Makefile.depend
 base_test
 pioneer
 scout
+orc
+rflex
