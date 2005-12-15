@@ -1,21 +1,23 @@
 include ../Makefile.conf
 
+SUBDIRS = scoutlib pioneerlib
+
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
-LFLAGS += -rdynamic
 LFLAGS += -llaser -lrobot -lglobal -lserial -lgeometry -lipc -lbase_interface \
-	-llaser_interface -lcamera_interface -lparam_interface -ldl
+	-llaser_interface -lcamera_interface -lparam_interface 
 
 MODULE_NAME = BASE
 MODULE_COMMENT = Generic interface to all robot bases
 
-SOURCES = base_interface.c base_test.c base_services.c \
-	base_main.c 
+SOURCES = base_interface.c base_test.c base_main.c 
 PUBLIC_INCLUDES = base_messages.h base_interface.h base_low_level.h
 PUBLIC_LIBRARIES = libbase_interface.a 
-PUBLIC_BINARIES = base_services
+PUBLIC_BINARIES = 
 
-TARGETS = libbase_interface.a libbase.a base_test base_services base_main.o 
+TARGETS = libbase_interface.a base_test base_main.o 
+
+TARGETS += scout pioneer
 
 # rules
 
@@ -23,6 +25,14 @@ libbase_interface.a:	base_interface.o
 
 base_test:		base_test.o libbase_interface.a
 
-base_services: 		base_services.o
+scout: base_main.o scoutlib/libscout.a 
+
+pioneer: base_main.o pioneerlib/libpioneer.a 
+
+scoutlib/libscout.a: 
+	$(MAKE) -C scoutlib 
+
+pioneerlib/libpioneer.a: 
+	$(MAKE) -C pioneerlib
 
 include ../Makefile.rules
