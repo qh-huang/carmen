@@ -245,7 +245,7 @@ static int params_save_as_ini(char *filename) {
   char *line, line_out[MAX_VARIABLE_LENGTH];
   char *mark, *token;
   int token_num;
-  char lvalue[255], rvalue[MAX_VARIABLE_LENGTH], comment[MAX_VARIABLE_LENGTH];
+  char lvalue[255], spacing[255], rvalue[MAX_VARIABLE_LENGTH], comment[MAX_VARIABLE_LENGTH];
   char module[255], variable[255];
   int found_desired_robot = 0;
   int line_length;
@@ -312,6 +312,12 @@ static int params_save_as_ini(char *filename) {
     /* tokenize line */
     token = mark;
     mark = strpbrk(mark, " \t");
+    if (mark) {
+      strncpy(spacing, mark, strspn(mark, " \t"));
+      spacing[strspn(mark, " \t")] = '\0';
+    }
+    else
+      spacing[0] = '\0';
 
     if (token != NULL && strlen(token) > 0) {
       if (mark) {
@@ -331,6 +337,8 @@ static int params_save_as_ini(char *filename) {
       if (lvalue[0] == '[') {
 	if (carmen_strncasecmp(lvalue+1, robot_name, strlen(robot_name)) == 0)
 	  found_desired_robot = 1;
+	else if (carmen_strncasecmp(lvalue+1, "expert", 6) == 0)
+	  found_desired_robot = 1;
 	else if (lvalue[1] == '*')
 	  found_desired_robot = 1;
 	else
@@ -338,7 +346,7 @@ static int params_save_as_ini(char *filename) {
 	fprintf(fout, "%s", line_out);
       }
       else if(token_num == 2 && found_desired_robot == 1) {
-	fprintf(fout, "%s\t\t", lvalue);
+	fprintf(fout, "%s%s", lvalue, spacing);
 	sscanf(lvalue, "%[^_]_%s", module, variable);
 	for (m = 0; m < num_modules; m++) {
 	  if (!strcmp(modules[m], module)) {

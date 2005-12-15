@@ -38,6 +38,10 @@
 
 #define MAX_ROBOT_NAME_LENGTH 50
 
+#define PARAM_LEVEL_BASIC     0
+#define PARAM_LEVEL_EXPERT    1
+#define PARAM_LEVEL_NOCHANGE  2
+
 typedef struct {
   char *module_name;
   char *variable_name;
@@ -174,7 +178,7 @@ check_param_space()
 }
 
 static void
-set_param(char *lvalue, char *rvalue, int expert)
+set_param(char *lvalue, char *rvalue, int param_level)
 {
   int param_index;
   char module[255], variable[255];
@@ -212,6 +216,9 @@ set_param(char *lvalue, char *rvalue, int expert)
 	(strlen(variable)+1, sizeof(char));
       carmen_test_alloc(param_list[param_index].variable_name);
       strcpy(param_list[param_index].variable_name, variable);
+
+      if (param_level == PARAM_LEVEL_NOCHANGE)
+	param_level = PARAM_LEVEL_BASIC;
     }
   else 
     {
@@ -224,7 +231,8 @@ set_param(char *lvalue, char *rvalue, int expert)
 
   strcpy(param_list[param_index].rvalue, rvalue);	    
 
-  param_list[param_index].expert = expert;
+  if (param_level != PARAM_LEVEL_NOCHANGE)
+    param_list[param_index].expert = param_level;
 
   carmen_verbose("Added %s %s%s: %s = %s \n", 
 		 param_list[param_index].module_name,
@@ -1032,13 +1040,13 @@ static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   if (query.module_name != NULL && query.module_name[0] != '\0')
     {
       sprintf(buffer, "%s_%s", query.module_name, query.variable_name);
-      if (query.value != NULL && query.value[0] != '\0')	       
-	set_param(buffer, query.value, 0);
+      if (query.value != NULL && query.value[0] != '\0')
+	set_param(buffer, query.value, PARAM_LEVEL_NOCHANGE);
       param_index = lookup_name(buffer);  
     } 
   else 
     {
-      set_param(query.variable_name, query.value, 0);
+      set_param(query.variable_name, query.value, PARAM_LEVEL_NOCHANGE);
       param_index = lookup_name(query.variable_name);  
     }
   /* Respond with the new value */
