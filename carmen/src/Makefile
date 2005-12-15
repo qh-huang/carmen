@@ -2,9 +2,9 @@ total:	home export phase1 phase2
 
 include Makefile.conf
 
-PACKAGES = ipc global param_daemon base laser camera \
-	   robot simulator robotgui joystick  mapserver vasco \
-	   localize navigator linemapping hmap logger
+PACKAGES = ipc global param_daemon base laser  \
+	   robot simulator robotgui maptools logtools joystick  mapserver \
+	   vasco localize navigator linemapping hmap logger camera
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
 
