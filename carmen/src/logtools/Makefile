@@ -1,7 +1,7 @@
 include ../Makefile.conf
 
-MODULE_NAME = "logtools"
-MODULE_COMMENT = "Log Tool"
+MODULE_NAME = "LOGTOOLS"
+MODULE_COMMENT = "Log tools, like the famous log2pic"
 
 		echo "WAND_CFLAGS     = `$(WAND_CONFIG) --cflags ` -DUSE_WAND" >> $(VARS); \
 		echo "WAND_CXXFLAGS   = `$(WAND_CONFIG) --cppflags `" >> $(VARS); \

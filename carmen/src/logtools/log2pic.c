@@ -666,9 +666,9 @@ log2pic_write_carmen_map( logtools_grid_map2_t * map )
 {
   char                creator[MAX_STRING_LENGTH];
   char                comment[MAX_STRING_LENGTH];
-  carmen_map_file_p   fp;
+  carmen_FILE*   fp;
 
-  fp = carmen_map_fopen( settings.outfilename, "w");
+  fp = carmen_fopen( settings.outfilename, "w");
   if(fp == NULL) {
     fprintf( stderr, "# Error: Could not open file %s for writing.",
 	     settings.outfilename);
@@ -694,7 +694,7 @@ log2pic_write_carmen_map( logtools_grid_map2_t * map )
 	      (map->offset.y - map->center.y * map->resolution)/100.0 );
   }
   carmen_map_write_all( 
-//			carmen_map_file_p fp
+//			carmen_FILE* fp
                         fp, 
 //			float **prob
 			map->mapprob,
@@ -724,7 +724,7 @@ log2pic_write_carmen_map( logtools_grid_map2_t * map )
 			NULL,
 //                      int num_scans
 			0 );
-  carmen_map_fclose(fp);
+  carmen_fclose(fp);
 }
 
 void
