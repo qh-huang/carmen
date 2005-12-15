@@ -30,6 +30,7 @@
 #include "gui.h"
 #include "tools.h"
 #include "history.h"
+#include <carmen/carmen_stdio.h>
 
 /********** Laser Scans **********/
 
@@ -37,7 +38,8 @@ int carmen_logger_nogz = 0;  //dbug
 int carmen_playback_nogz = 0;  //dbug
 
 char logfilename[1024];
-carmen_logger_file_p logfile;
+//carmen_logger_file_p logfile;
+carmen_FILE* logfile;
 
 carmen_laser_scan_p scan_list = NULL;
 int num_scans = 0;
@@ -302,7 +304,7 @@ static char *next_word(char *str) {
 /* read_next_laser_message - parses a log file, returning the next
    robot_laser_message struct */
 
-static carmen_robot_laser_message *read_next_laser_message(carmen_logger_file_p fp) {
+static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
 
   char message_name[100];
   char line[2000], *mark;
@@ -310,8 +312,8 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_logger_file_p 
   int i;
   int frontlaser_offset_flag = 1, max_range_flag = 1;
 
-  while(!carmen_logger_feof(fp)) {
-    carmen_logger_fgets(line, 2000, fp);
+  while(!carmen_feof(fp)) {
+    carmen_fgets(line, 2000, fp);
     sscanf(line, "%s", message_name);
     if(strcmp(message_name, "FLASER") == 0) {
       robot_frontlaser = (carmen_robot_laser_message *)
@@ -367,7 +369,7 @@ static gint load_logfile_end(gpointer p) {
   int i, cancelled = (int) p;
 
 
-  carmen_logger_fclose(logfile);
+  carmen_fclose(logfile);
 
   if (cancelled) {
     history_restore();
@@ -447,7 +449,7 @@ static gint load_scan(gpointer p) {
     gtk_progress_set_value(GTK_PROGRESS(progress_bar),
       gtk_progress_get_value(GTK_PROGRESS(progress_bar)) + 0.01);
 
-  if (!carmen_logger_feof(logfile)) {
+  if (!carmen_feof(logfile)) {
     front_laser = read_next_laser_message(logfile);
     if(front_laser != NULL) {
       if(num_scans >= array_length) {
@@ -510,7 +512,7 @@ static gint load_logfile_begin(gpointer p __attribute__ ((unused))) {
   if (cancel)
     return FALSE;
 
-  logfile = carmen_logger_fopen(logfilename, "r");
+  logfile = carmen_fopen(logfilename, "r");
   if(logfile == NULL) {
     sprintf(buf, "Error: could not open file %s for reading.", logfilename);
     status_print(buf, "laserscans");
@@ -560,26 +562,26 @@ int save_logfile() {
     strcat(logfilename, ".gz");
 #endif
 
-  if ((logfile = carmen_logger_fopen(logfilename, "w")) == NULL) {
+  if ((logfile = carmen_fopen(logfilename, "w")) == NULL) {
     sprintf(buf, "Error: Couldn't save logfile: %s.", logfilename);
     status_print(buf, "laserscans");
     return -1;
   }
 
-  carmen_logger_fprintf(logfile, "PARAM robot_frontlaser_offset %.2f nohost 0\n", frontlaser_offset);
-  carmen_logger_fprintf(logfile, "PARAM robot_front_laser_max %.1f nohost 0\n", max_range);
+  carmen_fprintf(logfile, "PARAM robot_frontlaser_offset %.2f nohost 0\n", frontlaser_offset);
+  carmen_fprintf(logfile, "PARAM robot_front_laser_max %.1f nohost 0\n", max_range);
   for (i = 0; i < num_scans; i++) {
     if (!scan_mask[i])
       continue;
-    carmen_logger_fprintf(logfile, "FLASER %d", scan_list[i].num_readings);
+    carmen_fprintf(logfile, "FLASER %d", scan_list[i].num_readings);
     for (j = 0; j < scan_list[i].num_readings; j++)
-      carmen_logger_fprintf(logfile, " %.2f", scan_list[i].range[j]);
-    carmen_logger_fprintf(logfile, " %.6f %.6f %.6f %.6f %.6f %.6f\n",	
+      carmen_fprintf(logfile, " %.2f", scan_list[i].range[j]);
+    carmen_fprintf(logfile, " %.6f %.6f %.6f %.6f %.6f %.6f\n",	
 		   scan_list[i].x, scan_list[i].y, scan_list[i].theta, 0.0, 0.0, 0.0);
   }
 
-  carmen_logger_fprintf(logfile, "\n");
-  carmen_logger_fclose(logfile);
+  carmen_fprintf(logfile, "\n");
+  carmen_fclose(logfile);
 
   sprintf(buf, "Saved logfile: %s.", logfilename);
   status_print(buf, "laserscans");

@@ -1,6 +1,5 @@
 include ../Makefile.conf
 
-LFLAGS 	+= -llogger_io
 
 ifndef NO_GRAPHICS
 CFLAGS 	+= 	-Wno-shadow
