@@ -9,7 +9,7 @@ LFLAGS += -lglobal -lserial -lipc -lparam_interface
 MODULE_NAME = "PIONEER"
 MODULE_COMMENT = "Program for controlling Pioneer robot"
 
-SOURCES = pioneer_lib2.c
+SOURCES = pioneer_lib.c pioneer_test.c
 PUBLIC_INCLUDES =  
 PUBLIC_LIBRARIES = libpioneer.a 
 PUBLIC_BINARIES = pioneer 
