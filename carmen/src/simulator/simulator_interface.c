@@ -193,7 +193,7 @@ carmen_simulator_clear_objects(void)
 
   msg = carmen_default_message_create();
 
-  err = IPC_publishData(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME, &msg);
+  err = IPC_publishData(CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME, msg);
   carmen_test_ipc(err, "Could not publish", 
 		  CARMEN_SIMULATOR_CLEAR_OBJECTS_NAME);
 }

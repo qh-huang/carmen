@@ -1443,7 +1443,7 @@ carmen_param_check_version(char *prog_name)
   carmen_param_version_message *response;
 
   query = carmen_default_message_create();
-  err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, &query, 
+  err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, query, 
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not check Carmen version", 
 		  CARMEN_PARAM_VERSION_QUERY_NAME);
