@@ -25,7 +25,6 @@ endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
-IFLAGS += `pkg-config --cflags gtk+-2.0` 
 #LFLAGS += -lmap_graphics -lglobal_graphics `pkg-config --libs gtk+-2.0`
 LFLAGS += -lmap_graphics -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
 
