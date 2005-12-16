@@ -365,7 +365,7 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
 static gint load_logfile_end(gpointer p) {
 
   char buf[1024];
-  int i, cancelled = (int) p;
+  int i, cancelled = *(int *) p;
 
 
   carmen_fclose(logfile);
