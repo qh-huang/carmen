@@ -97,6 +97,7 @@ extern "C" {
 #include <carmen/keyctrl.h>
 
 #include <carmen/map.h>
+#include <carmen/map_io.h>
 #include <carmen/map_messages.h>
 #include <carmen/map_interface.h>
 #include <carmen/map_util.h>
