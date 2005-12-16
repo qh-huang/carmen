@@ -5,6 +5,15 @@ banner = $(SILENT) \
 	echo "* Comment : "$(MODULE_COMMENT) ; \
 	echo "****************************************************************" ; \
 
+subdir_recurse = $(SILENT) \
+	for i in $(SUBDIRS) xxxx ; do \
+		if [ -d $$i ] ; then \
+			if ! $(MAKE) -C $$i $@ ; then \
+                                exit -1; \
+                        fi; \
+		fi \
+	done
+
 install_includes = $(SILENT) \
 	for i in $(PUBLIC_INCLUDES) xxxx ; do \
 		if test -f $$i && ! $(NEWER) $(INC_DIR)/carmen/$$i $$i ; then \
@@ -214,19 +223,13 @@ install:
 clean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
 	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
-	for i in $(SUBDIRS) xxxx ; do \
-		if test ! "$$i" = "xxxx" ; then \
-			if ! $(MAKE) -C $$i clean ; then \
-                                exit -1; \
-                        fi; \
-		fi ; \
-	done 
 
 relink:
 	$(SILENT) $(RM) $(filter-out %.a, $(TARGETS))
 	$(SILENT) for i in $(filter-out %.a, $(TARGETS)) ; do \
 		$(MAKE) $$i ; \
 	done
+	$(subdir_recurse)
 
 distclean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
@@ -237,9 +240,11 @@ distclean:
 	$(remove_libraries)
 	$(remove_binaries)
 	$(RM) core gmon.out *~ .\#* \#*
+	$(subdir_recurse)
 
 export:
 	$(install_includes)
+	$(subdir_recurse)
 
 dep depend:
 	$(ECHO) "    ---- Assigning dependencies in "$(MODULE_NAME)
@@ -248,6 +253,7 @@ dep depend:
 		$(CC) -M $(SOURCES) $(IFLAGS) $(filter -D%, $(CFLAGS)) > Makefile.depend ; \
 	fi
 	$(SILENT) $(RM) Makefile.depend.bak
+	$(subdir_recurse)
 
 debug:
 	$(SILENT) $(MAKE) CARMEN_DEBUG=1 all
