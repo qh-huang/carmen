@@ -1,27 +1,26 @@
-include $(CARMEN_HOME)/src/Makefile.conf
+include ../Makefile.conf
 
-LFLAGS +=  -lrobot_interface  -lglobal -lipc  -lparam_interface
+LINK=g++
+LFLAGS += -lparam_interface -lglobal -lipc -lm
 
 
 MODULE_NAME = MAPTOOLS
-MODULE_COMMENT = Tools for mapping, logfile conversion, etc.
+MODULE_COMMENT = Tools for mapping etc.
 
-SOURCES = movement.c clfconvert.c test_movement.c 
+SOURCES = linemapping.cpp
 
-PUBLIC_INCLUDES =  movement.h clfconvert.h
-PUBLIC_LIBRARIES = libmovement.a libclfconvert.a
-PUBLIC_BINARIES = 
+PUBLIC_INCLUDES = linemapping.h
+PUBLIC_LIBRARIES = libclfconvert.a liblinemapping.a
+PUBLIC_BINARIES = clf2linemap
 
-TARGETS =  libmovement.a libclfconvert.a test_movement 
+TARGETS =  liblinemapping.a \
+	clf2linemap
 
 all:
 
-libmovement.a: movement.o
+liblinemapping.a:    linemapping.o
 
-libclfconvert.a: clfconvert.o
+clf2linemap:         clf2linemap.o clfreader.o linemapping.o
 
-test_movement: movement.o test_movement.o
-
-
-include  $(CARMEN_HOME)/src/Makefile.rules
+include  ../Makefile.rules
 

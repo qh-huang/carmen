@@ -3,6 +3,8 @@ include ../Makefile.conf
 MODULE_NAME = "CAMERA"
 MODULE_COMMENT = "General Camera Module"
 
+SUBDIRS = quickcam fakecam
+
 LFLAGS += -lparam_interface -lipc -lglobal -L/usr/X11R6/lib -lXpm
 SOURCES = camera_main.c camera_view.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h

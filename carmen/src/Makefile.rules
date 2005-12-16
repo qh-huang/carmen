@@ -214,6 +214,13 @@ install:
 clean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
 	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
+	for i in $(SUBDIRS) xxxx ; do \
+		if test ! "$$i" = "xxxx" ; then \
+			if ! $(MAKE) -C $$i clean ; then \
+                                exit -1; \
+                        fi; \
+		fi ; \
+	done 
 
 relink:
 	$(SILENT) $(RM) $(filter-out %.a, $(TARGETS))

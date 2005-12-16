@@ -13,15 +13,16 @@ MODULE_NAME = "GLOBAL"
 MODULE_COMMENT = "CARMEN global functions"
 
 SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
-	  carmen-config.c keyctrl.c multicentral.c test_multicentral.c
+	  carmen-config.c keyctrl.c multicentral.c test_multicentral.c \
+	movement.c test_movement
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
-	  	  carmen.h serial.h keyctrl.h multicentral.h
+	  	  carmen.h serial.h keyctrl.h multicentral.h movement.h
 PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
-		   libkeyctrl.a libmulticentral.a
+		   libkeyctrl.a libmulticentral.a libmovement.a
 PUBLIC_BINARIES = carmen-config 
 TARGETS = libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
 	  carmen-config libkeyctrl.a libmulticentral.a \
-	  test_multicentral
+	  test_multicentral libmovement.a test_movement
 
 CHECK_CONFIG = $(shell if [ -f carmen-config.c ]; then echo "1"; fi;)
 
@@ -76,5 +77,9 @@ test_multicentral:	test_multicentral.o libmulticentral.a libglobal.a
 global_test: 		global_test.o libglobal.a
 
 carmen-config: 		carmen-config.o
+
+libmovement.a: movement.o
+
+test_movement: movement.o test_movement.o libglobal.a
 
 include ../Makefile.rules

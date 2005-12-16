@@ -53,7 +53,7 @@ void carmen_multicentral_allow_zero_centrals(int allow)
 carmen_centrallist_p carmen_multicentral_initialize(int argc, char **argv,
 						    void (*exit_handler)(void))
 {
-  FILE *fp;
+  FILE *fp = NULL;
   carmen_centrallist_p centrallist;
   int err2, valid, i, one_central;
   char filename[256], *centralhost, *err, line[256];
