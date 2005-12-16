@@ -7,13 +7,18 @@ LFLAGS += -lparam_interface -lglobal -lipc -lm
 MODULE_NAME = MAPTOOLS
 MODULE_COMMENT = Tools for mapping etc.
 
-SOURCES = linemapping.cpp
+SOURCES = bee2carmen.c clfconvert.c generate_blank.c img_to_map.c map.c \
+	linemapping.cpp map_interface.c map_ipc.c map_read.c map_test.c \
+	maptool.c map_util.c map_write.c
 
-PUBLIC_INCLUDES = linemapping.h
-PUBLIC_LIBRARIES = libclfconvert.a liblinemapping.a
-PUBLIC_BINARIES = clf2linemap
+PUBLIC_INCLUDES = linemapping.h map.h map_io.h map_messages.h map_interface.h \
+	 map_util.h
+PUBLIC_LIBRARIES = libclfconvert.a liblinemapping.a libmap_interface.a \
+	libmap_util.a libmap_io.a
+PUBLIC_BINARIES = clf2linemap map
 
-TARGETS =  liblinemapping.a clf2linemap libmap_util.a maptool
+TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
+	libmap_io.a
 
 ifndef NO_GRAPHICS
  IFLAGS += `$(GTK_CONFIG) --cflags`
@@ -29,15 +34,29 @@ endif
 
 all:
 
+libmap_io.a: map_read.o map_write.o map_ipc.o
+
+map: map.o libmap_interface.a libmap_io.a 
+
+map_test:       map_test.o libmap_interface.a libmap_graphics.a
+
+libmap_interface.a: map_interface.o
+
+libmap_graphics.a:	map_graphics.o libmap_interface.a
+
 liblinemapping.a:    linemapping.o
 
 clf2linemap:         clf2linemap.o clfreader.o linemapping.o
 
 libmap_util.a: map_util.o
 
-maptool: maptool.o libmap_util.a
+maptool: maptool.o libmap_util.a libmap_io.a libmap_interface.a
 
-libmap_graphics.a:	map_graphics.o libmap_interface.a
+generate_blank : generate_blank.o libmap_io.a
+
+bee2carmen : bee2carmen.o libmap_io.a
+
+img_to_map : libmap_io.a img_to_map.o libmap_graphics.a
 
 include  ../Makefile.rules
 

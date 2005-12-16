@@ -251,25 +251,6 @@ carmen_map_move_offlimits_chunk(carmen_offlimits_list_t *offlimits_list,
 }
 
 
-void
-carmen_map_free_hmap(carmen_hmap_p hmap)
-{
-  int i;
-
-  if (hmap->zone_names) {
-    for (i = 0; i < hmap->num_zones; i++)
-      free(hmap->zone_names[i]);
-    free(hmap->zone_names);
-  }
-  if (hmap->links) {
-    for (i = 0; i < hmap->num_links; i++) {
-      free(hmap->links[i].keys);
-      free(hmap->links[i].points);
-    }
-    free(hmap->links);
-  }
-}
-
 void carmen_rotate_places_chunk(carmen_place_p places, int num_places, 
 				carmen_map_p map, int rotation)
 {

@@ -103,6 +103,7 @@ extern "C" {
 #include <carmen/map_util.h>
 
 #include <carmen/geometry.h>
+#include <carmen/movement.h>
 
 #include <carmen/localizecore.h>
 #include <carmen/localize_messages.h>

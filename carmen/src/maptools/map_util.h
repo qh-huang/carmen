@@ -37,7 +37,6 @@ void carmen_map_free_hmap(carmen_hmap_p hmap);
 void carmen_rotate_places_chunk(carmen_place_p places, int num_places, 
 				carmen_map_p map, int rotation);
 
-void carmen_rotate_places_chunk(carmen_place_p places, int num_places, 
-				carmen_map_p map, int rotation);
+void carmen_rotate_gridmap(carmen_map_p map, int rotation);
 
 #endif

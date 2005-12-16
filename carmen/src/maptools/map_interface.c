@@ -389,6 +389,25 @@ carmen_map_get_hmap(carmen_hmap_p hmap)
   return 0;
 }
 
+void
+carmen_map_free_hmap(carmen_hmap_p hmap)
+{
+  int i;
+
+  if (hmap->zone_names) {
+    for (i = 0; i < hmap->num_zones; i++)
+      free(hmap->zone_names[i]);
+    free(hmap->zone_names);
+  }
+  if (hmap->links) {
+    for (i = 0; i < hmap->num_links; i++) {
+      free(hmap->links[i].keys);
+      free(hmap->links[i].points);
+    }
+    free(hmap->links);
+  }
+}
+
 int carmen_map_change_map_zone(char *zone_name)
 {
   IPC_RETURN_TYPE err;

@@ -39,32 +39,34 @@ static void usage(char* fmt, ...)
   carmen_die("Usage: rotate <rotation in degs> <input file> "
 	     "<output file>\n");
 
-    fprintf(stderr, "Error: wrong number of arguments.\n");
-    fprintf(stderr, "Usage: %s mapfilename placename [place params]\n", 
-	    argv[0]);
-    fprintf(stderr, "       2, 3, or 6 place parameters can be given.\n");
-    fprintf(stderr, "       2 parameters - named position (x, y)\n");
-    fprintf(stderr, "       3 parameters - named pose (x, y, theta)\n");
-    fprintf(stderr, "       6 parameters - initialization position\n");
-    fprintf(stderr, "                      (x, y, theta, std_x, std_y, "
-	    "std_theta)\n");
-    fprintf(stderr, "\nRemember: The x/y/std_x/std_y co-ordinates are in "
-	    "%sMETRES%s, not in\n", carmen_red_code, carmen_normal_code);
-    fprintf(stderr, "grid cells. \n");
-    fprintf(stderr, "\nAlso: theta is in %sDEGREES%s. I will print out the "
-	    "conversion to radians\n", carmen_red_code, carmen_normal_code);
-    fprintf(stderr, "automatically for you.\n");
-		
-      fprintf(stderr, "Error: wrong number of arguments.\n");
-      fprintf(stderr, "Usage: %s mapfilename chunkname chunkname2 ... \n", 
-	      argv[0]);
-      fprintf(stderr, "chunk name can be one of \"laserscans\", "
-	      "\"places\", \n");
-      fprintf(stderr, "      \"gridmap\", \"offlimits\", \"expected\"\n");
+  fprintf(stderr, "Error: wrong number of arguments.\n");
+  fprintf(stderr, "Usage: maptool mapfilename placename [place params]\n");
+  fprintf(stderr, "       2, 3, or 6 place parameters can be given.\n");
+  fprintf(stderr, "       2 parameters - named position (x, y)\n");
+  fprintf(stderr, "       3 parameters - named pose (x, y, theta)\n");
+  fprintf(stderr, "       6 parameters - initialization position\n");
+  fprintf(stderr, "                      (x, y, theta, std_x, std_y, "
+	  "std_theta)\n");
+  fprintf(stderr, "\nRemember: The x/y/std_x/std_y co-ordinates are in "
+	  "%sMETRES%s, not in\n", carmen_red_code, carmen_normal_code);
+  fprintf(stderr, "grid cells. \n");
+  fprintf(stderr, "\nAlso: theta is in %sDEGREES%s. I will print out the "
+	  "conversion to radians\n", carmen_red_code, carmen_normal_code);
+  fprintf(stderr, "automatically for you.\n");
+  
+  fprintf(stderr, "Error: wrong number of arguments.\n");
+
+  fprintf(stderr, "Usage: maptool mapfilename chunkname chunkname2 ... \n");
+  fprintf(stderr, "chunk name can be one of \"laserscans\", "
+	  "\"places\", \n");
+  fprintf(stderr, "      \"gridmap\", \"offlimits\", \"expected\"\n");
 }
+
 static void toppm(int argc, char *argv[]) 
 {
   int err;
+  carmen_map_t map;
+  char key;
 
   if(argc != 4) 
     usage("Error: wrong number of parameters.\n");    
@@ -86,6 +88,15 @@ static void toppm(int argc, char *argv[])
 
 static void rotate(int argc, char *argv[])
 {
+  char *in_filename;
+  carmen_FILE *in_fp, *out_fp;
+  int ret_val;
+  carmen_map_t map;
+  char *out_filename;
+  int rotation = 0;
+  double remain;
+  int degrees_angle;
+
   if (argc != 5)
     usage("Error: wrong number of parameters.\n");    
 
@@ -110,7 +121,7 @@ static void rotate(int argc, char *argv[])
   if (carmen_map_read_gridmap_chunk(in_filename, &map) < 0)
       carmen_die_syserror("Couldn't read GRIDMAP_CHUNK from %s", in_filename);
 
-  rotate_gridmap(&map, rotation);
+  carmen_rotate_gridmap(&map, rotation);
 
   in_fp = carmen_fopen(in_filename, "r");
   if (in_fp == NULL)
@@ -130,7 +141,7 @@ static void rotate(int argc, char *argv[])
   carmen_fclose(out_fp);
 }
 
-static void rotate(int argc, char *argv[])
+static void minimize(int argc, char *argv[])
 {
   char *filename;
   carmen_FILE *in_fp, *out_fp;
@@ -394,7 +405,6 @@ static void strip(int argc, char *argv[])
   else
     sprintf(cmd, "mv -f /tmp/stripped2.map %s", filename);
   system(cmd);
-  return 0;
 }
 
 static void info(int argc, char *argv[])
@@ -410,7 +420,7 @@ static void info(int argc, char *argv[])
 
   /* Check for the appropriate command line argument */
   if(argc != 2) 
-    usage(stderr, "Error: wrong number of parameters.\n");
+    usage("Error: wrong number of parameters.\n");
 
   filename = argv[2];
 
@@ -504,17 +514,15 @@ static void info(int argc, char *argv[])
 	       carmen_radians_to_degrees(place_list.places[i].theta), 
 	       place_list.places[i].x_std, place_list.places[i].y_std,
 	       carmen_radians_to_degrees(place_list.places[i].theta_std));
-  }
-  
-  return 0;
+  }  
 }
 
 int main(int argc, char **argv)
 {
-  carmen_map_t map;
+  char *action;
 
   if (argc < 2) 
-    usage();  
+    usage("");  
   
   action = argv[1];
   if (strcmp(action, "toppm") == 0)
@@ -527,7 +535,7 @@ int main(int argc, char **argv)
     add_place(argc, argv);
   else if (strcmp(action, "strip") == 0)
     strip(argc, argv);
-  else if (strcmp(action, "strip") == 0)
+  else if (strcmp(action, "info") == 0)
     info(argc, argv);
   return 0;
 }

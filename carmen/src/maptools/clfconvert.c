@@ -1,6 +1,6 @@
 
 #include "clfconvert.h"
-#include "movement.h"
+#include <carmen/movement.h>
 
 void carmen_clfconvert_transform_laser_message_laser_pose(carmen_point_t refpose_currentframe,
 							  carmen_point_t refpose_newframe,
