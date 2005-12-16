@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = scoutlib pioneerlib orclib rflexlib
+SUBDIRS = orclib pioneerlib reflexlib scoutlib segway_base xr4000_base
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
@@ -13,11 +13,12 @@ MODULE_COMMENT = Generic interface to all robot bases
 SOURCES = base_interface.c base_test.c base_main.c 
 PUBLIC_INCLUDES = base_messages.h base_interface.h base_low_level.h
 PUBLIC_LIBRARIES = libbase_interface.a 
-PUBLIC_BINARIES = 
 
 TARGETS = libbase_interface.a base_test base_main.o 
 
-TARGETS += scout pioneer orc rflex
+TARGETS += $(ROBOT_TYPES)
+PUBLIC_BINARIES += $(ROBOT_TYPES)
+
 
 # rules
 
@@ -32,6 +33,12 @@ pioneer: base_main.o pioneerlib/libpioneer.a
 orc: base_main.o orclib/liborc.a 
 
 rflex: base_main.o rflexlib/librflex.a
+
+segway: 
+	$(MAKE) -C segway_base
+
+xr4000: 
+	$(MAKE) -C xr4000_base
 
 scoutlib/libscout.a: 
 	$(MAKE) -C scoutlib 

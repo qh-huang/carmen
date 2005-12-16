@@ -97,7 +97,7 @@ int main(int argc, char **argv)
   /* initialize communications stuff */
   carmen_xr4000_start();
   while (!robd_done) {
-    dgc_ipc_sleep(0.01);
+    carmen_ipc_sleep(0.01);
     N_PollClient();
     if(carmen_get_time() - last_publish > 0.1) {
       carmen_xr4000_run();
