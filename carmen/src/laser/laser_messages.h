@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-typedef enum {SICK_LMS, SICK_PLS, HOKUYO_URG}   carmen_laser_laser_type_t;
+typedef enum {SICK_LMS, SICK_PLS, HOKUYO_URG, SIMULATED_LASER}   carmen_laser_laser_type_t;
 typedef enum {OFF, DIRECT, NORMALIZED}          carmen_laser_remission_type_t;
 
 
