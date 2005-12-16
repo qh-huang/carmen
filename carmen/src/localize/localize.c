@@ -366,7 +366,7 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
     {"localize", "update_distance", CARMEN_PARAM_DOUBLE, 
      &param->update_distance, 0, NULL},
     {"localize", "integrate_angle", CARMEN_PARAM_DOUBLE,
-     &param->integrate_angle, 1, NULL},
+     &param->integrate_angle, 0, NULL},
     {"localize", "do_scanmatching", CARMEN_PARAM_ONOFF,
      &param->do_scanmatching, 1, NULL},
     {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF, 
