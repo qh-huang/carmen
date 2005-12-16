@@ -43,7 +43,9 @@ typedef struct {
   int num_particles;
   double max_range, min_wall_prob, outlier_fraction;
   double update_distance;
-  int laser_skip, use_rear_laser, do_scanmatching;
+  double integrate_angle; /* used to compute laser_skip*/
+  int laser_skip;
+  int use_rear_laser, do_scanmatching;
   int constrain_to_map;
   double odom_a1, odom_a2, odom_a3, odom_a4;
   double occupied_prob;

@@ -195,12 +195,15 @@ carmen_localize_particle_filter_new(carmen_localize_param_p param)
   filter->first_odometry = 1;
   filter->global_mode = 0;
   filter->distance_travelled = 0;
+
+  filter->param->laser_skip = 0; /* will be automatically initialized later on */
+
   return filter;
 }
 
 void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filter_p filter,
-					   carmen_robot_laser_message *laser,
-					   carmen_localize_map_p map)
+						  carmen_robot_laser_message *laser,
+						  carmen_localize_map_p map)
 {
   priority_queue_p queue = priority_queue_init(filter->param->num_particles);
   float *laser_x, *laser_y;
@@ -208,6 +211,12 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   float angle, prob, ctheta, stheta;
   carmen_point_t point;
   queue_node_p mark;
+
+  /* compute the correct laser_skip */
+  if (filter->param->laser_skip <= 0) {   
+    filter->param->laser_skip = 
+      floor(filter->param->integrate_angle / laser->config.angular_resolution);
+  }
   
   fprintf(stderr, "\rDoing global localization... (%.1f%% complete)", 0.0);
   filter->initialized = 0;
@@ -399,7 +408,7 @@ void carmen_localize_initialize_particles_manual(carmen_localize_particle_filter
 /* incorporate a single odometry reading into the particle filter */
 
 void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filter,
-				   carmen_point_t odometry_position)
+					  carmen_point_t odometry_position)
 {
   int i, backwards;
   double dr1, dt, dr2;
@@ -516,6 +525,12 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
   float log_min_wall_prob = log(filter->param->min_wall_prob);
   int i, j, x, y, robot_x, robot_y;
   int count[num_readings]; 
+
+  /* compute the correct laser_skip */
+  if (filter->param->laser_skip <= 0) {   
+    filter->param->laser_skip = 
+      floor(filter->param->integrate_angle / angular_resolution);
+  }
 
   /* reset the weights back to even */
   for(i = 0; i < filter->param->num_particles; i++)
@@ -703,19 +718,20 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
   robot_position.theta = laser->robot_pose.theta;
   carmen_localize_incorporate_odometry(filter, robot_position);
 
-  /* incorporate the laser scan */
-  carmen_localize_incorporate_laser(filter, map, laser->num_readings, 
-				    laser->range, forward_offset, 
-				    laser->config.angular_resolution,
-				    laser->config.start_angle,
-				    backwards);
-  
-  /* check if it is time to resample */
-  if(filter->param->use_sensor && 
-     filter->distance_travelled > filter->param->update_distance) {
-    carmen_localize_resample(filter);
-    filter->distance_travelled = 0;
-    filter->initialized = 1;
+  if(filter->param->use_sensor) {
+    /* incorporate the laser scan */
+    carmen_localize_incorporate_laser(filter, map, laser->num_readings, 
+				      laser->range, forward_offset, 
+				      laser->config.angular_resolution,
+				      laser->config.start_angle,
+				      backwards);
+    
+    /* check if it is time to resample */
+    if ( filter->distance_travelled > filter->param->update_distance) {
+      carmen_localize_resample(filter);
+      filter->distance_travelled = 0;
+      filter->initialized = 1;
+    }
   }
 }
 
