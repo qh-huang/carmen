@@ -369,6 +369,11 @@ extern inline char *carmen_next_n_words(char *str, int n)
 
 void carmen_publish_heartbeat(char *module_name);
 
+void
+carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
+				   carmen_handler_t handler,
+				   carmen_subscribe_t subscribe_how);
+
 #ifdef __cplusplus
 }
 #endif

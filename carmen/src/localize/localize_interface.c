@@ -101,6 +101,25 @@ carmen_localize_unsubscribe_initialize_message(carmen_handler_t handler)
   carmen_unsubscribe_message(CARMEN_LOCALIZE_INITIALIZE_NAME, handler);
 }
 
+void
+carmen_localize_subscribe_initialize_placename_message(carmen_localize_initialize_placename_message 
+						       *initialize,
+						       carmen_handler_t handler,
+						       carmen_subscribe_t subscribe_how)
+{
+  carmen_subscribe_message(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, 
+                           CARMEN_LOCALIZE_INITIALIZE_PLACENAME_FMT,
+                           initialize,
+			   sizeof(carmen_localize_initialize_placename_message), 
+			   handler, subscribe_how);
+}
+
+void
+carmen_localize_unsubscribe_initialize_placename_message(carmen_handler_t handler)
+{
+  carmen_unsubscribe_message(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, handler);
+}
+
 static unsigned int timeout = 5000;
 
 void 

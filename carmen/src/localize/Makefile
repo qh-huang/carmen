@@ -27,7 +27,7 @@ liblocalize_interface.a:	localize_interface.o
 
 liblocalize_core.a: localizecore.o likelihood_map.o
 
-localize:	localize.o liblocalize_core.a
+localize:	localize.o liblocalize_core.a liblocalize_interface.a
 
 localizegraph:	localizegraph.o likelihood_map.o liblocalize_interface.a
 

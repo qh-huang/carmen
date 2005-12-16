@@ -1,6 +1,5 @@
 #include <carmen/carmen.h>
 #include <sys/wait.h>
-//#include <heartbeat_interface.h>
 #include "proccontrol_messages.h"
 #include "proccontrol_ipc.h"
 #include "proccontrol.h"
@@ -241,16 +240,14 @@ void groupset_handler(carmen_proccontrol_groupset_message *query)
       process[i].requested_state = query->requested_state;
 }
 
-/*
 void heartbeat_handler(carmen_heartbeat_message *heartbeat)
 {
   int i;
   
   for(i = 0; i < num_processes; i++)
-    if(strcmp(process[i].module_name, heartbeat->modulename) == 0)
+    if(strcmp(process[i].module_name, heartbeat->module_name) == 0)
       process[i].last_heartbeat = carmen_get_time();
 }
-*/
 
 void read_process_ini(char *filename)
 {
@@ -357,10 +354,9 @@ static void reconnect_central(void)
 			    (carmen_handler_t)groupset_handler,
 			    CARMEN_SUBSCRIBE_ALL);
       
-      /*
-      carmen_subscribe_heartbeat_message(NULL, (carmen_handler_t)heartbeat_handler,
-				      CARMEN_SUBSCRIBE_ALL);
-      */
+      carmen_subscribe_heartbeat_message(NULL, (carmen_handler_t)
+					 heartbeat_handler,
+					 CARMEN_SUBSCRIBE_ALL);
     }
     else
       usleep(100000);
@@ -409,10 +405,8 @@ int main(int argc, char **argv)
 			   (carmen_handler_t)groupset_handler,
 			   CARMEN_SUBSCRIBE_ALL);
 
-  /*
   carmen_subscribe_heartbeat_message(NULL, (carmen_handler_t)heartbeat_handler,
-				  CARMEN_SUBSCRIBE_ALL);
-  */
+				     CARMEN_SUBSCRIBE_ALL);
 
   /* add 5 Hz timer function */
   carmen_ipc_addPeriodicTimer(1.0 / 5.0, process_timer, NULL);

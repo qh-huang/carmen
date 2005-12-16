@@ -1520,3 +1520,13 @@ void carmen_publish_heartbeat(char *module_name)
   carmen_test_ipc_exit(err, "Could not publish",
 		       CARMEN_HEARTBEAT_NAME);
 }
+
+void
+carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
+				   carmen_handler_t handler,
+				   carmen_subscribe_t subscribe_how)
+{
+  carmen_subscribe_message(CARMEN_HEARTBEAT_NAME, CARMEN_HEARTBEAT_FMT,
+                           heartbeat, sizeof(carmen_heartbeat_message), 
+			   handler, subscribe_how);
+}

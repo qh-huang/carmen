@@ -40,20 +40,41 @@ carmen_localize_subscribe_globalpos_message(carmen_localize_globalpos_message
 					    carmen_handler_t handler,
 					    carmen_subscribe_t subscribe_how);
 
+void
+carmen_localize_unsubscribe_globalpos_message(carmen_handler_t handler);
+
 void 
 carmen_localize_subscribe_particle_message(carmen_localize_particle_message 
 					   *particle, carmen_handler_t handler,
 					   carmen_subscribe_t subscribe_how);
+
+void
+carmen_localize_unsubscribe_particle_message(carmen_handler_t handler);
 
 void 
 carmen_localize_subscribe_initialize_message(carmen_localize_initialize_message *init_msg,
 					     carmen_handler_t handler, 
 					     carmen_subscribe_t subscribe_how);
 
+void
+carmen_localize_unsubscribe_initialize_message(carmen_handler_t handler);
+
+void
+carmen_localize_subscribe_initialize_placename_message(carmen_localize_initialize_placename_message 
+						       *initialize,
+						       carmen_handler_t handler,
+						       carmen_subscribe_t subscribe_how);
+
+void
+carmen_localize_unsubscribe_initialize_placename_message(carmen_handler_t handler);
+
 void 
 carmen_localize_subscribe_sensor_message(carmen_localize_sensor_message 
 					 *sensor_msg, carmen_handler_t handler,
 					 carmen_subscribe_t subscribe_how);
+
+void
+carmen_localize_unsubscribe_sensor_message(carmen_handler_t handler);
 
 void 
 carmen_localize_initialize_gaussian_command(carmen_point_t mean,

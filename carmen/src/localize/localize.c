@@ -35,7 +35,6 @@ carmen_map_placelist_t placelist;
 carmen_localize_particle_filter_p filter;
 carmen_localize_summary_t summary;
 
-carmen_localize_initialize_message initialize_msg;
 carmen_robot_laser_message front_laser;
 
 /* publish a global position message */
@@ -116,55 +115,24 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
 
 /* process initialization messages */
 
-void carmen_localize_initialize_handler(MSG_INSTANCE msgRef, 
-					BYTE_ARRAY callData,
-					void *clientData 
-					__attribute__ ((unused)))
+void carmen_localize_initialize_handler(carmen_localize_initialize_message 
+					*initialize_msg)
 {
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err;
-  static int first = 1;
-
-  if(!first) {
-    free(initialize_msg.mean);
-    free(initialize_msg.std);
-  }
-  else
-    first = 0;
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  err = IPC_unmarshallData(formatter, callData, &initialize_msg, 
-			   sizeof(carmen_localize_initialize_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
-
-  if(initialize_msg.distribution == CARMEN_INITIALIZE_GAUSSIAN)
+  if(initialize_msg->distribution == CARMEN_INITIALIZE_GAUSSIAN)
     carmen_localize_initialize_particles_gaussians(filter, &map, 
-					    initialize_msg.num_modes,
-					    initialize_msg.mean,
-					    initialize_msg.std);
-  else if(initialize_msg.distribution == CARMEN_INITIALIZE_UNIFORM) {
+						   initialize_msg->num_modes,
+						   initialize_msg->mean,
+						   initialize_msg->std);
+  else if(initialize_msg->distribution == CARMEN_INITIALIZE_UNIFORM) {
     carmen_localize_initialize_particles_uniform(filter, &front_laser, &map);
     publish_particles(filter, &summary);
   }
 }
 
-void carmen_localize_initialize_placename_handler(MSG_INSTANCE msgRef, 
-						  BYTE_ARRAY callData,
-						  void *clientData 
-						  __attribute__ ((unused)))
+void carmen_localize_initialize_placename_handler(carmen_localize_initialize_placename_message *init_place)
 {
-  FORMATTER_PTR formatter;
-  IPC_RETURN_TYPE err;
-  carmen_localize_initialize_placename_message init_place;
-
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  err = IPC_unmarshallData(formatter, callData, &init_place,
-			   sizeof(carmen_localize_initialize_placename_message));
-  IPC_freeByteArray(callData);
-  carmen_test_ipc(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
-  
   carmen_localize_initialize_particles_placename(filter, &map, &placelist,
-						 init_place.placename);
+						 init_place->placename);
   publish_particles(filter, &summary);
 }
 
@@ -318,15 +286,15 @@ int register_ipc_messages(void)
 		       CARMEN_LOCALIZE_INITIALIZE_NAME);
 
   /* subscribe to initialization messages */
-  err = IPC_subscribe(CARMEN_LOCALIZE_INITIALIZE_NAME, 
-		      carmen_localize_initialize_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_INITIALIZE_NAME);
-  IPC_setMsgQueueLength(CARMEN_LOCALIZE_INITIALIZE_NAME, 1);
+  carmen_localize_subscribe_initialize_message(NULL, 
+					       (carmen_handler_t)
+					       carmen_localize_initialize_handler,
+					       CARMEN_SUBSCRIBE_LATEST);
 
-  err = IPC_subscribe(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, 
-		      carmen_localize_initialize_placename_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME);
-  IPC_setMsgQueueLength(CARMEN_LOCALIZE_INITIALIZE_PLACENAME_NAME, 1);
+  carmen_localize_subscribe_initialize_placename_message(NULL, 
+							 (carmen_handler_t)
+							 carmen_localize_initialize_placename_handler,
+							 CARMEN_SUBSCRIBE_LATEST);
 
   /* register map request message */
   err = IPC_defineMsg(CARMEN_LOCALIZE_QUERY_NAME, IPC_VARIABLE_LENGTH,
