@@ -259,3 +259,24 @@ void carmen_multicentral_reconnect_centrals(carmen_centrallist_p centrallist,
       }
     }
 }
+
+void carmen_multicentral_ipc_sleep(carmen_centrallist_p centrallist, 
+				   double sleep_time)
+{
+  int i, count = 0;
+
+  for(i = 0; i < centrallist->num_centrals; i++) 
+    if(centrallist->central[i].connected) 
+      count++;
+  
+  if(count == 0)
+    usleep((int)(sleep_time * 1e6));
+  else {
+    /* handle IPC messages for each central */
+    for(i = 0; i < centrallist->num_centrals; i++) 
+      if(centrallist->central[i].connected) {
+	IPC_setContext(centrallist->central[i].context);
+	carmen_ipc_sleep(sleep_time / count);
+      }
+  }
+}

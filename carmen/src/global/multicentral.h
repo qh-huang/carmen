@@ -39,6 +39,9 @@ void carmen_multicentral_reconnect_centrals(carmen_centrallist_p centrallist,
 
 void carmen_multicentral_start_central_check(carmen_centrallist_p centrallist);
 
+void carmen_multicentral_ipc_sleep(carmen_centrallist_p centrallist, 
+				   double sleep_time);
+
 #ifdef __cplusplus
 }
 #endif

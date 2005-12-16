@@ -14,13 +14,16 @@ void test_ipc_exit_handler(void)
 int main(int argc, char **argv)
 {
   carmen_centrallist_p centrallist;
-  int i;
+
+  /* set this if it is OK for the program to run without connections
+     to any centrals */
+  carmen_multicentral_allow_zero_centrals(1);
 
   /* connect to all IPC servers */
-  carmen_multicentral_allow_zero_centrals(1);
   centrallist = carmen_multicentral_initialize(argc, argv, 
 					       test_ipc_exit_handler);
 
+  /* start thread that monitors connections to centrals */
   carmen_multicentral_start_central_check(centrallist);
 
   /* subscribe to messages from each central */
@@ -28,14 +31,8 @@ int main(int argc, char **argv)
 					 test_subscribe_messages);
 
   do {
-    /* handle IPC messages for each central */
-    for(i = 0; i < centrallist->num_centrals; i++) 
-      if(centrallist->central[i].connected) {
-        IPC_setContext(centrallist->central[i].context);
-        carmen_ipc_sleep(0.05);
-      }
-      else
-	usleep(50000);
+    /* handle IPC messages across all centrals */
+    carmen_multicentral_ipc_sleep(centrallist, 0.1);
 
     /* attempt to reconnect any missing centrals */
     carmen_multicentral_reconnect_centrals(centrallist, NULL,
