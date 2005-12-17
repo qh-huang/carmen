@@ -3,10 +3,8 @@ include ../Makefile.conf
 LFLAGS += -lipc -lparam_interface
 
 ifndef NO_GRAPHICS
-IFLAGS += `$(GTK_CONFIG) --cflags` 
+IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += `$(GTK_CONFIG) --libs`
-IFLAGS += `$(IMLIB_CONFIG) --cflags` 
-LFLAGS += `$(IMLIB_CONFIG) --libs`
 else
 CFLAGS += -DNO_GRAPHICS
 endif

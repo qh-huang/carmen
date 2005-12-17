@@ -27,7 +27,7 @@ my ($xr4000Kernel) = "2.0.20";
 my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $notcpd, $nojpeg, $nozlib,
-    $noreadline, $nolibart, $install_path);
+    $noreadline, $nolibart, $nowand, $install_path);
 
 $nolibart = 1;
 
@@ -43,6 +43,7 @@ Options: [--nographics]  : compile without graphics
 	 [--notcpd]      : compile without using TCPD wrappers
 	 [--nojpeg]      : compile without JPEG support
 	 [--nozlib]      : compile without ZLib support
+	 [--nowand]      : compile without ImageMagick support
 	 [-L<libpath>]   : compile with additional library paths
                            (can have multiple -L option switchs)
 EOF
@@ -72,6 +73,9 @@ EOF
   if (/nolibart/) {
     $nolibart = 1;
   }
+  if (/nowand/) {
+    $nowand = 1;
+  }
   if (/prefix/) {
     ($install_path) = /prefix=(.*)/;
   }
@@ -100,6 +104,7 @@ my $jpeg = verify_libjpeg(\@user_libs) unless ($nojpeg or !$gtk_config);
 my $zlib = verify_zlib(\@user_libs) unless ($nozlib);
 my $readline = verify_readline(\@user_libs) unless ($noreadline);
 my $libart = verify_libart(\@user_libs) unless ($nolibart);
+my $wand = verify_wand() unless ($nowand);
 my $install_path = get_install_path() unless ($install_path);
 my @robots = get_robot_types($os_type, $kernel, $canlib);
 
@@ -129,6 +134,7 @@ print OUTPUT "NO_TCPD = 1\n" unless ($tcpd);
 print OUTPUT "NO_LIBJPEG = 1\n" unless ($jpeg);
 print OUTPUT "NO_ZLIB = 1\n" unless ($zlib);
 print OUTPUT "NO_LIBART = 1\n" unless ($libart);
+print OUTPUT "NO_WAND = 1\n" unless ($wand);
 print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
 print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
 if ($readline) {
@@ -165,51 +171,64 @@ sub check_gcc_version {
 
 sub verify_graphics {
   print "Searching for GTK... ";
-  my $gtk_path = "gtk-config";
-  my $gtk_return = `$gtk_path --version`;
-  while (!defined $gtk_return) {
-    print <<EOF;
+  my $gtk_version;
+  if ($suse) {
+    $gtk_version = `gtk-config --version`;
+  } else {
+    $gtk_version = `pkg-config --modversion gtk+`;
+  }
+  if ($? != 0) {
+    print<<EOF;
+${red}not found${normal};
+not found.
+I tried to execute pkg-config --version gtk+
+and got this response:
 
+$gtk_version
 
-Could not find GTK. I tried to execute $gtk_path
-but got this error:
-
-$!
-
-If GTK is installed, please type the full path of gtk-config, or hit enter to
-compile without graphics support. If you do not have graphics, CARMEN\'s
-display modules will not compile, but all other modules should compile without
-problem.
+If you do not have graphics, CARMEN\'s display modules will not compile, but 
+all other modules should compile without problem.
 
 EOF
-    print "gtk-config path [none]: ";
-    $gtk_path = <STDIN>;
-    chomp $gtk_path;
-    if (length($gtk_path) == 0) {
-      print "Very well, I will compile without graphics.\n";
-      return undef;
-    }
-    $gtk_return = `$gtk_path --version`;
+  return undef;
   }
+  chomp $gtk_version;
 
-  chomp $gtk_return;
-
-  my ($gtk_major, $gtk_minor, $revision) = $gtk_return =~ /(\d+)\.(\d+).(\d+)/;
+  my ($gtk_major,$gtk_minor,$revision) = $gtk_version =~ /(\d+)\.(\d+).(\d+)/;
 
   if ($gtk_major < $min_gtk_version[0] ||
       ($gtk_major == $min_gtk_version[0] && 
        $gtk_minor < $min_gtk_version[1])) {
     print <<EOF;
-
-
-Specified GTK version is $gtk_return, but minimum required version is
+found, version $gtk_major.$gtk_minor.$revision.
+Specified GTK version is $gtk_version, but minimum required version is
 $min_gtk_version[0].$min_gtk_version[1]. Please install a newer version of gtk, or re-run $PROGRAM_NAME
 with --nographics.
 EOF
     die "\n";
   }
-  print "Found gtk-config, version $gtk_major.$gtk_minor.$revision\n";
-  return $gtk_path;
+  print "found, version $gtk_major.$gtk_minor.$revision\n";
+
+  print "Searching for Gdk-Imlib... ";
+  my $error = system ("pkg-config imlibgdk");
+  if (!$error) {
+    print "found\n";
+    return 1;
+  }  
+
+  print "${red}not found${normal}\n";
+    print<<EOF;
+I tried to execute pkg-config --modversion imlibgdk
+and got this response:
+
+$error
+
+If you do not have gdk_imlib, CARMEN\'s display modules will not compile, but 
+all other modules should compile without problem.
+
+EOF
+
+  return undef;
 }
 
 sub verify_joystick {
@@ -238,7 +257,7 @@ EOF
       return undef;
     }
   }
-  print "Found joystick header at\n$joystick_path\n";
+  print "found at $joystick_path\n";
 
   if ($joystick_path =~ m!^/usr/include!)  {
     print<<EOF;
@@ -543,6 +562,26 @@ EOF
   }
   print "${red}not found${normal}\n";
   unlink "${filename}.c";
+  return undef;
+}
+
+sub verify_wand {
+  my $error = undef;
+
+  print "Searching for Wand... ";
+  $error = system ("pkg-config Wand");
+  if (!$error) {
+    print "found\n";
+    return 1;
+  }  
+
+  print "${red}not found${normal}\n";
+  return undef;
+}
+
+sub verify_imlib {
+  my $error = undef;
+
   return undef;
 }
 
@@ -872,9 +911,9 @@ EOF
 
 sub verify_suse {
   unless (-r "/etc/SuSE-release") {
-    print "Even better -- this isn't SuSE!\n";
+    print "This doesn't look like SuSE!\n";
     return undef;
   };
-  print "This looks like SuSE. Sorry.\n";
+  print "This looks like SuSE.\n";
   return 1;
 }
