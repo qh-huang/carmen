@@ -31,10 +31,10 @@ ipc_update( void )
 }
 
 void
-ipc_init( char * modulename )
+ipc_init( int argc, char * argv[] )
 {
 
-  carmen_initialize_ipc( modulename );
+  carmen_ipc_initialize( argc, argv );
   /*************************** SUBSCRIBE ***********************/
   carmen_gps_subscribe_nmea_message( &gps_gpgga,
 				     (carmen_handler_t) ipc_gps_gpgga_handler,
@@ -42,9 +42,9 @@ ipc_init( char * modulename )
 }
 
 int
-main( int argc __attribute__ ((unused)), char *argv[] )
+main( int argc, char *argv[] )
 {
-  ipc_init(argv[0] );
+  ipc_init(argc, argv );
 
   while(1) {
 

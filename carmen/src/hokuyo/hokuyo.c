@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   
   while(1) {
     carmen_hokuyo_run();
-    carmen_ipc_sleep(10);
+    carmen_ipc_sleep(0.1);
   }
   return 0;
 }

@@ -82,7 +82,7 @@ main(int argc, char *argv[])
       }
       usleep(100000);
     } else {
-      carmen_ipc_sleep(250);
+      carmen_ipc_sleep(0.25);
       //IPC_listen(0);
       //usleep(250000);
     }
