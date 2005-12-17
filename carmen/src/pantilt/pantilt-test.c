@@ -101,7 +101,7 @@ main( int argc, char *argv[] )
       tilt = atof(argv[2]);
     }
   }
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
 
   if (!use_keyboard) {
     fprintf( stderr, "Move PANTILT: pan=%3.1f tilt=%3.1f\n", pan, tilt );

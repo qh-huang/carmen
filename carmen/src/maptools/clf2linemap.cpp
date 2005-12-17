@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  carmen_initialize_ipc("clf2linemap");
+  carmen_ipc_initialize(argc, argv);
   carmen_linemapping_init(argc, argv);
 
   cerr << "reading clf " << argv[argc-1] << " ...";
