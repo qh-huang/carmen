@@ -1,8 +1,5 @@
-Directory structure (especially mapserver)
-  map/log file extensions: .cmf, .clf\
+map/log file extensions: .cmf, .clf\
   
-viewers
-
 laser module/messages
    Add error messages when laser fails to connect.
 

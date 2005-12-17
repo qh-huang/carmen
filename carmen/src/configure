@@ -171,26 +171,25 @@ sub check_gcc_version {
 
 sub verify_graphics {
   print "Searching for GTK... ";
-  my $gtk_version;
+  my $gtk_config;
   if ($suse) {
-    $gtk_version = `gtk-config --version`;
+    $gtk_config = "gtk-config --version";
   } else {
-    $gtk_version = `pkg-config --modversion gtk+`;
+    $gtk_config = "pkg-config --modversion gtk+";
   }
+  my $gtk_version = `$gtk_config 2>&1`;
   if ($? != 0) {
     print<<EOF;
-${red}not found${normal};
-not found.
-I tried to execute pkg-config --version gtk+
+${red}not found${normal}. 
+I tried to execute $gtk_config
 and got this response:
 
 $gtk_version
-
 If you do not have graphics, CARMEN\'s display modules will not compile, but 
-all other modules should compile without problem.
-
+all other modules should compile without problem. Please install gtk and
+gdk_imlib, or re-run $PROGRAM_NAME with --nographics.
 EOF
-  return undef;
+  die "\n";
   }
   chomp $gtk_version;
 
@@ -210,7 +209,7 @@ EOF
   print "found, version $gtk_major.$gtk_minor.$revision\n";
 
   print "Searching for Gdk-Imlib... ";
-  my $error = system ("pkg-config imlibgdk");
+  my $error = system("pkg-config imlibgdk");
   if (!$error) {
     print "found\n";
     return 1;
@@ -218,15 +217,13 @@ EOF
 
   print "${red}not found${normal}\n";
     print<<EOF;
-I tried to execute pkg-config --modversion imlibgdk
-and got this response:
 
-$error
-
+I tried to execute pkg-config --modversion imlibgdk and received an error.
 If you do not have gdk_imlib, CARMEN\'s display modules will not compile, but 
-all other modules should compile without problem.
-
+all other modules should compile without problem. Please install gdk_imlib, or
+re-run $PROGRAM_NAME with --nographics.
 EOF
+  die "\n";
 
   return undef;
 }
@@ -370,7 +367,8 @@ EOF
   if (length($type_string) == 0 or $type_string eq "*" or 
       $type_string eq "$max") {
     print "Very well, compiling support for all base types.\n";
-    my (@robots) = ("rflex", "pioneer", "scout", "orc");
+#    my (@robots) = ("rflex", "pioneer", "scout", "orc");
+    my (@robots) = ("rflex", "pioneer", "orc");
     push @robots, "xr4000" if ($allow_xr4000);
     push @robots, "segway" if ($allow_segway);
     return @robots;
