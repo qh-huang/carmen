@@ -94,6 +94,17 @@ main( int argc, char *argv[] )
       scan.timestamp = atof( strtok( NULL, " ") );
       strncpy( host, strtok( NULL, " "), MAX_NAME_LENGTH );
       time = atof( strtok( NULL, " ") );
+
+      // GUESS VALUES
+      scan.config.laser_type = 0;
+      scan.config.start_angle = -0.5*M_PI;
+      scan.config.fov = M_PI;
+      scan.config.angular_resolution = scan.config.fov/ ((double) (scan.num_readings-1.0) );
+      scan.config.maximum_range = 81.92;
+      scan.config.accuracy = 0.05;
+      scan.config.remission_mode = 0;
+
+
       /*****************************************************************/
       corrpos = vascocore_scan_match( scan, pos );
       /*****************************************************************/
@@ -126,20 +137,20 @@ main( int argc, char *argv[] )
       running = line;
       strtok( running, " ");
 
-      for (i=0; i<6; i++) {
-	strtok( NULL, " ");
-      }
-      
+      scan.config.laser_type = (int) (atoi( strtok( NULL, " ") ));
+      scan.config.start_angle = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.fov = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.angular_resolution = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.maximum_range = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.accuracy = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.remission_mode = (int) (atoi( strtok( NULL, " ") ));
+            
       scan.num_readings = (int) (atoi( strtok( NULL, " ") ));
-
-      //      fprintf(stderr, "%d ", scan.num_readings);
-
       for (i=0; i<scan.num_readings; i++) {
 	scan.range[i] = (float) (atof( strtok( NULL, " ") ));
       }
 
       scan.num_remissions = (int) (atoi( strtok( NULL, " ") ));
-      ///      fprintf(stderr, "(%d) ", scan.num_remissions);
       for (i=0; i<scan.num_remissions; i++) {
 	scan.remission[i] = (float) (atof( strtok( NULL, " ") ));
       }
@@ -155,7 +166,6 @@ main( int argc, char *argv[] )
       for (i=0; i<5; i++) {
 	strtok( NULL, " ");
       }
-
 
       scan.timestamp = atof( strtok( NULL, " ") );
       strncpy( host, strtok( NULL, " "), MAX_NAME_LENGTH );
