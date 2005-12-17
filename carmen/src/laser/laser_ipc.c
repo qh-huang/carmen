@@ -35,7 +35,7 @@ void publish_laser_message(sick_laser_p laser,
   int i;
 
   msg.host = carmen_get_host();
-  msg.num_readings = laser->numvalues - 1; 
+  msg.num_readings = laser->numvalues; 
   msg.timestamp = laser->timestamp;
   msg.config = *config;
   
