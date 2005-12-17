@@ -68,7 +68,7 @@ main( int argc, char *argv[] ) {
       read(pDevice.fd,&buffer, 512);
       ProcessLine(buffer, val );
     }
-    carmen_ipc_sleep(20);
+    carmen_ipc_sleep(0.020);
       //IPC_listen(0);
       //    usleep(20000);
   }
