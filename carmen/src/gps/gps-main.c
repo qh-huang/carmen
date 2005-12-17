@@ -48,7 +48,9 @@ main(int argc, char *argv[])
   SerialDevice                dev;
   carmen_gps_gpgga_message    gpgga;
 
-  gethostname( gpgga.host, 10 );
+  gpgga.host = carmen_get_host();
+
+  //gethostname( gpgga.host, 10 );
   carmen_ipc_initialize( argc, argv );
   ipc_initialize_messages();
  
@@ -80,8 +82,9 @@ main(int argc, char *argv[])
       }
       usleep(100000);
     } else {
-      IPC_listen(0);
-      usleep(250000);
+      carmen_ipc_sleep(250);
+      //IPC_listen(0);
+      //usleep(250000);
     }
 
   }
