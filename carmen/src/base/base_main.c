@@ -86,6 +86,10 @@ initialize_robot(void)
       calloc(num_sonar_ranges, sizeof(carmen_point_t));
     carmen_test_alloc(positions);
     sonar_state = 1;
+  } else {
+    result = carmen_base_direct_sonar_off();
+    if(result < 0) 
+      return -1;
   }
 
   result = carmen_base_direct_reset();

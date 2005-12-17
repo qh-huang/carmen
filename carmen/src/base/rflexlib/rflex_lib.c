@@ -6,8 +6,12 @@
 #include "rflex_params.h"
 
 typedef struct {
-  int distance;
-  int bearing;
+  int current_displacement_odometry;
+  int current_bearing_odometry;
+
+  int last_displacement_odometry;
+  int last_bearing_odometry;
+
   int t_vel;
   int r_vel;
   int num_sonars;
@@ -130,10 +134,10 @@ parseMotReport( unsigned char *buffer )
     timeStamp = convertBytes2UInt32(&(buffer[10]));
     axis      = buffer[14];
     if (axis == 0) {
-      status.distance = convertBytes2UInt32(&(buffer[15]));
+      status.current_displacement_odometry=convertBytes2UInt32(&(buffer[15]));
       status.t_vel = convertBytes2UInt32(&(buffer[19]));
     } else if (axis == 1) {
-      status.bearing = convertBytes2UInt32(&(buffer[15]));
+      status.current_bearing_odometry = convertBytes2UInt32(&(buffer[15]));
       status.r_vel = convertBytes2UInt32(&(buffer[19]));
     }
     acc       = convertBytes2UInt32(&(buffer[23]));
@@ -222,12 +226,12 @@ clear_incoming_data(void)
   // 32 bytes here because the motion packet is 34. No sense in waiting for a
   // complete packet -- we can starve because the last 2 bytes might always
   // arrive with the next packet also, and we never leave the loop. 
-
+  
   bytes = bytesWaiting(dev_fd);
-  carmen_warn("bytes %d\n", bytes); 
   while (bytes > 32) {
     waitForAnswer(dev_fd, buffer, &len);
     parseBuffer(buffer, len);
+    bytes = bytesWaiting(dev_fd);
   }
 }
 
@@ -426,7 +430,8 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
 
   carmen_rflex_brake_off();
 
-  carmen_rflex_initialize(1.0*distance_conversion, M_PI/4 * angle_conversion, 0, 0);
+  carmen_rflex_initialize(1.0*distance_conversion, 
+			  M_PI/4 * angle_conversion, 0, 0);
 
   return 0;
 }
@@ -527,13 +532,18 @@ carmen_base_direct_get_state(double *displacement, double *rotation,
 			     double *tv, double *rv)
 {
   if (displacement)
-    *displacement = status.distance;
+    *displacement = (status.current_displacement_odometry - 
+		     status.last_displacement_odometry) / distance_conversion;
   if (rotation)
-    *rotation = status.bearing;
+    *rotation = (status.current_bearing_odometry - 
+		 status.last_bearing_odometry) / angle_conversion;
   if (tv)
-    *tv = status.t_vel;
+    *tv = status.t_vel / distance_conversion;
   if (rv)
-    *rv = status.r_vel;
+    *rv = status.r_vel / angle_conversion;
+
+  status.current_displacement_odometry = status.last_displacement_odometry;
+  status.current_bearing_odometry = status.last_bearing_odometry;
 
   return 0;
 }

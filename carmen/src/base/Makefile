@@ -4,8 +4,7 @@ SUBDIRS = orclib pioneerlib reflexlib scoutlib xr4000_base
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
-LFLAGS += -llaser -lrobot -lglobal -lserial -lgeometry -lipc -lbase_interface \
-	-llaser_interface -lcamera_interface -lparam_interface 
+LFLAGS += -lparam_interface -lglobal -lserial -lgeometry -lipc 
 
 MODULE_NAME = BASE
 MODULE_COMMENT = Generic interface to all robot bases
