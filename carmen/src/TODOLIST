@@ -1,4 +1,10 @@
-map/log file extensions: .cmf, .clf\
+map file extensions: .cmf
+
+clean up ini files
+
+change arm_num_servos in base_main to only be used if base_has_arm is on.
+
+generic logging
   
 laser module/messages
    Add error messages when laser fails to connect.
@@ -8,6 +14,8 @@ Test programs
 
 IPC message size test
 Command shell
+
+
 
 - robotgraph -- when turning to face a point, and the network goes out, robot
 keeps turning for 1-3 secs. Why?

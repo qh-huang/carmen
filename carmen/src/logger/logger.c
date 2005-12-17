@@ -166,7 +166,7 @@ void shutdown_module(int sig)
 
 int main(int argc, char **argv)
 {
-  char filename[1024];
+  char *filename;
   char key;
 
   /* initialize connection to IPC network */
@@ -176,7 +176,24 @@ int main(int argc, char **argv)
   /* open logfile, check if file overwrites something */
   if(argc < 2) 
     carmen_die("usage: %s <logfile>\n", argv[0]);
-  sprintf(filename, argv[1]);
+  filename = carmen_new_string("%s", argv[1]);
+  
+  if (strlen(filename) < 4 || strcmp(filename+strlen(filename)-4,".clf") !=0) {
+    fprintf(stderr, "By convention, carmen log files end in .clf.\n");
+    do {
+      fprintf(stderr, "Append .clf to log filename %s? ",  filename);
+      scanf("%c", &key);
+    } while (key == '\n');
+
+    if (toupper(key) == 'Y') {
+      free(filename);
+      filename = carmen_new_string("%s.clf", argv[1]);
+    }
+
+    do {
+      scanf("%c", &key);
+    } while (key != '\n');    
+  }
 
   outfile = carmen_fopen(filename, "r");
   if (outfile != NULL) {
