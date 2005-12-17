@@ -46,7 +46,7 @@ typedef struct {
   double fov;                             /* field of view of the laser */
   double angular_resolution;              /* angular resolution of the laser */
   double maximum_range;                   /* the maximum valid range of a measurement  */
-  double accuracy;                        /* max. systematical error in the range measurements*/
+  double accuracy;                        /* error in the range measurements*/
 
   carmen_laser_remission_type_t remission_mode;  /* if and what kind of remission values are used */
 
