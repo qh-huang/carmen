@@ -192,9 +192,6 @@ char *carmen_get_host(void);
 
 carmen_default_message *carmen_default_message_create(void);
 
-void sleep_ipc(double timeout);
-void close_ipc(void);
-
 void carmen_running_average_clear(int which);
 void carmen_running_average_add(int which, double x);
 double carmen_running_average_report(int which);

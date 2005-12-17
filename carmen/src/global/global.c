@@ -531,18 +531,6 @@ carmen_carp_get_verbose(void) {
 
 extern IPC_VERBOSITY_TYPE ipcVerbosity;
 
-void 
-sleep_ipc(double timeout)
-{
-  IPC_listenWait(timeout * 1000);
-}
-
-void 
-close_ipc(void)
-{
-  IPC_disconnect();
-}
-
 #define MAX_AVERAGE_NUM 5
 #define AVERAGE_LENGTH 20
 
