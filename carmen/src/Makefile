@@ -5,7 +5,7 @@ include Makefile.conf
 PACKAGES = ipc global base laser maptools param_daemon \
 	   robot simulator robotgui mapeditor logtools joystick \
 	   vasco localize navigator linemapping hmap logger camera \
-           proccontrol pantilt hokuyo
+           proccontrol pantilt hokuyo gps
 
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
