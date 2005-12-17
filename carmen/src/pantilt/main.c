@@ -9,7 +9,7 @@ PantiltPosType       pPos;
 
 void 
 commShutdown( void ) {
-  IPC_disconnect();
+  carmen_ipc_disconnect();
   fprintf( stderr, "\n" );
   exit(0);
 }
@@ -41,7 +41,8 @@ main( int argc, char *argv[] ) {
   }
 
   /* connect to IPC server */
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
+  //  carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
   ipc_initialize_messages();
 
@@ -67,8 +68,9 @@ main( int argc, char *argv[] ) {
       read(pDevice.fd,&buffer, 512);
       ProcessLine(buffer, val );
     }
-    IPC_listen(0);
-    usleep(20000);
+    carmen_ipc_sleep(20);
+      //IPC_listen(0);
+      //    usleep(20000);
   }
   
 }
