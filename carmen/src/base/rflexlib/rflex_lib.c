@@ -231,7 +231,7 @@ clear_incoming_data(void)
   while (bytes > 32) {
     waitForAnswer(dev_fd, buffer, &len);
     parseBuffer(buffer, len);
-    bytes = bytesWaiting(dev_fd);
+    bytes = bytesWaiting(dev_fd); 
   }
 }
 
@@ -476,7 +476,7 @@ carmen_base_direct_shutdown_robot(void)
 int 
 carmen_base_direct_set_acceleration(double acceleration)
 {
-  acceleration_state = acceleration;
+  acceleration_state = acceleration * distance_conversion;
 
   return 0;
 }
@@ -484,7 +484,7 @@ carmen_base_direct_set_acceleration(double acceleration)
 int 
 carmen_base_direct_set_deceleration(double deceleration)
 {
-  deceleration_state = deceleration;
+  deceleration_state = deceleration * distance_conversion;
 
   return 0;
 }
@@ -494,6 +494,9 @@ carmen_base_direct_set_velocity(double tv, double rv)
 {
   unsigned char data[MAX_COMMAND_LENGTH];
 
+  tv = tv * distance_conversion;
+  rv = rv * angle_conversion;
+  
   convertUInt8( (long) 0, &(data[0]));                   /* forward motion */
   convertUInt32( (long) abs(tv), &(data[1]));        /* abs trans velocity */
 
@@ -534,6 +537,7 @@ carmen_base_direct_get_state(double *displacement, double *rotation,
   if (displacement)
     *displacement = (status.current_displacement_odometry - 
 		     status.last_displacement_odometry) / distance_conversion;
+  
   if (rotation)
     *rotation = (status.current_bearing_odometry - 
 		 status.last_bearing_odometry) / angle_conversion;
@@ -542,8 +546,8 @@ carmen_base_direct_get_state(double *displacement, double *rotation,
   if (rv)
     *rv = status.r_vel / angle_conversion;
 
-  status.current_displacement_odometry = status.last_displacement_odometry;
-  status.current_bearing_odometry = status.last_bearing_odometry;
+  status.last_displacement_odometry = status.current_displacement_odometry;
+  status.last_bearing_odometry = status.current_bearing_odometry;
 
   return 0;
 }
@@ -565,7 +569,6 @@ carmen_base_direct_send_binary_data(unsigned char *data
 				    __attribute__ ((unused)), 
 				    int size __attribute__ ((unused)))
 {
-  carmen_warn("Send binary data not supported by RFlex.\n");
 
   return 0;
 }
@@ -575,7 +578,6 @@ carmen_base_direct_get_binary_data(unsigned char **data
 				   __attribute__ ((unused)), 
 				   int *size __attribute__ ((unused)))
 {
-  carmen_warn("Get binary data not supported by RFlex.\n");
 
   return 0;
 }
@@ -584,7 +586,6 @@ int carmen_base_direct_get_bumpers(unsigned char *state
 				   __attribute__ ((unused)), 
 				   int num_bumpers __attribute__ ((unused)))
 {
-  carmen_warn("Send binary data not supported by RFlex.\n");
 
   return 0;
 }
@@ -594,13 +595,11 @@ void carmen_base_direct_arm_get(double servos[] __attribute__ ((unused)),
 				double *currents __attribute__ ((unused)), 
 				int *gripper __attribute__ ((unused)))
 {
-  carmen_warn("%s not supported by pioneer.\n", __FUNCTION__);
 }
 
 void carmen_base_direct_arm_set(double servos[] __attribute__ ((unused)), 
 				int num_servos __attribute__ ((unused)))
 {
-  carmen_warn("%s not supported by pioneer.\n", __FUNCTION__);
 }
 
 int carmen_base_direct_get_sonars(double *ranges, 
