@@ -238,7 +238,7 @@ void  set_laser_config_structure(sick_laser_p laser,
 
   if (laser->settings.type == LMS) {
     config->laser_type = SICK_LMS;
-    config->maximum_range = 81.92;
+    config->maximum_range = 81.90;
 
     if (laser->settings.range_res == MM)
       config->accuracy = 0.035;  /* 5cm in cm mode, 35mm in mm mode */
@@ -253,7 +253,7 @@ void  set_laser_config_structure(sick_laser_p laser,
   else { 
     // if unknown, assume LMS
     config->laser_type = SICK_LMS;
-    config->maximum_range = 81.92;
+    config->maximum_range = 81.90;
 
     if (laser->settings.range_res == MM)
       config->accuracy = 0.035;  /* 5cm in cm mode, 35mm in mm mode */
