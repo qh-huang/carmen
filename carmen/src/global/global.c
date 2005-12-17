@@ -532,47 +532,6 @@ carmen_carp_get_verbose(void) {
 extern IPC_VERBOSITY_TYPE ipcVerbosity;
 
 void 
-carmen_initialize_ipc(char *module_name)
-{
-  IPC_RETURN_TYPE err;
-  char ipc_name[200];
-
-  if (getenv("WINDOWID") != NULL && getenv("SSH_TTY") != NULL) 
-    carmen_die("%s\nThis looks like an xterm that has been opened remotely.\n"
-	       "This is the wrong way to use Carmen, because it is a bandwidth-heavy\n"
-	       "way to connect remotely. The right thing to do is to open a local shell\n"
-	       "and ssh into the robot.\n%s\n", carmen_red_code, carmen_normal_code);
-
-  module_name = carmen_extract_filename(module_name);
-
-  carmen_print_version();
-
-  snprintf(ipc_name, 200, "%s-%d", module_name, getpid());
-
-  /* set verbosity level */
-  IPC_setVerbosity(IPC_Silent);
-
-  /* connect to the central server */
-  err = IPC_connect(ipc_name);
-  if(err == IPC_Error) {
-    carmen_warn("Could not connect to central.\n\n");
-    carmen_warn("Did you remember to start central?\n");
-    carmen_warn("Did you remember to set your CENTRALHOST variable?");
-    carmen_warn(" It is currently ");
-    if (getenv("CENTRALHOST"))
-      carmen_warn("\nset to %s.\n", getenv("CENTRALHOST"));
-    else
-      carmen_warn("not set.\n");
-    exit(-1);
-  }
-
-  /* Set local message queue capacity */
-  err = IPC_setCapacity(4);
-  carmen_test_ipc_exit(err, "I had problems setting the IPC capacity. This is a "
-		       "very strange error and should never happen.\n", "IPC_setCapacity");
-}
-
-void 
 sleep_ipc(double timeout)
 {
   IPC_listenWait(timeout * 1000);

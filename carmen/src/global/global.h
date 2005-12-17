@@ -192,7 +192,6 @@ char *carmen_get_host(void);
 
 carmen_default_message *carmen_default_message_create(void);
 
-void carmen_initialize_ipc(char *module_name);
 void sleep_ipc(double timeout);
 void close_ipc(void);
 
