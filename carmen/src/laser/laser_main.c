@@ -261,60 +261,63 @@ void  set_laser_config_structure(sick_laser_p laser,
       config->accuracy = 0.05;   /* 5cm in cm mode, 35mm in mm mode */
   }
 
-  if (laser->settings.laser_num == 181 ) {
+  if (laser->settings.num_values == 181 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0); 
     config->fov  = M_PI;
     config->start_angle = -0.5*M_PI;
   } 
-  else  if (laser->settings.laser_num == 361 ) {
+  else if (laser->settings.num_values == 361 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.5); 
     config->fov  = M_PI;
     config->start_angle = -0.5*M_PI;
   } 
-  else   if (laser->settings.laser_num == 180 ) {
+  else if (laser->settings.num_values == 180 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0);
     config->fov  = M_PI - config->angular_resolution;
     config->start_angle = -0.5*M_PI;
   } 
-  else   if (laser->settings.laser_num == 360 ) {
+  else if (laser->settings.num_values == 360 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.5);
     config->fov  = M_PI - config->angular_resolution;
     config->start_angle = -0.5*M_PI;
   } 
-  else   if (laser->settings.laser_num == 401 ) {
+  else   if (laser->settings.num_values == 401 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.25);
     config->fov  = carmen_degrees_to_radians(100.0);
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
-  else   if (laser->settings.laser_num == 201 ) {
+  else   if (laser->settings.num_values == 201 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.5);
     config->fov  = carmen_degrees_to_radians(100.0);
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
-  else   if (laser->settings.laser_num == 101 ) {
+  else   if (laser->settings.num_values == 101 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0);
     config->fov  = carmen_degrees_to_radians(100.0);
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
-  else   if (laser->settings.laser_num == 400 ) {
+  else   if (laser->settings.num_values == 400 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.25);
     config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
-  else   if (laser->settings.laser_num == 200 ) {
+  else   if (laser->settings.num_values == 200 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.5);
     config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
-  else   if (laser->settings.laser_num == 100 ) {
+  else   if (laser->settings.num_values == 100 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0);
     config->fov  = carmen_degrees_to_radians(100.0) - config->angular_resolution;
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
   else {
-    config->angular_resolution = 0.0;
-    config->fov  = 0.0;
-    config->start_angle = 0.0;
+
+    carmen_warn("Unkown laser config: laser->settings.num_values=%d\n", laser->settings.num_values);
+
+    config->fov  = M_PI;
+    config->start_angle = -0.5*config->fov;
+    config->angular_resolution = config->fov/((double)laser->settings.laser_num-1.0);
   }
 
   if (laser->settings.use_remission == 1 && 

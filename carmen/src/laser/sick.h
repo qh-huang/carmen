@@ -75,10 +75,8 @@ typedef struct {
   parity_t parity;
   int swf, hwf;
   int angle_range, angle_resolution;
-// *** REI - START *** //
   int use_remission;
   int rem_values;
-// *** REI - END *** //
   int num_values;
   int laser_flipped;
 } laser_settings_t;
