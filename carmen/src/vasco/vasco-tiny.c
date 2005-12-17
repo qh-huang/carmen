@@ -59,6 +59,9 @@ main( int argc, char *argv[] )
   scan.range = (float *) malloc( MAX_NUM_LASER_VALUES * sizeof(float) );
   carmen_test_alloc(scan.range);
   
+  scan.remission = (float *) malloc( MAX_NUM_LASER_VALUES * sizeof(float) );
+  carmen_test_alloc(scan.remission);
+
   carmen_ipc_initialize(argc, argv);
 
   /*****************************************************************/
@@ -71,6 +74,7 @@ main( int argc, char *argv[] )
   }
 
   while (fgets(line,MAX_LINE_LENGTH,fp) != NULL) {
+
     if ( (sscanf(line,"%s",command)!=0) &&
 	 (!strcmp( command, "FLASER") ) ) {
       sscanf(line, "%s %d",
@@ -116,8 +120,77 @@ main( int argc, char *argv[] )
       old_pos     = pos;
       old_corrpos = corrpos;
       
+    } else if ( (sscanf(line,"%s",command)!=0) &&
+	 (!strcmp( command, "ROBOTLASER1") ) ) {
+
+      running = line;
+      strtok( running, " ");
+
+      for (i=0; i<6; i++) {
+	strtok( NULL, " ");
+      }
+      
+      scan.num_readings = (int) (atoi( strtok( NULL, " ") ));
+
+      //      fprintf(stderr, "%d ", scan.num_readings);
+
+      for (i=0; i<scan.num_readings; i++) {
+	scan.range[i] = (float) (atof( strtok( NULL, " ") ));
+      }
+
+      scan.num_remissions = (int) (atoi( strtok( NULL, " ") ));
+      ///      fprintf(stderr, "(%d) ", scan.num_remissions);
+      for (i=0; i<scan.num_remissions; i++) {
+	scan.remission[i] = (float) (atof( strtok( NULL, " ") ));
+      }
+      
+
+      pos.x = atof( strtok( NULL, " ") );
+      pos.y = atof( strtok( NULL, " ") );
+      pos.theta = atof( strtok( NULL, " ") );
+      odo.x = atof( strtok( NULL, " ") );
+      odo.y = atof( strtok( NULL, " ") );
+      odo.theta = atof( strtok( NULL, " ") );
+
+      for (i=0; i<5; i++) {
+	strtok( NULL, " ");
+      }
+
+
+      scan.timestamp = atof( strtok( NULL, " ") );
+      strncpy( host, strtok( NULL, " "), MAX_NAME_LENGTH );
+      time = atof( strtok( NULL, " ") );
+
+      ///      fprintf(stderr, "SM" );
+
+      /*****************************************************************/
+      corrpos = vascocore_scan_match( scan, pos );
+      /*****************************************************************/
+      printf( "FLASER %d", scan.num_readings );
+      for (i=0; i<scan.num_readings; i++) {
+	printf( " %.2f", scan.range[i] );
+      }
+      printf( " %.6f %.6f %.6f %.6f %.6f %.6f %.6f %s %.6f\n",	
+	      corrpos.x, corrpos.y, corrpos.theta,
+	      odo.x, odo.y, odo.theta, scan.timestamp, host, time );
+
+      corr_move = carmen_move_between_points( old_corrpos, corrpos );
+      pos_move = carmen_move_between_points( old_pos, pos );
+
+      fprintf( stderr, "***********************************************\n" );
+      fprintf( stderr, "expected movement  %.6f m %.6f m %.6f degree\n",
+	       corr_move.forward, corr_move.sideward,
+	       rad2deg(corr_move.rotation) );
+      fprintf( stderr, "corrected movement %.6f m %.6f m %.6f degree\n",
+	       pos_move.forward, pos_move.sideward,
+	       rad2deg(pos_move.rotation) );
+      fprintf( stderr, "***********************************************\n\n" );
+      
+      old_pos     = pos;
+      old_corrpos = corrpos;
+      
     } else {
-      fputs( line, stdout );
+      //  fputs( line, stdout );
     }
     fflush(stdout);
   }
