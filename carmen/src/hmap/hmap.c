@@ -119,7 +119,7 @@ static void level_up() {
       break;
 
   carmen_map_change_map_zone(hmap.zone_names[link->keys[i+1]]);
-  sleep_ipc(1.0);
+  carmen_ipc_sleep(1.0);
   set_robot_pose(transform_robot_pose(link->points[i], link->points[i+1]));
 }
 
@@ -140,7 +140,7 @@ static void level_down() {
       break;
 
   carmen_map_change_map_zone(hmap.zone_names[link->keys[i-1]]);
-  sleep_ipc(1.0);
+  carmen_ipc_sleep(1.0);
   set_robot_pose(transform_robot_pose(link->points[i], link->points[i-1]));
 }
 
@@ -195,7 +195,7 @@ static void hmap_warp_check(carmen_point_t old_pose, carmen_point_t new_pose) {
     if (line_side_test(warp_post1, warp_post2, warp_pose, new_pose) < 0) {
       if (carmen_distance(&warp_pose, &new_pose) > 0.5) {  //dbug: param?
 	carmen_map_change_map_zone(warp_zone);
-	sleep_ipc(1.0);
+	carmen_ipc_sleep(1.0);
 	set_robot_pose(transform_robot_pose(warp_src, warp_dst));
 	warping = 0;
       }
@@ -282,7 +282,8 @@ static void ipc_init() {
 }
 
 void shutdown_module(int sig) {
-
+  carmen_ipc_disconnect();
+  
   sig = 0;
   exit(0);
 }
@@ -317,7 +318,7 @@ int main(int argc, char** argv) {
 
   int c;
 
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc,argv);
   carmen_param_check_version(argv[0]);
   signal(SIGINT, shutdown_module);
 
@@ -335,7 +336,7 @@ int main(int argc, char** argv) {
   carmen_terminal_cbreak(0);
 
   while(1) {
-    sleep_ipc(0.01);
+    carmen_ipc_sleep(0.01);
     c = getchar();
     /*
     if (c == EOF)
