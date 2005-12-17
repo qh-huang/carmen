@@ -104,6 +104,8 @@ main( int argc, char *argv[] )
       scan.config.accuracy = 0.05;
       scan.config.remission_mode = 0;
 
+      scan.num_remissions=0;
+
 
       /*****************************************************************/
       corrpos = vascocore_scan_match( scan, pos );
@@ -119,14 +121,14 @@ main( int argc, char *argv[] )
       corr_move = carmen_move_between_points( old_corrpos, corrpos );
       pos_move = carmen_move_between_points( old_pos, pos );
 
-      fprintf( stderr, "***********************************************\n" );
+      fprintf( stderr, "* FLASER  (%d beams) ***\n", scan.num_readings);
       fprintf( stderr, "expected movement  %.6f m %.6f m %.6f degree\n",
 	       corr_move.forward, corr_move.sideward,
 	       rad2deg(corr_move.rotation) );
-      fprintf( stderr, "corrected movement %.6f m %.6f m %.6f degree\n",
+      fprintf( stderr, "corrected movement %.6f m %.6f m %.6f degree\n\n",
 	       pos_move.forward, pos_move.sideward,
 	       rad2deg(pos_move.rotation) );
-      fprintf( stderr, "***********************************************\n\n" );
+
       
       old_pos     = pos;
       old_corrpos = corrpos;
@@ -138,11 +140,11 @@ main( int argc, char *argv[] )
       strtok( running, " ");
 
       scan.config.laser_type = (int) (atoi( strtok( NULL, " ") ));
-      scan.config.start_angle = (double) (atoi( strtok( NULL, " ") ));
-      scan.config.fov = (double) (atoi( strtok( NULL, " ") ));
-      scan.config.angular_resolution = (double) (atoi( strtok( NULL, " ") ));
-      scan.config.maximum_range = (double) (atoi( strtok( NULL, " ") ));
-      scan.config.accuracy = (double) (atoi( strtok( NULL, " ") ));
+      scan.config.start_angle = (double) (atof( strtok( NULL, " ") ));
+      scan.config.fov = (double) (atof( strtok( NULL, " ") ));
+      scan.config.angular_resolution = (double) (atof( strtok( NULL, " ") ));
+      scan.config.maximum_range = (double) (atof( strtok( NULL, " ") ));
+      scan.config.accuracy = (double) (atof( strtok( NULL, " ") ));
       scan.config.remission_mode = (int) (atoi( strtok( NULL, " ") ));
             
       scan.num_readings = (int) (atoi( strtok( NULL, " ") ));
@@ -187,20 +189,19 @@ main( int argc, char *argv[] )
       corr_move = carmen_move_between_points( old_corrpos, corrpos );
       pos_move = carmen_move_between_points( old_pos, pos );
 
-      fprintf( stderr, "***********************************************\n" );
+      fprintf( stderr, "* ROOBOTLASER1 (%d beams, %d remissions) ***\n", scan.num_readings, scan.num_remissions);
       fprintf( stderr, "expected movement  %.6f m %.6f m %.6f degree\n",
 	       corr_move.forward, corr_move.sideward,
 	       rad2deg(corr_move.rotation) );
-      fprintf( stderr, "corrected movement %.6f m %.6f m %.6f degree\n",
+      fprintf( stderr, "corrected movement %.6f m %.6f m %.6f degree\n\n",
 	       pos_move.forward, pos_move.sideward,
 	       rad2deg(pos_move.rotation) );
-      fprintf( stderr, "***********************************************\n\n" );
       
       old_pos     = pos;
       old_corrpos = corrpos;
       
     } else {
-      //  fputs( line, stdout );
+      fputs( line, stdout );
     }
     fflush(stdout);
   }
