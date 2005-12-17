@@ -37,19 +37,28 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
   carmen_fprintf(outfile, "# file format is one message per line\n");
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
-  carmen_fprintf(outfile, "# message formats defined: PARAM SYNC ODOM FLASER RLASER\n");
+  carmen_fprintf(outfile, "# message formats defined: PARAM SYNC ODOM RAWLASER1 RAWLASER2 RAWLASER3 RAWLASER4 ROBOTLASER0 ROBOTLASER1 FLASER RLASER LASER3 LASER4\n");
   carmen_fprintf(outfile, "# PARAM param_name param_value\n");
   carmen_fprintf(outfile, "# SYNC tagname\n");
   carmen_fprintf(outfile, "# ODOM x y theta tv rv accel\n");
-  carmen_fprintf(outfile, "# FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
-  carmen_fprintf(outfile, "# RLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
-  carmen_fprintf(outfile, "# LASER3 num_readings [range_readings]\n");
-  carmen_fprintf(outfile, "# LASER4 num_readings [range_readings]\n");
-  carmen_fprintf(outfile, "# REMISSIONFLASER num_readings [range_readings remission_value]\n");
-  carmen_fprintf(outfile, "# REMISSIONRLASER num_readings [range_readings remission_value]\n");
-  carmen_fprintf(outfile, "# REMISSIONLASER3 num_readings [range_readings remission_value]\n");
-  carmen_fprintf(outfile, "# REMISSIONLASER4 num_readings [range_readings remission_value]\n");
   carmen_fprintf(outfile, "# TRUEPOS true_x true_y true_theta odom_x odom_y odom_theta\n");
+  carmen_fprintf(outfile, "# RAWLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# RAWLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# RAWLASER3 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# RAWLASER4 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# ROBOTLASER0 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist\n");
+  carmen_fprintf(outfile, "# ROBOTLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist\n");
+
+  carmen_fprintf(outfile, "# \n");
+  carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
+  carmen_fprintf(outfile, "# (old) # FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
+  carmen_fprintf(outfile, "# (old) # RLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
+  carmen_fprintf(outfile, "# (old) # LASER3 num_readings [range_readings]\n");
+  carmen_fprintf(outfile, "# (old) # LASER4 num_readings [range_readings]\n");
+  carmen_fprintf(outfile, "# (old) # REMISSIONFLASER num_readings [range_readings remission_value]\n");
+  carmen_fprintf(outfile, "# (old) # REMISSIONRLASER num_readings [range_readings remission_value]\n");
+  carmen_fprintf(outfile, "# (old) # REMISSIONLASER3 num_readings [range_readings remission_value]\n");
+  carmen_fprintf(outfile, "# (old) # REMISSIONLASER4 num_readings [range_readings remission_value]\n");
 }
 
 void carmen_logwrite_write_odometry(carmen_base_odometry_message *odometry, 
@@ -80,10 +89,14 @@ void carmen_logwrite_write_laser_laser(carmen_laser_laser_message *laser,
   int i;
 
   carmen_fprintf(outfile, "RAWLASER%d ", laser_num);
-  carmen_fprintf(outfile, "%d %f %f %f %f %f ", laser->config.laser_type,
-		 laser->config.start_angle, laser->config.fov, 
+  carmen_fprintf(outfile, "%d %f %f %f %f %f %d ", 
+		 laser->config.laser_type,
+		 laser->config.start_angle, 
+		 laser->config.fov, 
 		 laser->config.angular_resolution, 
-		 laser->config.maximum_range, laser->config.accuracy);
+		 laser->config.maximum_range, 
+		 laser->config.accuracy,
+		 laser->config.remission_mode);
   carmen_fprintf(outfile, "%d ", laser->num_readings);
   for(i = 0; i < laser->num_readings; i++)
     carmen_fprintf(outfile, "%.2f ", laser->range[i]);
@@ -101,10 +114,12 @@ void carmen_logwrite_write_robot_laser(carmen_robot_laser_message *laser,
   int i;
 
   carmen_fprintf(outfile, "ROBOTLASER%d ", laser_num);
-  carmen_fprintf(outfile, "%d %f %f %f %f %f ", laser->config.laser_type,
+  carmen_fprintf(outfile, "%d %f %f %f %f %f %d ", laser->config.laser_type,
 		 laser->config.start_angle, laser->config.fov, 
 		 laser->config.angular_resolution, 
-		 laser->config.maximum_range, laser->config.accuracy);
+		 laser->config.maximum_range, 
+		 laser->config.accuracy,
+		 laser->config.remission_mode);
   carmen_fprintf(outfile, "%d ", laser->num_readings);
   for(i = 0; i < laser->num_readings; i++)
     carmen_fprintf(outfile, "%.2f ", laser->range[i]);

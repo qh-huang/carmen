@@ -245,6 +245,7 @@ char *carmen_string_to_laser_laser_message_orig(char *string,
     carmen_laser_guess_angle_increment(laser->num_readings);
   laser->config.maximum_range = 80.0;
   laser->config.accuracy = 0.01;
+  laser->config.remission_mode = 0;
 
   return current_pos;
 }
@@ -289,6 +290,7 @@ char *carmen_string_to_robot_laser_message_orig(char *string,
     carmen_laser_guess_angle_increment(laser->num_readings);
   laser->config.maximum_range = 80.0;
   laser->config.accuracy = 0.01;
+  laser->config.remission_mode = 0;
 
   return current_pos;
 }
@@ -305,6 +307,7 @@ char *carmen_string_to_laser_laser_message(char *string,
   laser->config.angular_resolution = CLF_READ_DOUBLE(&current_pos);
   laser->config.maximum_range = CLF_READ_DOUBLE(&current_pos);
   laser->config.accuracy = CLF_READ_DOUBLE(&current_pos);
+  laser->config.remission_mode = CLF_READ_INT(&current_pos);
 
   num_readings = CLF_READ_INT(&current_pos);
   if(laser->num_readings != num_readings) {
@@ -344,6 +347,7 @@ char *carmen_string_to_robot_laser_message(char *string,
   laser->config.angular_resolution = CLF_READ_DOUBLE(&current_pos);
   laser->config.maximum_range = CLF_READ_DOUBLE(&current_pos);
   laser->config.accuracy = CLF_READ_DOUBLE(&current_pos);
+  laser->config.remission_mode = CLF_READ_INT(&current_pos);
 
   num_readings = CLF_READ_INT(&current_pos);
   if(laser->num_readings != num_readings) {
