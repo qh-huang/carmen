@@ -45,7 +45,7 @@ void hokuyo_handler(void)
 
 void shutdown_module(int x __attribute__ ((unused)))
 {
-  close_ipc();
+  carmen_ipc_disconnect();
   printf("\nDisconnected from device.\n");
   exit(1);  
 }
@@ -60,9 +60,9 @@ void print_statistics(void *clientdata __attribute__ ((unused)),
 	  hokuyo_count / (current_timestamp - first_timestamp));
 }
 
-int main(int argc __attribute__ ((unused)), char **argv)
+int main(int argc , char **argv)
 {
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
   signal(SIGINT, shutdown_module);
  
