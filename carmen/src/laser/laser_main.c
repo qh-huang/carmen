@@ -312,12 +312,13 @@ void  set_laser_config_structure(sick_laser_p laser,
     config->start_angle = -0.5*carmen_degrees_to_radians(100.0);
   } 
   else {
-
-    carmen_warn("Unkown laser config: laser->settings.num_values=%d\n", laser->settings.num_values);
-
     config->fov  = M_PI;
     config->start_angle = -0.5*config->fov;
     config->angular_resolution = config->fov/((double)laser->settings.laser_num-1.0);
+
+    carmen_warn("Unkown laser config for a SICK with %d beams\n", laser->settings.num_values);
+    carmen_warn("Guessing: (fov=%.3f, start=%.2f, res=%.2f)\n", config->fov, config->start_angle, config->angular_resolution);
+
   }
 
   if (laser->settings.use_remission == 1 && 
@@ -343,20 +344,24 @@ int carmen_laser_start(int argc, char **argv)
   set_default_parameters(&laser4, CARMEN_LASER4_NUM);
   read_parameters(argc, argv);
   
-  set_laser_config_structure(&laser1, &laser1_config);
-  set_laser_config_structure(&laser2, &laser2_config);
-  set_laser_config_structure(&laser3, &laser3_config);
-  set_laser_config_structure(&laser4, &laser4_config);
 
   /* start lasers, and start publishing scans */
-  if(use_laser1)
+  if(use_laser1) {
+    set_laser_config_structure(&laser1, &laser1_config);
     sick_start_laser(&laser1);
-  if(use_laser2)
+  }
+  if(use_laser2) {
+    set_laser_config_structure(&laser2, &laser2_config);
     sick_start_laser(&laser2);
-  if(use_laser3)
+  }
+  if(use_laser3) {
+    set_laser_config_structure(&laser3, &laser3_config);
     sick_start_laser(&laser3);
-  if(use_laser4)
+  }
+  if(use_laser4) {
+    set_laser_config_structure(&laser4, &laser4_config);
     sick_start_laser(&laser4);
+  }
   return 0;
 }
 
