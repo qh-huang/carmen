@@ -75,7 +75,7 @@ int carmen_hokuyo_run(void)
 void shutdown_hokuyo(int x)
 {
   carmen_hokuyo_shutdown(x);
-  close_ipc();
+  carmen_ipc_disconnect();
   exit(-1);
 }
 
