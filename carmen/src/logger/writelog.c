@@ -37,7 +37,7 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "%s\n", CARMEN_LOGFILE_HEADER);
   carmen_fprintf(outfile, "# file format is one message per line\n");
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
-  carmen_fprintf(outfile, "# message formats defined: PARAM SYNC ODOM RAWLASER1 RAWLASER2 RAWLASER3 RAWLASER4 ROBOTLASER0 ROBOTLASER1 FLASER RLASER LASER3 LASER4\n");
+  carmen_fprintf(outfile, "# message formats defined: PARAM SYNC ODOM RAWLASER1 RAWLASER2 RAWLASER3 RAWLASER4 ROBOTLASER1 ROBOTLASER2 FLASER RLASER LASER3 LASER4\n");
   carmen_fprintf(outfile, "# PARAM param_name param_value\n");
   carmen_fprintf(outfile, "# SYNC tagname\n");
   carmen_fprintf(outfile, "# ODOM x y theta tv rv accel\n");
