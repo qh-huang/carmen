@@ -1,4 +1,4 @@
-merge read-rec, readlog, vasco-tiny, log reading.
+merge read-rec, readlog, log reading  (see e.g. logtools/clf-read-example.c)
 
 map file extensions: .cmf
 
