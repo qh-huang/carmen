@@ -29,25 +29,13 @@ int main(int argc, char* argv[]) {
   const int max_line_length=9999;
   char line[max_line_length+1];
   
-  /*   used to read the messages. set arrays to NULL and size field to 0 */
+  /*   used to read the messages. erase stucture before! */
   carmen_robot_laser_message l;
-  l.num_readings = 0;
-  l.range = NULL;
-  l.num_remissions = 0;
-  l.remission = NULL;
-  l.host = NULL;
-
-  /*   used to read the messages. set arrays to NULL and size field to 0 */
+  carmen_erase_structure(&l, sizeof(carmen_robot_laser_message) );
   carmen_laser_laser_message rawl;
-  rawl.host = NULL;
-  rawl.num_readings = 0;
-  rawl.range = NULL;
-  rawl.num_remissions = 0;
-
-  /*   used to read the messages. set arrays to NULL and size field to 0 */
-  l.remission = NULL;
+  carmen_erase_structure(&l, sizeof(carmen_laser_laser_message) );
   carmen_base_odometry_message o;
-  o.host = NULL;
+  carmen_erase_structure(&o, sizeof(carmen_base_odometry_message) );
 
   /*   iterate over all entries in the logfile */
   while (!carmen_logfile_eof(logfile_index)) {
@@ -61,32 +49,32 @@ int main(int argc, char* argv[]) {
     /*     what kind of message it this? */
     if (strncmp(line, "ROBOTLASER1 ", 12) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_robot_laser_message(carmen_next_word(line), &l);
+      carmen_string_to_robot_laser_message(line, &l);
       fprintf(stderr, "F");
     }
     else if (strncmp(line, "ROBOTLASER2 ", 12) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_robot_laser_message(carmen_next_word(line), &l);
+      carmen_string_to_robot_laser_message(line, &l);
       fprintf(stderr, "R");
     }
     else if (strncmp(line, "FLASER ", 7) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_robot_laser_message_orig(carmen_next_word(line), &l);
+      carmen_string_to_robot_laser_message_orig(line, &l);
       fprintf(stderr, "f");
     }
     else if (strncmp(line, "RLASER", 7) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_robot_laser_message_orig(carmen_next_word(line), &l);
+      carmen_string_to_robot_laser_message_orig(line, &l);
       fprintf(stderr, "r");
     }
     else if (strncmp(line, "RAWLASER", 8) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_laser_laser_message(carmen_next_word(line), &rawl);
+      carmen_string_to_laser_laser_message(line, &rawl);
       fprintf(stderr, "L");
     }
     else if (strncmp(line, "ODOM ", 5) == 0) {
       /*  convert the string using the corresponding read function */
-      carmen_string_to_base_odometry_message(carmen_next_word(line), &o);
+      carmen_string_to_base_odometry_message(line, &o);
       fprintf(stderr, "o");
     }
   }
