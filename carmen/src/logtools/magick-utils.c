@@ -631,12 +631,12 @@ ImageMagickDrawMapMarker( Image * image, ImageInfo * image_info,
 	  DrawPushGraphicContext( wand );
 	  {
 	    DrawRotate( wand,rad2deg(-orientation) );
-	    DrawAnnotation ( wand, 0, (fontsize/2.5), str5 );
+	    DrawAnnotation ( wand, 0, (fontsize/2.5), (unsigned char*) str5 );
 	  }
 	  DrawPopGraphicContext( wand );
 	  pri++;
 	} else {
-	  DrawAnnotation ( wand, 0, (fontsize/2.5), str5 );
+	  DrawAnnotation ( wand, 0, (fontsize/2.5),  (unsigned char*) str5 );
 	}
       }
       DrawPopGraphicContext( wand );
