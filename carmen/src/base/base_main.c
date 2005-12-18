@@ -48,20 +48,20 @@ static double *ranges = NULL;
 static carmen_point_t *positions = NULL;
 static int num_sonar_ranges;
 
-static int num_servos;
-
 static carmen_base_bumper_message bumper;
 
 static double last_motion_command = 0;
 
 static double motion_timeout = 1;
-static int backwards_flag;
+static int odometry_inverted;
 
 static char *model_name;
 static char *dev_name;
 
 //Edsinger: added
 static carmen_base_arm_state_message arm_state;
+static int has_arm = 0;
+static int num_arm_servos;
 
 static int 
 initialize_robot(void)
@@ -109,11 +109,19 @@ initialize_robot(void)
 //Edsinger: added
 static void initialize_arm_message(carmen_base_arm_state_message * arm)
 {
-  arm->num_servos=num_servos;
-  if (num_servos > 0) {
-    arm->servos = (double *)calloc(num_servos, sizeof(double));
+  int err;
+
+  carmen_param_allow_unfound_variables(FALSE); 
+  err = carmen_param_get_int("arm_num_servos", &num_arm_servos, NULL);
+  if (err < 0)
+    carmen_die("\nThe base_has_arm parameter is on, but the arm_num_servos "
+	       "parameter is\nmissing. Please set the arm_num_servos "
+	       "parameter.\n");
+  arm->num_servos=num_arm_servos;
+  if (num_arm_servos > 0) {
+    arm->servos = (double *)calloc(num_arm_servos, sizeof(double));
     carmen_test_alloc(arm->servos);
-    if (num_servos == 1)
+    if (num_arm_servos == 1)
       arm->num_currents = 1;
     else
       arm->num_currents = 2;
@@ -185,9 +193,11 @@ read_parameters(int argc, char **argv)
     {"base", "model", CARMEN_PARAM_STRING, &model_name, 0, NULL},
     {"base", "use_hardware_integrator", CARMEN_PARAM_ONOFF, 
      &use_hardware_integrator, 0, NULL},
-    {"robot", "backwards", CARMEN_PARAM_ONOFF, &backwards_flag, 0, NULL},
+    {"robot", "odometry_inverted", CARMEN_PARAM_ONOFF, &odometry_inverted, 
+     0, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, 
      handle_sonar_change}, 
+    {"robot", "has_arm", CARMEN_PARAM_ONOFF, &has_arm, 0, NULL}, 
     {"robot", "acceleration", CARMEN_PARAM_DOUBLE, 
      &(robot_config.acceleration), 1, NULL},
     {"robot", "deceleration", CARMEN_PARAM_DOUBLE, 
@@ -198,12 +208,8 @@ read_parameters(int argc, char **argv)
      &relative_wheelsize, 0, NULL},
     {"base", "relative_wheelbase", CARMEN_PARAM_DOUBLE, 
      &relative_wheelbase, 0, NULL},
-    {"arm", "num_servos", CARMEN_PARAM_INT,
-     &num_servos, 0, NULL},
   };
 
-
-  
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
 
@@ -217,8 +223,8 @@ read_parameters(int argc, char **argv)
     carmen_param_install_params(argc, argv, extra_params, num_items);      
   }
 
-   if (num_servos > 0) {
-      initialize_arm_message(&arm_state);
+  if (has_arm > 0) {
+    initialize_arm_message(&arm_state);
   }
 
   if (robot_config.acceleration > deceleration) 
@@ -274,7 +280,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       carmen_warn("V");
     }  
 
-  if (backwards_flag)
+  if (odometry_inverted)
     vel.tv *= -1;
   if (!use_hardware_integrator)
     {
@@ -337,11 +343,11 @@ arm_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   IPC_freeByteArray(callData);
 
-  response.num_servos = num_servos;
-  if (num_servos > 0) {
-    response.servos = (double *)calloc(num_servos, sizeof(double));
+  response.num_servos = num_arm_servos;
+  if (num_arm_servos > 0) {
+    response.servos = (double *)calloc(num_arm_servos, sizeof(double));
     carmen_test_alloc(response.servos);
-    if (num_servos == 1)
+    if (num_arm_servos == 1)
       response.num_currents = 1;
     else
       response.num_currents = 2;
@@ -354,7 +360,7 @@ arm_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   response.timestamp = carmen_get_time();
   response.host = carmen_get_host();
   err = IPC_respondData(msgRef, CARMEN_BASE_SERVO_ARM_STATE_NAME, &response);
-  if (num_servos > 0) {
+  if (num_arm_servos > 0) {
     free(response.servos);
     free(response.servo_currents);
   }
@@ -541,7 +547,7 @@ integrate_odometry(double displacement, double rotation, double tv, double rv)
   odometry.tv = tv * relative_wheelsize;
   odometry.rv = rv * relative_wheelsize / relative_wheelbase;
   
-  if (backwards_flag) {
+  if (odometry_inverted) {
     odometry.tv *= -1;
     displacement *= -1;
   }
@@ -611,7 +617,7 @@ carmen_base_run(void)
       if (base_err < 0)
 	initialize_robot();
       else {
-	if (backwards_flag) {
+	if (odometry_inverted) {
 	  odometry.tv *= -1;
 	  odometry.x *= -1;
 	  odometry.y *= -1;
@@ -659,7 +665,7 @@ carmen_base_run(void)
   }
 
   //Edsinger: added 
-  if (num_servos> 0) {
+  if (num_arm_servos> 0) {
     arm_state.timestamp = carmen_get_time();
     arm_state.host = carmen_get_host();
     carmen_base_direct_arm_get(arm_state.servos, arm_state.num_servos, 

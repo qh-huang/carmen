@@ -1,8 +1,8 @@
+merge read-rec, readlog, vasco-tiny, log reading.
+
 map file extensions: .cmf
 
 clean up ini files
-
-change arm_num_servos in base_main to only be used if base_has_arm is on.
 
 generic logging
   

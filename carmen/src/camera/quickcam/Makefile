@@ -1,7 +1,7 @@
 CARMEN_HOME = ../../../
 include ../../Makefile.conf
 
-MODULE_NAME = "QuickCam"
+MODULE_NAME = "QUICKCAM"
 MODULE_COMMENT = "Phillips Camera Module"
 
 SOURCES = ccvt_mmx.S ccvt_misc.c quickcam.c

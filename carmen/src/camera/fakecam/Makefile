@@ -1,7 +1,7 @@
 CARMEN_HOME = ../../../
 include ../../Makefile.conf
 
-MODULE_NAME = "FakeCam"
+MODULE_NAME = "FAKECAM"
 MODULE_COMMENT = "Publishes images from a file"
 
 SOURCES = fakecam.c

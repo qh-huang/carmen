@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = orclib pioneerlib reflexlib scoutlib xr4000_base
+SUBDIRS = orclib pioneerlib rflexlib scoutlib xr4000_base
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser

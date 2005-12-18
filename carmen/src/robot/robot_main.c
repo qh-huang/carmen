@@ -302,7 +302,6 @@ static void follow_vector(void)
 {
   double true_angle_difference, angle_difference, displacement;
   double radius;
-  int backwards = 0;
 
   double angle_change = 
     carmen_normalize_theta(carmen_robot_latest_odometry.theta - 
@@ -369,9 +368,6 @@ static void follow_vector(void)
     if (fabs(displacement) > 0 && fabs(displacement) < 0.15)
       command_tv -= carmen_robot_latest_odometry.tv/2;
   }
-
-  if (backwards)
-    command_tv *= -1;
 
   publish_vector_status(displacement, true_angle_difference);
   carmen_robot_send_base_velocity_command();	

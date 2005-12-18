@@ -27,7 +27,7 @@ my ($xr4000Kernel) = "2.0.20";
 my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $notcpd, $nojpeg, $nozlib,
-    $noreadline, $nolibart, $nowand, $install_path);
+    $noreadline, $nolibart, $nowand, $nojava, $install_path);
 
 $nolibart = 1;
 
@@ -44,6 +44,7 @@ Options: [--nographics]  : compile without graphics
 	 [--nojpeg]      : compile without JPEG support
 	 [--nozlib]      : compile without ZLib support
 	 [--nowand]      : compile without ImageMagick support
+	 [--nojava]      : compile without java support
 	 [-L<libpath>]   : compile with additional library paths
                            (can have multiple -L option switchs)
 EOF
@@ -76,6 +77,9 @@ EOF
   if (/nowand/) {
     $nowand = 1;
   }
+  if (/nojava/) {
+    $nojava = 1;
+  }
   if (/prefix/) {
     ($install_path) = /prefix=(.*)/;
   }
@@ -105,6 +109,7 @@ my $zlib = verify_zlib(\@user_libs) unless ($nozlib);
 my $readline = verify_readline(\@user_libs) unless ($noreadline);
 my $libart = verify_libart(\@user_libs) unless ($nolibart);
 my $wand = verify_wand() unless ($nowand);
+my $java = verify_java() unless ($nojava);
 my $install_path = get_install_path() unless ($install_path);
 my @robots = get_robot_types($os_type, $kernel, $canlib);
 
@@ -142,6 +147,9 @@ if ($readline) {
 } else {
   print OUTPUT "NO_READLINE = 1\n";
 }
+if ($java) {
+  print OUTPUT "JAVA_HOME = $java\n";
+} 
 print OUTPUT "INSTALL_PATH = $install_path\n";
 print OUTPUT "ROBOT_TYPES = ".(join ' ', @robots)."\n";
 print OUTPUT "USER_LIBS = ".(join ' ', @user_libs)."\n";
@@ -577,11 +585,43 @@ sub verify_wand {
   return undef;
 }
 
-sub verify_imlib {
+sub verify_java {
   my $error = undef;
 
+  print "Searching for Java... ";
+  if (defined $ENV{JAVA_HOME}) {
+    if (-x "$ENV{JAVA_HOME}/bin/javac") {
+      print "found\n";
+      return $ENV{JAVA_HOME} 
+    }
+    print<<EOF;
+${red}not found${normal}.
+
+Your JAVA_HOME environment variable is set to $ENV{JAVA_HOME}, but I 
+can\'t find $ENV{JAVA_HOME}/bin/javac. Please either set your 
+JAVA_HOME environment variable correctly, or re-run configure with --nojava.
+EOF
+
+    die "\n";
+  }
+  if (-e "/usr/java" and -d "/usr/java") {
+    if (!opendir DIR, "/usr/java") {
+      print "${red}not found${normal}\n";
+      return undef;
+    }
+    my @subdirs = grep { /^[^\.]/ && -d "/usr/java/$_" } readdir(DIR);
+    closedir DIR;
+    foreach my $dir (@subdirs) {
+      if (-e "/usr/java/$dir/bin/javac") {
+	print "found\n";
+	return "/usr/java/$dir";
+      }
+    }     
+  }
+  print "${red}not found${normal}\n";
   return undef;
 }
+
 
 sub verify_readline {
   my $lib_ref = shift;

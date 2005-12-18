@@ -2,11 +2,14 @@ total:	home export phase1 phase2
 
 include Makefile.conf
 
-PACKAGES = ipc global base laser maptools param_daemon \
-	   robot simulator robotgui mapeditor logtools joystick \
-	   vasco localize navigator linemapping hmap logger camera \
-           proccontrol pantilt hokuyo gps
+PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
+	   maptools mapeditor logger logtools hmap \
+	   localize navigator vasco proccontrol \
+	   camera joystick pantilt hokuyo gps 
 
+ifdef JAVA_HOME
+PACKAGES += java 
+endif
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
 

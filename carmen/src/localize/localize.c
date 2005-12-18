@@ -339,10 +339,12 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
      &param->do_scanmatching, 1, NULL},
     {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF, 
      &param->constrain_to_map, 1, NULL},
+#ifdef OLD_MOTION_MODEL
     {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &param->odom_a1, 1, NULL},
     {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &param->odom_a2, 1, NULL},
     {"localize", "odom_a3", CARMEN_PARAM_DOUBLE, &param->odom_a3, 1, NULL},
     {"localize", "odom_a4", CARMEN_PARAM_DOUBLE, &param->odom_a4, 1, NULL},
+#endif
     {"localize", "occupied_prob", CARMEN_PARAM_DOUBLE, 
      &param->occupied_prob, 0, NULL},
     {"localize", "lmap_std", CARMEN_PARAM_DOUBLE, 
@@ -413,6 +415,10 @@ int main(int argc, char **argv)
 
   /* get a map */
   create_localize_map(&map, &param);
+
+#ifndef OLD_MOTION_MODEL
+  param.motion_model = carmen_localize_motion_initialize(argc, argv);
+#endif
 
   /* Allocate memory for the particle filter */
   filter = carmen_localize_particle_filter_new(&param);

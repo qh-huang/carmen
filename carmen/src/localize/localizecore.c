@@ -27,6 +27,7 @@
 
 #include <carmen/carmen.h>
 #include "localizecore.h"
+#include "localize_motion.h"
 
 /* gains for gradient descent */
 
@@ -411,10 +412,15 @@ void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filt
 					  carmen_point_t odometry_position)
 {
   int i, backwards;
-  double dr1, dt, dr2;
+  double delta_t, delta_theta;
+  double dx, dy, odom_theta;
+#ifndef OLD_MOTION_MODEL
+  double downrange, crossrange, turn;
+#else
+  double dr1, dr2;
   double dhatr1, dhatt, dhatr2;
   double std_r1, std_r2, std_t;
-  double dx, dy, odom_theta;
+#endif
 
   /* The dr1/dr2 code becomes unstable if dt is too small. */
   if(filter->first_odometry) {
@@ -425,15 +431,46 @@ void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filt
 
   dx = odometry_position.x - filter->last_odometry_position.x;
   dy = odometry_position.y - filter->last_odometry_position.y;
-  dt = sqrt(dx * dx + dy * dy);
+  delta_t = sqrt(dx * dx + dy * dy);
+  delta_theta = carmen_normalize_theta(odometry_position.theta - 
+				       filter->last_odometry_position.theta);
   odom_theta = atan2(dy, dx);
   backwards = (dx * cos(odometry_position.theta) + 
 	       dy * sin(odometry_position.theta) < 0);
 
-  filter->distance_travelled += dt;
+  filter->distance_travelled += delta_t;
 
- /* The dr1/dr2 code becomes unstable if dt is too small. */
-  if(dt < 0.05) {
+#ifndef OLD_MOTION_MODEL
+  for(i = 0; i < filter->param->num_particles; i++) {
+    downrange = 
+      carmen_localize_sample_noisy_downrange(delta_t, delta_theta, 
+					     filter->param->motion_model);
+    crossrange = 
+      carmen_localize_sample_noisy_crossrange(delta_t, delta_theta,
+					      filter->param->motion_model);
+    turn = carmen_localize_sample_noisy_turn(delta_t, delta_theta,
+					     filter->param->motion_model);
+
+    if(backwards) {
+      filter->particles[i].x -= downrange * 
+	cos(filter->particles[i].theta + turn/2.0) + 
+	crossrange * cos(filter->particles[i].theta + turn/2.0 + M_PI/2.0);
+      filter->particles[i].y -= downrange * 
+	sin(filter->particles[i].theta + turn/2.0) + 
+	crossrange * sin(filter->particles[i].theta + turn/2.0 + M_PI/2.0);
+    } else {
+      filter->particles[i].x += downrange * 
+	cos(filter->particles[i].theta + turn/2.0) + 
+      crossrange * cos(filter->particles[i].theta + turn/2.0 + M_PI/2.0);
+      filter->particles[i].y += downrange * 
+	sin(filter->particles[i].theta + turn/2.0) + 
+      crossrange * sin(filter->particles[i].theta + turn/2.0 + M_PI/2.0);
+    }
+    filter->particles[i].theta = carmen_normalize_theta(filter->particles[i].theta+turn);
+  }
+#else
+ /* The dr1/dr2 code becomes unstable if delta_t is too small. */
+  if(delta_t < 0.05) {
     dr1 = carmen_normalize_theta(odometry_position.theta - 
 				 filter->last_odometry_position.theta) / 2.0;
     dr2 = dr1;
@@ -456,14 +493,14 @@ void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filt
   }
 
   /* compute motion model parameters */
-  std_r1 = filter->param->odom_a1 * fabs(dr1) + filter->param->odom_a2 * dt;
-  std_t = filter->param->odom_a3 * dt + filter->param->odom_a4 * fabs(dr1 + dr2);
-  std_r2 = filter->param->odom_a1 * fabs(dr2) + filter->param->odom_a2 * dt;
+  std_r1 = filter->param->odom_a1 * fabs(dr1) + filter->param->odom_a2 * delta_t;
+  std_t = filter->param->odom_a3 * delta_t + filter->param->odom_a4 * fabs(dr1 + dr2);
+  std_r2 = filter->param->odom_a1 * fabs(dr2) + filter->param->odom_a2 * delta_t;
 
   /* update the positions of all of the particles */
   for(i = 0; i < filter->param->num_particles; i++) {
     dhatr1 = carmen_gaussian_random(dr1, std_r1);
-    dhatt = carmen_gaussian_random(dt, std_t);
+    dhatt = carmen_gaussian_random(delta_t, std_t);
     dhatr2 = carmen_gaussian_random(dr2, std_r2);
     
     if(backwards) {
@@ -481,6 +518,7 @@ void carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filt
     filter->particles[i].theta =
       carmen_normalize_theta(filter->particles[i].theta + dhatr1 + dhatr2);
   }
+#endif
 
   /* keep track of the last odometry */
   filter->last_odometry_position = odometry_position;

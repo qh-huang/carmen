@@ -24,15 +24,15 @@ libipcjava.so: ipcjava.o
 
 Carmen.jar: 
 	$(ECHO) "    ---- Compiling IPC (Java)"
-	$(SILENT) javac -d . IPC/*.java
+	$(SILENT) $(JAVA_HOME)/bin/javac -d . IPC/*.java
 	$(ECHO) "    ---- Compiling Carmen (Java)"
-	$(SILENT) javac -classpath . -d . Carmen/*.java
+	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . Carmen/*.java
 	$(ECHO) "    ---- Creating $@"
-	$(SILENT) jar cf Carmen.jar Carmen/*.class IPC/*.class 
+	$(SILENT) $(JAVA_HOME)/bin/jar cf Carmen.jar Carmen/*.class IPC/*.class 
 
 %.class: %.java
 	$(ECHO) "    ---- Compiling $@ (Java)"
-	$(SILENT) javac -classpath Carmen.jar:. -d . $<
+	$(SILENT) $(JAVA_HOME)/bin/javac -classpath Carmen.jar:. -d . $<
 
 # rules
 

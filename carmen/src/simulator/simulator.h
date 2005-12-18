@@ -65,10 +65,14 @@ typedef struct {
   int use_sonar;
   int use_front_laser, use_rear_laser;
 
+#ifndef OLD_MOTION_MODEL
+  carmen_localize_motion_model_t *motion_model;
+#else
   double odom_a1;
   double odom_a2;
   double odom_a3;
   double odom_a4;
+#endif
 
   carmen_map_t map;
   carmen_point_t odom_pose;

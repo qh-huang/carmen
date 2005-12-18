@@ -2,7 +2,7 @@ include ../Makefile.conf
 
 IFLAGS += -I../robot
 LFLAGS += -lmap_interface -lparam_interface -llocalize_interface -lrobot \
-	  -lbase_interface -llaser_interface -lcamera_interface -lgeometry \
+	  -lbase_interface -llaser_interface -lgeometry -llocalize_motion \
 	  -lglobal -lipc 
 
 MODULE_NAME = SIMULATOR

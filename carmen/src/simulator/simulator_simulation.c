@@ -71,11 +71,16 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
 
   double distance, radius, centre_x, centre_y, delta_angle;
   int backwards;
+  double dx, dy, odom_theta;
+  double delta_t, delta_theta;
+#ifndef OLD_MOTION_MODEL
+  double downrange, crossrange, turn;
+  carmen_localize_motion_model_t *model;
+#else
   double dr1, dr2;
   double dhatr1, dhatt, dhatr2;
   double std_r1, std_r2, std_t;
-  double dx, dy, odom_theta;
-  double delta_t;
+#endif
 
   int map_x, map_y;
   double tv, rv;
@@ -141,10 +146,36 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
 
   dx = new_odom.x - old_odom.x;
   dy = new_odom.y - old_odom.y;
+
   delta_t = sqrt(dx * dx + dy * dy);
+  delta_theta = carmen_normalize_theta(new_odom.theta - old_odom.theta);
+
   odom_theta = atan2(dy, dx);
   backwards = (dx * cos(new_odom.theta) + dy * sin(new_odom.theta) < 0);
 
+#ifndef OLD_MOTION_MODEL  
+  model = simulator_config->motion_model;
+  downrange = 
+    carmen_localize_sample_noisy_downrange(delta_t, delta_theta, model);
+  crossrange = 
+    carmen_localize_sample_noisy_crossrange(delta_t, delta_theta, model);
+  turn = carmen_localize_sample_noisy_turn(delta_t, delta_theta, model);
+
+  if(backwards) {
+    new_true.x -= downrange * cos(new_true.theta + turn/2.0) + 
+      crossrange * cos(new_true.theta + turn/2.0 + M_PI/2.0);
+    new_true.y -= downrange * sin(new_true.theta + turn/2.0) + 
+      crossrange * sin(new_true.theta + turn/2.0 + M_PI/2.0);
+  }
+  else {
+    new_true.x += downrange * cos(new_true.theta + turn/2.0) + 
+      crossrange * cos(new_true.theta + turn/2.0 + M_PI/2.0);
+    new_true.y += downrange * sin(new_true.theta + turn/2.0) + 
+      crossrange * sin(new_true.theta + turn/2.0 + M_PI/2.0);
+  }
+  new_true.theta = carmen_normalize_theta(new_true.theta+turn);
+
+#else
  /* The dr1/dr2 code becomes unstable if dt is too small. */
   if(delta_t < 0.05) {
     dr1 = carmen_normalize_theta(new_odom.theta - old_odom.theta) / 2.0;
@@ -183,6 +214,7 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
     new_true.y += dhatt * sin(new_true.theta + dhatr1);
   }
   new_true.theta = carmen_normalize_theta(new_true.theta+dhatr1+dhatr2);
+#endif
     
   map = &(simulator_config->map);
   map_x = new_true.x / map->config.resolution;
@@ -192,9 +224,7 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
      map_y < 0 || map_y >= map->config.y_size ||
      map->map[map_x][map_y] > .15 ||
      carmen_simulator_object_too_close(new_true.x, new_true.y, -1))
-    {
-      return;
-    }
+    return;
   
   simulator_config->odom_pose = new_odom;
   simulator_config->true_pose = new_true;

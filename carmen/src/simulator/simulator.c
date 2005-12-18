@@ -540,10 +540,12 @@ read_parameters(int argc, char *argv[],
      &(config->sync_mode), 1, NULL},
     {"simulator", "use_robot", CARMEN_PARAM_ONOFF,
      &use_robot, 1, NULL},
+#ifdef OLD_MOTION_MODEL
     {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &(config->odom_a1), 1, NULL},
     {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &(config->odom_a2), 1, NULL},
     {"localize", "odom_a3", CARMEN_PARAM_DOUBLE, &(config->odom_a3), 1, NULL},
     {"localize", "odom_a4", CARMEN_PARAM_DOUBLE, &(config->odom_a4), 1, NULL},
+#endif
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &(config->use_front_laser), 
      1, NULL},
     {"simulator", "use_rear_laser", CARMEN_PARAM_ONOFF, 
@@ -640,6 +642,8 @@ read_parameters(int argc, char *argv[],
 	(offset_string, config->sonar_config.offsets,
 	 config->sonar_config.num_sonars);
     }
+
+  config->motion_model = carmen_localize_motion_initialize(argc, argv);
 
   fill_laser_config_data( &(config->front_laser_config) );
 

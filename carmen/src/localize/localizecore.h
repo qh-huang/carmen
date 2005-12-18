@@ -33,6 +33,7 @@ extern "C" {
 #endif
 
 #include <carmen/map.h>
+#include "localize_motion.h"
 
 #define      SMALL_PROB        0.01
 
@@ -47,12 +48,17 @@ typedef struct {
   int laser_skip;
   int use_rear_laser, do_scanmatching;
   int constrain_to_map;
+#ifdef OLD_MOTION_MODEL
   double odom_a1, odom_a2, odom_a3, odom_a4;
+#endif
   double occupied_prob;
   double lmap_std;
   double global_lmap_std, global_evidence_weight, global_distance_threshold;
   int global_test_samples;
   int use_sensor;
+#ifndef OLD_MOTION_MODEL
+  carmen_localize_motion_model_t *motion_model;
+#endif  
 } carmen_localize_param_t, *carmen_localize_param_p;
 
 typedef struct {
