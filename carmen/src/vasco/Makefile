@@ -1,8 +1,8 @@
 include ../Makefile.conf
 
-LFLAGS +=  -lparam_interface -lglobal -lipc 
+LFLAGS +=  -lreadlog -lwritelog -lparam_interface -lglobal -lipc 
 
-##CFLAGS += -O0 -g
+CFLAGS += -O0 -g
 
 ifndef NO_GRAPHICS
 CFLAGS 	+= 	-Wno-shadow
