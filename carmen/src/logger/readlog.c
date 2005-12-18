@@ -179,6 +179,9 @@ char *carmen_string_to_base_odometry_message(char *string,
 {
   char *current_pos = string;
 
+  if (strncmp(current_pos, "ODOM", 4) == 0)
+    current_pos = carmen_next_word(current_pos); 
+  
   odometry->x = CLF_READ_DOUBLE(&current_pos);
   odometry->y = CLF_READ_DOUBLE(&current_pos);
   odometry->theta = CLF_READ_DOUBLE(&current_pos);
@@ -195,6 +198,10 @@ char *carmen_string_to_simulator_truepos_message(char *string,
 {
   char *current_pos = string;
 
+  if (strncmp(current_pos, "TRUEPOS", 7) == 0)
+    current_pos = carmen_next_word(current_pos); 
+
+ 
   truepos->truepose.x = CLF_READ_DOUBLE(&current_pos);
   truepos->truepose.y = CLF_READ_DOUBLE(&current_pos);
   truepos->truepose.theta = CLF_READ_DOUBLE(&current_pos);
@@ -244,6 +251,10 @@ char *carmen_string_to_laser_laser_message_orig(char *string,
   char *current_pos = string;
   int i, num_readings;
 
+  if (strncmp(current_pos, "LASER", 5) == 0)
+    current_pos = carmen_next_word(current_pos); 
+ 
+
   num_readings = CLF_READ_INT(&current_pos);
   if(laser->num_readings != num_readings) {
     laser->num_readings = num_readings;
@@ -279,6 +290,10 @@ char *carmen_string_to_robot_laser_message_orig(char *string,
 {
   char *current_pos = string;
   int i, num_readings;
+
+  if (strncmp(current_pos, "FLASER", 6) == 0 || 
+      strncmp(current_pos, "RLASER", 6) == 0)
+    current_pos = carmen_next_word(current_pos); 
 
   num_readings = CLF_READ_INT(&current_pos);
   if(laser->num_readings != num_readings) {
@@ -324,6 +339,9 @@ char *carmen_string_to_laser_laser_message(char *string,
   char *current_pos = string;
   int i, num_readings, num_remissions;
 
+  if (strncmp(current_pos, "RAWLASER", 6) == 0)
+    current_pos = carmen_next_word(current_pos); 
+
   laser->config.laser_type = CLF_READ_INT(&current_pos);
   laser->config.start_angle = CLF_READ_DOUBLE(&current_pos);
   laser->config.fov = CLF_READ_DOUBLE(&current_pos);
@@ -363,6 +381,9 @@ char *carmen_string_to_robot_laser_message(char *string,
 {
   char *current_pos = string;
   int i, num_readings, num_remissions;
+
+  if (strncmp(current_pos, "ROBOTLASER", 10) == 0)
+    current_pos = carmen_next_word(current_pos); 
 
   laser->config.laser_type = CLF_READ_INT(&current_pos);
   laser->config.start_angle = CLF_READ_DOUBLE(&current_pos);
