@@ -2,13 +2,15 @@
 
 carmen_FILE *logfile = NULL;
 carmen_logfile_index_p logfile_index = NULL;
-carmen_base_odometry_message odometry;
 
 int main(int argc, char **argv)
 {
   int i, percent, last_percent = 0;
   char line[100000];
   int odometry_count = 0;
+
+  carmen_base_odometry_message odometry;
+  carmen_erase_structure(&odometry, sizeof(carmen_base_odometry_message) );
 
   /* initialize connection to IPC network */
   carmen_ipc_initialize(argc, argv);
