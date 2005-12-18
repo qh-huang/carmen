@@ -133,9 +133,11 @@ main( int argc, char *argv[] )
 	       pos_move.forward, pos_move.sideward,
 	       rad2deg(pos_move.rotation) );
 
+      l.laser_pose = corrpos;
+
       carmen_logwrite_write_robot_laser(&l,1,(carmen_FILE*)stdout, time);
       fflush(stdout);
-fflush(stdout);      
+   
       old_pos     = pos;
       old_corrpos = corrpos;
     }
