@@ -21,7 +21,7 @@ PantiltInit( int argc, char **argv )
 void
 PantiltGetInfo( void )
 {
-  unsigned char      buffer[BUFFER_SIZE];
+   char      buffer[BUFFER_SIZE];
  
   fprintf( stderr, "PT2: -----------------------------------\n" );
 

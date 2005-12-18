@@ -17,7 +17,7 @@ commShutdown( void ) {
 int 
 main( int argc, char *argv[] ) {
 
-  unsigned char  buffer[BUFFER_SIZE];
+  char  buffer[BUFFER_SIZE];
   int            i=0, val = 0;
   int            do_reset      = FALSE;
   int            do_reset_pan  = FALSE;
