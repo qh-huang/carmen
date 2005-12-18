@@ -14,7 +14,7 @@ CFLAGS += $(WAND_CFLAGS)
 LFLAGS += $(WAND_LDFLAGS) -L/usr/X11R6/lib 
 endif
 
-LFLAGS += -lmap_io -lmap_interface -llogtools -lglobal -lipc
+LFLAGS += -lreadlog -lmap_io -lmap_interface -llogtools -lglobal -lipc
 
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \
@@ -27,7 +27,7 @@ PUBLIC_LIBRARIES = liblogtools.a libclfconvert.a
 
 PUBLIC_BINARIES = log2pic log2log
 
-TARGETS = liblogtools.a libclfconvert.a log2log
+TARGETS = liblogtools.a libclfconvert.a log2log clf-read-example
 
 ifndef NO_WAND
 SOURCES += log2pic.c
@@ -46,6 +46,8 @@ endif
 log2log:	log2log.o
 
 libclfconvert.a: clfconvert.o
+
+clf-read-example: clf-read-example.o
 
 # rules
 
