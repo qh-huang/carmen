@@ -89,6 +89,20 @@ carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
   return index;
 }
 
+void carmen_logfile_free_index(carmen_logfile_index_p* pindex) {
+  if (pindex == NULL) 
+    return;
+
+  if ( (*pindex) == NULL) 
+    return;
+    
+  if ( (*pindex)->offset != NULL) {
+    free( (*pindex)->offset);
+  }
+  free(*pindex);
+  (*pindex) = NULL;
+}
+
 int carmen_logfile_eof(carmen_logfile_index_p index)
 {
   if(index->current_position >= index->num_messages - 1)
@@ -125,6 +139,15 @@ int carmen_logfile_read_line(carmen_logfile_index_p index, carmen_FILE *infile,
   index->current_position++;
   return nread;
 }
+
+int carmen_logfile_read_next_line(carmen_logfile_index_p index, carmen_FILE *infile,
+				  int max_line_length, char *line)
+{
+  return carmen_logfile_read_line(index, infile, 
+				  index->current_position, 
+				  max_line_length, line);
+}
+
 
 int first_wordlength(char *str)
 {
@@ -380,6 +403,7 @@ char *carmen_string_to_robot_laser_message(char *string,
   laser->rv = CLF_READ_DOUBLE(&current_pos);
   laser->forward_safety_dist = CLF_READ_DOUBLE(&current_pos);
   laser->side_safety_dist = CLF_READ_DOUBLE(&current_pos);
+  laser->turn_axis = CLF_READ_DOUBLE(&current_pos);
 
   laser->timestamp = CLF_READ_DOUBLE(&current_pos);
   copy_host_string(&laser->host, &current_pos);

@@ -12,12 +12,17 @@ typedef struct {
 
 carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile);
 
+void carmen_logfile_free_index(carmen_logfile_index_p* pindex);
+
 int carmen_logfile_eof(carmen_logfile_index_p index);
 
 float carmen_logfile_percent_read(carmen_logfile_index_p index);
 
 int carmen_logfile_read_line(carmen_logfile_index_p index, carmen_FILE *infile,
 			     int message_num, int max_line_length, char *line);
+
+int carmen_logfile_read_next_line(carmen_logfile_index_p index, carmen_FILE *infile,
+				  int max_line_length, char *line);
 
 char *carmen_string_to_base_odometry_message(char *string,
 					     carmen_base_odometry_message
