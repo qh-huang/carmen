@@ -32,6 +32,8 @@ logger  ---  add param change recording to logger, and param change playback
              make logger log arbitrary messages
              version stamping
              logger usage statement
+             enable the logger to log GPS messages
+
 
 map_editor -- 	no support for deleting offlimits.
 	        no support for undo while creating offlimits.
