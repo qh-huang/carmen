@@ -222,6 +222,12 @@ extern inline int carmen_trunc(double X)
   return (int)(X);
 }
 
+extern inline void carmen_erase_structure(void* ptr, int size_of_struture)
+{
+  memset(ptr, 0, size_of_struture);
+}
+
+
 extern inline double carmen_normalize_theta(double theta)
 {
   int multiplier;
