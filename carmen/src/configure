@@ -149,7 +149,9 @@ if ($readline) {
 }
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
-} 
+} else {
+  print OUTPUT "JAVA_HOME =\n";
+}
 print OUTPUT "INSTALL_PATH = $install_path\n";
 print OUTPUT "ROBOT_TYPES = ".(join ' ', @robots)."\n";
 print OUTPUT "USER_LIBS = ".(join ' ', @user_libs)."\n";
