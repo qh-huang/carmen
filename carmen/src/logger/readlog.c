@@ -1,5 +1,7 @@
+
 #include <carmen/carmen.h>
 #include <carmen/carmen_stdio.h>
+#include <carmen/robot_interface.h>
 #include <carmen/readlog.h>
 
 long int carmen_logfile_uncompressed_length(carmen_FILE *infile)
@@ -170,8 +172,29 @@ void copy_host_string(char **host, char **string)
   *string += l;
 }
 
+char clf_read_char_helper(char* str, char** strret) {
+  /* remove spaces */
+  char ret;
+  while ( isspace(str[0]) )
+    str++;  
+  /* if end of string return last valid char */
+  if (str[0] == '\0') {
+    str--;
+  }
+  /* return char */
+  ret = str[0];
+  /* goto next character*/
+  str++;
+  /* set return string */
+  *strret = str;
+  return ret;
+}
+
+
 #define CLF_READ_DOUBLE(str) strtod(*(str), (str))
 #define CLF_READ_INT(str) (int)strtol(*(str), (str), 10)
+#define CLF_READ_CHAR(str) clf_read_char_helper(*(str), (str))
+
 
 char *carmen_string_to_base_odometry_message(char *string,
 					     carmen_base_odometry_message
@@ -428,6 +451,37 @@ char *carmen_string_to_robot_laser_message(char *string,
 
   laser->timestamp = CLF_READ_DOUBLE(&current_pos);
   copy_host_string(&laser->host, &current_pos);
+
+  return current_pos;
+}
+
+
+
+char *carmen_string_to_gps_gpgga_message(char *string,
+					 carmen_gps_gpgga_message *gps)
+{
+  char *current_pos = string;
+
+  if (strncmp(current_pos, "GPSNMEA", 7) == 0)
+    current_pos = carmen_next_word(current_pos); 
+
+  gps->nr             = CLF_READ_INT(&current_pos);
+  gps->utc            = CLF_READ_DOUBLE(&current_pos);
+  gps->latitude       = CLF_READ_DOUBLE(&current_pos);
+  gps->lat_orient     = CLF_READ_CHAR(&current_pos);
+  gps->longitude      = CLF_READ_DOUBLE(&current_pos);
+  gps->long_orient    = CLF_READ_CHAR(&current_pos);
+  gps->gps_quality    = CLF_READ_INT(&current_pos);
+  gps->num_satellites = CLF_READ_INT(&current_pos);
+  gps->hdop           = CLF_READ_DOUBLE(&current_pos);
+  gps->sea_level      = CLF_READ_DOUBLE(&current_pos);
+  gps->altitude       = CLF_READ_DOUBLE(&current_pos);
+  gps->geo_sea_level  = CLF_READ_DOUBLE(&current_pos);
+  gps->geo_sep        = CLF_READ_DOUBLE(&current_pos);
+  gps->data_age       = CLF_READ_INT(&current_pos);
+
+  gps->timestamp      = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&gps->host, &current_pos);
 
   return current_pos;
 }

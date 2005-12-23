@@ -135,6 +135,15 @@ void localize_handler(carmen_localize_globalpos_message *msg)
 				 logger_starttime);
 }
 
+void gps_gpgga_handler(carmen_gps_gpgga_message *gps)
+{
+  fprintf(stderr, "G");
+  carmen_logwrite_write_gps_gpgga(gps, outfile, 
+				  carmen_get_time() - logger_starttime);
+}
+
+
+
 static void sync_handler(carmen_logger_sync_message *sync)
 {
   carmen_logwrite_write_sync(sync, outfile);
@@ -242,6 +251,10 @@ int main(int argc, char **argv)
   carmen_simulator_subscribe_truepos_message(NULL, (carmen_handler_t)  
 					     carmen_simulator_truepos_handler,
                                              CARMEN_SUBSCRIBE_ALL);
+
+  carmen_gps_subscribe_nmea_message(NULL,(carmen_handler_t)  
+				    gps_gpgga_handler,
+				    CARMEN_SUBSCRIBE_ALL);
   
   signal(SIGINT, shutdown_module);
   logger_starttime = carmen_get_time();

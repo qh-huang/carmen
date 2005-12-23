@@ -24,6 +24,6 @@ pantilt:  io.o ipc.o utils.o main.o
 
 pantilt-test:  pantilt-test.o 
 
-include $(CARMEN_HOME)/src/Makefile.rules
+include ../Makefile.rules
 
 

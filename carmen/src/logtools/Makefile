@@ -14,7 +14,7 @@ CFLAGS += $(WAND_CFLAGS)
 LFLAGS += $(WAND_LDFLAGS) -L/usr/X11R6/lib 
 endif
 
-LFLAGS += -lreadlog -lmap_io -lmap_interface -llogtools -lglobal -lipc
+LFLAGS += -lreadlog -lmap_io -lmap_interface -llogtools -lreadlog -lglobal -lipc
 
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \

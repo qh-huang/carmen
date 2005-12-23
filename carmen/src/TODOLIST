@@ -1,6 +1,9 @@
 merge read-rec, readlog, log reading  (see e.g. logtools/clf-read-example.c)
 
+
 map file extensions: .cmf
+
+merge ipc_wrappers and multicentral
 
 clean up ini files
 
@@ -32,7 +35,6 @@ logger  ---  add param change recording to logger, and param change playback
              make logger log arbitrary messages
              version stamping
              logger usage statement
-             enable the logger to log GPS messages
 
 
 map_editor -- 	no support for deleting offlimits.

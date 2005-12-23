@@ -1,5 +1,7 @@
 include ../Makefile.conf
 
+SUBDIRS = learn_model
+
 CFLAGS +=
 IFLAGS += 
 LFLAGS += -lglobal -lparam_interface -llaser_interface -lmap_interface \
@@ -9,7 +11,7 @@ MODULE_NAME = LOCALIZE
 MODULE_COMMENT = Markov Localization Module
 
 SOURCES = localize.c likelihood_map.c localizecore.c localize_interface.c \
-	  localize_initialize.c localize_motion.c
+	  localize_initialize.c localize_motion.c 
 PUBLIC_INCLUDES = localize_messages.h localize_interface.h localizecore.h \
 	          likelihood_map.h localize_motion.h
 PUBLIC_LIBRARIES = liblocalize_interface.a liblocalize_core.a liblocalize_motion.a

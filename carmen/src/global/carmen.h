@@ -112,12 +112,18 @@ extern "C" {
 #include <carmen/navigator_interface.h>
 #include <carmen/navigator_messages.h>
 
+#include <carmen/gps_nmea_interface.h>
+#include <carmen/gps_nmea_messages.h>
+
 #include <carmen/logger.h>
 #include <carmen/logger_messages.h>
 #include <carmen/writelog.h>
 #include <carmen/readlog.h>
 #include <carmen/playback_interface.h>
 #include <carmen/playback_messages.h>
+
+
+
 
 #ifdef CARMEN_MEMORY_DEBUG
 #include <dmalloc.h>
