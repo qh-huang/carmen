@@ -4,7 +4,7 @@ ifdef FOR_XAVIER
 INTERFACE_LIBS = -lxavier_interface -lparam_interface -lsimulator_interface
 else
 INTERFACE_LIBS = -lrobot_interface -llaser_interface -lbase_interface \
-	         -lsimulator_interface -lgps_nmea_interface
+	         -lsimulator_interface
 endif
 
 LFLAGS += $(INTERFACE_LIBS) -llocalize_interface -lparam_interface \
@@ -51,6 +51,6 @@ log_timestamp_repair: 	log_timestamp_repair.o
 
 log_corrected_laser: 	log_corrected_laser.o libwritelog.a
 
-test_logfileread:	test_logfileread.o libreadlog.a  libwritelog.a
+test_logfileread:	test_logfileread.o libreadlog.a
 
 include ../Makefile.rules
