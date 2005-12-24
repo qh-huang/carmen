@@ -9,12 +9,8 @@ int main(int argc, char **argv)
   char line[100000];
   int odometry_count = 0;
 
-  carmen_gps_gpgga_message gps;
   carmen_base_odometry_message odometry;
   carmen_erase_structure(&odometry, sizeof(carmen_base_odometry_message) );
-
-  if (argc != 2) 
-    carmen_die("Sytntax: %s <carmen-log-file>\n", argv[0]);
 
   /* initialize connection to IPC network */
   carmen_ipc_initialize(argc, argv);
@@ -45,12 +41,6 @@ int main(int argc, char **argv)
 					     &odometry);
       odometry_count++;
     }
-    else if(strncmp(line, "GPSNMEA ", 8) == 0) {
-      fprintf(stderr, "G");
-      carmen_string_to_gps_gpgga_message(carmen_next_word(line), 
-					 &gps);
-    }
-
   }
   fprintf(stderr, "\rReading logfile (100%%)   \n");
 
