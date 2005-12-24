@@ -204,10 +204,6 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	  posctr++;
 	} else if (!strcmp( command, "FLASER") ){
 	  laserctr++;
-	} else if (!strcmp( command, "ROBOTLASER1") ){
-	  laserctr++;
-	} else if (!strcmp( command, "ROBOTLASER2") ){
-	  laserctr++;
 	} else if (!strcmp( command, "RLASER") ){
 	  laserctr++;
 	} else if (!strcmp( command, "MARKER")) {
@@ -328,10 +324,9 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
   } else
     rec->psens = NULL;
 
-    if (laserctr>0) {
+  if (laserctr>0)
     rec->lsens =
       (logtools_lasersens2_data_t *) malloc( laserctr * sizeof(logtools_lasersens2_data_t) ); 
-  }
   else
     rec->lsens = NULL;
 

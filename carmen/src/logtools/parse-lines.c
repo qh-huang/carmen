@@ -10,7 +10,6 @@
 #include <ctype.h>
 
 #include <carmen/logtools.h>
-#include <carmen/readlog.h>
 
 #include "defines.h"
 #include "internal.h"
@@ -539,8 +538,6 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
   static char    str7[MAX_CMD_LENGTH];
   static char  * running, * valptr;
 
-  static carmen_robot_laser_message carmen_laser;
-
   float          fov = M_PI;
   double         angleDiff, time;
   int            i, l, nVal;
@@ -550,7 +547,6 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
 
 
   if (firsttime) {
-    carmen_erase_structure(&carmen_laser, sizeof(carmen_robot_laser_message));
     lprop.fov.start     =   -M_PI_2;
     lprop.fov.end       =    M_PI_2;
     lprop.fov.delta     =      M_PI;
@@ -717,96 +713,7 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
       convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
       rec->numlaserscans++;
     }
-  } else if (!strcmp( command, "ROBOTLASER1") ){
     
-    if (sscanf( line, "%s ", dummy ) == EOF) {
-      return(FALSE);
-      
-    } else {
-
-      rec->entry[rec->numentries].type   = LASER_VALUES;
-      rec->entry[rec->numentries].index  = rec->numlaserscans;
-      rec->numentries++;
-	  
-      carmen_string_to_robot_laser_message(line,&carmen_laser);
-     
-      rec->lsens[rec->numlaserscans].id                 = 0;
-      rec->lsens[rec->numlaserscans].laser.numvalues    = carmen_laser.num_readings;
-      rec->lsens[rec->numlaserscans].coord              = NULL;
-
-      if (alloc) {
-	rec->lsens[rec->numlaserscans].laser.val =
-	  (float *) malloc( carmen_laser.num_readings * sizeof(float) );
-	rec->lsens[rec->numlaserscans].laser.angle =
-	  (float *) malloc( carmen_laser.num_readings * sizeof(float) );
-      }
-      lprop.fov.delta = carmen_laser.config.fov;
-      lprop.fov.start = carmen_laser.config.start_angle;
-      lprop.fov.end   = carmen_laser.config.start_angle + carmen_laser.config.fov;
-      angleDiff       = carmen_laser.config.angular_resolution;
-
-      rec->lsens[rec->numlaserscans].laser.fov    = lprop.fov.delta;
-      rec->lsens[rec->numlaserscans].laser.offset = lprop.offset;
-
-      for (i=0;i<carmen_laser.num_readings;i++) {
-	rec->lsens[rec->numlaserscans].laser.val[i]       =
-	  100.0 * carmen_laser.range[i];
-	rec->lsens[rec->numlaserscans].laser.angle[i]     =
-	  carmen_laser.config.start_angle+(((double)i)*angleDiff);
-      }
-      rec->lsens[rec->numlaserscans].estpos.x = 100.0 * carmen_laser.laser_pose.x;
-      rec->lsens[rec->numlaserscans].estpos.y = 100.0 * carmen_laser.laser_pose.y;
-      rec->lsens[rec->numlaserscans].estpos.o = carmen_laser.laser_pose.theta;
-      time = carmen_laser.timestamp;
-      convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
-      rec->numlaserscans++;
-    }
-  } else if (!strcmp( command, "ROBOTLASER2") ){
-    
-    if (sscanf( line, "%s ", dummy ) == EOF) {
-      return(FALSE);
-      
-    } else {
-
-      rec->entry[rec->numentries].type   = LASER_VALUES;
-      rec->entry[rec->numentries].index  = rec->numlaserscans;
-      rec->numentries++;
-	  
-      carmen_string_to_robot_laser_message(line,&carmen_laser);
-     
-      rec->lsens[rec->numlaserscans].id                 = 1;
-      rec->lsens[rec->numlaserscans].laser.numvalues    = carmen_laser.num_readings;
-      rec->lsens[rec->numlaserscans].coord              = NULL;
-
-      if (alloc) {
-	rec->lsens[rec->numlaserscans].laser.val =
-	  (float *) malloc( carmen_laser.num_readings * sizeof(float) );
-	rec->lsens[rec->numlaserscans].laser.angle =
-	  (float *) malloc( carmen_laser.num_readings * sizeof(float) );
-      }
-      lprop.fov.delta = carmen_laser.config.fov;
-      lprop.fov.start = carmen_laser.config.start_angle;
-      lprop.fov.end   = carmen_laser.config.start_angle + carmen_laser.config.fov;
-      angleDiff       = carmen_laser.config.angular_resolution;
-
-      rec->lsens[rec->numlaserscans].laser.fov    = lprop.fov.delta;
-      rec->lsens[rec->numlaserscans].laser.offset = lprop.offset;
-
-      for (i=0;i<carmen_laser.num_readings;i++) {
-	rec->lsens[rec->numlaserscans].laser.val[i]       =
-	  100.0 * carmen_laser.range[i];
-	rec->lsens[rec->numlaserscans].laser.angle[i]     =
-	  carmen_laser.config.start_angle+(((double)i)*angleDiff);
-      }
-      rec->lsens[rec->numlaserscans].estpos.x = 100.0 * carmen_laser.laser_pose.x;
-      rec->lsens[rec->numlaserscans].estpos.y = 100.0 * carmen_laser.laser_pose.y;
-      rec->lsens[rec->numlaserscans].estpos.o = carmen_laser.laser_pose.theta;
-      time = carmen_laser.timestamp;
-      convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
-      rec->numlaserscans++;
-    }
-    
-     
   } else if (!strcmp( command, "MARKER" )) {
     
     if (sscanf( line, "%s %[^\n] %s",
