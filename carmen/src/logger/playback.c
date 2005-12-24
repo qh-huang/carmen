@@ -24,7 +24,6 @@ carmen_simulator_truepos_message truepos;
 carmen_robot_laser_message laser1, laser2, laser3, laser4;
 carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4;
 carmen_localize_globalpos_message globalpos;
-carmen_gps_gpgga_message gps;
 
 void print_playback_status(void)
 {
@@ -136,10 +135,6 @@ void register_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_LOCALIZE_GLOBALPOS_NAME);
 
-  err = IPC_defineMsg(CARMEN_GPS_GPGGA_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_GPS_GPGGA_MESSAGE_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_GPS_GPGGA_MESSAGE_NAME);
-
   carmen_subscribe_message(CARMEN_PLAYBACK_COMMAND_NAME, 
                            CARMEN_PLAYBACK_COMMAND_FMT,
                            NULL, sizeof(carmen_playback_command_message),
@@ -188,6 +183,7 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser3, 0},
   {"LASER4", CARMEN_LASER_LASER4_NAME, 
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
+
   {"RAWLASER1", CARMEN_LASER_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_laser_laser_message, &rawlaser1, 0},
   {"RAWLASER2", CARMEN_LASER_REARLASER_NAME, 
@@ -204,8 +200,6 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_robot_laser_message, &laser3, 0},
   {"ROBOLASER4", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser4, 0},
-  {"GPSNMEA", CARMEN_GPS_GPGGA_MESSAGE_NAME,
-   (converter_func)carmen_string_to_gps_gpgga_message, &gps, 0},
 };
 
 int read_message(int message_num, int publish)
@@ -360,7 +354,6 @@ int main(int argc, char **argv)
   memset(&rawlaser2, 0, sizeof(rawlaser2));
   memset(&rawlaser3, 0, sizeof(rawlaser3));
   memset(&rawlaser4, 0, sizeof(rawlaser4));
-  carmen_erase_structure(&gps, sizeof(gps));
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);

@@ -48,7 +48,6 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# RAWLASER4 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# ROBOTLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# ROBOTLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
-  carmen_fprintf(outfile, "# GPSNMEA gpsnr utc latitude lat_orient longitude long_orient gps_quality num_satellites hdop sea_level altitude geo_sea_level geo_sep data_age\n");
 
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
@@ -162,26 +161,4 @@ void carmen_logwrite_write_localize(carmen_localize_globalpos_message *msg,
 		 msg->odometrypos.x, msg->odometrypos.y, 
 		 msg->odometrypos.theta, msg->timestamp, msg->host, timestamp);
 }
-
-void carmen_logwrite_write_gps_gpgga(carmen_gps_gpgga_message *gps, 
-				     carmen_FILE *outfile, double timestamp)
-{
-  carmen_fprintf(outfile, "GPSNMEA %d %f %lf %c %lf %c %d %d %lf %lf %lf %lf %lf %d %lf %s %lf\n",
-		 gps->nr,
-		 gps->utc,         
-		 gps->latitude,      
-		 gps->lat_orient,    
-		 gps->longitude,     
-		 gps->long_orient,   
-		 gps->gps_quality,   
-		 gps->num_satellites,
-		 gps->hdop,          
-		 gps->sea_level,     
-		 gps->altitude,      
-		 gps->geo_sea_level, 
-		 gps->geo_sep,       
-		 gps->data_age,      
-		 gps->timestamp, gps->host, timestamp);
-}
-
 

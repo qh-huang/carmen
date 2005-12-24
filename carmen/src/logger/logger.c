@@ -135,15 +135,6 @@ void localize_handler(carmen_localize_globalpos_message *msg)
 				 logger_starttime);
 }
 
-void gps_gpgga_handler(carmen_gps_gpgga_message *gps)
-{
-  fprintf(stderr, "G");
-  carmen_logwrite_write_gps_gpgga(gps, outfile, 
-				  carmen_get_time() - logger_starttime);
-}
-
-
-
 static void sync_handler(carmen_logger_sync_message *sync)
 {
   carmen_logwrite_write_sync(sync, outfile);
@@ -175,7 +166,7 @@ void shutdown_module(int sig)
 
 int main(int argc, char **argv)
 {
-  char *filename;
+  char filename[1024];
   char key;
 
   /* initialize connection to IPC network */
@@ -185,24 +176,7 @@ int main(int argc, char **argv)
   /* open logfile, check if file overwrites something */
   if(argc < 2) 
     carmen_die("usage: %s <logfile>\n", argv[0]);
-  filename = carmen_new_string("%s", argv[1]);
-  
-  if (strlen(filename) < 4 || strcmp(filename+strlen(filename)-4,".clf") !=0) {
-    fprintf(stderr, "By convention, carmen log files end in .clf.\n");
-    do {
-      fprintf(stderr, "Append .clf to log filename %s? ",  filename);
-      scanf("%c", &key);
-    } while (key == '\n');
-
-    if (toupper(key) == 'Y') {
-      free(filename);
-      filename = carmen_new_string("%s.clf", argv[1]);
-    }
-
-    do {
-      scanf("%c", &key);
-    } while (key != '\n');    
-  }
+  sprintf(filename, argv[1]);
 
   outfile = carmen_fopen(filename, "r");
   if (outfile != NULL) {
@@ -251,10 +225,6 @@ int main(int argc, char **argv)
   carmen_simulator_subscribe_truepos_message(NULL, (carmen_handler_t)  
 					     carmen_simulator_truepos_handler,
                                              CARMEN_SUBSCRIBE_ALL);
-
-  carmen_gps_subscribe_nmea_message(NULL,(carmen_handler_t)  
-				    gps_gpgga_handler,
-				    CARMEN_SUBSCRIBE_ALL);
   
   signal(SIGINT, shutdown_module);
   logger_starttime = carmen_get_time();
