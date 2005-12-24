@@ -234,7 +234,7 @@ void carmen_linemapping_split_and_merge(carmen_linemapping_dyn_tab_segment_t *se
 
   // check the distance of the points to the line segment
   if( num_of_points > 2 ){
-    int max_index=0;
+    int max_index;
     double max_dist = carmen_linemapping_params_global.sam_tolerance + 1.0;
     if(carmen_linemapping_params_global.sam_use_fit_split){ // line-fitting before 'split'-check
       carmen_linemapping_line_fitting(s, pnts, i_low, i_high);
