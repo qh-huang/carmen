@@ -36,7 +36,7 @@ void CloseLowSlam();
 // whether there is still information to be processed by SLAM (set to 1). The second and third
 // arguments return the corrected odometry for the time steps, and the corresponding list of
 // observations. This can be used for the higher level SLAM process when using hierarchical SLAM.
-void LowSlam(int &continueSlam, TPath **path, TSenseLog **obs);
+void LowSlam(TPath **path, TSenseLog **obs);
 
 
 

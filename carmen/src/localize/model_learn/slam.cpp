@@ -47,17 +47,12 @@
 // Not used when the robot is reading data from a log file.
 double RotationSpeed, TranslationSpeed;
 
-// The means by which the slam thread can be told to halt, either by user command or by the end of a playback file.
-int continueSlam;
-int PLAYBACK_COMPLETE = 0;
-
-
 //
 // This calls the procedures in the other files which do all the real work. 
 // If you wanted to not use hierarchical SLAM, you could remove all references here to High*, and make
 // certain to set LOW_DURATION in low.h to some incredibly high number.
 //
-void *Slam(void *a __attribute__ ((unused)))
+void *Slam(void *arg __attribute__ ((unused)))
 {
   TPath *path, *trashPath;
   TSenseLog *obs, *trashObs;
@@ -99,7 +94,7 @@ void *Slam(void *a __attribute__ ((unused)))
     logfile_index = carmen_logfile_index_messages(readFile);
 
     InitLowSlam();
-    LowSlam(continueSlam, &path, &obs);
+    LowSlam(&path, &obs);
     carmen_fclose(readFile);
 
     oldmC_D = meanC_D;    
@@ -161,22 +156,15 @@ void *Slam(void *a __attribute__ ((unused)))
 //
 int main (int argc, char *argv[])
 {
-  //char command[256], tempString[20];
-  int x;
-  //int y;
-  //double maxDist, tempDist, tempAngle;
-  int WANDER, EXPLORE, DIRECT_COMMAND;
-  pthread_t slam_thread;
+  //  carmen_warn("Random seed: %d\n", carmen_randomize(&argc, &argv));
 
-  if (argc != 2) {
-    fprintf(stderr, "Usage: model_learner <logfile>\n");
-    exit(-1);
-  }
+  if (argc != 2) 
+    carmen_die("Usage: model_learner <logfile>\n");
 
   RECORDING = "";
-  PLAYBACK = argv[x];
+  PLAYBACK = argv[1];
 
-  fprintf(stderr, "********** World Initialization ***********\n");
+  carmen_warn("********** World Initialization ***********\n");
 
   seedMT(SEED);
   // Spawn off a seperate thread to do SLAM
@@ -184,21 +172,8 @@ int main (int argc, char *argv[])
   // Should use semaphores or similar to prevent reading of the map
   // during updates to the map.
   //
-  continueSlam = 1;
-  pthread_create(&slam_thread, (pthread_attr_t *) NULL, Slam, &x);
+  Slam(NULL);
 
-  fprintf(stderr, "*********** Main Loop (Movement) **********\n");
-
-
-  // This is the spot where code should be inserted to control the robot. You can go ahead and assume
-  // that the robot is localizing and mapping.
-  WANDER = 0;
-  EXPLORE = 0;
-  DIRECT_COMMAND = 0;
-  RotationSpeed = 0.0;
-  TranslationSpeed = 0.0;
-
-  pthread_join(slam_thread, NULL);
   return 0;
 }
 

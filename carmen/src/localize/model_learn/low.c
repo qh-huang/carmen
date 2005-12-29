@@ -813,7 +813,7 @@ void UpdateAncestry(TSense sense, TAncestor particleID[])
 // While there is still information in the file, it will return 0. When it reaches the end of the file, it will return 1.
 //
 int ReadLog(carmen_FILE *logFile, carmen_logfile_index_p logfile_index, 
-	    TSense &sense, int &continueSlam) {
+	    TSense &sense) {
   int i, max;
   char line[4096];
   int laser;
@@ -821,7 +821,6 @@ int ReadLog(carmen_FILE *logFile, carmen_logfile_index_p logfile_index,
 
   if (carmen_logfile_eof(logfile_index)) {
     fprintf(stderr, "End of Log File.\n");
-    continueSlam = 0;
     return 1;
   }
 
@@ -1010,7 +1009,7 @@ void CloseLowSlam()
 // arguments return the corrected odometry for the time steps, and the corresponding list of
 // observations. This can be used for the higher level SLAM process when using hierarchical SLAM.
 //
-void LowSlam(int &continueSlam, TPath **path, TSenseLog **obs)
+void LowSlam(TPath **path, TSenseLog **obs)
 {
   int cnt;
   int i, j, overflow = 0;
@@ -1071,11 +1070,11 @@ void LowSlam(int &continueSlam, TPath **path, TSenseLog **obs)
   overflow = 1;
 
   for (i=0; i < START_ITERATION; i++)
-    ReadLog(readFile, logfile_index, sense, continueSlam);
+    ReadLog(readFile, logfile_index, sense);
 
   curGeneration = 0;
   // Add the first thing that you see to the worldMap at the center. This gives us something to localize off of.
-  ReadLog(readFile, logfile_index, sense, continueSlam);
+  ReadLog(readFile, logfile_index, sense);
   AddToWorldModel(sense, 0);
   curGeneration = 1;
 
@@ -1093,12 +1092,11 @@ void LowSlam(int &continueSlam, TPath **path, TSenseLog **obs)
   }
   (*obs)->next = NULL;
 
-  continueSlam = 1;
   cnt = 0;
-  while ((continueSlam) && (curGeneration < LEARN_DURATION)) {
+  while (curGeneration < LEARN_DURATION) {
     // Collect information from the data log. If either reading returns 1, we've run out of log data, and
     // we need to stop now.
-    if (ReadLog(readFile, logfile_index, sense, continueSlam) == 1)
+    if (ReadLog(readFile, logfile_index, sense) == 1)
       overflow = 0;
     else 
       overflow = 1;
