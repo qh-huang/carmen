@@ -45,13 +45,3 @@ typedef struct odo_struct TOdo;
 
 extern TOdo odometry;
 
-// These should be self explainatory. Each one represents how the robot actually performs these tasks,
-// which the program issues the commands. Actual implementation in ThisRobot.c is specific to each robot.
-// For purposes of playback from logfiles, these need to be present, but do not need to be implemented
-int InitializeThisRobot(int argc, char *argv[]);
-int ConnectOdometry(int argc, char *argv[]);
-int ConnectLaser(int argc, char *argv[]);
-int ConnectDrive(int argc, char *argv[]);
-void GetSensation(TSense &sense);
-void GetOdometry(TOdo &odometry);
-void Drive(double speed, double turn);

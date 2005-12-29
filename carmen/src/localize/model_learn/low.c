@@ -18,6 +18,9 @@
 #include "low.h"
 #include "mt-rand.h"
 
+TOdo odometry;
+
+
 //
 // Error model for motion
 // Note that the var terms are really the standard deviations. See our paper on
@@ -1107,10 +1110,6 @@ void LowSlam(int &continueSlam, TPath **path, TSenseLog **obs)
 
     if (overflow > 0) {
       overflow--;
-
-      // Record and preprocess the current laser reading
-      if (PLAYBACK == "")
-	GetSensation(sense);
 
       // Wipe the slate clean 
       LowInitializeFlags();

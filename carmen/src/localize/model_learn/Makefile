@@ -12,7 +12,7 @@ LFLAGS += -lreadlog -lglobal -lparam_interface -lipc
 MODULE_NAME = MODEL-LEARN
 MODULE_COMMENT = A program for learning motion models.
 
-SOURCES = mt-rand.c basic.c map.c lowMap.c low.c learn.c slam.cpp ThisRobot.cpp
+SOURCES = mt-rand.c basic.c map.c lowMap.c low.c learn.c slam.cpp 
 PUBLIC_INCLUDES = l
 PUBLIC_LIBRARIES = 
 PUBLIC_BINARIES = model_learner
@@ -22,7 +22,7 @@ TARGETS = model_learner
 
 # rules
 
-model_learner: mt-rand.o ThisRobot.o basic.o map.o lowMap.o low.o learn.o \
+model_learner: mt-rand.o basic.o map.o lowMap.o low.o learn.o \
 	slam.o 
 
 include ../../Makefile.rules

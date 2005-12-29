@@ -188,10 +188,6 @@ int MTrandInt(int max) {
   return ( (int) (MTrandDec() * (max + 1)) );
 }
 
-void dummyInit(long i __attribute__ ((unused))) {
-  /* do nothing */
-  ;
-}
 #ifdef TEST
 #define MAX 200000000UL
 #define DM 10000

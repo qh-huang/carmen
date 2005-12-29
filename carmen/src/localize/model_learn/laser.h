@@ -35,3 +35,4 @@
 // Set the maximum usuable distance for the laser range finder. This number is often less than the actual
 // reliable distance for the specific LRF, because the laser casts 'scatter' at long distances.
 #define MAX_SENSE_RANGE 7.95 * MAP_SCALE
+
