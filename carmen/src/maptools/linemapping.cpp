@@ -135,7 +135,6 @@ void carmen_linemapping_get_max_dist_max_index(const carmen_point_t *p1,
   double dx = p2->x - p1->x;
   double dy = p2->y - p1->y;
   double denominator = carmen_square(dx) + carmen_square(dy);
-
   *max_dist = 0.0;
   if(denominator < carmen_square(carmen_linemapping_epsilon)){ // line segment is a point
     for(int i=i_low; i<=i_high; i++){
@@ -234,7 +233,7 @@ void carmen_linemapping_split_and_merge(carmen_linemapping_dyn_tab_segment_t *se
 
   // check the distance of the points to the line segment
   if( num_of_points > 2 ){
-    int max_index;
+    int max_index=0;
     double max_dist = carmen_linemapping_params_global.sam_tolerance + 1.0;
     if(carmen_linemapping_params_global.sam_use_fit_split){ // line-fitting before 'split'-check
       carmen_linemapping_line_fitting(s, pnts, i_low, i_high);
