@@ -510,7 +510,7 @@ static void egrid_dialog_destroy(GtkWidget *widget __attribute__ ((unused)),
   egrid_dialog = NULL;
 }
 
-int save_egrid(char *description) {
+int save_egrid(const gchar *description) {
 
   carmen_FILE *fp;
   char *filename = egrid_filename;
@@ -532,8 +532,9 @@ int save_egrid(char *description) {
     return -1;
   }
   if(carmen_map_write_all(fp, egrid->prob, egrid->size_x, egrid->size_y,
-			  egrid->resolution, egrid_origin, description,
-			  "", "", NULL, 0, NULL, 0, NULL, 0) < 0) {
+			  egrid->resolution, egrid_origin, 
+			  (gchar *)description, "", "", NULL, 0, NULL, 
+			  0, NULL, 0) < 0) {
     carmen_fclose(fp);
     return -1;
   }
@@ -779,28 +780,51 @@ static void egrid_window_close() {
     gtk_widget_hide(egrid_file_save_description_dialog);
 }
 
-static GtkWidget *egrid_menubar_init() {
-
-  GtkItemFactory *item_factory;
-  GtkAccelGroup *accel_group;
-  GtkWidget *menubar;
-  gint nmenu_items;
-  GtkItemFactoryEntry menu_items[] = {
-    {"/_File", NULL, NULL, 0, "<Branch>"},
-    {"/File/_Save", "<control>S", egrid_file_save, 0, NULL},
-    {"/File/", NULL, NULL, 0, "<Separator>"},
-    {"/File/_Close", "<control>C", egrid_window_close, 0, NULL}
+static GtkWidget *egrid_menubar_init() 
+{
+  GtkActionEntry action_entries[] = {
+    {"FileMenu", NULL, "_File", NULL, NULL, NULL},
+    {"Save", GTK_STOCK_SAVE, "_Save", "<control>S", NULL, 
+     G_CALLBACK(egrid_file_save)},
+    {"Close", GTK_STOCK_QUIT, "_Close", "<control>C", NULL, 
+     G_CALLBACK(egrid_window_close)},
   };
 
-  nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
+  const char *ui_description = 
+    "<ui>"
+    "  <menubar name='MainMenu'>"
+    "    <menu action='FileMenu'>"
+    "      <menuitem action='Save'/>"
+    "      <separator/>"
+    "      <menuitem action='Close'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>"; 
 
-  accel_group = gtk_accel_group_new();
-  item_factory = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				      accel_group);
-  gtk_item_factory_create_items(item_factory, nmenu_items, menu_items, NULL);
-  gtk_window_add_accel_group(GTK_WINDOW(egrid_window), accel_group);
+  GtkWidget *menubar;
+  GtkActionGroup *action_group;
+  GtkAccelGroup *accel_group;
+  GError *error;
+  GtkUIManager *ui_manager;
 
-  menubar = gtk_item_factory_get_widget(item_factory, "<main>");
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions (action_group, action_entries, 
+				G_N_ELEMENTS (action_entries), egrid_window);
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (GTK_WINDOW (egrid_window), accel_group);
+  
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, 
+					  &error)) {
+    g_message ("building menus failed: %s", error->message);
+    g_error_free (error);
+    exit (EXIT_FAILURE);
+  }
+
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
 
   return menubar;
 }

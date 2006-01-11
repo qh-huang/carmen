@@ -641,41 +641,81 @@ static void file_save_as(GtkWidget *w __attribute__ ((unused)),
   gtk_widget_show(file_window);
 }
 
-static GtkWidget *main_menubar_init(GtkWidget *main_window) {
+static GtkWidget *main_menubar_init(GtkWidget *main_window) 
+{
+  GtkActionEntry action_entries[] = {
+    {"FileMenu", NULL, "_File", NULL, NULL, NULL},
+    {"Open", GTK_STOCK_OPEN, "_Open", "<control>O", NULL, 
+     G_CALLBACK(file_open)},
+    {"Save", GTK_STOCK_SAVE, "_Save", "<control>S", NULL, 
+     G_CALLBACK(file_save)},
+    {"Save_As", GTK_STOCK_SAVE_AS, "Save _As", NULL, NULL, 
+     G_CALLBACK(file_save_as)},
+    {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, 
+     G_CALLBACK(main_window_destroy)},
 
-  GtkItemFactory *item_factory;
-  GtkAccelGroup *accel_group;
-  GtkWidget *menubar;
-  gint nmenu_items;
-  GtkItemFactoryEntry menu_items[] = {
-    {"/_File", NULL, NULL, 0, "<Branch>"},
-    {"/File/_Open", "<control>O", file_open, 0, NULL},
-    {"/File/_Save", "<control>S", file_save, 0, NULL},
-    {"/File/Save _As...", NULL, file_save_as, 0, NULL},
-    {"/File/", NULL, NULL, 0, "<Separator>"},
-    {"/File/_Quit", "<control>Q", main_window_destroy, 0, NULL},
-    {"/_Edit", NULL, NULL, 0, "<Branch>"},
-    {"/Edit/_Undo", "<control>Z", history_undo, 0, NULL},
-    {"/Edit/_Redo", "<control>Y", history_redo, 0, NULL},
-    {"/Edit/", NULL, NULL, 0, "<Separator>"},
-    {"/Edit/_Delete", "<control>X", laser_scans_delete, 0, NULL},
-    {"/_Help", NULL, NULL, 0, "<Branch>"},
-    {"/Help/_Local Help", "<control>H", help_local, 0, NULL}
+    {"EditMenu", NULL, "_Edit", NULL, NULL, NULL},
+    {"Undo", GTK_STOCK_UNDO, "_Undo", "<control>Z", NULL, 
+     G_CALLBACK(history_undo)},
+    {"Redo", GTK_STOCK_REDO, "_Redo", "<control>Y", NULL, 
+     G_CALLBACK(history_redo)},
+    {"Delete", GTK_STOCK_DELETE, "_Delete", "<control>X", NULL, 
+     G_CALLBACK(laser_scans_delete)},
+
+    {"HelpMenu", NULL, "_Help", NULL, NULL, NULL},
+    {"LocalHelp", GTK_STOCK_HELP, "_Undo", "<control>H", NULL, 
+     G_CALLBACK(help_local)},
   };
 
-  nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
+  const char *ui_description = 
+    "<ui>"
+    "  <menubar name='MainMenu'>"
+    "    <menu action='FileMenu'>"
+    "      <menuitem action='Open'/>"
+    "      <menuitem action='Save'/>"
+    "      <menuitem action='SaveAs'/>"
+    "      <separator/>"
+    "      <menuitem action='Quit'/>"
+    "    </menu>"
+    "    <menu action='EditMenu'>"
+    "      <menuitem action='Undo'/>"
+    "      <menuitem action='Redo'/>"
+    "      <separator/>"
+    "      <menuitem action='Delete'/>"
+    "    </menu>"
+    "    <menu action='HelpMenu'>"
+    "      <menuitem action='LocalHelp'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>"; 
 
-  accel_group = gtk_accel_group_new();
-  item_factory = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				      accel_group);
-  gtk_item_factory_create_items(item_factory, nmenu_items, menu_items, NULL);
-  gtk_window_add_accel_group(GTK_WINDOW(main_window), accel_group);
+  GtkWidget *menubar;
+  GtkActionGroup *action_group;
+  GtkAccelGroup *accel_group;
+  GError *error;
+  GtkUIManager *ui_manager;
 
-  menubar = gtk_item_factory_get_widget(item_factory, "<main>");
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions (action_group, action_entries, 
+				G_N_ELEMENTS (action_entries), main_window);
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (GTK_WINDOW (main_window), accel_group);
+  
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, 
+					  &error)) {
+    g_message ("building menus failed: %s", error->message);
+    g_error_free (error);
+    exit (EXIT_FAILURE);
+  }
+
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
 
   return menubar;
 }
-
 
 static GtkWidget *toolbar_init() {
 

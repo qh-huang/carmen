@@ -29,7 +29,7 @@ TARGETS = libwritelog.a libreadlog.a logger libplayback_interface.a playback \
 ifndef NO_GRAPHICS
 SOURCES += playback_control.c
 IFLAGS += `$(GTK_CONFIG) --cflags`
-LFLAGS += -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
+LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
 TARGETS += playback_control
 endif
 

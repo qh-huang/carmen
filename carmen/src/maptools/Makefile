@@ -21,15 +21,14 @@ TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
 	libmap_io.a
 
 ifndef NO_GRAPHICS
- IFLAGS += `$(GTK_CONFIG) --cflags`
- LFLAGS += -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
-endif
-
-ifndef NO_GRAPHICS
+IFLAGS += `$(GTK_CONFIG) --cflags`
+LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
 SOURCES += map_graphics.c 
 PUBLIC_INCLUDES += map_graphics.h
 PUBLIC_LIBRARIES += libmap_graphics.a
-TARGETS += libmap_graphics.a
+TARGETS += libmap_graphics.a map_test
+else
+ CFLAGS += -DNO_GRAPHICS
 endif
 
 all:

@@ -43,8 +43,9 @@ typedef struct {
   int draw_flags;
   carmen_world_point_t centre;
   double zoom;
-  carmen_graphics_screen_config_t screen_defn;
   int port_size_x, port_size_y;
+  double rescale_size;
+
   GtkWidget *image_widget;
   GtkWidget *map_box;
   GtkWidget *window;
@@ -54,7 +55,7 @@ typedef struct {
   art_buffer_p art_buffer;
   art_context_p art_context;
 #else
-  GdkPixmap *current_pixmap;
+  GdkPixbuf *current_pixbuf;
   GdkGC *drawing_gc;
 #endif
   GdkPixmap *drawing_pixmap;
@@ -63,19 +64,22 @@ typedef struct {
   GtkAdjustment *y_scroll_adj;
   int button_two_down;
   void (*user_draw_routine)();
-  GtkSignalFunc motion_handler;
-  GtkSignalFunc button_release_handler;
-  GtkSignalFunc button_press_handler;
+  void (*motion_handler)();
+  void (*button_release_handler)();
+  void (*button_press_handler)();
 } GtkMapViewer;
 
-typedef void (* drawing_func)(GtkMapViewer *map_view);
+typedef void (*carmen_graphics_mapview_drawing_func_t)(GtkMapViewer *map_view);
 
+typedef void (*carmen_graphics_mapview_callback_t)(GtkMapViewer *map_view,
+						   carmen_world_point_p point,
+						   GdkEvent *event);
 
 GtkMapViewer *carmen_map_graphics_new_viewer(int x_size, int y_size,
 					     double initial_zoom);
 
 void carmen_map_graphics_add_drawing_func(GtkMapViewer *map_view, 
-					  drawing_func new_func);
+					  carmen_graphics_mapview_drawing_func_t new_func);
 void carmen_map_graphics_add_map(GtkMapViewer *map_view, carmen_map_p new_map, 
 				 int new_flags);
 void carmen_map_graphics_modify_map(GtkMapViewer *map_view, float *data, 
@@ -119,15 +123,16 @@ void carmen_map_graphics_draw_string(GtkMapViewer *map_view, GdkColor *colour,
 				     const char *string);
   
 void carmen_map_graphics_add_motion_event(GtkMapViewer *internal_map_view, 
-					  GtkSignalFunc motion_handler);
+					  carmen_graphics_mapview_callback_t 
+					  motion_handler);
 void carmen_map_graphics_add_button_release_event(GtkMapViewer 
 						  *internal_map_view, 
-						  GtkSignalFunc 
+						  carmen_graphics_mapview_callback_t 
 						  button_release_handler);
 
 void 
 carmen_map_graphics_add_button_press_event(GtkMapViewer *map_view, 
-					   GtkSignalFunc button_press_handler);
+					   carmen_graphics_mapview_callback_t button_press_handler);
 
 carmen_map_p carmen_map_image_to_map( GdkImlibImage* im, double resolution);
 carmen_map_p carmen_map_imagefile_to_map(char *filename, double resolution);

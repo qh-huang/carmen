@@ -16,7 +16,7 @@ ifndef NO_GRAPHICS
 ifndef NO_LIBJPEG
 CFLAGS +=
 IFLAGS += `$(GTK_CONFIG) --cflags` 
-LFLAGS += -lparam_interface -lipc -lglobal -lglobal_graphics -lgdk_imlib \
+LFLAGS += -lparam_interface -lipc -lglobal -lglobal_graphics \
 	`$(GTK_CONFIG) --libs` -lmap_graphics -ljpeg
 SOURCES += laserview.c
 PUBLIC_INCLUDES += 

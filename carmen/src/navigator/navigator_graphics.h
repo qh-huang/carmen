@@ -58,9 +58,7 @@ extern "C" {
 
   void navigator_graphics_update_simulator_objects
   (int num_objects, carmen_traj_point_t *objects_list);
-  void navigator_graphics_initialize_dynamics(carmen_list_t *people, 
-					      carmen_list_t *trash, 
-					      carmen_list_t *doors);
+  void navigator_graphics_initialize_dynamics(carmen_list_t *people);
   void navigator_graphics_update_dynamics(void);
 
   void navigator_graphics_display_config(char *attribute, int value,

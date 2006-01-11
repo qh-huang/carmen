@@ -29,37 +29,39 @@
 #include <carmen/camera_interface.h>
 
 static GtkWidget *drawing_area;
-static GdkPixmap *image_pixmap;
+static GdkPixbuf *image;
 static int received_image = 0;
 static void redraw(void);
 
-static void image_handler(carmen_camera_image_message *image)
+static void pixbuf_destroyed(guchar *pixels, 
+			     gpointer data __attribute__ ((unused)))
 {
-  GdkImlibImage *imlib_image;
+  free(pixels);
+}
+
+static void image_handler(carmen_camera_image_message *image_msg)
+{
   int i, j;
   unsigned char *data;
 
   if (!received_image) {
-    gtk_widget_set_usize (drawing_area, image->width, image->height);
+    gtk_widget_set_usize (drawing_area, image_msg->width, image_msg->height);
   }
 
   data = (unsigned char *)calloc
-    (image->width*image->height*3, sizeof(unsigned char));
+    (image_msg->width*image_msg->height*3, sizeof(unsigned char));
   carmen_test_alloc(data);
 
-  for (i = 0; i < image->width*image->height; i++) {
+  for (i = 0; i < image_msg->width*image_msg->height; i++) {
     for (j = 0; j < 3; j++) {
-      data[3*i+j] = image->image[3*i+j];
+      data[3*i+j] = image_msg->image[3*i+j];
     }
   }
 
-  imlib_image = 
-   gdk_imlib_create_image_from_data(data, (unsigned char *)NULL, 
-				    image->width, image->height);
- 
-  gdk_imlib_render(imlib_image, image->width, image->height);
-  image_pixmap = gdk_imlib_move_image(imlib_image);
-  gdk_imlib_destroy_image(imlib_image);
+  image = gdk_pixbuf_new_from_data((guchar *)data, GDK_COLORSPACE_RGB,
+				   FALSE, 8,  image_msg->width, 
+				   image_msg->height, image_msg->width*3, 
+				   pixbuf_destroyed, NULL);
 
   received_image = 1;
   redraw();
@@ -121,11 +123,12 @@ static void redraw(void)
   if (!received_image)
     return;
 
-  gdk_draw_pixmap(drawing_area->window, 
+  gdk_draw_pixbuf(drawing_area->window, 
 		  drawing_area->style->fg_gc[GTK_WIDGET_STATE (drawing_area)],
-                  image_pixmap, 0, 0, 0, 0, 
+		  image, 0, 0, 0, 0,
 		  drawing_area->allocation.width, 
-		  drawing_area->allocation.height);
+		  drawing_area->allocation.height, 
+		  GDK_RGB_DITHER_NONE, 0, 0);
 }
 
 static void 
@@ -134,8 +137,6 @@ start_graphics(int argc, char *argv[])
   GtkWidget *main_window;
 
   gtk_init(&argc, &argv);
-
-  carmen_graphics_initialize_screenshot();
 
   main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (main_window), "Robot Graph");

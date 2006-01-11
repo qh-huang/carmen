@@ -29,14 +29,21 @@
 #define CARMEN_MAP_UTIL_H
 
 void carmen_map_util_change_resolution(carmen_map_p map, double new_resolution);
-void carmen_map_minimize_gridmap(carmen_map_p map, int *x_offset, int *y_offset);
-void carmen_map_move_offlimits_chunk(carmen_offlimits_list_t *offlimits_list, 
-				     int x_offset, int y_offset);
+void carmen_minimize_gridmap(carmen_map_p map, int *x_offset, int *y_offset);
+void carmen_minimize_offlimits(carmen_offlimits_list_t *offlimits_list, 
+			       double x_offset, double y_offset);
+void carmen_minimize_places(carmen_map_placelist_t *place_list, 
+			    double x_offset, double y_offset,
+			    double width, double height);
+
 void carmen_map_free_hmap(carmen_hmap_p hmap);
 
-void carmen_rotate_places_chunk(carmen_place_p places, int num_places, 
-				carmen_map_p map, int rotation);
-
 void carmen_rotate_gridmap(carmen_map_p map, int rotation);
+void carmen_rotate_offlimits(carmen_map_config_t config,
+			     carmen_offlimits_list_t *offlimits_list,
+			     int rotation);
+void carmen_rotate_places(carmen_map_config_t config, 
+			  carmen_map_placelist_p place_list, 
+			  int rotation);
 
 #endif

@@ -1080,8 +1080,6 @@ start_graphics(int argc, char *argv[])
 
   gtk_init(&argc, &argv);
 
-  carmen_graphics_initialize_screenshot();
-
   main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (main_window), "Robot Graph");
   

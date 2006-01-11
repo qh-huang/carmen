@@ -6,8 +6,7 @@ LFLAGS += $(INTERFACE_LIBS) -lparam_interface -lglobal -lipc
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
-LFLAGS += -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs` \
-	-lpswrap
+LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs` -lpswrap
 endif
 
 ifndef NO_JOYSTICK

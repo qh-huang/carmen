@@ -535,10 +535,12 @@ static void toggle_view() {
 
 static GtkWidget *menubar_init(GtkWidget *window) {
 
+#if 0
   GtkItemFactory *item_factory;
   GtkAccelGroup *accel_group;
   GtkWidget *menubar;
   gint nmenu_items;
+
   GtkItemFactoryEntry menu_items[] = {
     {"/_File", NULL, NULL, 0, "<Branch>"},
     {"/File/_Save ini", "<control>S", file_window_popup, 0, NULL},
@@ -557,7 +559,63 @@ static GtkWidget *menubar_init(GtkWidget *window) {
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
   menubar = gtk_item_factory_get_widget(item_factory, "<main>");
+#endif
 
+  GtkActionEntry action_entries[] = {
+    {"FileMenu", NULL, "_File", NULL, NULL, NULL},
+    {"Save_ini", GTK_STOCK_SAVE, "_Save ini", "<control>S", NULL, 
+     file_window_popup},
+    {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, 
+     G_CALLBACK(window_destroy)},
+    {"ViewMenu", NULL, "_View", NULL, NULL, NULL},
+  };
+
+  GtkToggleActionEntry toggle_entries[] = {
+    {"Expert_Params", NULL, "E_xpert Params", "<control>X", NULL, toggle_view, 
+     FALSE}
+  };
+
+  const char *ui_description =
+    "<ui>"
+    "  <menubar name='MainMenu'>"
+    "    <menu action='FileMenu'>"
+    "      <menuitem action='Save_ini'/>"
+    "      <separator/>"
+    "      <menuitem action='Quit'/>"
+    "    </menu>"
+    "    <menu action='ViewMenu'>"
+    "      <menuitem action='Expert_Params'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+  GtkActionGroup *action_group;
+  GtkUIManager *ui_manager;
+  GtkAccelGroup *accel_group;
+  GError *error;
+  GtkWidget *menubar;
+
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions (action_group, action_entries, 
+				G_N_ELEMENTS (action_entries), window);
+  gtk_action_group_add_toggle_actions (action_group, toggle_entries, 
+				       G_N_ELEMENTS (toggle_entries), window);
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
+  
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, 
+					  &error)) {
+    g_message ("building menus failed: %s", error->message);
+    g_error_free (error);
+    exit (EXIT_FAILURE);
+  }
+  
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
+  
   return menubar;
 }
 

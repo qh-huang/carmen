@@ -12,7 +12,8 @@ SOURCES = navigator.c conventional.c planner.c navigator_ipc.c \
 	navigator_interface.c trajectory.c map_modify.c \
 	navigator_test.c random_nav.c
 
-PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h navigator.h planner_interface.h
+PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h navigator.h \
+	planner_interface.h
 PUBLIC_LIBRARIES = libnavigator_interface.a libconventional.a
 
 PUBLIC_BINARIES = navigator
@@ -25,8 +26,7 @@ endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
-#LFLAGS += -lmap_graphics -lglobal_graphics `pkg-config --libs gtk+-2.0`
-LFLAGS += -lmap_graphics -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
+LFLAGS += -lmap_graphics -lglobal_graphics `pkg-config --libs gtk+-2.0`
 
 ifndef NO_LIBART
 LFLAGS += -lart_lgpl -lartwrap

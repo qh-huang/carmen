@@ -25,8 +25,401 @@
  *
  ********************************************************/
 
+#ifndef NO_GRAPHICS
+#include <carmen/carmen_graphics.h>
+#else
 #include <carmen/carmen.h>
+#endif
+
+#include <getopt.h>
 #include "map_io.h"
+
+static void main_usage(char *prog_name)
+{
+  carmen_die("\nUsage: %s <action> <...>\n\n"
+	     "<action> is one of: toppm, "
+#ifndef NO_GRAPHICS
+	     "tomap, "
+#endif
+	     "rotate, minimize, "
+	     //add_place, strip,"
+	     " info\n"
+	     "Run %s <action> to get help on using each action.\n\n",
+	     prog_name, prog_name);  
+}
+
+static int handle_options(int argc,  char *argv[], int *force)
+{
+  static struct option long_options[] = {
+    {"force", 0, NULL, 'f'},
+    {0, 0, 0, 0}
+  };
+
+  int option_index = 0;
+  int c;
+
+  *force = 0;
+  opterr = 0;
+  while (1) {
+    c = getopt_long (argc, argv, "f", long_options, &option_index);
+    if (c == -1)
+      break;
+    switch (c) {
+    case 'f':
+      *force = 1;
+      break;
+    case '?':
+    default:
+      carmen_warn("Unknown option character %c", optopt);
+      main_usage(argv[0]);
+      break;
+    }
+  }
+
+  return optind;
+}
+
+static char *check_mapfile(char *filename)
+{
+   if(!carmen_file_exists(filename))
+     carmen_die("Map file %s does not exist.\n", filename);
+
+   if (!carmen_map_file(filename)) 
+     carmen_die("File %s is not a recognizable map file.\n", filename);
+   
+   return filename;
+}
+
+static char *check_output(char *filename, int force)
+{
+  char key;
+  
+  if (!force && carmen_file_exists(filename)) {
+    fprintf(stderr, "Overwrite %s? ", filename);
+    scanf("%c", &key);
+    if (toupper(key) != 'Y')
+      exit(-1);
+  }
+  
+  return filename;
+}
+
+static void toppm(int argc, char *argv[]) 
+{
+  int err;
+  int next_arg;
+  int force;
+  char *input_filename, *output_filename;
+  carmen_map_t map;
+
+  next_arg = handle_options(argc, argv, &force);
+
+  if(argc - next_arg != 3) {
+    if (argc != 2) 
+      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s toppm <map filename> <ppm filename>\n\n", 
+	       argv[0]); 
+  }
+
+  input_filename = check_mapfile(argv[next_arg+1]);
+  output_filename = check_output(argv[next_arg+2], force);
+
+  if(carmen_map_read_gridmap_chunk(input_filename, &map) < 0) 
+    carmen_die("Error: %s did not contain a gridmap.\n", input_filename);
+  carmen_map_read_offlimits_chunk_into_map(input_filename, &map);
+
+  err = carmen_map_write_to_ppm(&map, output_filename);
+  if (err < 0)
+    carmen_die_syserror("Could not write ppm to %s", output_filename);
+}
+
+
+#ifndef NO_GRAPHICS
+static void tomap(int argc, char *argv[]) 
+{
+  int next_arg;
+  int force;
+  double resolution;
+  char *input_filename, *output_filename;
+  carmen_map_t *map;
+  carmen_FILE *out_fp;
+  char buf[1024];
+
+  gtk_init (&argc, &argv);
+
+  next_arg = handle_options(argc, argv, &force);
+
+  if(argc - next_arg != 4) {
+    if (argc != 2) 
+      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s tomap <resolution> <map filename> "
+	       "<ppm filename>\n\n", argv[0]); 
+  }
+
+  resolution = (double)(atof(argv[next_arg+1]) / 90);
+  if (resolution == 0) 
+    carmen_die("%s translated to a resolution of 0.\n"
+		"A positive, non-zero resolution is required.\n", 
+		argv[next_arg+1]);
+  
+  input_filename = argv[next_arg+2];
+  if(!carmen_file_exists(input_filename)) 
+     carmen_die("Image file %s does not exist.\n", input_filename);
+
+  output_filename = check_output(argv[next_arg+3], force);
+
+  map = carmen_map_imagefile_to_map(input_filename, resolution);
+
+  out_fp = carmen_fopen(output_filename, "w");
+  if (carmen_map_write_id(out_fp) < 0)
+    carmen_die_syserror("Couldn't write map id to %s", output_filename);
+
+  sprintf(buf, "Created from %s", input_filename);
+  if (carmen_map_write_creator_chunk(out_fp, "img_to_map", buf) < 0)
+    carmen_die_syserror("Couldn't write creator chunk to %s", output_filename);
+
+  if (carmen_map_write_gridmap_chunk(out_fp, map->map, map->config.x_size,
+				     map->config.y_size, 
+				     map->config.resolution) < 0)
+    carmen_die_syserror("Couldn't write gridmap chunk to %s", output_filename);
+
+  carmen_fclose(out_fp);
+}
+#endif
+
+static void rotate(int argc, char *argv[])
+{
+  int force;
+  char *input_filename, *output_filename;
+  int next_arg;
+
+  carmen_FILE *in_fp, *out_fp;
+  int ret_val;
+  carmen_map_t map;
+  int rotation = 0;
+  double remain;
+  int degrees_angle;
+  carmen_offlimits_list_t offlimits_list;
+  carmen_map_placelist_t places_list;
+
+  next_arg = handle_options(argc, argv, &force);
+
+  if(argc - next_arg != 4) {
+    if (argc != 2) 
+      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s rotate <rotation in degrees> <in map filename> "
+	       "<out map filename>\n\n", argv[0]);
+  }
+
+  degrees_angle = (int)(atof(argv[next_arg+1]) / 90);
+  remain = fabs(degrees_angle*90 - atof(argv[next_arg+1]));
+  if (carmen_radians_to_degrees(remain) > 2)
+    carmen_die("Rotations only supported in increments of 90 degrees.\n");
+  else
+    rotation = (int)atof(argv[next_arg+1]) / 90;
+
+  input_filename = check_mapfile(argv[next_arg+2]);
+  output_filename = check_output(argv[next_arg+3], force);
+
+  carmen_warn("Rotating by %d degrees\n", rotation*90);
+
+  /*
+   * Read the gridmap, places and offlimits chunks and rotate them
+   */ 
+
+  ret_val = carmen_map_chunk_exists(input_filename, CARMEN_MAP_GRIDMAP_CHUNK);
+  if (ret_val < 0)    
+    carmen_die_syserror("Couldn't check existence of GRIDMAP_CHUNK in %s", 
+			input_filename);
+  
+  if (carmen_map_read_gridmap_chunk(input_filename, &map) < 0)
+    carmen_die_syserror("Couldn't read GRIDMAP_CHUNK from %s", input_filename);
+
+  carmen_rotate_gridmap(&map, rotation);
+
+  ret_val = carmen_map_chunk_exists(input_filename, 
+				    CARMEN_MAP_OFFLIMITS_CHUNK);
+  if (ret_val > 0) {
+    ret_val = carmen_map_read_offlimits_chunk
+      (input_filename, &(offlimits_list.offlimits), 
+       &(offlimits_list.list_length));
+
+    if (ret_val < 0)
+      carmen_die_syserror("Couldn't read OFFLIMITS_CHUNK in %s",
+			  input_filename);
+
+    carmen_rotate_offlimits(map.config, &offlimits_list, rotation);
+  } else
+    offlimits_list.list_length = 0;
+
+  ret_val = carmen_map_chunk_exists(input_filename, CARMEN_MAP_PLACES_CHUNK);
+  if (ret_val > 0) {
+    ret_val = carmen_map_read_places_chunk(input_filename, &places_list);
+    if (ret_val < 0)
+      carmen_die_syserror("Couldn't read PLACES_CHUNK in %s", input_filename);
+
+    carmen_rotate_places(map.config, &places_list, rotation);
+  } else
+    places_list.num_places = 0;
+
+
+  /*
+   * Pass everything else through untouched, and then write the rotated
+   * chunks at the end.
+   */
+
+  in_fp = carmen_fopen(input_filename, "r");
+  if (in_fp == NULL)
+    carmen_die_syserror("Couldn't open %s for reading", input_filename);
+
+  out_fp = carmen_fopen(output_filename, "w");
+  if (out_fp == NULL)
+    carmen_die_syserror("Couldn't open %s for writing", output_filename);
+  
+  if (carmen_map_vstrip(in_fp, out_fp, 3, CARMEN_MAP_GRIDMAP_CHUNK,
+			CARMEN_MAP_OFFLIMITS_CHUNK, 
+			CARMEN_MAP_PLACES_CHUNK) < 0) 
+    carmen_die_syserror("Couldn't strip map to %s", output_filename);
+
+  if (carmen_map_write_gridmap_chunk(out_fp, map.map, map.config.x_size, 
+				     map.config.y_size, 
+				     map.config.resolution) < 0)
+    carmen_die_syserror("Couldn't write gridmap to %s", output_filename);
+
+  if (offlimits_list.list_length > 0) {
+    if (carmen_map_write_offlimits_chunk(out_fp, offlimits_list.offlimits,
+					 offlimits_list.list_length) < 0)
+      carmen_die_syserror("Couldn't write offlimits list to %s", 
+			  output_filename);
+  }
+
+  if (places_list.num_places > 0) {
+    if (carmen_map_write_places_chunk(out_fp, places_list.places, 
+				      places_list.num_places) < 0)
+      carmen_die_syserror("Couldn't write places list to %s", output_filename);
+  }
+
+  carmen_fclose(in_fp);
+  carmen_fclose(out_fp);
+}
+
+static void minimize(int argc, char *argv[])
+{
+  char *input_filename, *output_filename;
+  int next_arg;
+  carmen_FILE *in_fp, *out_fp;
+
+  int ret_val;
+  carmen_map_t map;
+  int x_offset, y_offset;
+  carmen_offlimits_list_t offlimits_list;
+  carmen_map_placelist_t places;
+  int force;
+  int previous_num_places;
+
+  next_arg = handle_options(argc, argv, &force);
+
+  if(argc - next_arg != 3) {
+    if (argc != 2) 
+      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
+	       argv[0]);
+  }
+
+  input_filename = check_mapfile(argv[next_arg+1]);
+  output_filename = check_output(argv[next_arg+2], force);
+
+  /*
+   * Read the gridmap, places and offlimits chunks and minimize them
+   */ 
+
+  if (carmen_map_read_gridmap_chunk(input_filename, &map) < 0) {
+    carmen_die_syserror("Couldn't read GRIDMAP_CHUNK from %s", input_filename);
+  }
+
+  carmen_warn("Map size was %d x %d, ",map.config.x_size, map.config.y_size);
+
+  carmen_minimize_gridmap(&map, &x_offset, &y_offset);
+
+  carmen_warn("is now %d x %d (offset %d, %d)\n", map.config.x_size, 
+	      map.config.y_size, x_offset, y_offset);
+
+
+  ret_val = carmen_map_chunk_exists(input_filename, 
+				    CARMEN_MAP_OFFLIMITS_CHUNK);
+  if (ret_val > 0) {
+    ret_val = carmen_map_read_offlimits_chunk
+      (input_filename, &(offlimits_list.offlimits), 
+       &(offlimits_list.list_length));
+    if (ret_val < 0)
+      carmen_die_syserror("Couldn't read OFFLIMITS_CHUNK in %s",
+			  input_filename);
+
+    carmen_minimize_offlimits(&offlimits_list, x_offset*map.config.resolution, 
+			      y_offset*map.config.resolution);
+  } else
+    offlimits_list.list_length = 0;
+
+  ret_val = carmen_map_chunk_exists(input_filename, CARMEN_MAP_PLACES_CHUNK);
+  if (ret_val > 0) {
+    ret_val = carmen_map_read_places_chunk(input_filename, &places);
+    if (ret_val < 0)
+      carmen_die_syserror("Couldn't read PLACES_CHUNK in %s", input_filename);
+
+    previous_num_places = places.num_places;
+    carmen_minimize_places(&places, x_offset*map.config.resolution, 
+			   y_offset*map.config.resolution, 
+			   map.config.x_size*map.config.resolution,
+			   map.config.y_size*map.config.resolution);
+    if (places.num_places < previous_num_places)
+      carmen_warn("%d place locations were dropped from the map after "
+		  "minimization.\n", previous_num_places-places.num_places);
+  } else
+    places.num_places = 0;
+
+  /*
+   * Pass everything else through untouched, and then write the rotated
+   * chunks at the end.
+   */
+
+
+  in_fp = carmen_fopen(input_filename, "r");
+  if (in_fp == NULL)
+    carmen_die_syserror("Couldn't open %s for reading", input_filename);
+
+  out_fp = carmen_fopen(output_filename, "w");
+  if (out_fp == NULL)
+    carmen_die_syserror("Couldn't open %s for writing", output_filename);
+  
+  if (carmen_map_vstrip(in_fp, out_fp, 3, CARMEN_MAP_GRIDMAP_CHUNK,
+			CARMEN_MAP_OFFLIMITS_CHUNK, 
+			CARMEN_MAP_PLACES_CHUNK) < 0) 
+    carmen_die_syserror("Couldn't strip map to %s", output_filename);
+  
+
+  if (carmen_map_write_gridmap_chunk(out_fp, map.map, map.config.x_size, 
+				     map.config.y_size, 
+				     map.config.resolution) < 0)
+    carmen_die_syserror("Couldn't write gridmap to %s", output_filename);
+
+  if (offlimits_list.list_length > 0) {
+    if (carmen_map_write_offlimits_chunk(out_fp, offlimits_list.offlimits,
+					 offlimits_list.list_length) < 0)
+      carmen_die_syserror("Couldn't write offlimits list to %s", 
+			  output_filename);
+  }
+
+  if (places.num_places > 0) {
+    if (carmen_map_write_places_chunk(out_fp, places.places,
+				      places.num_places) < 0)
+      carmen_die_syserror("Couldn't write places list to %s", output_filename);
+  }
+
+  carmen_fclose(in_fp);
+  carmen_fclose(out_fp);
+}
+
+
 
 static void usage(char* fmt, ...)
 {
@@ -36,7 +429,7 @@ static void usage(char* fmt, ...)
   vfprintf(stderr, fmt, args);
   va_end(args);
 
-  carmen_die("Usage: rotate <rotation in degs> <input file> "
+  carmen_die("Usage: map <rotation in degs> <input file> "
 	     "<output file>\n");
 
   fprintf(stderr, "Error: wrong number of arguments.\n");
@@ -62,175 +455,29 @@ static void usage(char* fmt, ...)
   fprintf(stderr, "      \"gridmap\", \"offlimits\", \"expected\"\n");
 }
 
-static void toppm(int argc, char *argv[]) 
-{
-  int err;
-  carmen_map_t map;
-  char key;
-
-  if(argc != 4) 
-    usage("Error: wrong number of parameters.\n");    
-  if(carmen_map_read_gridmap_chunk(argv[2], &map) < 0) 
-    carmen_die("Error: This file did not contain a gridmap.\n");
-  carmen_map_read_offlimits_chunk_into_map(argv[1], &map);
-
-  if (carmen_file_exists(argv[3])) {
-    fprintf(stderr, "Overwrite %s? ", argv[3]);
-    scanf("%c", &key);
-    if (toupper(key) != 'Y')
-      exit(-1);
-  }
-
-  err = carmen_map_write_to_ppm(&map, argv[3]);
-  if (err < 0)
-    carmen_die_syserror("Could not write ppm");
-}
-
-static void rotate(int argc, char *argv[])
-{
-  char *in_filename;
-  carmen_FILE *in_fp, *out_fp;
-  int ret_val;
-  carmen_map_t map;
-  char *out_filename;
-  int rotation = 0;
-  double remain;
-  int degrees_angle;
-
-  if (argc != 5)
-    usage("Error: wrong number of parameters.\n");    
-
-  degrees_angle = (int)(atof(argv[2]) / 90);
-  remain = fabs(degrees_angle*90 - atof(argv[2]));
-  if (carmen_radians_to_degrees(remain) > 2)
-    carmen_die("Rotations only supported in increments of 90 degrees.\n");
-  else
-    rotation = (int)atof(argv[2]) / 90;
-
-  in_filename = argv[3];
-  out_filename = argv[4];
-
-  carmen_warn("Rotating by %d degrees\n", rotation*90);
-
-  ret_val = carmen_map_chunk_exists(in_filename, CARMEN_MAP_GRIDMAP_CHUNK);
-	
-  if (ret_val < 0)    
-      carmen_die_syserror("Couldn't check existence of GRIDMAP_CHUNK in %s", 
-			  in_filename);
-
-  if (carmen_map_read_gridmap_chunk(in_filename, &map) < 0)
-      carmen_die_syserror("Couldn't read GRIDMAP_CHUNK from %s", in_filename);
-
-  carmen_rotate_gridmap(&map, rotation);
-
-  in_fp = carmen_fopen(in_filename, "r");
-  if (in_fp == NULL)
-    carmen_die_syserror("Couldn't open %s for reading", in_filename);
-
-  out_fp = carmen_fopen(out_filename, "w");
-  if (out_fp == NULL)
-    carmen_die_syserror("Couldn't open %s for writing", out_filename);
-
-  ret_val = carmen_map_strip(in_fp, out_fp, CARMEN_MAP_GRIDMAP_CHUNK);
-
-  ret_val = carmen_map_write_gridmap_chunk(out_fp, map.map, map.config.x_size, 
-					   map.config.y_size, 
-					   map.config.resolution);
-
-  carmen_fclose(in_fp);
-  carmen_fclose(out_fp);
-}
-
-static void minimize(int argc, char *argv[])
-{
-  char *filename;
-  carmen_FILE *in_fp, *out_fp;
-  int ret_val;
-  carmen_map_t map;
-  int x_offset, y_offset;
-  char backup_filename[1024];
-  char new_filename[1024];
-  carmen_offlimits_list_t offlimits_list;
-
-  if (argc != 3)
-    usage("Error: wrong number of parameters.\n");    
-
-  filename = argv[2];
-
-  in_fp = carmen_fopen(filename, "r");
-  if (in_fp == NULL)
-    carmen_die_syserror("Couldn't open %s for reading", filename);
-
-  sprintf(new_filename, "%s.new", filename);
-  out_fp = carmen_fopen(new_filename, "w");
-  if (out_fp == NULL)
-    carmen_die_syserror("Couldn't open %s for writing", new_filename);
-
-  if (carmen_map_vstrip(in_fp, out_fp, 2, CARMEN_MAP_GRIDMAP_CHUNK,
-			CARMEN_MAP_OFFLIMITS_CHUNK) < 0) {
-    unlink(new_filename);
-    carmen_die_syserror("Couldn't strip map to %s", new_filename);
-  }
-
-  ret_val = carmen_map_chunk_exists(filename, CARMEN_MAP_GRIDMAP_CHUNK);
-
-  if (ret_val < 0) {
-    unlink(new_filename);
-    carmen_die_syserror("Couldn't check existence of GRIDMAP_CHUNK in %s",
-			filename);
-  }
-
-  if (ret_val ==  0) {
-    unlink(new_filename);
-    carmen_die("There is no gridmap in %s\n", filename);
-  }
-
-  if (carmen_map_read_gridmap_chunk(filename, &map) < 0) {
-    unlink(new_filename);
-    carmen_die_syserror("Couldn't read GRIDMAP_CHUNK from %s", filename);
-  }
-
-  carmen_warn("Map size was %d x %d, ",map.config.x_size, map.config.y_size);
-
-  carmen_map_minimize_gridmap(&map, &x_offset, &y_offset);
-
-  carmen_warn("is now %d x %d (offset %d, %d)\n", map.config.x_size, 
-	      map.config.y_size, x_offset, y_offset);
-
-  carmen_map_write_gridmap_chunk(out_fp, map.map, map.config.x_size, 
-				 map.config.y_size, map.config.resolution);
-
-  carmen_map_read_offlimits_chunk(filename, &(offlimits_list.offlimits), 
-				  &(offlimits_list.list_length));
-
-  carmen_map_move_offlimits_chunk(&offlimits_list, x_offset, y_offset);
-
-  carmen_map_write_offlimits_chunk(out_fp, offlimits_list.offlimits,
-				   offlimits_list.list_length);
-
-  carmen_fclose(in_fp);
-  carmen_fclose(out_fp);
-
-  sprintf(backup_filename, "%s.bak", filename);
-  if (rename(filename, backup_filename) < 0) {
-    unlink(new_filename);
-    carmen_die("Couldn't rename %s to %s : %s\n", filename, backup_filename, 
-	       strerror(errno));
-  }
-  
-  if (rename(new_filename, filename) < 0)
-    carmen_die("Couldn't rename %s to %s : %s\n", new_filename, filename, 
-						 strerror(errno));
-}
-
 static void add_place(int argc, char *argv[])
 {
+  char *input_filename, *output_filename;
+  int next_arg;
+  int force;
   char *filename, cmd[100];
   char tmp_filename[100];
   carmen_FILE *fp_in, *fp_out;
   carmen_map_placelist_t place_list;
   carmen_place_p places;
   int system_err;
+
+  next_arg = handle_options(argc, argv, &force);
+
+  if(argc - next_arg != 3) {
+    if (argc != 2) 
+      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
+	       argv[0]);
+  }
+
+  input_filename = check_mapfile(argv[next_arg+1]);
+  output_filename = check_output(argv[next_arg+2], force);
 
   if(argc != 6 && argc != 7 && argc != 10) 
     usage("Error: wrong number of parameters.\n");    
@@ -239,7 +486,7 @@ static void add_place(int argc, char *argv[])
 
   if(!carmen_map_file(filename))
     carmen_die("Error: %s does not appear to be a valid carmen map file;\n" 
-	       "if it is gzipped, make sure it has a \".gz\" extension\n",
+	       "if it is gzipped, make sure it has a \".gz\" extension.\n",
 	       filename);
 
   if(!carmen_map_chunk_exists(filename, CARMEN_MAP_PLACES_CHUNK)) {
@@ -419,15 +666,18 @@ static void info(int argc, char *argv[])
   int list_length;
 
   /* Check for the appropriate command line argument */
-  if(argc != 2) 
-    usage("Error: wrong number of parameters.\n");
+  if (argc == 2) 
+    carmen_die("\nUsage: %s info <filename>\n\n", argv[0]);  
+
+  if(argc != 3) 
+    carmen_die("Error in info: wrong number of parameters.\n");
 
   filename = argv[2];
 
   /* Make sure the file exists */
   if (!carmen_map_file(filename))
     carmen_die("Error: %s does not appear to be a valid carmen map file;\n"
-	       "if it is gzipped, make sure it has a \".gz\" extension\n." 
+	       "if it is gzipped, make sure it has a \".gz\" extension.\n" 
 	       "Do you have an incompatible file?\n"
 	       "Current map version: %s\n", filename, CARMEN_MAP_VERSION);
   
@@ -514,7 +764,7 @@ static void info(int argc, char *argv[])
 	       carmen_radians_to_degrees(place_list.places[i].theta), 
 	       place_list.places[i].x_std, place_list.places[i].y_std,
 	       carmen_radians_to_degrees(place_list.places[i].theta_std));
-  }  
+  }
 }
 
 int main(int argc, char **argv)
@@ -522,11 +772,15 @@ int main(int argc, char **argv)
   char *action;
 
   if (argc < 2) 
-    usage("");  
+    main_usage(argv[0]);
   
   action = argv[1];
   if (strcmp(action, "toppm") == 0)
     toppm(argc, argv);
+#ifndef NO_GRAPHICS
+  else if (strcmp(action, "tomap") == 0)
+    tomap(argc, argv);
+#endif
   else if (strcmp(action, "rotate") == 0)
     rotate(argc, argv);
   else if (strcmp(action, "minimize") == 0)
@@ -537,5 +791,10 @@ int main(int argc, char **argv)
     strip(argc, argv);
   else if (strcmp(action, "info") == 0)
     info(argc, argv);
+  else {
+    carmen_warn("\nUnrecognized action %s\n", argv[1]);
+    main_usage(argv[0]);
+  }
+
   return 0;
 }

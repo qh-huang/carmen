@@ -55,8 +55,6 @@
 #define DEFAULT_PATH_COLOUR carmen_blue
 
 #define DEFAULT_PEOPLE_COLOUR carmen_orange
-#define DEFAULT_TRASH_COLOUR carmen_green
-#define DEFAULT_DOOR_COLOUR carmen_purple
 
 #define DEFAULT_TRACK_ROBOT 1
 #define DEFAULT_DRAW_WAYPOINTS 1
@@ -75,6 +73,9 @@ typedef enum {NO_PLACEMENT, PLACING_ROBOT, ORIENTING_ROBOT,
 
 static carmen_navigator_map_t display;
 static carmen_map_placelist_p placelist = NULL;
+static carmen_list_t *place_action_uids = NULL;
+static carmen_list_t *goal_actions = NULL;
+static carmen_list_t *start_actions = NULL;
 
 static double time_of_last_redraw = 0;
 static int display_needs_updating = 0;
@@ -87,8 +88,7 @@ static carmen_world_point_t last_robot;
 static carmen_world_point_t new_person;
 static carmen_world_point_t new_simulator;
 
-static GdkColor robot_colour, goal_colour, people_colour, trash_colour,
-  door_colour, path_colour;
+static GdkColor robot_colour, goal_colour, people_colour, path_colour;
 
 static int black_and_white = 0;
 static int is_filming = 0;
@@ -106,10 +106,11 @@ GdkColor RedBlueGradient[GRADIENT_COLORS];
 
 static int ignore_click;
 
+static GtkUIManager *ui_manager;
+
 static GtkMapViewer *map_view;
 
 static GtkWidget *window;
-static GtkItemFactory *item_factory;
 static GtkWidget *autonomous_button;
 static GtkWidget *place_robot_button;
 static GtkWidget *place_goal_button;
@@ -131,15 +132,16 @@ static double simulator_hidden;
 
 static carmen_list_t *simulator_objects = NULL;
 static carmen_list_t *people = NULL;
-static carmen_list_t *trash = NULL;
-static carmen_list_t *doors = NULL;
 
 static carmen_robot_config_t *robot_config;
 static carmen_navigator_config_t *nav_config;
 static carmen_navigator_panel_config_t *nav_panel_config;
 
-static void switch_display(GtkWidget *w, carmen_navigator_map_t new_display);
-static void switch_localize_display(GtkWidget *w, int arg);
+static void switch_display(GtkAction *action, gpointer user_data
+			   __attribute__ ((unused)));
+static void switch_localize_display(GtkAction *action, 
+				    gpointer user_data 
+				    __attribute__ ((unused)));
 static void set_location(GtkWidget *w, int place_index);
 static void start_filming(GtkWidget *w __attribute__ ((unused)), 
 			  int arg __attribute__ ((unused)));
@@ -325,172 +327,169 @@ place_goal(GtkWidget *widget __attribute__ ((unused)),
   placement_status = PLACING_GOAL;
 }
 
-static GtkItemFactoryEntry menu_items[] = {
-  { "/_File",         NULL,          NULL, 0, "<Branch>" },
-  { "/File/_Screen Shot", "<control>S",  (GtkItemFactoryCallback)save_image, 
-    0, NULL },
-  { "/File/Start Filming", NULL, start_filming, 0, NULL },
-  { "/File/Stop Filming", NULL, start_filming, 0, NULL },
-  { "/File/sep1",     NULL,          NULL, 0, "<Separator>" },
-  { "/File/_Quit",     "<control>Q",  gtk_main_quit, 0, NULL },
-  { "/_Maps",         NULL,          NULL, 0, "<Branch>" },
-  { "/Maps/_Map",      "<control>M", switch_display, CARMEN_NAVIGATOR_MAP_v, 
-    "<RadioItem>"},
-  { "/Maps/_Utility",  NULL, switch_display, CARMEN_NAVIGATOR_UTILITY_v,
-    "/Maps/Map"},
-  { "/Maps/_Costs",    NULL, switch_display, CARMEN_NAVIGATOR_COST_v,  
-    "/Maps/Map"},
-  { "/Maps/_Likelihood", NULL, switch_display, CARMEN_LOCALIZE_LMAP_v,  
-    "/Maps/Map"},
-  { "/Maps/_Global Likelihood", NULL, switch_display, CARMEN_LOCALIZE_GMAP_v,  
-    "/Maps/Map"},
-  { "/_Display",         NULL,          NULL, 0, "<Branch>" },
-  { "/Display/Track Robot",   NULL, switch_localize_display, 1, 
-    "<ToggleItem>"}, 
-  { "/Display/Draw Waypoints",   NULL, switch_localize_display, 2, 
-    "<ToggleItem>"}, 
-  { "/Display/sep1",     NULL,          NULL, 0, "<Separator>" },
-  { "/Display/Show Particles",   NULL, switch_localize_display, 3, 
-    "<ToggleItem>"}, 
-  { "/Display/Show Gaussians",   NULL, switch_localize_display, 4, 
-    "<ToggleItem>"}, 
-  { "/Display/Show Laser Data",   NULL, switch_localize_display, 5, 
-    "<ToggleItem>"},
-#ifdef USE_DOT
-  { "/Display/sep1",     NULL,          NULL, 0, "<Separator>" },
-  { "/Display/Show Tracked Objects",   NULL, switch_localize_display, 9, 
-    "<ToggleItem>"},
-#endif
-  { "/Display/sep1",     NULL,          NULL, 0, "<Separator>" },
-  { "/Display/Black&White", NULL, switch_localize_display, 8,  "<ToggleItem>" },
-  { "/_Simulator",         NULL,          NULL, 0, "<Branch>" },
-  { "/Simulator/Show True Position",   NULL, 
-    switch_localize_display, 6, "<ToggleItem>"},
-  { "/Simulator/Show Objects", NULL, switch_localize_display, 7, "<ToggleItem>"}, 
-  { "/Simulator/sep1",     NULL,          NULL, 0, "<Separator>" },
-  { "/Simulator/Add Person", NULL, place_person, 7, NULL}, 
-  { "/Simulator/Clear Objects", NULL, clear_objects, 7, NULL},
-  { "/_Start Location", NULL,          NULL, 0, "<Branch>" },
-  { "/Start Location/Global Localization", NULL, set_location, 0, NULL },
-  { "/Start Location/sep1", NULL, NULL, 0, "<Separator>" },
-  { "/_Goals",         NULL,           NULL, 0, "<Branch>" },
-  { "/_Help",         NULL,          NULL, 0, "<LastBranch>" },
-  { "/_Help/About",   NULL,          NULL, 0, NULL }
+static GtkActionEntry action_entries[] = {
+  {"FileMenu", NULL, "_File", NULL, NULL, NULL},
+  {"ScreenShot", GTK_STOCK_SAVE, "_Screen Shot", "<control>S", NULL, 
+   G_CALLBACK(save_image)},
+  {"StartFilming", NULL, "Start Filming", NULL, NULL, 
+   G_CALLBACK(start_filming)},
+  {"StopFilming", NULL, "Stop Filming", NULL, NULL, G_CALLBACK(start_filming)},
+  {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, 
+   G_CALLBACK(gtk_main_quit)},
+  {"MapMenu", NULL, "_Maps", NULL, NULL, NULL},
+  {"DisplayMenu", NULL, "_Display", NULL, NULL, NULL},
+  {"SimulatorMenu", NULL, "_Simulator", NULL, NULL, NULL},
+  {"SimAddPerson", NULL, "Add Person", NULL, NULL, 
+   G_CALLBACK(place_person)},
+  {"SimClearObjects", NULL, "Clear Objects", NULL, NULL, 
+   G_CALLBACK(clear_objects)},
+  {"StartLocationMenu", NULL, "_Start Location", NULL, NULL, NULL},
+  {"GlobalLocalization", NULL, "Global Localization", NULL, NULL, 
+   G_CALLBACK(set_location)},
+  {"GoalMenu", NULL, "_Goals", NULL, NULL, NULL},
+  {"HelpMenu", NULL, "_Help", NULL, NULL, NULL},
+  {"HelpAbout", NULL, "_About", NULL, NULL, NULL}
 };
 
-/*
-static void 
-switch_people_display(GtkWidget *w __attribute__ ((unused)), 
-		      int arg  __attribute__ ((unused)))
-{
-  GtkWidget *menu_item = gtk_item_factory_get_widget(item_factory, 
-						     "/Display/People");
-  display_people = ((struct _GtkCheckMenuItem *)menu_item)->active;  
-}
-*/
+static GtkToggleActionEntry toggle_entries[] = {
+  {"TrackRobot", NULL, "Track Robot", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"DrawWaypoints", NULL, "Draw Waypoints", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"ShowParticles", NULL, "Show Particles", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"ShowGaussians", NULL, "Show Gaussians", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"ShowLaserData", NULL, "Show Laser Data", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"BlackWhite", NULL, "Black&White", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"SimShowTruePosition", NULL, "Show True Position", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
+  {"SimShowObjects", NULL, "Show Objects", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE}
+};
+
+static GtkRadioActionEntry radio_entries[] = {
+  {"Map", NULL, "_Map", "<control>M", NULL, CARMEN_NAVIGATOR_MAP_v},
+  {"Utility", NULL, "_Utility", NULL, NULL, CARMEN_NAVIGATOR_UTILITY_v},
+  {"Costs", NULL, "_Costs", NULL, NULL, CARMEN_NAVIGATOR_COST_v},
+  {"Likelihood", NULL, "_Likelihood", NULL, NULL, CARMEN_LOCALIZE_LMAP_v},
+  {"GLikelihood", NULL, "_Global Likelihood", NULL, NULL, 
+   CARMEN_LOCALIZE_GMAP_v}
+};
+
+const char *ui_description = 
+    "<ui>"
+    "  <menubar name='MainMenu'>"
+    "    <menu action='FileMenu'>"
+    "      <menuitem action='ScreenShot'/>"
+    "      <separator/>"
+    "      <menuitem action='StartFilming'/>"
+    "      <menuitem action='StopFilming'/>" 
+    "      <separator/>"
+    "      <menuitem action='Quit'/>"
+    "    </menu>"
+    "    <menu action='MapMenu'>"
+    "      <menuitem action='Map'/>"
+    "      <menuitem action='Utility'/>"
+    "      <menuitem action='Costs'/>"
+    "      <menuitem action='Likelihood'/>"
+    "      <menuitem action='GLikelihood'/>"
+    "    </menu>"
+    "    <menu action='DisplayMenu'>"
+    "      <menuitem action='TrackRobot'/>"
+    "      <menuitem action='DrawWaypoints'/>"
+    "      <menuitem action='ShowParticles'/>"
+    "      <menuitem action='ShowGaussians'/>"
+    "      <menuitem action='ShowLaserData'/>"
+    "      <separator/>"
+    "      <menuitem action='BlackWhite'/>"
+    "    </menu>"
+    "    <menu action='SimulatorMenu'>"
+    "      <menuitem action='SimShowTruePosition'/>"
+    "      <menuitem action='SimShowObjects'/>"
+    "      <separator/>"
+    "      <menuitem action='SimAddPerson'/>"
+    "      <menuitem action='SimClearObjects'/>"
+    "    </menu>"
+    "    <menu action='StartLocationMenu'>"
+    "      <menuitem action='GlobalLocalization'/>"
+    "    </menu>"
+    "    <menu action='GoalMenu'>"
+    "    </menu>"
+    "    <menu action='HelpMenu'>"
+    "      <menuitem action='HelpAbout'/>"
+    "    </menu>"
+    "  </menubar>"
+    "</ui>";
 
 static void 
-switch_localize_display(GtkWidget *w __attribute__ ((unused)), 
-			int arg)
+switch_localize_display(GtkAction *action, 
+			gpointer user_data __attribute__ ((unused)))
 		 
 {
-  if (arg == 1) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory,"/Display/Track Robot");
-      nav_panel_config->track_robot = ((struct _GtkCheckMenuItem *)menu_item)->active;
-      if (nav_panel_config->track_robot) 
-	carmen_map_graphics_adjust_scrollbars(map_view, &robot);    
-    } 
-  else if (arg == 2) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget
-	(item_factory,"/Display/Draw Waypoints");
-      nav_panel_config->draw_waypoints = ((struct _GtkCheckMenuItem *)menu_item)->active;
-    } 
-  else if (arg == 3) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/Display/Show Particles");
-      nav_panel_config->show_particles = ((struct _GtkCheckMenuItem *)menu_item)->active;
-      if (nav_panel_config->show_particles == 1 && !nav_panel_config->show_gaussians) 
-	carmen_localize_subscribe_particle_message
-	  (&particle_msg, NULL, CARMEN_SUBSCRIBE_LATEST);
-      else if (!nav_panel_config->show_particles && !nav_panel_config->show_gaussians)
-	carmen_localize_subscribe_particle_message(NULL, NULL, 
-						   CARMEN_UNSUBSCRIBE);
-    }
-  else if (arg == 4) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/Display/Show Gaussians");
-      nav_panel_config->show_gaussians = ((struct _GtkCheckMenuItem *)menu_item)->active;
-      if (nav_panel_config->show_gaussians == 1 && !nav_panel_config->show_particles) 
-	carmen_localize_subscribe_particle_message
-	  (&particle_msg, NULL, CARMEN_SUBSCRIBE_LATEST);
-      else if (!nav_panel_config->show_gaussians && !nav_panel_config->show_particles)
-	carmen_localize_subscribe_particle_message(NULL, NULL, 
-						   CARMEN_UNSUBSCRIBE);
-    }
-  else if (arg == 5) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/Display/Show Laser Data");
-      nav_panel_config->show_lasers = ((struct _GtkCheckMenuItem *)menu_item)->active;
-      if (nav_panel_config->show_lasers == 1) 
-	carmen_localize_subscribe_sensor_message
-	  (&sensor_msg, NULL, CARMEN_SUBSCRIBE_LATEST);
-      else
-	carmen_localize_subscribe_sensor_message(NULL, NULL, 
+  char *name;
+  GtkToggleAction *toggle;
+
+  name = (char *)gtk_action_get_name(action);
+
+  if (strcmp(name, "TrackRobot") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->track_robot = gtk_toggle_action_get_active(toggle);
+    if (robot.map && nav_panel_config->track_robot) 
+      carmen_map_graphics_adjust_scrollbars(map_view, &robot);    
+  } else if (strcmp(name, "DrawWaypoints") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->draw_waypoints = gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "ShowParticles") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_particles = gtk_toggle_action_get_active(toggle);
+    if (nav_panel_config->show_particles == 1 && 
+	!nav_panel_config->show_gaussians) 
+      carmen_localize_subscribe_particle_message
+	(&particle_msg, NULL, CARMEN_SUBSCRIBE_LATEST);
+    else if (!nav_panel_config->show_particles && 
+	     !nav_panel_config->show_gaussians)
+      carmen_localize_subscribe_particle_message(NULL, NULL, 
 						 CARMEN_UNSUBSCRIBE);
+  } else if (strcmp(name, "ShowGaussians") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_gaussians = gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "ShowLaserData") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_lasers = gtk_toggle_action_get_active(toggle);
+    if (nav_panel_config->show_lasers) 
+      carmen_localize_subscribe_sensor_message
+	(&sensor_msg, NULL, CARMEN_SUBSCRIBE_LATEST);
+    else
+      carmen_localize_subscribe_sensor_message(NULL, NULL, CARMEN_UNSUBSCRIBE);
+  } else if (strcmp(name, "SimShowTruePosition") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_true_pos = gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "SimShowTruePosition") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_simulator_objects = 
+      gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "BlackWhite") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    black_and_white = gtk_toggle_action_get_active(toggle);
+    if (black_and_white) {
+      if (colour_equals(robot_colour, DEFAULT_ROBOT_COLOUR))
+	robot_colour = carmen_grey;
+      if (colour_equals(goal_colour, DEFAULT_GOAL_COLOUR))
+	goal_colour = carmen_grey;
+      if (colour_equals(path_colour, DEFAULT_PATH_COLOUR))
+	path_colour = carmen_black;
+    } else {
+      if (colour_equals(robot_colour, carmen_grey))
+	robot_colour = DEFAULT_ROBOT_COLOUR;
+      if (colour_equals(goal_colour, carmen_grey))
+	goal_colour = DEFAULT_GOAL_COLOUR;
+      if (colour_equals(path_colour, carmen_black))
+	path_colour = DEFAULT_PATH_COLOUR;
     }
-  else if (arg == 6) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory,"/Simulator/Show True Position");
-      nav_panel_config->show_true_pos = ((struct _GtkCheckMenuItem *)menu_item)->active;
-    } 
-  else if (arg == 7) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory,"/Simulator/Show Objects");
-      nav_panel_config->show_simulator_objects = ((struct _GtkCheckMenuItem *)menu_item)->active;
-    } 
-  else if (arg == 8) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory,"/Display/Black&White");
-      black_and_white = ((struct _GtkCheckMenuItem *)menu_item)->active;
-      if (black_and_white) 
-	{
-	  if (colour_equals(robot_colour, DEFAULT_ROBOT_COLOUR))
-	    robot_colour = carmen_grey;
-	  if (colour_equals(goal_colour, DEFAULT_GOAL_COLOUR))
-	    goal_colour = carmen_grey;
-	  if (colour_equals(path_colour, DEFAULT_PATH_COLOUR))
-	    path_colour = carmen_black;
-	}
-      else
-	{
-	  if (colour_equals(robot_colour, carmen_grey))
-	    robot_colour = DEFAULT_ROBOT_COLOUR;
-	  if (colour_equals(goal_colour, carmen_grey))
-	    goal_colour = DEFAULT_GOAL_COLOUR;
-	  if (colour_equals(path_colour, carmen_black))
-	    path_colour = DEFAULT_PATH_COLOUR;
-	}
-      switch_display(NULL, display);
-    } 
-  else if (arg == 9) 
-    {
-      GtkWidget *menu_item = 
-	gtk_item_factory_get_widget(item_factory,"/Display/Show Tracked Objects");
-      nav_panel_config->show_tracked_objects = ((struct _GtkCheckMenuItem *)menu_item)->active;
-    } 
+  }
 }
 
 static gint
@@ -505,33 +504,30 @@ start_filming(GtkWidget *w __attribute__ ((unused)),
 {
   GtkWidget *menu_item;
 
-  if (is_filming) 
-    {
-      menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/File/Stop Filming");
-      gtk_widget_hide(menu_item);
-      menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/File/Start Filming");
-      gtk_widget_show(menu_item);
-      gtk_timeout_remove(filming_timeout);
-      is_filming = 0;
-    } 
-  else
-    {
-      menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/File/Start Filming");
-      gtk_widget_hide(menu_item);
-      menu_item = 
-	gtk_item_factory_get_widget(item_factory, 
-				    "/File/Stop Filming");
-      gtk_widget_show(menu_item);
-      is_filming = 1;
-      filming_timeout = gtk_timeout_add
-	(1000, (GtkFunction)film_image, NULL);
-    }
+  if (is_filming) {
+    menu_item = 
+      gtk_ui_manager_get_widget(ui_manager, 
+				"/ui/MainMenu/FileMenu/StopFilming");
+    gtk_widget_hide(menu_item);
+    menu_item = 
+      gtk_ui_manager_get_widget(ui_manager, 
+				"/ui/MainMenu/FileMenu/StartFilming");
+    gtk_widget_show(menu_item);
+    gtk_timeout_remove(filming_timeout);
+    is_filming = 0;
+  } else {
+    menu_item = 
+      gtk_ui_manager_get_widget(ui_manager, 
+				"/ui/MainMenu/FileMenu/StartFilming");
+    gtk_widget_hide(menu_item);
+    menu_item = 
+      gtk_ui_manager_get_widget(ui_manager, 
+				"/ui/MainMenu/FileMenu/StopFilming");
+    gtk_widget_show(menu_item);
+    is_filming = 1;
+    filming_timeout = gtk_timeout_add
+      (1000, (GtkFunction)film_image, NULL);
+  }
 }
 
 static int
@@ -559,20 +555,20 @@ assign_colour(GdkColor *colour, int new_colour)
 }
 
 static void
-assign_variable(char *menu_text, int value, int default_value)
+assign_variable(char *action_name, int value, int default_value)
 {
-  GtkWidget *menu_item;
+  GtkAction *action;
   int state;
 
   if (value > 2)
     return;
 
-  menu_item = gtk_item_factory_get_widget(item_factory,menu_text);
-  state = ((struct _GtkCheckMenuItem *)menu_item)->active;
+  action = gtk_ui_manager_get_action(ui_manager, action_name);  
+  state = gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(action));
   if (value == -1)
     value = default_value;
   if (state != value)
-     gtk_menu_item_activate(GTK_MENU_ITEM(menu_item));
+     gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(action), value);
 }
 
 void 
@@ -581,154 +577,159 @@ navigator_graphics_reset(void)
   robot_colour = DEFAULT_ROBOT_COLOUR;
   goal_colour = DEFAULT_GOAL_COLOUR;
   path_colour = DEFAULT_PATH_COLOUR;
-  trash_colour = DEFAULT_TRASH_COLOUR;
   people_colour = DEFAULT_PEOPLE_COLOUR;
-  door_colour = DEFAULT_DOOR_COLOUR;
 
-  assign_variable("/Display/Track Robot", -1, DEFAULT_TRACK_ROBOT);
-  assign_variable("/Display/Draw Waypoints", -1, DEFAULT_DRAW_WAYPOINTS);
-  assign_variable("/Display/Show Particles", -1, DEFAULT_SHOW_PARTICLES);
-  assign_variable("/Display/Show Gaussians", -1, DEFAULT_SHOW_GAUSSIANS);
-  assign_variable("/Display/Show Laser Data", -1, DEFAULT_SHOW_LASER);
-  assign_variable("/Display/Show Simulator True Position", -1,
+  assign_variable("/ui/MainMenu/DisplayMenu/TrackRobot", -1, 
+		  DEFAULT_TRACK_ROBOT);
+  assign_variable("/ui/MainMenu/DisplayMenu/DrawWaypoints", -1, 
+		  DEFAULT_DRAW_WAYPOINTS);
+  assign_variable("/ui/MainMenu/DisplayMenu/ShowParticles", -1, 
+		  DEFAULT_SHOW_PARTICLES);
+  assign_variable("/ui/MainMenu/DisplayMenu/ShowGaussians", -1, 
+		  DEFAULT_SHOW_GAUSSIANS);
+  assign_variable("/ui/MainMenu/DisplayMenu/ShowLaserData", -1, 
+		  DEFAULT_SHOW_LASER);
+  assign_variable("/ui/MainMenu/SimulatorMenu/SimShowTruePosition", -1, 
 		  DEFAULT_SHOW_SIMULATOR);
-  assign_variable("/Display/Show Tracked Objects", -1, DEFAULT_SHOW_TRACKED_OBJECTS);
+  assign_variable("/ui/MainMenu/SimulatorMenu/SimShowObjects", -1, 
+		  DEFAULT_SHOW_TRACKED_OBJECTS);
 }
 
 void 
 navigator_graphics_display_config
 (char *attribute, int value, char *new_status_message __attribute__ ((unused)))
 {
-  if (strncmp(attribute, "robot colour", 12) == 0) 
-    {
-      if (value == -1)
-	robot_colour = DEFAULT_ROBOT_COLOUR;
-      else
-	assign_colour(&robot_colour, value);
-    }
-
-  else if (strncmp(attribute, "goal colour", 11) == 0) 
-    {
-      if (value == -1)
-	goal_colour = DEFAULT_GOAL_COLOUR;
-      else
-	assign_colour(&goal_colour, value);
-    }
-
-  else if (strncmp(attribute, "path colour", 11) == 0) 
-    {
-      if (value == -1)
-	path_colour = DEFAULT_PATH_COLOUR;
-      else
-	assign_colour(&path_colour, value);
-    }
-  else if (strncmp(attribute, "people colour", 11) == 0) 
-    {
-      if (value == -1)
-	path_colour = DEFAULT_PATH_COLOUR;
-      else
-	assign_colour(&people_colour, value);
-    }
-  else if (strncmp(attribute, "trash colour", 11) == 0) 
-    {
-      if (value == -1)
-	path_colour = DEFAULT_TRASH_COLOUR;
-      else
-	assign_colour(&trash_colour, value);
-    }
-  else if (strncmp(attribute, "door colour", 11) == 0) 
-    {
-      if (value == -1)
-	path_colour = DEFAULT_DOOR_COLOUR;
-      else
-	assign_colour(&door_colour, value);
-    }
-  else if (strncmp(attribute, "track robot", 11) == 0)
-    assign_variable("/Display/Track Robot", value, 
-		    DEFAULT_TRACK_ROBOT);
+  if (strncmp(attribute, "robot colour", 12) == 0) {
+    if (value == -1)
+      robot_colour = DEFAULT_ROBOT_COLOUR;
+    else
+      assign_colour(&robot_colour, value);
+  } else if (strncmp(attribute, "goal colour", 11) == 0) {
+    if (value == -1)
+      goal_colour = DEFAULT_GOAL_COLOUR;
+    else
+      assign_colour(&goal_colour, value);
+  } else if (strncmp(attribute, "path colour", 11) == 0) {
+    if (value == -1)
+      path_colour = DEFAULT_PATH_COLOUR;
+    else
+      assign_colour(&path_colour, value);
+  } else if (strncmp(attribute, "people colour", 11) == 0) {
+    if (value == -1)
+      path_colour = DEFAULT_PATH_COLOUR;
+    else
+      assign_colour(&people_colour, value);
+  } else if (strncmp(attribute, "track robot", 11) == 0)
+    assign_variable("/ui/MainMenu/DisplayMenu/TrackRobot", 
+		    value, DEFAULT_TRACK_ROBOT);
   else if (strncmp(attribute, "draw waypoints", 14) == 0)
-    assign_variable("/Display/Draw Waypoints", value, 
-		    DEFAULT_DRAW_WAYPOINTS);
+    assign_variable("/ui/MainMenu/DisplayMenu/DrawWaypoints", 
+		    value, DEFAULT_DRAW_WAYPOINTS);
   else if (strncmp(attribute, "show particles", 14) == 0)
-    assign_variable("/Display/Show Particles", value, 
-		    DEFAULT_SHOW_PARTICLES);
+    assign_variable("/ui/MainMenu/DisplayMenu/ShowParticles", 
+		    value, DEFAULT_SHOW_PARTICLES);
   else if (strncmp(attribute, "show gaussians", 14) == 0)
-    assign_variable("/Display/Show Gaussians", value,
-		    DEFAULT_SHOW_GAUSSIANS);
+    assign_variable("/ui/MainMenu/DisplayMenu/ShowGaussians", 
+		    value, DEFAULT_SHOW_GAUSSIANS);
   else if (strncmp(attribute, "show laser", 10) == 0)
-    assign_variable("/Display/Show Laser Data", value,
-		    DEFAULT_SHOW_LASER);
+    assign_variable("/ui/MainMenu/DisplayMenu/ShowLaserData", 
+		    value, DEFAULT_SHOW_LASER);
   else if (strncmp(attribute, "show simulator", 14) == 0)
-    assign_variable("/Display/Show Simulator True Position", value,
-		    DEFAULT_SHOW_SIMULATOR);
+    assign_variable("/ui/MainMenu/SimulatorMenu/SimShowTruePosition", 
+		    value, DEFAULT_SHOW_SIMULATOR);
   else if (strncmp(attribute, "show tracked objects", 20) == 0)
-    assign_variable("/Display/Show Tracked Objects", value,
-		    DEFAULT_SHOW_TRACKED_OBJECTS);
-  /*
-  else if (strncmp(attribute, "show people", 11) == 0)
-    assign_variable("/Show/People", value, DEFAULT_SHOW_PEOPLE);
-  */
+    assign_variable("/ui/MainMenu/SimulatorMenu/SimShowObjects", 
+		    value, DEFAULT_SHOW_TRACKED_OBJECTS);
   carmen_map_graphics_redraw(map_view);
 }
 
 
-static void switch_display(GtkWidget *w __attribute__ ((unused)), 
-			   carmen_navigator_map_t new_display) {
+static void switch_display(GtkAction *action, gpointer user_data
+			   __attribute__ ((unused)))
+{
+  carmen_navigator_map_t new_display;
+
+  new_display = gtk_radio_action_get_current_value(GTK_RADIO_ACTION(action));
+
+#if 0
+  char *name;
+  if (strcmp(name, "Map") == 0) {
+    new_display = CARMEN_NAVIGATOR_MAP
+  {"Map", NULL, "_Map", "<control>M", NULL, CARMEN_NAVIGATOR_MAP_v},
+  {"Utility", NULL, "_Utility", NULL, NULL, CARMEN_NAVIGATOR_UTILITY_v},
+  {"Costs", NULL, "_Costs", NULL, NULL, CARMEN_NAVIGATOR_COST_v},
+  {"Likelihood", NULL, "_Likelihood", NULL, NULL, CARMEN_LOCALIZE_LMAP_v},
+  {"GLikelihood", NULL, "_Global Likelihood", NULL, NULL, 
+#endif
+
   if (display == new_display)
     return;
   
   navigator_get_map(new_display);
 }
 
-static void 
-get_main_menu(GtkWidget *new_window, GtkWidget **menubar) 
+static GtkWidget *get_main_menu(void) 
 {
+  GtkWidget *menubar;
+  GtkActionGroup *action_group;
   GtkAccelGroup *accel_group;
-  gint nmenu_items = sizeof (menu_items) / sizeof (menu_items[0]);
-  GtkWidget *menu_item;
+  GError *error;
+  GtkAction* action;
 
-  accel_group = gtk_accel_group_new ();
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions (action_group, action_entries, 
+				G_N_ELEMENTS (action_entries), window);
+  gtk_action_group_add_toggle_actions (action_group, toggle_entries, 
+				       G_N_ELEMENTS (toggle_entries), window);
+
+  gtk_action_group_add_radio_actions (action_group, radio_entries, 
+				      G_N_ELEMENTS (radio_entries), 
+				      CARMEN_NAVIGATOR_MAP_v,
+				      G_CALLBACK(switch_display), NULL);
+
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
   
-  item_factory = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
-				       accel_group);
-  gtk_item_factory_create_items (item_factory, nmenu_items, menu_items, NULL);
-  gtk_accel_group_attach (accel_group, GTK_OBJECT (new_window));
-  if (menubar)
-    *menubar = gtk_item_factory_get_widget (item_factory, "<main>");
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
+  
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, 
+					  &error)) {
+    g_message ("building menus failed: %s", error->message);
+    g_error_free (error);
+    exit (EXIT_FAILURE);
+  }
+  
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Track Robot");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->track_robot;
+  action = gtk_action_group_get_action(action_group, "TrackRobot");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->track_robot);
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Draw Waypoints");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->draw_waypoints;
+  action = gtk_action_group_get_action(action_group, "DrawWaypoints");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->draw_waypoints);
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Show Particles");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_particles;
+  action = gtk_action_group_get_action(action_group, "ShowParticles");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_particles);
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Show Gaussians");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_gaussians;
+  action = gtk_action_group_get_action(action_group, "ShowGaussians");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_gaussians);
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Show Laser Data");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_lasers;
+  action = gtk_action_group_get_action(action_group, "ShowLaserData");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_lasers);
 
-#ifdef USE_DOT
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Display/Show Tracked Objects");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_tracked_objects;
-#endif
+  action = gtk_action_group_get_action(action_group, "SimShowTruePosition");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_true_pos);
 
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Simulator/Show True Position");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_true_pos;
-
-  menu_item = 
-    gtk_item_factory_get_item(item_factory, "/Simulator/Show Objects");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = nav_panel_config->show_simulator_objects;
+  action = gtk_action_group_get_action(action_group, "SimShowObjects");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_simulator_objects);
 
   if (nav_panel_config->show_particles || nav_panel_config->show_gaussians) 
     carmen_localize_subscribe_particle_message
@@ -736,6 +737,8 @@ get_main_menu(GtkWidget *new_window, GtkWidget **menubar)
   if (nav_panel_config->show_lasers) 
     carmen_localize_subscribe_sensor_message(&sensor_msg, NULL, 
 					     CARMEN_SUBSCRIBE_LATEST);
+
+  return menubar;
 }
 
 static GtkWidget *
@@ -983,23 +986,18 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
   carmen_world_point_t *draw_point = NULL;
   carmen_traj_point_t *simulator_object;
 
-#ifdef USE_DOT
-  carmen_world_point_t object_pt; 
-  carmen_dot_person_t *person;
-  carmen_dot_trash_t *trash_bin;
-  carmen_dot_door_t *door;
-  //  double vx, vxy, vy;
-#endif
-
   if (the_map_view->internal_map == NULL)
     return;
 
-  pixel_size = carmen_fmax
-    (map_view->internal_map->config.x_size/(double)map_view->port_size_x,
-     map_view->internal_map->config.y_size/(double)map_view->port_size_y);
+  pixel_size = 1*map_view->internal_map->config.resolution*
+    map_view->rescale_size;
+
+  // carmen_fmax
+  //    (map_view->internal_map->config.x_size/(double)map_view->port_size_x,
+  //     map_view->internal_map->config.y_size/(double)map_view->port_size_y);
   
-  pixel_size *= map_view->internal_map->config.resolution * 
-    (map_view->zoom/100.0);
+  //  pixel_size *= map_view->internal_map->config.resolution * 
+  //    (map_view->zoom/100.0);
 
   /* 
    * Draw robot features
@@ -1084,47 +1082,7 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 					&particle, circle_size);
       }
     }
-  }
-  
-#ifdef USE_DOT
-  if (nav_panel_config->show_tracked_objects) {
-    object_pt.map = map_view->internal_map;
-    for (index = 0; people && index < people->length; index++) {
-      person = (carmen_dot_person_t *)carmen_list_get(people, index);
-      object_pt.pose.x = person->x;
-      object_pt.pose.y = person->y;
-      if (1)
-	carmen_map_graphics_draw_ellipse(the_map_view, &people_colour, 
-					 &object_pt, person->vx,
-					 person->vxy, person->vy, 3);
-      else
-	carmen_map_graphics_draw_circle(the_map_view, &people_colour, FALSE, 
-					&object_pt, 1);
-    }
-    for (index = 0; trash && index < trash->length; index++) {
-      trash_bin = (carmen_dot_trash_t *)carmen_list_get(trash, index);
-      object_pt.pose.x = trash_bin->x;
-      object_pt.pose.y = trash_bin->y;
-      //      carmen_eigs_to_covariance(trash_bin->theta, trash_bin->major/2, 
-      //				trash_bin->minor, &vx, &vxy, &vy);
-      carmen_map_graphics_draw_ellipse(the_map_view, &trash_colour, 
-				       &object_pt, trash_bin->vx, 
-				       trash_bin->vxy, trash_bin->vy, 1);
-    }
-    for (index = 0; doors && index < doors->length; index++) {
-      door = (carmen_dot_door_t *)carmen_list_get(doors, index);
-      object_pt.pose.x = door->x;
-      object_pt.pose.y = door->y;
-      if (1)
-	carmen_map_graphics_draw_ellipse(the_map_view, &door_colour, 
-					 &object_pt, door->vx,
-					 door->vxy, door->vy, 3);
-      else
-	carmen_map_graphics_draw_circle(the_map_view, &door_colour, FALSE, 
-					&object_pt, 1);
-    }
-  }
-#endif
+  }  
 
   if (placement_status != ORIENTING_ROBOT && 
       placement_status != ORIENTING_PERSON &&
@@ -1190,20 +1148,19 @@ motion_handler (GtkMapViewer *the_map_view, carmen_world_point_p world_point,
 	  point.x * the_map->config.resolution, point.y * 
 	  the_map->config.resolution);
   gtk_label_set_text(GTK_LABEL(cursor_status_label), buffer);  
-  if (the_map != NULL) 
-    {
-      sprintf(buffer, "Value: %.2f", the_map->map[point.x][point.y]);
-      gtk_label_set_text(GTK_LABEL(value_label), buffer);  
-    }
+  if (the_map != NULL) {
+    sprintf(buffer, "Value: %.2f", the_map->map[point.x][point.y]);
+    gtk_label_set_text(GTK_LABEL(value_label), buffer);  
+  }
 
-  if (placement_status == ORIENTING_ROBOT || placement_status == ORIENTING_SIMULATOR ||
-      placement_status == ORIENTING_SIMULATOR) 
-    {
-      cursor_pos = *world_point;
-      display_needs_updating = 1;
-      do_redraw();
-    }
-
+  if (placement_status == ORIENTING_ROBOT || 
+      placement_status == ORIENTING_SIMULATOR ||
+      placement_status == ORIENTING_SIMULATOR) {
+    cursor_pos = *world_point;
+    display_needs_updating = 1;
+    do_redraw();
+  }
+  
   return TRUE;
 }
 
@@ -1360,7 +1317,7 @@ initialize_position(carmen_world_point_p point)
   point->map = map_view->internal_map;
 }
 
-static void 
+void 
 set_goal(GtkWidget *w __attribute__ ((unused)), int place_index) 
 {
   navigator_set_goal_by_place(placelist->places+place_index);
@@ -1407,8 +1364,10 @@ save_image(gpointer data __attribute__ ((unused)),
 
   x_start = map_view->x_scroll_adj->value;
   y_start = map_view->y_scroll_adj->value;
-  x_size = carmen_fmin(map_view->screen_defn.width, map_view->port_size_x);
-  y_size = carmen_fmin(map_view->screen_defn.height, map_view->port_size_y);
+  x_size = carmen_fmin(gdk_pixbuf_get_width(map_view->current_pixbuf), 
+		       map_view->port_size_x);
+  y_size = carmen_fmin(gdk_pixbuf_get_height(map_view->current_pixbuf), 
+		       map_view->port_size_y);
 
   sprintf(filename, "%s%d.png", 
 	  carmen_extract_filename(map_view->internal_map->config.map_name), 
@@ -1449,20 +1408,17 @@ navigator_graphics_init(int argc, char *argv[],
   int sync_mode_var;
 
   gtk_init (&argc, &argv);
-  gdk_imlib_init();
 
   carmen_graphics_setup_colors();
   robot_colour = DEFAULT_ROBOT_COLOUR;
   goal_colour = DEFAULT_GOAL_COLOUR;
   path_colour = DEFAULT_PATH_COLOUR;
   people_colour = DEFAULT_PEOPLE_COLOUR;
-  trash_colour = DEFAULT_TRASH_COLOUR;
-  door_colour = DEFAULT_DOOR_COLOUR;
 
   nav_panel_config = nav_panel_conf_param;
-  if (nav_panel_config->initial_map_zoom < 1.0 || nav_panel_config->initial_map_zoom > 100.0)
+  if (nav_panel_config->initial_map_zoom < 1.0 || 
+      nav_panel_config->initial_map_zoom > 100.0)
     nav_panel_config->initial_map_zoom = 100.0;
-
   
   /* Create a new window */
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -1480,7 +1436,7 @@ navigator_graphics_init(int argc, char *argv[],
   gtk_container_border_width (GTK_CONTAINER (main_box), 0); 
   gtk_container_add (GTK_CONTAINER (window), main_box);
 
-  get_main_menu (window, &menubar);
+  menubar = get_main_menu ();
   gtk_box_pack_start (GTK_BOX (main_box), menubar, FALSE, FALSE, 0);
 
   panel_box = gtk_hbox_new(FALSE, 0);
@@ -1490,14 +1446,14 @@ navigator_graphics_init(int argc, char *argv[],
   map_view = carmen_map_graphics_new_viewer(400, 400, nav_panel_config->initial_map_zoom);
   gtk_box_pack_start(GTK_BOX (panel_box), map_view->map_box, TRUE, TRUE, 0);
 
-  carmen_map_graphics_add_motion_event(map_view, 
-				       (GtkSignalFunc)motion_handler);
+  carmen_map_graphics_add_motion_event
+    (map_view, (carmen_graphics_mapview_callback_t)motion_handler);
   carmen_map_graphics_add_button_release_event
-    (map_view, (GtkSignalFunc)button_release_handler);
+    (map_view, (carmen_graphics_mapview_callback_t)button_release_handler);
   carmen_map_graphics_add_button_press_event
-    (map_view, (GtkSignalFunc)button_press_handler);
-  carmen_map_graphics_add_drawing_func(map_view, 
-				       (drawing_func)draw_robot_objects);
+    (map_view, (carmen_graphics_mapview_callback_t)button_press_handler);
+  carmen_map_graphics_add_drawing_func
+    (map_view, (carmen_graphics_mapview_drawing_func_t)draw_robot_objects);
 
   vseparator = gtk_vseparator_new();
   gtk_widget_set_usize(vseparator, 5, 
@@ -1599,7 +1555,8 @@ navigator_graphics_init(int argc, char *argv[],
 
   gtk_widget_grab_focus(window);
 
-  menu_item = gtk_item_factory_get_item(item_factory, "/File/Stop Filming");
+  menu_item = 
+    gtk_ui_manager_get_widget(ui_manager, "/ui/MainMenu/FileMenu/StopFilming");
   gtk_widget_hide(menu_item);
 
   globalpos = msg;
@@ -1628,10 +1585,6 @@ navigator_graphics_change_map(carmen_map_p new_map)
   initialize_position(&goal);
   if (people)
     people->length = 0;
-  if (doors)
-    doors->length = 0;
-  if (trash)
-    trash->length = 0;
   initialize_position(&last_robot);
 
   sprintf(buffer, "Map: %s", 
@@ -1683,69 +1636,79 @@ navigator_graphics_display_map(float *data, carmen_navigator_map_t type)
 void 
 navigator_graphics_add_placelist(carmen_map_placelist_p new_placelist)
 {
-  char buffer[1024], buffer2[1024];
-  char accelerator_buffer[3];
-  GtkItemFactoryEntry new_entry;
+  char name[1024], label[1024], menu_path[1024];
   int index;
+  int *merge_uid, new_merge_uid;
   char *underscore;
+  GtkAction *action;
 
   carmen_verbose("Received %d places\n", new_placelist->num_places);
 
-  if (placelist != NULL)
-    {
-      for (index = 0; index < placelist->num_places; index++)
-	{
-	  sprintf(buffer, "/Goals/%s", placelist->places[index].name);
-	  gtk_item_factory_delete_item(item_factory, buffer);	  
-	  sprintf(buffer, "/Start Location/%s", placelist->places[index].name);
-	  gtk_item_factory_delete_item(item_factory, buffer);	  
-	}
-      free(placelist->places);
-    } 
-  else 
-    {
-      placelist = (carmen_map_placelist_p)
-	calloc(1, sizeof(carmen_map_placelist_t));
-      carmen_test_alloc(placelist);
+  if (place_action_uids != NULL) {
+    for (index = 0; index < place_action_uids->length; index++) {
+      merge_uid = (int *)carmen_list_get(place_action_uids, index);
+      gtk_ui_manager_remove_ui(ui_manager, *merge_uid);
+      action = carmen_list_get(goal_actions, index);
+      g_object_unref(action);
+      action = carmen_list_get(start_actions, index);
+      g_object_unref(action);
     }
+    free(placelist->places);
+  } else {
+    place_action_uids = carmen_list_create
+      (sizeof(int), new_placelist->num_places);
+    goal_actions = carmen_list_create
+      (sizeof(GtkAction *), new_placelist->num_places);
+    start_actions = carmen_list_create
+      (sizeof(GtkAction *), new_placelist->num_places);
+    placelist = (carmen_map_placelist_p)
+      calloc(1, sizeof(carmen_map_placelist_t));
+    carmen_test_alloc(placelist);
+  }
 
   placelist->num_places = new_placelist->num_places;
+  place_action_uids->length = 0;
+  if (placelist->num_places == 0) 
+    return;
 
-  if (placelist->num_places > 0) 
-    {
-      placelist->places = (carmen_place_p)calloc(placelist->num_places, 
-						 sizeof(carmen_place_t));
-      carmen_test_alloc(placelist->places);
-      memcpy(placelist->places, new_placelist->places, 
-	     sizeof(carmen_place_t)*placelist->num_places);
-    }
-
-  new_entry.path = buffer;
-  new_entry.item_type = NULL;
+  placelist->places = (carmen_place_p)calloc(placelist->num_places, 
+					     sizeof(carmen_place_t));
+  carmen_test_alloc(placelist->places);
+  memcpy(placelist->places, new_placelist->places, 
+	 sizeof(carmen_place_t)*placelist->num_places);
   
-  for (index = 0; index < placelist->num_places; index++)
-    {
-      strcpy(buffer2, placelist->places[index].name);
-      buffer2[0] = toupper(buffer2[0]);
-      do {
-	underscore = strchr(buffer2, '_');
-	if (underscore)
-	  *underscore = ' ';
-      } while (underscore);
+  for (index = 0; index < placelist->num_places; index++) {
+    strcpy(label, placelist->places[index].name);
+    label[0] = toupper(label[0]);
+    do {
+      underscore = strchr(label, '_');
+      if (underscore)
+	*underscore = ' ';
+    } while (underscore);    
 
-      sprintf(buffer, "/Goals/%s", buffer2);
-      new_entry.callback = set_goal;
-      new_entry.callback_action = index;
-      new_entry.accelerator = NULL;
-      gtk_item_factory_create_item(item_factory, &new_entry, NULL, 1);
+    sprintf(name, "Goal%s", placelist->places[index].name);
+    action = gtk_action_new(name, label, NULL, NULL);
+    carmen_list_add(goal_actions, &action);
+    sprintf(menu_path, "/ui/MainMenu/GoalMenu/%s", 
+	    placelist->places[index].name); 
+    new_merge_uid = gtk_ui_manager_new_merge_id(ui_manager); 
+    gtk_ui_manager_add_ui(ui_manager, new_merge_uid, menu_path,
+			  name, NULL, GTK_UI_MANAGER_MENUITEM, FALSE);
+    carmen_list_add(place_action_uids, &new_merge_uid);
 
-      sprintf(buffer, "/Start Location/%s", buffer2);
-      new_entry.callback = set_location;
-      new_entry.callback_action = index+1;
-      sprintf(accelerator_buffer, "%d", index+1);
-      new_entry.accelerator = accelerator_buffer;
-      gtk_item_factory_create_item(item_factory, &new_entry, NULL, 1);      
-    }
+    sprintf(name, "Start%s", placelist->places[index].name);
+    action = gtk_action_new(name, label, NULL, NULL);
+    carmen_list_add(start_actions, &action);
+    sprintf(menu_path, "/ui/MainMenu/StartLocationMenu/%s", 
+	    placelist->places[index].name); 
+    new_merge_uid = gtk_ui_manager_new_merge_id(ui_manager); 
+    gtk_ui_manager_add_ui(ui_manager, new_merge_uid, menu_path,
+			  name, NULL, GTK_UI_MANAGER_MENUITEM, FALSE);
+    carmen_list_add(place_action_uids, &new_merge_uid);
+
+    // ToDo: g_signal_connect(instance, detailed_signal, c_handler, data)
+    // to each action 
+  }
 }
 
 void navigator_graphics_update_dynamics(void) 
@@ -1754,13 +1717,9 @@ void navigator_graphics_update_dynamics(void)
   do_redraw();
 }
 
-void navigator_graphics_initialize_dynamics(carmen_list_t *new_people, 
-					    carmen_list_t *new_trash, 
-					    carmen_list_t *new_doors)
+void navigator_graphics_initialize_dynamics(carmen_list_t *new_people)
 {
   people = new_people;
-  trash = new_trash;
-  doors = new_doors;
 }
 
 void 

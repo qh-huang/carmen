@@ -49,7 +49,6 @@ static void initialize_people_graphics(int argc, char *argv[])
   GtkWidget *main_box;
 
   gtk_init (&argc, &argv);
-  gdk_imlib_init();
 
   carmen_graphics_setup_colors();
   
@@ -72,8 +71,8 @@ static void initialize_people_graphics(int argc, char *argv[])
   map_view = carmen_map_graphics_new_viewer(400, 400, 30.0);
   gtk_box_pack_start(GTK_BOX (main_box), map_view->map_box, FALSE, FALSE, 0);
 
-	assert (map != NULL);
-	assert (map->map != NULL);
+  assert (map != NULL);
+  assert (map->map != NULL);
   carmen_map_graphics_add_map(map_view, map, 0);
 
   gtk_widget_show_all (window);
@@ -97,53 +96,54 @@ handle_ipc(gpointer *data __attribute__ ((unused)),
 void 
 robot_frontlaser_handler(carmen_robot_laser_message *msg) 
 {
-	carmen_world_point_t world_point;
-	carmen_navigator_config_t nav_conf;
-
-	carmen_localize_correct_laser(msg, &globalpos);
-
+  carmen_world_point_t world_point;
+  carmen_navigator_config_t nav_conf;
+  
+  carmen_localize_correct_laser(msg, &globalpos);
+  
   world_point.pose.x = msg->laser_pose.x;
   world_point.pose.y = msg->laser_pose.y;
   world_point.pose.theta = msg->laser_pose.theta;
   world_point.map = map;
 
-	nav_conf.max_range = 50.0;
-	nav_conf.max_collision_range = 3.0;
-	nav_conf.num_lasers_to_use = 360;
-
+  nav_conf.max_range = 50.0;
+  nav_conf.max_collision_range = 3.0;
+  nav_conf.num_lasers_to_use = 360;
+  
   map_modify_update(msg->range, msg->num_readings, &nav_conf, 
-										&world_point, true_map, map);
+		    &world_point, true_map, map);
 
-	carmen_map_graphics_modify_map(map_view, map->complete_map, 0);
-	carmen_map_graphics_adjust_scrollbars(map_view, &world_point);    
-	carmen_map_graphics_redraw(map_view);
+  carmen_map_graphics_modify_map(map_view, map->complete_map, 0);
+  carmen_map_graphics_adjust_scrollbars(map_view, &world_point);    
+  carmen_map_graphics_redraw(map_view);
 }
 
 int main(int argc, char *argv[])
 {
-	carmen_map_t global_map = {{0, 0, 0, 0}, 0, 0};
-	carmen_robot_laser_message laser_msg; 
-
-	laser_msg.range = NULL;
-	laser_msg.tooclose = NULL;
-
-	carmen_randomize(&argc, &argv);
-	carmen_ipc_initialize(argc, argv);
-
-	map = &global_map;
+  carmen_map_t global_map = {{0, 0, 0, 0}, 0, 0};
+  carmen_robot_laser_message laser_msg; 
+  
+  laser_msg.range = NULL;
+  laser_msg.tooclose = NULL;
+  
+  carmen_randomize(&argc, &argv);
+  carmen_ipc_initialize(argc, argv);
+  
+  map = &global_map;
   carmen_map_get_gridmap(map);
-	true_map = carmen_map_copy(map);
-
-	carmen_robot_subscribe_frontlaser_message(&laser_msg, 
-																					(carmen_handler_t)robot_frontlaser_handler, 
-																					CARMEN_SUBSCRIBE_LATEST);
-
-	carmen_localize_subscribe_globalpos_message(&globalpos, NULL, CARMEN_SUBSCRIBE_LATEST);
-
-	initialize_people_graphics(argc, argv);
-	
-	carmen_graphics_update_ipc_callbacks((GdkInputFunction)handle_ipc);
-	gtk_main();
-
-	return 0;
+  true_map = carmen_map_copy(map);
+  
+  carmen_robot_subscribe_frontlaser_message
+    (&laser_msg, (carmen_handler_t)robot_frontlaser_handler,
+     CARMEN_SUBSCRIBE_LATEST);
+  
+  carmen_localize_subscribe_globalpos_message
+    (&globalpos, NULL, CARMEN_SUBSCRIBE_LATEST);
+  
+  initialize_people_graphics(argc, argv);
+  
+  carmen_graphics_update_ipc_callbacks((GdkInputFunction)handle_ipc);
+  gtk_main();
+  
+  return 0;
 }

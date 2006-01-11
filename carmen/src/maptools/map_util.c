@@ -174,7 +174,7 @@ carmen_map_util_change_resolution(carmen_map_p map, double new_resolution)
 
 
 void
-carmen_map_minimize_gridmap(carmen_map_t *map, int *x_offset, int *y_offset)
+carmen_minimize_gridmap(carmen_map_t *map, int *x_offset, int *y_offset)
 {
   int x, y;
   
@@ -226,56 +226,47 @@ carmen_map_minimize_gridmap(carmen_map_t *map, int *x_offset, int *y_offset)
   *y_offset = min_y; 
 }
 
-void
-carmen_map_move_offlimits_chunk(carmen_offlimits_list_t *offlimits_list, 
-				int x_offset, int y_offset)
+void carmen_minimize_offlimits(carmen_offlimits_list_t *offlimits_list, 
+			       double x_offset, double y_offset)
 {
   int i;
 
-  for (i = 0; i < offlimits_list->list_length; i++) 
-    {
-      if (offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_POINT_ID) 
-	{
-	  offlimits_list->offlimits[i].x1 -= x_offset;
-	  offlimits_list->offlimits[i].y1 -= y_offset;
-	}
-      else if (offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_LINE_ID ||
-	       offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_RECT_ID)
-	{
-	  offlimits_list->offlimits[i].x1 -= x_offset;
-	  offlimits_list->offlimits[i].y1 -= y_offset;
-	  offlimits_list->offlimits[i].x2 -= x_offset;
-	  offlimits_list->offlimits[i].y2 -= y_offset;
-	}
-    }
-}
-
-
-void carmen_rotate_places_chunk(carmen_place_p places, int num_places, 
-				carmen_map_p map, int rotation)
-{
-  int index;
-  int width, height;
-  double tmp;
-
-  width = map->config.x_size;
-  height = map->config.y_size;
-
-  for (index = 0; index < num_places; index++) {
-    if (rotation == 1) {
-      tmp = places[index].x;
-      places[index].x = height-places[index].y;
-      places[index].y = tmp;
-    } else if (rotation == 2) {
-      places[index].x = width - places[index].x;
-      places[index].y = height - places[index].y;
-    } else if (rotation == 3) {
-      tmp = places[index].x;
-      places[index].x = places[index].y;
-      places[index].y = width-tmp;
+  for (i = 0; i < offlimits_list->list_length; i++) {
+    if (offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_POINT_ID) {
+      offlimits_list->offlimits[i].x1 -= x_offset;
+      offlimits_list->offlimits[i].y1 -= y_offset;
+    } else if (offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_LINE_ID ||
+	       offlimits_list->offlimits[i].type == CARMEN_OFFLIMITS_RECT_ID) {
+      offlimits_list->offlimits[i].x1 -= x_offset;
+      offlimits_list->offlimits[i].y1 -= y_offset;
+      offlimits_list->offlimits[i].x2 -= x_offset;
+      offlimits_list->offlimits[i].y2 -= y_offset;
     }
   }
 }
+
+
+void carmen_minimize_places(carmen_map_placelist_t *places, 
+			    double x_offset, double y_offset, 
+			    double width, double height)
+{
+  int index;
+
+  for (index = 0; index < places->num_places; index++) {
+    places->places[index].x -= x_offset;
+    places->places[index].y -= y_offset;
+  }
+
+  for (index = 0; index < places->num_places; index++) {
+    if (places->places[index].x < 0 || places->places[index].x >= width ||
+	places->places[index].y < 0 || places->places[index].y >= height) {
+      places->places[index] = places->places[places->num_places-1];
+      places->num_places--;
+      index--;
+    }
+  }
+}
+
 
 void carmen_rotate_gridmap(carmen_map_p map, int rotation) 
 {
@@ -286,7 +277,10 @@ void carmen_rotate_gridmap(carmen_map_p map, int rotation)
   new_map = (float *)calloc(map->config.x_size*map->config.y_size, 
 			    sizeof(float));
   carmen_test_alloc(new_map);
-  
+
+  rotation = rotation % 4;
+  if (rotation < 0)
+    rotation = rotation + 4;
   new_map_ptr = new_map;
   width = map->config.x_size;
   height = map->config.y_size;
@@ -295,14 +289,14 @@ void carmen_rotate_gridmap(carmen_map_p map, int rotation)
       x = index / height;
       y = index % height;
     } else if (rotation == 1) {
-      x = width - (index % width) - 1;
-      y = index / width;
+      x = index % width;
+      y = height - (index / width) - 1;
     } else if (rotation == 2) {
       x = width - (index / height) - 1;
       y = height - (index % height) - 1;
     } else if (rotation == 3) {
-      x = index % width;
-      y = width - index / width - 1;
+      x = width - (index % width) - 1;
+      y = index / width;
     }
     *(new_map_ptr++) = map->map[x][y];
   }
@@ -324,5 +318,84 @@ void carmen_rotate_gridmap(carmen_map_p map, int rotation)
   
   for (index = 0; index < map->config.x_size; index++) 
     map->map[index] = map->complete_map+index*map->config.y_size;
+}
+
+static inline void rotate(int rotation, double old_x, double old_y, 
+			  double *new_x, double *new_y,
+			  double width, double height)
+{
+  if (rotation == 0) {
+    *new_x = old_x;
+    *new_y = old_y;
+  } else if (rotation == 1) {
+    *new_x = width-old_y;
+    *new_y = old_x;
+  } else if (rotation == 2) {
+    *new_x = width - old_x;
+    *new_y = height - old_y;
+  } else if (rotation == 3) {
+    *new_x = old_y;
+    *new_y = height-old_x;
+  } else 
+    carmen_die("Major error in rotate %s %d\n", __FILE__, __LINE__);
+}
+
+void carmen_rotate_offlimits(carmen_map_config_t config,
+			     carmen_offlimits_list_t *offlimits_list, 
+			     int rotation) 
+{
+  int index;
+  double new_x = 0, new_y = 0;
+  carmen_offlimits_t *offlimit;
+  double width, height;
+
+  rotation = rotation % 4;
+  if (rotation < 0)
+    rotation = rotation + 4;
+
+  width = config.x_size*config.resolution;
+  height = config.y_size*config.resolution;
+
+  for (index = 0; index < offlimits_list->list_length; index++) {
+    offlimit = offlimits_list->offlimits+index;
+    rotate(rotation, offlimit->x1, offlimit->y1, &new_x, &new_y, 
+	   width, height);
+    offlimit->x1 = new_x;
+    offlimit->y1 = new_y;
+
+    if (offlimit->type != CARMEN_OFFLIMITS_POINT_ID) {
+      rotate(rotation, offlimit->x2, offlimit->y2, &new_x, 
+	     &new_y, config.x_size, config.y_size);
+      offlimit->x2 = new_x;
+      offlimit->y2 = new_y;
+    } 
+  }
+}
+
+void carmen_rotate_places(carmen_map_config_t config, 
+			  carmen_map_placelist_t *places, int rotation)
+{
+  int index;
+  double new_x = 0, new_y = 0;
+  carmen_place_t *place;
+  double width, height;
+
+  rotation = rotation % 4;
+  if (rotation < 0)
+    rotation = rotation + 4;
+
+  width = config.x_size*config.resolution;
+  height = config.y_size*config.resolution;
+
+  for (index = 0; index < places->num_places; index++) {
+    place = places->places+index;
+
+    rotate(rotation, place->x, place->y, &new_x, &new_y, width, height);
+    place->x = new_x;
+    place->y = new_y;
+
+    if (place->type != CARMEN_NAMED_POSITION_TYPE) 
+      place->theta = carmen_normalize_theta(place->theta + rotation*M_PI/2);
+  }
 }
 

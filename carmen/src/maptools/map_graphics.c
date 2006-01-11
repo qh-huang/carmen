@@ -29,17 +29,55 @@
 
 #define ELLIPSE_PLOTPOINTS 30
 
-static void redraw (GtkMapViewer *map_view, int regenerate_map);
+static void redraw (GtkMapViewer *map_view, int map_changed, 
+		    int viewport_changed);
 
-void 
-carmen_map_graphics_adjust_scrollbars(GtkMapViewer *map_view, 
-				      carmen_world_point_p new_centre) 
+static inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
+				   GtkMapViewer *map_view)
+{
+  carmen_map_point_t mp;
+  
+  carmen_world_to_map(wp, &mp);
+
+  mp.y = map_view->internal_map->config.y_size - mp.y;
+
+  p->x = mp.x * map_view->rescale_size;
+  p->y = mp.y * map_view->rescale_size;
+
+  p->x -= map_view->x_scroll_adj->value;
+  p->y -= map_view->y_scroll_adj->value;  
+}
+
+static inline void screen_to_map(carmen_point_t *p, carmen_map_point_t *mp,
+				 GtkMapViewer *map_view)
+{
+  mp->x = p->x;
+  mp->y = p->y;
+  mp->map = map_view->internal_map;
+
+  mp->x /= map_view->rescale_size;
+  mp->y /= map_view->rescale_size;
+
+  mp->y = map_view->internal_map->config.y_size - mp->y;
+}
+
+static inline void screen_to_world(carmen_point_t *p, carmen_world_point_t *wp,
+				   GtkMapViewer *map_view)
+{
+  carmen_map_point_t mp;
+
+  screen_to_map(p, &mp, map_view);
+  carmen_map_to_world(&mp, wp);
+}
+
+void carmen_map_graphics_adjust_scrollbars(GtkMapViewer *map_view, 
+					   carmen_world_point_p new_centre) 
 {
   double x_value, y_value;
-  carmen_graphics_screen_point_t screen;  
+  carmen_point_t screen;  
   GtkAdjustment *x_scroll_adj, *y_scroll_adj;
   
-  carmen_graphics_world_to_screen(new_centre, &screen, &map_view->screen_defn);
+  world_to_screen(new_centre, &screen, map_view);
 
   x_scroll_adj = map_view->x_scroll_adj;
   y_scroll_adj = map_view->y_scroll_adj;
@@ -72,7 +110,7 @@ move_event(GtkWidget *widget __attribute__ ((unused)), GtkMapViewer *map_view,
 	   GdkEventExpose *event __attribute__ ((unused)))
 {
   
-  redraw(map_view, 1);
+  redraw(map_view, 1, 0);
 
   return 0;
 }
@@ -80,7 +118,7 @@ move_event(GtkWidget *widget __attribute__ ((unused)), GtkMapViewer *map_view,
 static void 
 recover_centre(GtkMapViewer *map_view, carmen_world_point_p new_centre) 
 {
-  carmen_graphics_screen_point_t screen;
+  carmen_point_t screen;
   double x_value, y_value;
 
   if (map_view->internal_map == NULL)
@@ -89,166 +127,78 @@ recover_centre(GtkMapViewer *map_view, carmen_world_point_p new_centre)
   x_value = map_view->x_scroll_adj->value;
   y_value = map_view->y_scroll_adj->value;
 
-  screen.config = &(map_view->screen_defn);
-
   screen.x = x_value+(map_view->x_scroll_adj->page_size/2);
   screen.y = y_value+(map_view->y_scroll_adj->page_size/2);
   
-  carmen_graphics_screen_to_world(&screen, new_centre, map_view->internal_map);
+  screen_to_world(&screen, new_centre, map_view);
 }
 
-static void 
-recover_top_left(GtkMapViewer *map_view, carmen_point_p topleft,
-		 carmen_point_p bottom_right) 
+static void pixbuf_destroyed(guchar *pixels, 
+			     gpointer data __attribute__ ((unused)))
 {
-  carmen_graphics_screen_point_t screen;
-  carmen_map_point_t map_point;
-
-  screen.config = &(map_view->screen_defn);
-
-  screen.x = map_view->x_scroll_adj->value;
-  screen.y = map_view->y_scroll_adj->value;
-
-  carmen_graphics_screen_to_map(&screen, &map_point, map_view->internal_map);
-
-  topleft->x = map_point.x;
-  topleft->y = map_point.y;
-
-  screen.x += map_view->port_size_x;
-  screen.y += map_view->port_size_y;
-
-  carmen_graphics_screen_to_map(&screen, &map_point, map_view->internal_map);
-
-  bottom_right->x = map_point.x;
-  bottom_right->y = map_point.y;
-
-}
-
-static void 
-regenerate_screen_defn(GtkMapViewer *map_view) 
-{  
-  carmen_map_config_t config;
-  double map_rescale;
-  int canvas_x, canvas_y;
-
-  if (map_view == NULL || map_view->internal_map == NULL)
-    return;
-
-  config = map_view->internal_map->config;
-
-  canvas_x = map_view->image_widget->allocation.width;
-  canvas_y = map_view->image_widget->allocation.height;
-
-  map_rescale = carmen_fmin(canvas_x / (double)config.x_size,
-			    canvas_y / (double)config.y_size);
-
-  map_view->screen_defn.zoom = map_rescale*config.resolution;
-
-  if (canvas_x/(double)config.x_size < canvas_y / (double)config.y_size)
-    {
-      map_view->screen_defn.width = canvas_x;
-      map_view->screen_defn.height = config.y_size*map_rescale;
-    }
-  else 
-    {
-      map_view->screen_defn.width = config.x_size*map_rescale;
-      map_view->screen_defn.height = canvas_y;
-    }
+  free(pixels);
 }
 
 static void 
 regenerate_map_pixmap(GtkMapViewer *map_view) 
 {
-  carmen_point_t top_left, bottom_right;
   int x_render_size, y_render_size;
-  int x_crop_size, y_crop_size;
   unsigned char *image_data;
-  GdkImlibImage *image = NULL;
+  GdkPixbuf *image = NULL;
+  GdkPixbuf *rotated_image = NULL;
+  GdkPixbuf *final_image = NULL;
+  double x_ratio, y_ratio;
+  double scale_to_fit_window;
   carmen_map_config_t config;
+  double zoom;
 
   if (map_view == NULL || map_view->internal_map == NULL)
     return;
 
-  if (map_view->current_pixmap != NULL) 
-    {
-      gdk_pixmap_unref(map_view->current_pixmap);
-      map_view->current_pixmap = NULL;
-    }
+  if (map_view->current_pixbuf != NULL) {
+    g_object_unref(map_view->current_pixbuf);
+    map_view->current_pixbuf = NULL;
+  }
 
   image_data = carmen_graphics_convert_to_image(map_view->internal_map, 
 						map_view->draw_flags);
 
-  regenerate_screen_defn(map_view);
-
   config = (map_view->internal_map)->config;
 
-  image = gdk_imlib_create_image_from_data(image_data, (unsigned char *)NULL, 
-					   config.y_size, config.x_size);
+  image = gdk_pixbuf_new_from_data((guchar *)image_data, GDK_COLORSPACE_RGB,
+				   FALSE, 8,  config.y_size, config.x_size, 
+				   config.y_size*3, pixbuf_destroyed, NULL);
 
-  gdk_imlib_rotate_image(image, -1);
-  gdk_imlib_flip_image_vertical(image);  
-  
-  x_render_size = carmen_fmin(map_view->screen_defn.width, 
-			      map_view->port_size_x);
-  y_render_size = carmen_fmin(map_view->screen_defn.height, 
-			      map_view->port_size_y);
+  rotated_image = gdk_pixbuf_rotate_simple
+    (image, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+  g_object_unref(image);  
 
-  recover_top_left(map_view, &top_left, &bottom_right);
+  x_ratio = map_view->port_size_x / (double)config.x_size;
+  y_ratio = map_view->port_size_y / (double)config.y_size;
 
-  top_left.y = config.y_size - top_left.y;
-  bottom_right.y = config.y_size - bottom_right.y;
+  scale_to_fit_window = carmen_fmin(x_ratio, y_ratio);
+  zoom = 100.0/map_view->zoom;
+  map_view->rescale_size = scale_to_fit_window*zoom;
 
-#if 0
-  carmen_warn("Top : %.2f %.2f Bottom : %.2f %.2f : port %d %d scrn: %d %d\n",
-	      top_left.x, top_left.y, bottom_right.x, bottom_right.y,
-	      map_view->port_size_x, map_view->port_size_y,
-	      map_view->screen_defn.width, map_view->screen_defn.height);
-#endif
-  
-  if (bottom_right.x > config.x_size) 
-    x_crop_size = config.x_size - top_left.x;
-  else 
-    x_crop_size = bottom_right.x - top_left.x;
+  x_render_size = map_view->rescale_size*config.x_size;
+  y_render_size = map_view->rescale_size*config.y_size;
 
-  if (bottom_right.y > config.y_size) 
-    y_crop_size = config.y_size - top_left.y;
-  else 
-    y_crop_size = bottom_right.y - top_left.y;
-
-  if (fabs((x_crop_size/(double)y_crop_size) / 
-	   (x_render_size/(double)y_render_size) - 1) >
-      1e-4) {
-    if (x_crop_size/y_crop_size > x_render_size/y_render_size) {
-      y_render_size = x_render_size*(y_crop_size/(double)x_crop_size);
-    } else {
-      y_render_size = x_render_size*(y_crop_size/(double)x_crop_size);
-    }
-  }
-
-  if (x_crop_size > 0 && y_crop_size > 0 &&
-      x_render_size > 0 && y_render_size > 0)
-    {
-      gdk_imlib_crop_image(image, top_left.x, top_left.y, x_crop_size, 
-			   y_crop_size);
-      gdk_imlib_render(image, x_render_size, y_render_size);
-
-      map_view->current_pixmap = gdk_imlib_move_image(image);
-    }
-
-  gdk_imlib_destroy_image(image);
-
-  free(image_data);
+  final_image = gdk_pixbuf_scale_simple(rotated_image, x_render_size, 
+					y_render_size, GDK_INTERP_BILINEAR);
+  map_view->current_pixbuf = final_image;
+  g_object_unref(rotated_image);
 }
 
 static void 
-redraw (GtkMapViewer *map_view, int regenerate_map) 
+redraw (GtkMapViewer *map_view, int map_changed, int viewport_changed) 
 {
   GdkPixmap *drawing_pixmap;
 
   GtkWidget *widget;
   int width, height;
+  int x_render_size, y_render_size;
   carmen_map_config_t config;
-  int x_disp, y_disp;
+  carmen_point_t top_left;
 
   widget = map_view->image_widget;
   if (widget == NULL || widget->window == NULL)
@@ -260,41 +210,33 @@ redraw (GtkMapViewer *map_view, int regenerate_map)
   if (!map_view->window)
     return;
 
-  if (regenerate_map)
-    {
-      if (map_view->drawing_pixmap) 
-	{
-	  gdk_pixmap_unref(map_view->drawing_pixmap);
-	  map_view->drawing_pixmap = NULL;
-	}
+  if (map_changed)
+    regenerate_map_pixmap(map_view);
+  
+  if (!map_view->drawing_pixmap || viewport_changed) {
+    if (map_view->drawing_pixmap) {
+      gdk_pixmap_unref(map_view->drawing_pixmap);
+      map_view->drawing_pixmap = NULL;
     }
-
+    
+    drawing_pixmap = gdk_pixmap_new
+      (widget->window, map_view->port_size_x, map_view->port_size_y, -1);
+    
+    if (drawing_pixmap == NULL) 
+      carmen_die("Requested pixmap of size %d x %d failed. X must be out "
+		 "of memory.\n", map_view->port_size_x,
+		 map_view->port_size_y);
+    
+    map_view->drawing_pixmap = drawing_pixmap;
+  } 
+  
   drawing_pixmap = map_view->drawing_pixmap;
 
-  map_view->port_size_x = map_view->window->allocation.width-24;
-  map_view->port_size_y = map_view->window->allocation.height-24;
-  
-  if (drawing_pixmap == NULL) 
-    {
-      regenerate_map_pixmap(map_view);
-      
-      drawing_pixmap = gdk_pixmap_new
-	(widget->window, map_view->port_size_x, map_view->port_size_y, -1);
-      
-      if (drawing_pixmap == NULL) 
-	carmen_die("Requested pixmap of size %d x %d failed. X must be out "
-		   "of memory.\n", map_view->screen_defn.width,
-		   map_view->screen_defn.height);
-      
-      map_view->drawing_pixmap = drawing_pixmap;
-    } 
-  
-  if (map_view->drawing_gc == NULL) 
-    {
-      map_view->drawing_gc = gdk_gc_new (widget->window);
-      gdk_gc_copy (map_view->drawing_gc, 
-		   widget->style->fg_gc[GTK_WIDGET_STATE (widget)]);
-    }
+  if (map_view->drawing_gc == NULL) {
+    map_view->drawing_gc = gdk_gc_new (widget->window);
+    gdk_gc_copy (map_view->drawing_gc, 
+		 widget->style->fg_gc[GTK_WIDGET_STATE (widget)]);
+  }
 
   if (map_view->draw_flags & CARMEN_GRAPHICS_BLACK_AND_WHITE)
     gdk_gc_set_foreground(map_view->drawing_gc, &carmen_white);
@@ -308,14 +250,29 @@ redraw (GtkMapViewer *map_view, int regenerate_map)
   width = config.x_size;
   height = config.y_size;
 
-  x_disp = width*map_view->screen_defn.zoom - map_view->x_scroll_adj->value;
-  y_disp = -map_view->y_scroll_adj->upper+map_view->y_scroll_adj->page_size+
-    map_view->y_scroll_adj->value;
+  if (map_view->current_pixbuf) {
+    top_left.x = map_view->x_scroll_adj->value;
+    top_left.y = map_view->y_scroll_adj->value;
 
-  if (map_view->current_pixmap) {
-    gdk_draw_pixmap(map_view->drawing_pixmap, 
+    if (top_left.x + map_view->port_size_x > 
+	gdk_pixbuf_get_width(map_view->current_pixbuf))
+      x_render_size = gdk_pixbuf_get_width(map_view->current_pixbuf) - 
+	top_left.x;
+    else
+      x_render_size = map_view->port_size_x;
+
+    if (top_left.y + map_view->port_size_y > 
+	gdk_pixbuf_get_height(map_view->current_pixbuf))
+      y_render_size = gdk_pixbuf_get_height(map_view->current_pixbuf) - 
+	top_left.y;
+    else
+      y_render_size = map_view->port_size_y;
+
+    gdk_draw_pixbuf(map_view->drawing_pixmap, 
 		    widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
-		    map_view->current_pixmap, 0, 0, 0, 0, -1, -1);
+		    map_view->current_pixbuf, top_left.x, top_left.y, 
+		    0, 0, x_render_size, y_render_size, 
+		    GDK_RGB_DITHER_NONE, 0, 0);
   }
 
   if (map_view->user_draw_routine != NULL)
@@ -328,18 +285,35 @@ redraw (GtkMapViewer *map_view, int regenerate_map)
 		  map_view->y_scroll_adj->value, -1, -1);
 }
 
+static void set_drawing_area_size(GtkMapViewer *map_view)
+{
+  double zoom = 100/map_view->zoom;
+    
+  int port_x = map_view->window->allocation.width - 24;
+  int port_y = map_view->window->allocation.height - 24;
+
+  int new_canvas_x = port_x * zoom;
+  int new_canvas_y = port_y * zoom;    
+
+  map_view->port_size_x = port_x;
+  map_view->port_size_y = port_y;
+
+  gtk_drawing_area_size(GTK_DRAWING_AREA(map_view->image_widget), 
+			new_canvas_x, new_canvas_y);
+}
+
 /* redraw the screen from the backing pixmap */
-static int
-expose_event (GtkWidget *widget, 
-	      GdkEventExpose *event, 
-	      GtkMapViewer *map_view) 
+static int expose_event (GtkWidget *widget, GdkEventExpose *event, 
+			 GtkMapViewer *map_view) 
 {
   if (event->count > 1)
     return 1;
 
-  if (0 || map_view->drawing_pixmap == NULL) 
-    redraw(map_view, 1);
-  else
+  if (map_view->window->allocation.width-24 != map_view->port_size_x ||
+      map_view->window->allocation.height-24 != map_view->port_size_y) {
+    set_drawing_area_size(map_view);
+    redraw(map_view, 1, 1);
+  } else
     gdk_draw_pixmap(widget->window, 
 		    widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		    map_view->drawing_pixmap, 
@@ -351,29 +325,25 @@ expose_event (GtkWidget *widget,
   return 1;
 }
 
-static int
-configure_event (GtkWidget *widget __attribute__ ((unused)), 
-		 GdkEventConfigure *event __attribute__ ((unused)),
-		 GtkMapViewer *map_view)
+static int configure_event (GtkWidget *widget __attribute__ ((unused)), 
+			    GdkEventConfigure *event __attribute__ ((unused)),
+			    GtkMapViewer *map_view)
 {
   if (!map_view || !map_view->window || !map_view->image_widget)
     return 1;
 
   if (map_view->window->allocation.width-24 != map_view->port_size_x ||
-      map_view->window->allocation.height-24 != map_view->port_size_y)
-     redraw(map_view, 1);
+      map_view->window->allocation.height-24 != map_view->port_size_y) {
+    set_drawing_area_size(map_view);
+    redraw(map_view, 1, 1);
+  }
 
   return 1;
 }
 
-static gint 
-rescale_event(GtkWidget *image_widget __attribute__ ((unused)), 
-	      GtkMapViewer *map_view) 
+static gint rescale_event(GtkWidget *image_widget __attribute__ ((unused)), 
+			  GtkMapViewer *map_view) 
 {
-  int port_x, port_y;
-  int canvas_x, canvas_y, new_canvas_x, new_canvas_y;
-  double map_rescale;
-  double zoom;
   carmen_map_config_t config;
   carmen_world_point_t new_centre;
 
@@ -383,168 +353,107 @@ rescale_event(GtkWidget *image_widget __attribute__ ((unused)),
   map_view->centre = new_centre;
 
   map_view->zoom = GTK_ADJUSTMENT(map_view->zoom_adjustment)->value;
-
-  port_x = map_view->window->allocation.width - 24;
-  port_y = map_view->window->allocation.height - 24;
-
-  canvas_x = map_view->image_widget->allocation.width;
-  canvas_y = map_view->image_widget->allocation.height;
-
-  zoom = carmen_fmax(canvas_x/(double)port_x, canvas_y/(double)port_y);
-  
-  if (fabs(100.0/map_view->zoom - zoom) > .01) 
-    {
-      zoom = 100/map_view->zoom;
-      
-      new_canvas_x = port_x * zoom;
-      new_canvas_y = port_y * zoom;
-      
-      map_rescale = carmen_fmin(new_canvas_x / (double)config.x_size,
-				new_canvas_y / (double)config.y_size);
-      
-      if (canvas_x / (double)config.x_size < canvas_y / (double)config.y_size)
-	{
-	  if (map_rescale*config.y_size < port_y)
-	    new_canvas_y = port_y;
-	  else
-	    new_canvas_y = map_rescale*config.y_size;	
-	}
-      else
-	{
-	  if (map_rescale*config.x_size < port_x)
-	    new_canvas_x = port_x;
-	  else
-	    new_canvas_x = map_rescale*config.x_size;	
-	}
-      
-      gtk_drawing_area_size(GTK_DRAWING_AREA(map_view->image_widget), 
-			    new_canvas_x, new_canvas_y);
-    }
+  set_drawing_area_size(map_view);
 
   carmen_map_graphics_adjust_scrollbars(map_view, &new_centre);
 
-  redraw(map_view, 1);
+  redraw(map_view, 1, 0);
 
   return 1;
 }
 
-static gint
-motion_event (GtkWidget *widget __attribute__ ((unused)), 
-	      GdkEventMotion *event,GtkMapViewer *map_view) 
+static gint motion_event (GtkWidget *widget __attribute__ ((unused)), 
+			  GdkEventMotion *event,GtkMapViewer *map_view) 
 {
   GdkModifierType state;
-  carmen_graphics_screen_point_t screen_point;
+  carmen_point_t screen_point;
   carmen_map_point_t point;
   carmen_world_point_t world_point;
+  gint x, y;
 
-  screen_point.config = &(map_view->screen_defn);
-
-  if (event->is_hint) 
-    {
-      gdk_window_get_pointer (event->window, &screen_point.x, 
-			      &screen_point.y, &state);
-    }
-  else
-    {
-      screen_point.x = event->x;
-      screen_point.y = event->y;
-      state = event->state;
-    }
+  if (event->is_hint) {
+    gdk_window_get_pointer (event->window, &x, &y, &state);
+    screen_point.x = x;
+    screen_point.y = y;
+  } else {
+    screen_point.x = event->x;
+    screen_point.y = event->y;
+    state = event->state;
+  }
       
   if (!(map_view->internal_map))
     return TRUE;  
-  
-  carmen_graphics_screen_to_map(&screen_point, &point, map_view->internal_map);
+
+  screen_to_map(&screen_point, &point, map_view);
 
   if (point.x < 0 || point.x >= (map_view->internal_map)->config.x_size ||
       point.y < 0 || point.y >= (map_view->internal_map)->config.y_size)
     return TRUE;
   
-  if (map_view->button_two_down && !(event->state & ~GDK_BUTTON2_MASK)) 
-    {
-      carmen_graphics_screen_to_world(&screen_point, &(map_view->centre), 
-				      map_view->internal_map);
-      carmen_map_graphics_adjust_scrollbars(map_view, &(map_view->centre));
-    } 
-  else if (map_view->motion_handler) 
-    {
-      carmen_graphics_screen_to_world(&screen_point, &world_point, 
-				      map_view->internal_map);
-      (map_view->motion_handler)(map_view, &world_point, event);
-    }
+  if (map_view->button_two_down && !(event->state & ~GDK_BUTTON2_MASK)) {
+    screen_to_world(&screen_point, &(map_view->centre), map_view);
+    carmen_map_graphics_adjust_scrollbars(map_view, &(map_view->centre));
+  } else if (map_view->motion_handler) {
+    screen_to_world(&screen_point, &world_point, map_view);
+    (map_view->motion_handler)(map_view, &world_point, event);
+  }
   
   return TRUE;
 }
-static int 
-button_release_event(GtkWidget *widget __attribute__ ((unused)), 
-		     GdkEventButton *event, GtkMapViewer *map_view) 
+
+static int button_release_event(GtkWidget *widget __attribute__ ((unused)), 
+				GdkEventButton *event, GtkMapViewer *map_view) 
 {
-  carmen_graphics_screen_point_t screen_point;
+  carmen_point_t screen_point;
   carmen_world_point_t point;
 
   screen_point.x = event->x;
   screen_point.y = event->y;
-  screen_point.config = &(map_view->screen_defn);
 
   if (!(map_view->internal_map))
     return TRUE;
 
-  carmen_graphics_screen_to_world(&screen_point, &point, 
-				  map_view->internal_map);
+  screen_to_world(&screen_point, &point, map_view);
 
-  if (event->button == 2 && !(event->state & ~GDK_BUTTON2_MASK)) 
-    {
-      map_view->button_two_down = 0;    
-      map_view->centre = point;
-    } 
-  else if (map_view->button_release_handler) 
-    {
-      (map_view->button_release_handler)(map_view, &point, event);
-    }
+  if (event->button == 2 && !(event->state & ~GDK_BUTTON2_MASK)) {
+    map_view->button_two_down = 0;    
+    map_view->centre = point;
+  } else if (map_view->button_release_handler) {
+    (map_view->button_release_handler)(map_view, &point, event);
+  }
 
   return TRUE;
 }
 
-static int 
-button_press_event(GtkWidget *widget __attribute__ ((unused)), 
-		   GdkEventButton *event, GtkMapViewer *map_view) 
+static int button_press_event(GtkWidget *widget __attribute__ ((unused)), 
+			      GdkEventButton *event, GtkMapViewer *map_view) 
 {
-  carmen_graphics_screen_point_t screen_point;
+  carmen_point_t screen_point;
   carmen_world_point_t point;
 
   screen_point.x = event->x;
   screen_point.y = event->y;
-  screen_point.config = &(map_view->screen_defn);
 
   if (!(map_view->internal_map))
     return TRUE;
 
-  carmen_graphics_screen_to_world(&screen_point, &point, 
-				  map_view->internal_map);
+  screen_to_world(&screen_point, &point, map_view);
 
-  if (event->button == 2 && !event->state) 
-    {
-      map_view->button_two_down = 1;
-      carmen_map_graphics_adjust_scrollbars(map_view, &point);
-    }
-  else if (map_view->button_press_handler) 
-    {
-      (map_view->button_press_handler)(map_view, &point, event);
-    }
+  if (event->button == 2 && !event->state) {
+    map_view->button_two_down = 1;
+    carmen_map_graphics_adjust_scrollbars(map_view, &point);
+  } else if (map_view->button_press_handler) {
+    (map_view->button_press_handler)(map_view, &point, event);
+  }
 
   return TRUE;
 }
 
-static void 
-construct_image(int x_size, int y_size, GtkWidget *Parent, 
-		GtkMapViewer *map_view) 
+static void construct_image(int x_size, int y_size, GtkWidget *Parent, 
+			    GtkMapViewer *map_view) 
 {
   GtkWidget *scrolled_window;
-  GtkWidget *image_widget;
-  
-  map_view->screen_defn.width = x_size*100.0/map_view->zoom;
-  map_view->screen_defn.height = y_size*100.0/map_view->zoom;
-  map_view->screen_defn.zoom = 100.0/map_view->zoom;
+  GtkWidget *image_widget;  
 
   scrolled_window = gtk_scrolled_window_new (NULL, NULL);    
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
@@ -562,26 +471,26 @@ construct_image(int x_size, int y_size, GtkWidget *Parent,
   image_widget = gtk_drawing_area_new();
 
   gtk_drawing_area_size (GTK_DRAWING_AREA (image_widget), 
-			 map_view->screen_defn.width, 
-			 map_view->screen_defn.height);
+			 x_size*100.0/map_view->zoom, 
+			 y_size*100.0/map_view->zoom);
   
   gtk_signal_connect (GTK_OBJECT (image_widget), "expose_event", 
- 		      (GtkSignalFunc) expose_event, map_view); 
+ 		      GTK_SIGNAL_FUNC(expose_event), map_view); 
   gtk_signal_connect (GTK_OBJECT (image_widget), "motion_notify_event",
-		      (GtkSignalFunc) motion_event, map_view);
+		      GTK_SIGNAL_FUNC(motion_event), map_view);
   gtk_signal_connect (GTK_OBJECT (image_widget), "button_release_event", 
- 		      (GtkSignalFunc) button_release_event, map_view);   
+ 		      GTK_SIGNAL_FUNC(button_release_event), map_view);   
   gtk_signal_connect (GTK_OBJECT (image_widget), "button_press_event", 
- 		      (GtkSignalFunc) button_press_event, map_view);   
+ 		      GTK_SIGNAL_FUNC(button_press_event), map_view);   
 
   gtk_signal_connect(GTK_OBJECT(image_widget), "configure_event",
-		     (GtkSignalFunc)configure_event, map_view);
-  
+		     GTK_SIGNAL_FUNC(configure_event), map_view);
+
   gtk_signal_connect (GTK_OBJECT (map_view->x_scroll_adj), "value_changed", 
-		      (GtkSignalFunc)move_event, map_view); 
+		      GTK_SIGNAL_FUNC(move_event), map_view); 
   
   gtk_signal_connect (GTK_OBJECT (map_view->y_scroll_adj), "value_changed", 
-		      (GtkSignalFunc)move_event, map_view); 
+		      GTK_SIGNAL_FUNC(move_event), map_view); 
 
   gtk_widget_set_events (image_widget, GDK_EXPOSURE_MASK
 			 | GDK_LEAVE_NOTIFY_MASK
@@ -645,18 +554,15 @@ carmen_map_graphics_add_map(GtkMapViewer *map_view, carmen_map_p new_map,
 			    int new_flags)
 {
   carmen_world_point_t point;
-  int canvas_x, canvas_y;
-  double map_rescale;
   carmen_map_config_t config;
 
   if (map_view->internal_map != NULL)
     carmen_map_destroy(&(map_view->internal_map));
 
-  if (new_map != NULL)
-    {
-      map_view->internal_map = carmen_map_copy(new_map);
-      map_view->draw_flags = new_flags;
-    }
+  if (new_map != NULL) {
+    map_view->internal_map = carmen_map_copy(new_map);
+    map_view->draw_flags = new_flags;
+  }
 
   point.pose.x = (new_map->config.x_size*3/4)*new_map->config.resolution;
   point.pose.y = (new_map->config.y_size*3/4)*new_map->config.resolution;
@@ -665,27 +571,7 @@ carmen_map_graphics_add_map(GtkMapViewer *map_view, carmen_map_p new_map,
 
   config = new_map->config;
 
-  canvas_x = map_view->image_widget->allocation.width;
-  canvas_y = map_view->image_widget->allocation.height;
-
-  map_rescale = carmen_fmin(canvas_x / (double)config.x_size,
-			    canvas_y / (double)config.y_size);
-
-  if (canvas_x / (double)config.x_size < canvas_y / (double)config.y_size)
-    {
-      if (map_rescale*config.y_size < canvas_y)
-	gtk_drawing_area_size (GTK_DRAWING_AREA (map_view->image_widget), 
-			       canvas_x, map_rescale*config.y_size);
-
-    }
-  else
-    {
-      if (map_rescale*config.x_size < canvas_x)
-	gtk_drawing_area_size (GTK_DRAWING_AREA (map_view->image_widget), 
-			       map_rescale*config.x_size, canvas_y);
-    }
-
-  redraw(map_view, 1);
+  redraw(map_view, 1, 0);
 }
 
 void
@@ -702,12 +588,12 @@ carmen_map_graphics_modify_map(GtkMapViewer *map_view, float *data,
 	 sizeof(float)*config.x_size*config.y_size);
   map_view->draw_flags = new_flags;
 
-  redraw(map_view, 1);
+  redraw(map_view, 1, 0);
 }
 
 void 
 carmen_map_graphics_add_drawing_func(GtkMapViewer *map_view, 
-				     drawing_func new_func)
+				     carmen_graphics_mapview_drawing_func_t new_func)
 {
   map_view->user_draw_routine = new_func;
 }
@@ -715,20 +601,14 @@ carmen_map_graphics_add_drawing_func(GtkMapViewer *map_view,
 void carmen_map_graphics_draw_point(GtkMapViewer *map_view, GdkColor *colour, 
 				    carmen_world_point_p world_point)
 {
-  carmen_graphics_screen_point_t point;
+  carmen_point_t point;
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
   if (world_point->map == NULL)
     return;
   
-  if (carmen_graphics_world_to_screen(world_point, &point, 
-				      &(map_view->screen_defn)) < 0) {
-    return;
-  }
-
-  point.x -= map_view->x_scroll_adj->value;
-  point.y -= map_view->y_scroll_adj->value;
+  world_to_screen(world_point, &point, map_view);
 
   gdk_draw_point(map_view->drawing_pixmap, map_view->drawing_gc, 
                  point.x, point.y);
@@ -740,29 +620,19 @@ void carmen_map_graphics_draw_circle(GtkMapViewer *map_view, GdkColor *colour,
 				  double radius) 
 {
   GdkRectangle rect;
-  carmen_graphics_screen_point_t point;
-  double scale_x = 1, scale_y =1;
+  carmen_point_t point;
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
   if (world_point->map == NULL)
     return;
   
-  if (carmen_graphics_world_to_screen
-      (world_point, &point, &(map_view->screen_defn)) < 0) 
-    return;
+  world_to_screen(world_point, &point, map_view);
   
-  scale_x = map_view->screen_defn.width / 
-    (double)(world_point->map->config.x_size * 
-	     world_point->map->config.resolution);
-  scale_y = (map_view->screen_defn.height-1) / 
-    (double)(world_point->map->config.y_size * 
-	     world_point->map->config.resolution);
+  radius /= (map_view->internal_map->config.resolution*map_view->rescale_size);
 
-  radius *= carmen_fmin(scale_x, scale_y);
-
-  rect.x = carmen_round(point.x - radius - map_view->x_scroll_adj->value);
-  rect.y = carmen_round(point.y - radius - map_view->y_scroll_adj->value);
+  rect.x = carmen_round(point.x - radius);
+  rect.y = carmen_round(point.y - radius);
 
   rect.width = carmen_round(2*radius);
   rect.height = carmen_round(2*radius);
@@ -783,19 +653,18 @@ void carmen_map_graphics_draw_arc(GtkMapViewer *map_view, GdkColor *colour,
 				  int start, int delta) 
 {
   GdkRectangle rect;
-  carmen_graphics_screen_point_t point;
+  carmen_point_t point;
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
   if (world_point->map == NULL)
     return;
   
-  if (carmen_graphics_world_to_screen
-      (world_point, &point, &(map_view->screen_defn)) < 0) 
-    return;
+  world_to_screen(world_point, &point, map_view);
   
-  rect.x = point.x - radius - map_view->x_scroll_adj->value;
-  rect.y = point.y - radius - map_view->y_scroll_adj->value;
+  radius /= (map_view->internal_map->config.resolution*map_view->rescale_size);
+  rect.x = point.x - radius;
+  rect.y = point.y - radius;
 
   rect.width = 2*radius;
   rect.height = 2*radius; 
@@ -808,20 +677,14 @@ void carmen_map_graphics_draw_line(GtkMapViewer *map_view, GdkColor *colour,
 				   carmen_world_point_p start, 
 				   carmen_world_point_p end)
 {
-  carmen_graphics_screen_point_t p1, p2;
+  carmen_point_t p1, p2;
 
   if (start->map == NULL || end->map == NULL)
     return;
 
-  carmen_graphics_world_to_screen(start, &p1, &(map_view->screen_defn));
-  carmen_graphics_world_to_screen(end, &p2, &(map_view->screen_defn));
+  world_to_screen(start, &p1, map_view);
+  world_to_screen(end, &p2, map_view);
      
-  p1.x -= map_view->x_scroll_adj->value;
-  p1.y -= map_view->y_scroll_adj->value;  
-
-  p2.x -= map_view->x_scroll_adj->value;
-  p2.y -= map_view->y_scroll_adj->value;  
-
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
   gdk_draw_line(map_view->drawing_pixmap, map_view->drawing_gc, p1.x, 
@@ -834,7 +697,7 @@ void carmen_map_graphics_draw_polygon(GtkMapViewer *map_view, GdkColor *colour,
 {
   static GdkPoint *poly = NULL;
   static int poly_length = 0;
-  carmen_graphics_screen_point_t p1;
+  carmen_point_t p1;
   int i;
 
   if (points[0].map == NULL)
@@ -850,11 +713,8 @@ void carmen_map_graphics_draw_polygon(GtkMapViewer *map_view, GdkColor *colour,
     carmen_test_alloc(poly);
   }
   
-  for (i = 0; i < num_points; i++) {
-    carmen_graphics_world_to_screen(points+i, &p1, &(map_view->screen_defn));
-    poly[i].x = p1.x - map_view->x_scroll_adj->value;
-    poly[i].y = p1.y - map_view->y_scroll_adj->value;  
-  }
+  for (i = 0; i < num_points; i++) 
+    world_to_screen(points+i, &p1, map_view);  
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
@@ -867,21 +727,15 @@ carmen_map_graphics_draw_rectangle(GtkMapViewer *map_view, GdkColor *colour,
 				   int filled, carmen_world_point_p start, 
 				   carmen_world_point_p end)
 {
-  carmen_graphics_screen_point_t p1, p2;
+  carmen_point_t p1, p2;
   int x, y, width, height;
 
   if (start->map == NULL || end->map == NULL)
     return;
 
-  carmen_graphics_world_to_screen(start, &p1, &(map_view->screen_defn));
-  carmen_graphics_world_to_screen(end, &p2, &(map_view->screen_defn));
+  world_to_screen(start, &p1, map_view);
+  world_to_screen(end, &p2, map_view);
      
-  p1.x -= map_view->x_scroll_adj->value;
-  p1.y -= map_view->y_scroll_adj->value;  
-
-  p2.x -= map_view->x_scroll_adj->value;
-  p2.y -= map_view->y_scroll_adj->value;  
-
   width = abs(p1.x-p2.x);
   height = abs(p1.y-p2.y);
   x = carmen_fmin(p1.x, p2.x);
@@ -916,7 +770,7 @@ carmen_map_graphics_draw_ellipse(GtkMapViewer *map_view, GdkColor *colour,
   double discriminant, eigval1, eigval2,
     eigvec1x, eigvec1y, eigvec2x, eigvec2y;
   carmen_world_point_t point, e1, e2;
-  carmen_graphics_screen_point_t p1;
+  carmen_point_t p1;
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
 
@@ -971,10 +825,7 @@ carmen_map_graphics_draw_ellipse(GtkMapViewer *map_view, GdkColor *colour,
     point.pose.y = xi * eigvec1y + yi * eigvec2y + mean->pose.y;
     point.map = map_view->internal_map;
 
-    carmen_graphics_world_to_screen(&point, &p1, &(map_view->screen_defn));
-
-    p1.x -= map_view->x_scroll_adj->value;
-    p1.y -= map_view->y_scroll_adj->value;
+    world_to_screen(&point, &p1, map_view);
 
     poly[i].x = p1.x;
     poly[i].y = p1.y;
@@ -1005,14 +856,15 @@ carmen_map_graphics_draw_ellipse(GtkMapViewer *map_view, GdkColor *colour,
 
 void 
 carmen_map_graphics_add_motion_event(GtkMapViewer *map_view, 
-				     GtkSignalFunc motion_handler) 
+				     carmen_graphics_mapview_callback_t 
+				     motion_handler) 
 {
   map_view->motion_handler = motion_handler;
 }
 
 void 
 carmen_map_graphics_add_button_release_event(GtkMapViewer *map_view, 
-					     GtkSignalFunc 
+					     carmen_graphics_mapview_callback_t
 					     button_release_handler)
 {
   map_view->button_release_handler = button_release_handler;
@@ -1020,7 +872,7 @@ carmen_map_graphics_add_button_release_event(GtkMapViewer *map_view,
 
 void 
 carmen_map_graphics_add_button_press_event(GtkMapViewer *map_view, 
-					   GtkSignalFunc 
+					   carmen_graphics_mapview_callback_t
 					   button_press_handler)
 {
   map_view->button_press_handler = button_press_handler;
@@ -1051,88 +903,8 @@ carmen_map_graphics_redraw(GtkMapViewer *map_view)
   else
     average = difference;
 
-  redraw(map_view, 0);
+  redraw(map_view, 0, 0);
 
   time_of_last_redraw = carmen_get_time();  
   count++;
 }
-
-/* image to map */
-
-int carmen_map_image_to_map_color_unknown(unsigned char r, unsigned char g, unsigned char b) {
-  if (   ( r == 0 && g == 0 &&   b==255) ||
-	 ( r == 0 && g == 255 && b==0) )
-    return 1;
-  return 0;
-}
-
-float carmen_map_image_to_map_color_occupancy(unsigned char r, unsigned char g, unsigned char b) {
-  float occ =( ((float)r) + ((float)g) + ((float)b)  ) / (3.0 * 255.0);
-  if (occ < 0.001)
-    occ = 0.001;
-  if (occ > 0.999)
-    occ = 0.999;
-  return 1.0 - occ;
-}
-
-carmen_map_p
-carmen_map_image_to_map( GdkImlibImage* im, double resolution )
-{
-  carmen_map_p map;
-  int x_index, y_index;
-
-  if (im == NULL) {
-    carmen_warn("Error: im = NULL in %s at line %d in file %s\n",
-		__FUNCTION__, __LINE__, __FILE__);
-    return NULL;
-  }
-
-  map = (carmen_map_p)calloc(1, sizeof(carmen_map_t));
-  carmen_test_alloc(map);
-
-  map->config.x_size = im->rgb_width;
-  map->config.y_size = im->rgb_height;
-  map->config.resolution =  resolution;
-
-  map->complete_map = (float *)
-    calloc(map->config.x_size*map->config.y_size, sizeof(float));
-  carmen_test_alloc(map->complete_map);
-  
-  map->map = (float **)calloc(map->config.x_size, sizeof(float *));
-  carmen_test_alloc(map->map);
-  for (x_index = 0; x_index < map->config.x_size; x_index++) 
-    map->map[x_index] = map->complete_map+x_index*map->config.y_size;
-
-  for (x_index = 0; x_index < map->config.x_size; x_index++) 
-    for (y_index = 0; y_index < map->config.y_size; y_index++)       {
-	unsigned char r,g ,b;
-	r = im->rgb_data[3*(x_index + y_index * im->rgb_width) + 0];
-	g = im->rgb_data[3*(x_index + y_index * im->rgb_width) + 1];
-	b = im->rgb_data[3*(x_index + y_index * im->rgb_width) + 2];
-
-	if (carmen_map_image_to_map_color_unknown(r,g,b)) 
-	  map->map[x_index][map->config.y_size-1-y_index] = -1.0;
-	else 
-	  map->map[x_index][map->config.y_size-1-y_index] =  carmen_map_image_to_map_color_occupancy(r,g,b);
-      }
-  return map;
-}
-
-
-
-carmen_map_p
-carmen_map_imagefile_to_map(char *filename, double resolution) {
-  carmen_map_p map;
-  GdkImlibImage* im;
-
-  im = (GdkImlibImage*) gdk_imlib_load_image(filename);
-  if (im == NULL)
-    carmen_die_syserror("Couldn't open %s for reading", filename);
-
-  map = carmen_map_image_to_map(im, resolution);
-
-  gdk_imlib_kill_image(im);
-
- return map;
-}
-

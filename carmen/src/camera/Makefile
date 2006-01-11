@@ -22,7 +22,7 @@ endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
-LFLAGS += -lparam_interface -lipc -lglobal -lglobal_graphics -lgdk_imlib \
+LFLAGS += -lparam_interface -lipc -lglobal -lglobal_graphics \
 	`$(GTK_CONFIG) --libs` 
 SOURCES += camera_view.c
 PUBLIC_BINARIES += camera_view

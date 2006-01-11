@@ -18,7 +18,7 @@ endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
-LFLAGS += -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs`
+LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs` 
 SOURCES += param_edit.c
 PUBLIC_BINARIES += param_edit
 TARGETS += param_edit

@@ -50,6 +50,7 @@ int main(int argc, char **argv)
     carmen_camera_grab_image(image);
     if(image->is_new) {
       carmen_camera_publish_image_message(image);
+      carmen_warn("c");
       image->is_new = 0;
     }
   

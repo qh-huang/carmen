@@ -19,7 +19,7 @@ PUBLIC_BINARIES = localize_initialize localize
 MAN_PAGES =
 
 TARGETS = localize liblocalize_interface.a localize_initialize \
-	  liblocalize_core.a liblocalize_motion.a
+	  liblocalize_core.a liblocalize_motion.a model_learn/model_learner
 
 # rules
 
@@ -35,6 +35,9 @@ localize:	localize.o liblocalize_core.a liblocalize_interface.a \
 	liblocalize_motion.a
 
 localizegraph:	localizegraph.o likelihood_map.o liblocalize_interface.a
+
+model_learn/model_learner: 
+	$(MAKE) -C model_learn
 
 include ../Makefile.rules
 

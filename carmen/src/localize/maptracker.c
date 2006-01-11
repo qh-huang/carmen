@@ -690,7 +690,6 @@ void graphics_init(int argc, char **argv)
   int i;
 
   gtk_init(&argc, &argv);
-  gdk_imlib_init();
   gdk_rgb_init();
 
   main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);

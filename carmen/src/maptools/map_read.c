@@ -29,10 +29,6 @@
 #include "map_io.h"
 #include <assert.h>
 
-#ifndef NO_GRAPHICS
-#include <gdk_imlib.h>
-#endif
-
 /*
  * if size < 0 then ignore buf and advance fp to one byte after the next '\0'
  */

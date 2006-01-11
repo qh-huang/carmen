@@ -72,7 +72,7 @@ main(int argc, char** argv)
   int list_length;
 
   gtk_init (&argc, &argv);
-  gdk_imlib_init();
+  carmen_graphics_setup_colors();
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
@@ -81,7 +81,6 @@ main(int argc, char** argv)
 
   carmen_map_get_gridmap(&map);
   carmen_map_get_offlimits(&offlimits, &list_length);
-  carmen_warn("got %d offlimits\n", list_length);
   carmen_map_apply_offlimits_chunk_to_map(offlimits, list_length, &map);
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -90,7 +89,8 @@ main(int argc, char** argv)
   gtk_container_add (GTK_CONTAINER (window), map_view->map_box);
   gtk_widget_show_all(window);
 
-  carmen_map_graphics_add_drawing_func(map_view, (drawing_func)post_func);
+  carmen_map_graphics_add_drawing_func
+    (map_view, (carmen_graphics_mapview_drawing_func_t)post_func);
   carmen_map_graphics_add_map(map_view, &map, 0);
   gtk_main();
 
