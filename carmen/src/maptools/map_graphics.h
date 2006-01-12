@@ -134,7 +134,6 @@ void
 carmen_map_graphics_add_button_press_event(GtkMapViewer *map_view, 
 					   carmen_graphics_mapview_callback_t button_press_handler);
 
-carmen_map_p carmen_map_image_to_map( GdkImlibImage* im, double resolution);
 carmen_map_p carmen_map_imagefile_to_map(char *filename, double resolution);
 
 #ifdef __cplusplus
