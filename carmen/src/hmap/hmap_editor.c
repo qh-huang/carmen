@@ -1,4 +1,5 @@
-#include <carmen/carmen_graphics.h>
+#include <gtk/gtk.h>
+#include <carmen/carmen.h>
 #include <carmen/map_io.h>
 
 static const int DEFAULT_WINDOW_HEIGHT = 500;

@@ -20,6 +20,7 @@ PUBLIC_BINARIES = create_hmap hmap
 
 TARGETS = create_hmap hmap
 
+NO_GRAPHICS = 1
 ifndef NO_GRAPHICS
 CFLAGS +=
 IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
