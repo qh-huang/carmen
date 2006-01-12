@@ -874,3 +874,13 @@ void carmen_base_direct_arm_get(double servos[], int num_servos,
   if (gripper)
     *gripper = gripper_state;
 }
+
+int 
+carmen_base_direct_get_binary_data(unsigned char **data
+				   __attribute__ ((unused)), 
+				   int *size __attribute__ ((unused)))
+{
+
+  return 0;
+}
+

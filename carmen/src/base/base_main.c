@@ -568,6 +568,7 @@ carmen_base_run(void)
   int base_err;
   double tv, rv;
   double displacement, rotation;
+  carmen_base_binary_data_message binary_data;
 
   if (reset_time > reset.timestamp) {
     reset.timestamp = reset_time;
@@ -598,6 +599,11 @@ carmen_base_run(void)
     if (base_err < 0)
       initialize_robot();
   } while (base_err < 0);      
+
+  carmen_base_direct_get_binary_data(&(binary_data.data), &(binary_data.size));
+  binary_data.host = carmen_get_host();
+  binary_data.timestamp = carmen_get_time();
+  IPC_publishData(CARMEN_BASE_BINARY_DATA_NAME, &binary_data);
 
   if (base_err > 0)
     return 2;
