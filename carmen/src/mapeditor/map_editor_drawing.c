@@ -30,7 +30,11 @@
  * based features of the editor                  *
  *************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <gtk/gtk.h>
+#include <carmen/carmen.h>
+
+GdkColor carmen_graphics_add_color_rgb(int r, int g, int b);
+
 #include "map_editor.h"
 #include "map_editor_drawing.h"
 #include "map_editor_graphics.h"

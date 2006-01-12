@@ -31,7 +31,191 @@
  * which display the map.          *
  ***********************************/
 //#include <gnome.h>
-#include <carmen/carmen_graphics.h>
+
+// This chunk of code is ripped from global_graphics.c and 
+// global_graphics.h. Because those files have been upgraded
+// to GTK 2.0, they can't be included here.
+
+#include <gtk/gtk.h>
+#include <gdk_imlib.h>
+#include <carmen/carmen.h>
+
+#define CARMEN_GRAPHICS_INVERT          1
+#define CARMEN_GRAPHICS_RESCALE         2
+#define CARMEN_GRAPHICS_ROTATE          4
+#define CARMEN_GRAPHICS_BLACK_AND_WHITE 8
+
+unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags) 
+{
+  register float *data_ptr;
+  unsigned char *image_data = NULL;
+  register unsigned char *image_ptr = NULL;
+  double value;
+  int x_size, y_size;
+  int x_index, y_index;
+  int index;
+  double max_val = -MAXDOUBLE, min_val = MAXDOUBLE;
+
+  int rescale = flags & CARMEN_GRAPHICS_RESCALE;
+  int invert = flags & CARMEN_GRAPHICS_INVERT;
+  int rotate = flags & CARMEN_GRAPHICS_ROTATE;
+  int black_and_white = flags & CARMEN_GRAPHICS_BLACK_AND_WHITE;
+
+  if (map == NULL) {
+    carmen_warn("carmen_graphics_convert_to_image was passed NULL map.\n");
+    return NULL;
+  }
+
+  x_size = map->config.x_size;
+  y_size = map->config.y_size;
+  image_data = (unsigned char *)calloc(x_size*y_size*3, sizeof(unsigned char));
+  carmen_test_alloc(image_data);
+
+  if (rescale) {
+    max_val = -MAXDOUBLE;
+    min_val = MAXDOUBLE;
+    data_ptr = map->complete_map;
+    for (index = 0; index < map->config.x_size*map->config.y_size; index++) {
+      max_val = carmen_fmax(max_val, *data_ptr);
+      if (*data_ptr >= 0)
+	min_val = carmen_fmin(min_val, *data_ptr);
+      data_ptr++;
+    }
+  }
+
+  if (max_val < 0)
+    rescale = 0;
+  
+  image_ptr = image_data;
+  data_ptr = map->complete_map;
+  for (x_index = 0; x_index < x_size; x_index++) {
+    for (y_index = 0; y_index < y_size; y_index++) {
+      value = *(data_ptr++);	    
+      if (rotate)
+	image_ptr = image_data+y_index*x_size*3+x_index;
+      if (value < 0) {
+	if (black_and_white) {
+	  *(image_ptr++) = 255;
+	  *(image_ptr++) = 255;
+	  *(image_ptr++) = 255;
+	} else {
+	  *(image_ptr++) = 0;
+	  *(image_ptr++) = 0;
+	  *(image_ptr++) = 255;
+	}
+      } else if(!rescale && value > 1.0) {
+	if (black_and_white) {
+	  *(image_ptr++) = 128;
+	  *(image_ptr++) = 128;
+	  *(image_ptr++) = 128;
+	} else {
+	  *(image_ptr++) = 255;
+	  *(image_ptr++) = 0;
+	  *(image_ptr++) = 0;
+	}
+      } else {
+	if (rescale)
+	  value = (value - min_val) / (max_val - min_val);
+	if (!invert)
+	  value = 1 - value;
+	for (index = 0; index < 3; index++)
+	  *(image_ptr++) = value * 255;
+      }
+    }
+  }
+  return image_data;
+}
+
+static GdkColormap *cmap = NULL;
+
+GdkColor carmen_red, carmen_blue, carmen_white, carmen_yellow, 
+  carmen_green, carmen_light_blue, carmen_black, carmen_orange, 
+  carmen_grey, carmen_light_grey, carmen_purple;
+
+
+static void _add_color(GdkColor *color, char *name)
+{
+  if(cmap == NULL)
+    cmap = gdk_colormap_get_system();
+
+  if (!gdk_color_parse (name, color)) {
+    g_error("couldn't parse color");
+    return;
+  }
+
+  if(!gdk_colormap_alloc_color(cmap, color, FALSE, TRUE))
+    g_error("couldn't allocate color");
+}
+
+void
+carmen_graphics_setup_colors(void)
+{
+  _add_color(&carmen_red, "red");
+  _add_color(&carmen_blue, "blue");
+  _add_color(&carmen_white, "white");
+  _add_color(&carmen_yellow, "yellow");
+  _add_color(&carmen_green, "green");
+  _add_color(&carmen_light_blue, "DodgerBlue");
+  _add_color(&carmen_black, "black");
+  _add_color(&carmen_orange, "tomato");
+  _add_color(&carmen_grey, "ivory4");
+  _add_color(&carmen_light_grey, "grey79");
+  _add_color(&carmen_purple, "purple");
+}
+
+GdkColor carmen_graphics_add_color(char *name) 
+{
+  GdkColor color;
+
+  _add_color(&color, name);
+  return color;
+}
+
+GdkColor carmen_graphics_add_color_rgb(int r, int g, int b) 
+{
+  GdkColor color;
+
+  if(cmap == NULL)
+    cmap = gdk_colormap_get_system();
+
+  color.red = r * 256;
+  color.green = g * 256;
+  color.blue = b * 256;
+
+  if(!gdk_colormap_alloc_color(cmap, &color, FALSE, TRUE))
+    g_error("couldn't allocate color");
+
+  return color;
+}
+
+GdkPixmap * 
+carmen_graphics_generate_pixmap(GtkWidget* drawing_area, unsigned char* image_data,
+				carmen_map_config_p config, double zoom) 
+{
+  GdkImlibImage *image;
+  GdkPixmap *pixmap;
+
+  if (drawing_area == NULL || image_data == NULL) 
+    {
+      carmen_warn("carmen_graphics_generate_pixmap was passed bad arguments.\n");
+      return NULL;
+    }
+
+  image =  gdk_imlib_create_image_from_data
+    (image_data, (unsigned char *)NULL, config->y_size, config->x_size);
+  
+  gdk_imlib_rotate_image(image, -1);
+  gdk_imlib_flip_image_vertical(image);
+  gdk_imlib_render(image, config->x_size*zoom, config->y_size*zoom);
+
+  pixmap = gdk_imlib_move_image(image);
+
+  gdk_imlib_kill_image(image);  
+
+  return pixmap;
+}
+
+
 
 #include "map_editor.h"
 #include "map_editor_graphics.h"

@@ -30,7 +30,12 @@
  * menu items in the map_editor    *
  ***********************************/
 
-#include <carmen/carmen_graphics.h>
+#include <gtk/gtk.h>
+#include <carmen/carmen.h>
+
+extern GdkColor carmen_red, carmen_blue, carmen_white, carmen_yellow, 
+  carmen_green, carmen_light_blue, carmen_black, carmen_orange, 
+  carmen_grey, carmen_light_grey, carmen_purple;
 
 #include "map_editor.h"
 #include "map_editor_menus.h"

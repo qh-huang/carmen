@@ -4,9 +4,9 @@ MODULE_NAME = MAP_EDITOR
 MODULE_COMMENT = "Provides photoshop-like map editor."
 
 ifndef NO_GRAPHICS
-IFLAGS += `$(GTK_CONFIG) --cflags`
+IFLAGS += `gtk-config --cflags`
 LFLAGS += -lglobal -lmap_interface -lmap_io -lglobal_graphics -lgdk_imlib \
-	`$(GTK_CONFIG) --libs` -lipc
+	`gtk-config --libs` -lipc
 SOURCES = map_editor.c map_editor_drawing.c map_editor_menus.c \
 	   map_editor_graphics.c 
 TARGETS = map_editor 

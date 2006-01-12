@@ -25,7 +25,8 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <gtk/gtk.h>
+#include <carmen/carmen.h>
 #include "map_editor.h"
 #include "map_editor_menus.h"
 #include "map_editor_drawing.h"
