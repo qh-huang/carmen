@@ -176,18 +176,18 @@ Redraw(void)
 
   sprintf(str, "Laser %d - %.1f fps", laser_num, framerate);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
-  gdk_draw_string(pixmap, drawing_area->style->font, Drawing_GC, 
+  gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 10, str);
 
   sprintf(str, "%d pts", numreadings);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
-  gdk_draw_string(pixmap, drawing_area->style->font, Drawing_GC, 
+  gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  drawing_area->allocation.width - 60.0, 
 		  drawing_area->allocation.height - 25, str);
 
   sprintf(str, "Max range  = %.1fm", laser_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
-  gdk_draw_string(pixmap, drawing_area->style->font, Drawing_GC, 
+  gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  drawing_area->allocation.width - 125.0, 
 		  drawing_area->allocation.height - 10, str);
   
@@ -210,7 +210,6 @@ start_graphics(int argc, char *argv[])
   unsigned char data[WINDOWSIZE * WINDOWSIZE];
 
   gtk_init(&argc, &argv);
-  carmen_graphics_initialize_screenshot();
   main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (main_window), "Robot Graph");
   drawing_area = gtk_drawing_area_new ();
