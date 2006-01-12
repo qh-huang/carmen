@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 #include <gtk/gtk.h>
-#include <gdk_imlib.h>
 #include <carmen/carmen.h>
 
 #define CARMEN_GRAPHICS_INVERT          1
