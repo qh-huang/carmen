@@ -128,7 +128,7 @@ cBaudrate( int baudrate )
   case 115200:
     return(B115200);
     break;
-#ifndef CYGWIN
+#if !defined(CYGWIN) && !defined(__APPLE__)
   case 500000:
     /* to use 500k you have to change the entry of B460800 in you kernel:
        /usr/src/linux/drivers/usb/serial/ftdi_sio.h:
