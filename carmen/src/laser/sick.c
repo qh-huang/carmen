@@ -2,7 +2,7 @@
 
 /*****  DIRK WAS HERE - START ******/
 #include <sys/utsname.h>
-#ifndef CYGWIN
+#if !defined(CYGWIN) && !defined(__APPLE__)
 #include <linux/serial.h>
 #include <linux/version.h>
 #endif
@@ -118,7 +118,7 @@ int cBaudrate(int baudrate)
   case 115200:
     return(B115200);
     break;
-#ifndef CYGWIN
+#if !defined(CYGWIN) && !defined(__APPLE__)
   case 500000:
     /* to use 500k you have to change the entry of B460800 in you kernel:
        /usr/src/linux/drivers/usb/serial/ftdi_sio.h:
@@ -171,7 +171,7 @@ void sick_set_baudrate(sick_laser_p laser, int brate)
 {
   struct termios  ctio;
 
-#ifndef CYGWIN
+#if !defined(CYGWIN) && !defined(__APPLE__)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,20)
   struct serial_struct  serinfo;
