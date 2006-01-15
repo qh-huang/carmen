@@ -16,8 +16,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/10/17 20:18:16  nickr
  * Upgraded to IPC 3.7.7, added Arm patches from Dirk Haehnel.
@@ -1318,7 +1321,7 @@ X_IPC_RETURN_VALUE_TYPE x_ipcSuccess(X_IPC_REF_PTR ref)
 #ifndef NMP_IPC
   ref->responded = TRUE;
 #endif
-  
+
   status = x_ipc_sendResponse(ref, (MSG_PTR)NULL, (char *)NULL, 
 			      SuccessClass, (char *)NULL, sd);
   

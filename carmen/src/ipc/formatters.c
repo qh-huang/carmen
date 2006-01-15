@@ -15,6 +15,9 @@
  * REVISION HISTORY:
  *
  * $Log$
+ * Revision 1.3  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
  * Revision 1.2  2005/09/15 22:39:27  dhaehnel
  * added support for x86_64 machines (almost untested)
  *
@@ -1060,6 +1063,7 @@ static int32 x_ipc_varArraySize(FORMAT_ARRAY_PTR formatArray,
     }
     
     offset = sizeOffset - currentOffset;
+
     BCOPY(dataStruct+dStart+offset, &size, sizeof(int32));
     arraySize *= size;
   }
@@ -1648,13 +1652,14 @@ static int32 firstElementSize(CONST_FORMAT_PTR format)
   switch (format->type) {
   case LengthFMT: return format->formatter.i;
     
-  case PrimitiveFMT: 
+  case PrimitiveFMT: {
     int32 result;
     LOCK_M_MUTEX;
     result = (GET_M_GLOBAL(TransTable)[format->formatter.i].RLength)();
     UNLOCK_M_MUTEX;
     return result;
-    
+  }
+
   case PointerFMT:
   case VarArrayFMT: 
     return sizeof(GENERIC_DATA_PTR);
@@ -2001,7 +2006,7 @@ int32 x_ipc_dataStructureSize(CONST_FORMAT_PTR format)
   FORMAT_ARRAY_PTR formatArray;
   
   size = 0;
-
+  
   if (format) {
     if (format->structSize != NOT_CACHED) {
       return format->structSize;

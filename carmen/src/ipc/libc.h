@@ -17,8 +17,11 @@
  *
  * REVISION HISTORY
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/04/20 02:28:13  nickr
  * Upgraded to IPC 3.7.6.
@@ -576,6 +579,26 @@ extern int unlink _PARAMS((char *));
 #define FORCE_32BIT_ENUM
 
 #endif /* macintosh */
+
+#if defined(__APPLE__) // OSX, hopefully
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <string.h>
+#include <sys/socket.h>
+#undef ALIGN
+#include <sys/stat.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <sys/un.h>
+#include <sys/uio.h>
+#include <netdb.h>
+#include <errno.h>
+
+#endif // __APPLE__ / OSX
 
 #if defined(Next) ||  defined(__NeXT__)
 #include <stdio.h>

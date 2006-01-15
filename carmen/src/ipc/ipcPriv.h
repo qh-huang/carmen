@@ -11,8 +11,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.7  2003/10/17 20:18:16  nickr
  * Upgraded to IPC 3.7.7, added Arm patches from Dirk Haehnel.
@@ -321,8 +324,8 @@
 /* Interal version control */
 #define IPC_VERSION_MAJOR  3
 #define IPC_VERSION_MINOR  7
-#define IPC_VERSION_MICRO  7
-#define IPC_VERSION_DATE "Jul-23-03"
+#define IPC_VERSION_MICRO  10
+#define IPC_VERSION_DATE "Dec-30-05"
 #define IPC_COMMIT_DATE "$Date$"
 
 #define MAX_RECONNECT_TRIES (5)

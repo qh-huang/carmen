@@ -15,6 +15,9 @@
  * REVISION HISTORY
  *
  * $Log$
+ * Revision 1.3  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
  * Revision 1.2  2005/09/15 22:39:27  dhaehnel
  * added support for x86_64 machines (almost untested)
  *
@@ -594,13 +597,15 @@ typedef enum
 #define ALIGN ALIGN_WORD
 #elif defined(macintosh) && defined(__POWERPC__)
 #define ALIGN ALIGN_MAC_PPC
+#elif defined(__APPLE__) && defined(_ARCH_PPC)
+#define ALIGN ALIGN_MAC_PPC
 #elif defined(sun4) || defined(SUN4) || defined(sparc) || defined(__sparc)
 #define ALIGN ALIGN_LONGEST
 #elif defined(pmax) || defined(alpha) || defined(__alpha) || defined(__alpha__)
 #define ALIGN ALIGN_LONGEST
 #elif _MSC_VER == 1200  /* JSM Microsoft VC++ Version 6.0 aligns on 8-byte boundaries */
 #define ALIGN ALIGN_LONGEST
-#elif defined(i386) || defined(__TURBOC__) || defined(OS2) || defined(_WIN95_MSC_) || defined(WIN32) 
+#elif defined(i386) || defined(__TURBOC__) || defined(OS2) || defined(_WIN95_MSC_) || defined(WIN32)
 #define ALIGN ALIGN_INT
 #elif defined(__sgi) || defined(MIPSEB)
 #define ALIGN ALIGN_LONGEST

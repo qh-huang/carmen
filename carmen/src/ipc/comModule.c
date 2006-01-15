@@ -16,8 +16,11 @@
  * REVISION HISTORY 
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2006/01/15 21:22:33  nickr
+ * Added support for Mac
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.6  2003/04/20 02:28:12  nickr
  * Upgraded to IPC 3.7.6.
@@ -1234,20 +1237,16 @@ X_IPC_CONTEXT_PTR x_ipcGetContext(void)
  *
  * FUNCTION: X_IPC_CONTEXT_PTR x_ipcResetContext(void)
  *
- * DESCRIPTION: 
- *
- * INPUTS: 
- *
- * OUTPUTS: void.
+ * NOTE: ASSUMES THAT C AND M MUTEXES ARE ALREADY LOCKED WHEN INVOKED!!!!
  *
  *****************************************************************************/
 
 static void x_ipcResetContext(void)
 {
-  LOCK_M_MUTEX;
+  // LOCK_M_MUTEX; Assumes already locked
   GET_M_GLOBAL(currentContext) = 
     (X_IPC_CONTEXT_PTR)x_ipcMalloc(sizeof(X_IPC_CONTEXT_TYPE));
-  LOCK_C_MUTEX;
+  // LOCK_C_MUTEX; Assumes already locked
 #ifdef THREADED
   initMutex(&GET_C_GLOBAL(mutex));
   initMutex(&GET_C_GLOBAL(ioMutex));
@@ -1293,7 +1292,7 @@ static void x_ipcResetContext(void)
   GET_C_GLOBAL(connectNotifyList) = NULL;
   GET_C_GLOBAL(disconnectNotifyList) = NULL;
   GET_C_GLOBAL(changeNotifyList) = NULL;
-  UNLOCK_CM_MUTEX;
+  // UNLOCK_CM_MUTEX; Assumes already locked
 }
 
 
@@ -2964,7 +2963,7 @@ static void resizeMsgQueue (MSG_QUEUE_PTR msgQueue)
   msgQueue->queueSize += MSG_QUEUE_INCR;
   msgQueue->messages  = (QUEUED_MSG_PTR)realloc(msgQueue->messages, /* check_alloc checked */
 						(sizeof(QUEUED_MSG_TYPE)*
-						 msgQueue->queueSize)); 
+						 msgQueue->queueSize));
 }
 
 void initMsgQueue (MSG_QUEUE_PTR msgQueue)
