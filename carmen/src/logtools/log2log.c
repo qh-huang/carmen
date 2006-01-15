@@ -3,7 +3,6 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
-#include <values.h>
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
@@ -12,7 +11,6 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <zlib.h>
-
 
 #include <carmen/carmen.h>
 #include <carmen/logtools.h>

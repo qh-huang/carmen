@@ -148,8 +148,8 @@ write_rec2d_file( char *filename, logtools_log_data_t *rec )
     switch( rec->entry[i].type ) {
     case LASER_VALUES:
       fprintf(iop, "LASER-RANGE %11ld %7ld %d %d %.1f:",
-	      rec->lsens[rec->entry[i].index].laser.time.tv_sec,
-	      rec->lsens[rec->entry[i].index].laser.time.tv_usec,
+	      (long int)rec->lsens[rec->entry[i].index].laser.time.tv_sec,
+	      (long int)rec->lsens[rec->entry[i].index].laser.time.tv_usec,
 	      rec->lsens[rec->entry[i].index].id,
 	      rec->lsens[rec->entry[i].index].laser.numvalues,
 	      rad2deg(rec->lsens[rec->entry[i].index].laser.fov) );
@@ -160,8 +160,8 @@ write_rec2d_file( char *filename, logtools_log_data_t *rec )
       break;
     case POSITION:
       fprintf( iop, "POS %11ld %7ld: %.5f %.5f %.5f %.5f %.5f\n",
-	       rec->psens[rec->entry[i].index].time.tv_sec,
-	       rec->psens[rec->entry[i].index].time.tv_usec,
+	       (long int)rec->psens[rec->entry[i].index].time.tv_sec,
+	       (long int)rec->psens[rec->entry[i].index].time.tv_usec,
 	       rec->psens[rec->entry[i].index].rpos.x,
 	       rec->psens[rec->entry[i].index].rpos.y,
 	       rad2deg(rec->psens[rec->entry[i].index].rpos.o),
@@ -170,8 +170,8 @@ write_rec2d_file( char *filename, logtools_log_data_t *rec )
       break;
     case MARKER:
       fprintf( iop, "MARKER %11ld %7ld: %s\n",
-	       rec->marker[rec->entry[i].index].time.tv_sec,
-	       rec->marker[rec->entry[i].index].time.tv_usec,
+	       (long int)rec->marker[rec->entry[i].index].time.tv_sec,
+	       (long int)rec->marker[rec->entry[i].index].time.tv_usec,
 	       rec->marker[rec->entry[i].index].datastr );
       break;
     case UNKNOWN:
