@@ -4,7 +4,13 @@ extern "C" {
 #endif
 
 #include <carmen/carmen.h>
+#ifndef __APPLE__ 
 #include <values.h>
+#else
+#include <float.h>
+#define MAXDOUBLE DBL_MAX
+#endif
+
 #include "linemapping.h"
 
 #ifdef __cplusplus
