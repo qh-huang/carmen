@@ -214,7 +214,7 @@ void carmen_serial_setparms(int fd, char *baudr, char *par, char *bits,
   }		
   /* Set into raw, no echo mode */
 #if !defined(_DGUX_SOURCE)
-  tty.c_iflag &= ~(IGNBRK | IGNCR | INLCR | ICRNL | IUCLC | 
+  tty.c_iflag &= ~(IGNBRK | IGNCR | INLCR | ICRNL | // IUCLC | 
 		   IXANY | IXON | IXOFF | INPCK | ISTRIP);
   tty.c_iflag |= (BRKINT | IGNPAR);
   tty.c_oflag &= ~OPOST;
