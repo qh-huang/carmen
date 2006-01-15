@@ -96,7 +96,7 @@ int main(int argc, char **argv)
        Now that child is spawned, set WATCHDOG signals the way we want them.
      */
     for(this_signal = 0; this_signal < 128; this_signal++)
-      if(this_signal != SIGCLD && this_signal != SIGCHLD && 
+      if(this_signal != SIGCHLD && // this_signal != SIGCLD && 
 	 this_signal != SIGCONT)
 	signal(this_signal, watchdog_handle_signal);
     /* Note: Don't register handler for child signals.  Handler exits on signal
