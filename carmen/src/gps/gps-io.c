@@ -4,7 +4,6 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
-#include <values.h>
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
@@ -143,12 +142,14 @@ cBaudrate( int baudrate )
   case 115200:
     return(B115200);
     break;
+#if !defined(CYGWIN) && !defined(__APPLE__)
   case 500000:
     /* to use 500k you have to change the entry of B460800 in you kernel:
        /usr/src/linux/drivers/usb/serial/ftdi_sio.h:
        ftdi_8U232AM_48MHz_b460800 = 0x0006    */
     return(B460800);
     break;
+#endif
   default:
     return(B9600);
     break;
@@ -272,18 +273,47 @@ DEVICE_send( SerialDevice dev, unsigned char *cmd, int len )
   }
 }
 
+static int get_line(char **buffer, size_t *buffer_len, char delim, FILE *fp)
+{
+  char read_char;
+  size_t num_read;
+
+  if (*buffer == NULL || *buffer_len == 0) {
+    *buffer = (char *)calloc(1, sizeof(char));
+    carmen_test_alloc(*buffer);
+    *buffer_len = 1;
+  }
+
+  num_read = 0;
+  do {
+    read_char = fgetc(fp);
+    if (read_char == EOF)
+      return -1;
+    (*buffer)[num_read] = read_char;
+    num_read++;
+    if (num_read == *buffer_len) {
+      *buffer_len = *buffer_len+1;
+      *buffer = (char *)realloc(*buffer, sizeof(char));
+      carmen_test_alloc(*buffer);
+    }
+  } while (read_char != delim);
+
+  return num_read;
+}
+
 int
 DEVICE_read_data( SerialDevice dev )
 {
   int                  val, recieved, len;
-  static char        * buffer;
+  static char        * buffer = NULL;
   static size_t        buffer_len = 0;
   static char          line[BUFFER_LENGTH];
   int                  j, start;
   
   val = DEVICE_bytes_waiting(dev.fd);
   if (val>0) {
-    recieved = getdelim(&buffer, &buffer_len, '*', dev.fp);
+
+    recieved = get_line(&buffer, &buffer_len, '*', dev.fp);
     if (recieved>0) {
       len = 0;
       for (j=0;j<recieved;j++) {
