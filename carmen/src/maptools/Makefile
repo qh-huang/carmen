@@ -7,8 +7,8 @@ LFLAGS += -lparam_interface -lglobal -lipc -lm
 MODULE_NAME = MAPTOOLS
 MODULE_COMMENT = Tools for mapping etc.
 
-SOURCES = bee2carmen.c clfconvert.c generate_blank.c img_to_map.c map.c \
-	linemapping.cpp map_interface.c map_ipc.c map_read.c map_test.c \
+SOURCES = bee2carmen.c clfconvert.c generate_blank.c map.c \
+	linemapping.cpp map_interface.c map_ipc.c map_read.c \
 	maptool.c map_util.c map_write.c
 
 PUBLIC_INCLUDES = linemapping.h map.h map_io.h map_messages.h map_interface.h \
@@ -23,7 +23,7 @@ TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
-SOURCES += map_graphics.c 
+SOURCES += map_graphics.c map_test.c 
 PUBLIC_INCLUDES += map_graphics.h
 PUBLIC_LIBRARIES += libmap_graphics.a
 TARGETS += libmap_graphics.a map_test
@@ -54,8 +54,6 @@ maptool: maptool.o libmap_util.a libmap_io.a libmap_interface.a
 generate_blank : generate_blank.o libmap_io.a
 
 bee2carmen : bee2carmen.o libmap_io.a
-
-img_to_map : libmap_io.a img_to_map.o libmap_graphics.a
 
 include  ../Makefile.rules
 
