@@ -181,13 +181,15 @@ sub check_gcc_version {
 
 sub verify_graphics {
   print "Searching for GTK... ";
-  my $gtk_config;
+  my ($gtk_config, $version);
   if ($suse) {
-    $gtk_config = "gtk-config --version";
+    $gtk_config = "gtk-config";
+    $version = "--version";
   } else {
-    $gtk_config = "pkg-config --modversion gtk+";
+    $gtk_config = "pkg-config gtk+-2.0";
+    $version = "--modversion"
   }
-  my $gtk_version = `$gtk_config 2>&1`;
+  my $gtk_version = `$gtk_config $version 2>&1`;
   if ($? != 0) {
     print<<EOF;
 ${red}not found${normal}. 
@@ -218,24 +220,7 @@ EOF
   }
   print "found, version $gtk_major.$gtk_minor.$revision\n";
 
-  print "Searching for Gdk-Imlib... ";
-  my $error = system("pkg-config imlibgdk");
-  if (!$error) {
-    print "found\n";
-    return 1;
-  }  
-
-  print "${red}not found${normal}\n";
-    print<<EOF;
-
-I tried to execute pkg-config --modversion imlibgdk and received an error.
-If you do not have gdk_imlib, CARMEN\'s display modules will not compile, but 
-all other modules should compile without problem. Please install gdk_imlib, or
-re-run $PROGRAM_NAME with --nographics.
-EOF
-  die "\n";
-
-  return undef;
+  return $gtk_config;
 }
 
 sub verify_joystick {
@@ -773,6 +758,8 @@ sub write_out_config {
     $graphics_libs = `$gtk_config --libs`;
     chomp $graphics_libs;
   }
+
+  print STDERR "here $graphics_cflags\n";
 
   print CONFIG<<EOF;
 #include <stdio.h>
