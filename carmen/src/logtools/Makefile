@@ -7,7 +7,8 @@ MODULE_COMMENT = "Log tools, like the famous log2pic"
 #		echo "WAND_CXXFLAGS   = `$(WAND_CONFIG) --cppflags `" >> $(VARS); \
 #		echo "WAND_LIBS       = `$(WAND_CONFIG) --libs`" >> $(VARS); \
 
-LFLAGS += -lreadlog -lmap_io -lmap_interface -llogtools -lglobal -lipc
+
+LFLAGS += -lmap_io -lmap_interface -llogtools -lreadlog -lglobal -lipc
 
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \

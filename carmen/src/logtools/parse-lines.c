@@ -547,7 +547,7 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
   static int                firsttime = TRUE;
 
   carmen_robot_laser_message cl;
-  carmen_erase_structure(&l, sizeof(carmen_robot_laser_message) );
+  carmen_erase_structure(&cl, sizeof(carmen_robot_laser_message) );
 
   if (firsttime) {
     lprop.fov.start     =   -M_PI_2;
@@ -657,7 +657,7 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
     
   } else if (!strcmp( command, "ROBOTLASER1") ){
 
-    carmen_string_to_robot_laser_message_orig(line, &cl);
+    carmen_string_to_robot_laser_message(line, &cl);
     nVal = cl.num_readings;
 
       rec->entry[rec->numentries].type   = LASER_VALUES;
@@ -697,7 +697,7 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
       rec->numlaserscans++;
   } else if (!strcmp( command, "ROBOTLASER2") ){
 
-    carmen_string_to_robot_laser_message_orig(line, &cl);
+    carmen_string_to_robot_laser_message(line, &cl);
     nVal = cl.num_readings;
 
       rec->entry[rec->numentries].type   = LASER_VALUES;
