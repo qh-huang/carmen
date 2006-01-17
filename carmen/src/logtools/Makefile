@@ -20,7 +20,7 @@ PUBLIC_LIBRARIES = liblogtools.a libclfconvert.a
 
 PUBLIC_BINARIES = log2pic log2log
 
-TARGETS = liblogtools.a libclfconvert.a log2log clf-read-example
+TARGETS = liblogtools.a libclfconvert.a log2log clf-read-example clf-get-oldlaser
 
 ifndef NO_WAND
 WAND_CFLAGS = `/usr/bin/pkg-config --cflags Wand`
@@ -41,6 +41,8 @@ log2log:	log2log.o
 libclfconvert.a: clfconvert.o
 
 clf-read-example: clf-read-example.o
+
+clf-get-oldlaser: clf-get-oldlaser.o
 
 log2pic:	magick-utils.o log2pic.o
 
