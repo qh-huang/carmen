@@ -498,9 +498,8 @@ film_image(gpointer data)
   return save_image(data, 0, NULL);
 }
 
-static void 
-start_filming(GtkWidget *w __attribute__ ((unused)), 
-	      int arg __attribute__ ((unused)))
+static void start_filming(GtkWidget *w __attribute__ ((unused)), 
+			  int arg __attribute__ ((unused)))
 {
   GtkWidget *menu_item;
 
