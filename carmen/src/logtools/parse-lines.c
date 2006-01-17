@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <carmen/carmen.h>
 #include <carmen/logtools.h>
 
 #include "defines.h"
@@ -545,6 +546,8 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
   static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
 
+  carmen_robot_laser_message cl;
+  carmen_erase_structure(&l, sizeof(carmen_robot_laser_message) );
 
   if (firsttime) {
     lprop.fov.start     =   -M_PI_2;
@@ -652,6 +655,86 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
       rec->numlaserscans++;
     }
     
+  } else if (!strcmp( command, "ROBOTLASER1") ){
+
+    carmen_string_to_robot_laser_message_orig(line, &cl);
+    nVal = cl.num_readings;
+
+      rec->entry[rec->numentries].type   = LASER_VALUES;
+      rec->entry[rec->numentries].index  = rec->numlaserscans;
+      rec->numentries++;
+      
+      rec->lsens[rec->numlaserscans].id                 = 0;
+      rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
+      rec->lsens[rec->numlaserscans].coord              = NULL;
+
+      if (alloc) {
+	rec->lsens[rec->numlaserscans].laser.val =
+	  (float *) malloc( nVal * sizeof(float) );
+	rec->lsens[rec->numlaserscans].laser.angle =
+	  (float *) malloc( nVal * sizeof(float) );
+      }
+      if (fabs(rad2deg(lprop.fov.delta)-fov)>DEFAULT_EPSILON) {
+	lprop.fov.delta = cl.config.fov;
+	lprop.fov.start = cl.config.start_angle;
+	lprop.fov.end   = cl.config.start_angle + cl.config.fov;
+      }
+      rec->lsens[rec->numlaserscans].laser.fov = lprop.fov.delta;
+      rec->lsens[rec->numlaserscans].laser.offset = lprop.offset;
+      angleDiff = cl.config.angular_resolution;
+      
+      for (i=0;i<nVal;i++) {
+	rec->lsens[rec->numlaserscans].laser.val[i] = 100.0 * cl.range[i];
+	rec->lsens[rec->numlaserscans].laser.angle[i]  = lprop.fov.start+(i*angleDiff);
+      }
+      rec->lsens[rec->numlaserscans].estpos.x = 100.0 * cl.laser_pose.x;
+      valptr = strtok( NULL, " ");
+      rec->lsens[rec->numlaserscans].estpos.y = 100.0 * cl.laser_pose.y;
+      valptr = strtok( NULL, " ");
+      rec->lsens[rec->numlaserscans].estpos.o = cl.laser_pose.theta;
+      time = cl.timestamp;
+      convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
+      rec->numlaserscans++;
+  } else if (!strcmp( command, "ROBOTLASER2") ){
+
+    carmen_string_to_robot_laser_message_orig(line, &cl);
+    nVal = cl.num_readings;
+
+      rec->entry[rec->numentries].type   = LASER_VALUES;
+      rec->entry[rec->numentries].index  = rec->numlaserscans;
+      rec->numentries++;
+      
+      rec->lsens[rec->numlaserscans].id                 = 1;
+      rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
+      rec->lsens[rec->numlaserscans].coord              = NULL;
+
+      if (alloc) {
+	rec->lsens[rec->numlaserscans].laser.val =
+	  (float *) malloc( nVal * sizeof(float) );
+	rec->lsens[rec->numlaserscans].laser.angle =
+	  (float *) malloc( nVal * sizeof(float) );
+      }
+      if (fabs(rad2deg(lprop.fov.delta)-fov)>DEFAULT_EPSILON) {
+	lprop.fov.delta = cl.config.fov;
+	lprop.fov.start = cl.config.start_angle;
+	lprop.fov.end   = cl.config.start_angle + cl.config.fov;
+      }
+      rec->lsens[rec->numlaserscans].laser.fov = lprop.fov.delta;
+      rec->lsens[rec->numlaserscans].laser.offset = lprop.offset;
+      angleDiff = cl.config.angular_resolution;
+      
+      for (i=0;i<nVal;i++) {
+	rec->lsens[rec->numlaserscans].laser.val[i] = 100.0 * cl.range[i];
+	rec->lsens[rec->numlaserscans].laser.angle[i]  = lprop.fov.start+(i*angleDiff);
+      }
+      rec->lsens[rec->numlaserscans].estpos.x = 100.0 * cl.laser_pose.x;
+      valptr = strtok( NULL, " ");
+      rec->lsens[rec->numlaserscans].estpos.y = 100.0 * cl.laser_pose.y;
+      valptr = strtok( NULL, " ");
+      rec->lsens[rec->numlaserscans].estpos.o = cl.laser_pose.theta;
+      time = cl.timestamp;
+      convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
+      rec->numlaserscans++;
   } else if (!strcmp( command, "RLASER") ){
     
     if (sscanf( line, "%s %d ",

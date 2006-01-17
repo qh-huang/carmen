@@ -204,6 +204,10 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	  posctr++;
 	} else if (!strcmp( command, "FLASER") ){
 	  laserctr++;
+	} else if (!strcmp( command, "ROBOTLASER1") ){
+	  laserctr++;
+	} else if (!strcmp( command, "ROBOTLASER2") ){
+	  laserctr++;
 	} else if (!strcmp( command, "RLASER") ){
 	  laserctr++;
 	} else if (!strcmp( command, "MARKER")) {
