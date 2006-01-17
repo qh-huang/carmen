@@ -198,8 +198,8 @@ and got this response:
 
 $gtk_version
 If you do not have graphics, CARMEN\'s display modules will not compile, but 
-all other modules should compile without problem. Please install gtk and
-gdk_imlib, or re-run $PROGRAM_NAME with --nographics.
+all other modules should compile without problem. Please install gtk 2.0, 
+or re-run $PROGRAM_NAME with --nographics.
 EOF
   die "\n";
   }
@@ -849,7 +849,7 @@ EOF
   print CONFIG "    printf(\"-ljpeg \");\n" if ($gtk_config and $jpeg);
   print CONFIG<<EOF;
     if (mode & 4)
-      printf("-lmap_graphics -lgdk_imlib ");
+      printf("-lmap_graphics ");
   }
   printf("\\n");
 }
