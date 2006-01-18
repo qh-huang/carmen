@@ -759,7 +759,6 @@ sub write_out_config {
     chomp $graphics_libs;
   }
 
-  print STDERR "here $graphics_cflags\n";
 
   print CONFIG<<EOF;
 #include <stdio.h>
