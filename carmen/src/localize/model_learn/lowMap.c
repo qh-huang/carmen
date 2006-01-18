@@ -351,7 +351,7 @@ inline void LowBuildObservation(int x, int y, char usage)
   PAncestor stack[PARTICLE_NUMBER];
   short int workingArray[ID_NUMBER+1];
   int i, here, topStack;
-  char flag;
+  char flag = 0;
 
   // The size of the observationArray is not large enough- we throw out an error
   // message and stop the program

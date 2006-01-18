@@ -52,7 +52,7 @@ double RotationSpeed, TranslationSpeed;
 // If you wanted to not use hierarchical SLAM, you could remove all references here to High*, and make
 // certain to set LOW_DURATION in low.h to some incredibly high number.
 //
-void *Slam(void *arg __attribute__ ((unused)))
+void *Slam(void * /*arg unused */)
 {
   TPath *path, *trashPath;
   TSenseLog *obs, *trashObs;
