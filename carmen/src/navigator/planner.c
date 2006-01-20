@@ -185,12 +185,12 @@ plan(carmen_navigator_config_t *nav_conf)
   static double last_plan_time = 0;
   int goal_x, goal_y;
 
-  if (nav_conf->replan_frequency > 0)
-    {
-      if (carmen_get_time() - last_plan_time < 
-	  1.0/nav_conf->replan_frequency)
-	return;
+  if (nav_conf->replan_frequency > 0) {
+    if (carmen_get_time() - last_plan_time < 
+	1.0/nav_conf->replan_frequency) {
+      return;
     }
+  }
 
   goal_x = carmen_round(goal.x / carmen_planner_map->config.resolution);
   goal_y = carmen_round(goal.y / carmen_planner_map->config.resolution);
@@ -520,3 +520,15 @@ carmen_planner_get_map_message(carmen_navigator_map_t map_type)
   return reply;
 }
 
+double *carmen_planner_get_utility(void)
+{
+  return carmen_conventional_get_utility_ptr();
+}
+
+int carmen_planner_goal_reachable(void)
+{ 
+  if (path.length <= 1)
+    return 0;
+
+  return 1;
+}

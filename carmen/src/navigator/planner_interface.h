@@ -81,7 +81,11 @@ extern "C" {
   (carmen_navigator_map_t map_type);
   
   void carmen_planner_get_status(carmen_planner_status_p status);
-  
+
+  double *carmen_planner_get_utility(void);  
+
+  int carmen_planner_goal_reachable(void);
+
 #ifdef __cplusplus
 }
 #endif
