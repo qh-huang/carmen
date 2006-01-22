@@ -196,12 +196,35 @@ map_update_handler(carmen_map_t *new_map)
   carmen_warn("done.\n");
 }
 
-static void query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-			  void *clientData __attribute__ ((unused))) 
+static void
+globalpos_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+			void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_localize_globalpos_message globalpos;
+  FORMATTER_PTR formatter;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+
+  globalpos.timestamp = carmen_get_time();
+  globalpos.host = carmen_get_host();
+  globalpos.globalpos = summary.mean;
+  globalpos.globalpos_std = summary.std;
+  globalpos.globalpos_xy_cov = summary.xy_cov;
+  globalpos.odometrypos = summary.odometry_pos;
+  globalpos.converged = summary.converged;
+
+  err = IPC_respondData(msgRef, CARMEN_LOCALIZE_GLOBALPOS_NAME, &globalpos);
+  carmen_test_ipc(err, "Could not publish", CARMEN_LOCALIZE_GLOBALPOS_NAME);
+}
+
+static void map_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			      void *clientData __attribute__ ((unused))) 
 {
   FORMATTER_PTR formatter;
   IPC_RETURN_TYPE err;
-  carmen_localize_query_message msg;
+  carmen_localize_map_query_message msg;
   carmen_localize_map_message response;
 
 #ifndef NO_ZLIB
@@ -212,7 +235,7 @@ static void query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &msg, 
-			   sizeof(carmen_localize_query_message));
+			   sizeof(carmen_localize_map_query_message));
   IPC_freeByteArray(callData);
   
   carmen_test_ipc_return(err, "Could not unmarshall", 
@@ -297,18 +320,34 @@ int register_ipc_messages(void)
 							 CARMEN_SUBSCRIBE_LATEST);
 
   /* register map request message */
-  err = IPC_defineMsg(CARMEN_LOCALIZE_QUERY_NAME, IPC_VARIABLE_LENGTH,
-		      CARMEN_LOCALIZE_QUERY_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_QUERY_NAME);
+  err = IPC_defineMsg(CARMEN_LOCALIZE_MAP_QUERY_NAME, IPC_VARIABLE_LENGTH,
+		      CARMEN_LOCALIZE_MAP_QUERY_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_LOCALIZE_MAP_QUERY_NAME);
 
   err = IPC_defineMsg(CARMEN_LOCALIZE_MAP_NAME, IPC_VARIABLE_LENGTH,
 		      CARMEN_LOCALIZE_MAP_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_LOCALIZE_MAP_NAME);
 
   /* subscribe to map request message */
-  err = IPC_subscribe(CARMEN_LOCALIZE_QUERY_NAME, query_handler, NULL);
-  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_QUERY_NAME);
-  IPC_setMsgQueueLength(CARMEN_LOCALIZE_QUERY_NAME, 1);
+  err = IPC_subscribe(CARMEN_LOCALIZE_MAP_QUERY_NAME, map_query_handler, NULL);
+  carmen_test_ipc(err, "Could not subscribe", CARMEN_LOCALIZE_MAP_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_LOCALIZE_MAP_QUERY_NAME, 1);
+
+
+  /* register globalpos request message */
+  err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 
+		      IPC_VARIABLE_LENGTH,
+		      CARMEN_DEFAULT_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_LOCALIZE_MAP_QUERY_NAME);
+
+  /* subscribe to globalpos request message */
+  err = IPC_subscribe(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 
+		      globalpos_query_handler, NULL);
+  carmen_test_ipc(err, "Could not subscribe", 
+		  CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 1);
 
   return 0;
 }

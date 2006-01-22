@@ -94,6 +94,8 @@ carmen_localize_correct_laser(carmen_robot_laser_message *laser,
 
 int carmen_localize_get_map(int global, carmen_map_t *map);
 
+int carmen_localize_get_globalpos(carmen_localize_globalpos_message **globalpos);
+
 #ifdef __cplusplus
 }
 #endif

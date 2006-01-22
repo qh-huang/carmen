@@ -111,10 +111,10 @@ typedef struct {
   double timestamp;
   char *host;
   int global;
-} carmen_localize_query_message;
+} carmen_localize_map_query_message;
   
-#define CARMEN_LOCALIZE_QUERY_NAME "carmen_localize_query"
-#define CARMEN_LOCALIZE_QUERY_FMT "{double,string,int}"
+#define CARMEN_LOCALIZE_MAP_QUERY_NAME "carmen_localize_map_query"
+#define CARMEN_LOCALIZE_MAP_QUERY_FMT "{double,string,int}"
   
 typedef struct {
   double timestamp;
@@ -128,6 +128,9 @@ typedef struct {
   
 #define CARMEN_LOCALIZE_MAP_NAME "carmen_localize_map"
 #define CARMEN_LOCALIZE_MAP_FMT  "{double,string,<char:4>,int,{int,int,double,string},int,int}"
+
+#define CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME "carmen_localize_globalpos_query"
+typedef carmen_default_message carmen_localize_globalpos_query_message;
 
 #ifdef __cplusplus
 }

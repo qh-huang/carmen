@@ -291,7 +291,7 @@ carmen_localize_correct_laser(carmen_robot_laser_message *laser,
 int carmen_localize_get_map(int global, carmen_map_t *map) 
 {
   IPC_RETURN_TYPE err;
-  carmen_localize_query_message msg;
+  carmen_localize_map_query_message msg;
   carmen_localize_map_message *response = NULL;
   int index;
 
@@ -306,11 +306,11 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
 
   if (!initialized) 
     {
-      err = IPC_defineMsg(CARMEN_LOCALIZE_QUERY_NAME, 
+      err = IPC_defineMsg(CARMEN_LOCALIZE_MAP_QUERY_NAME, 
 			  IPC_VARIABLE_LENGTH, 
-			  CARMEN_LOCALIZE_QUERY_FMT);
+			  CARMEN_LOCALIZE_MAP_QUERY_FMT);
       carmen_test_ipc_exit(err, "Could not define message", 
-			   CARMEN_LOCALIZE_QUERY_NAME);
+			   CARMEN_LOCALIZE_MAP_QUERY_NAME);
       initialized = 1;
     }
 
@@ -318,9 +318,9 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
   msg.timestamp = carmen_get_time();
   msg.host = carmen_get_host();
 
-  err = IPC_queryResponseData(CARMEN_LOCALIZE_QUERY_NAME, &msg, 
+  err = IPC_queryResponseData(CARMEN_LOCALIZE_MAP_QUERY_NAME, &msg, 
 			      (void **)&response, timeout);
-  carmen_test_ipc(err, "Could not get map", CARMEN_LOCALIZE_QUERY_NAME);
+  carmen_test_ipc(err, "Could not get map", CARMEN_LOCALIZE_MAP_QUERY_NAME);
 
 #ifndef NO_ZLIB
   if (response && response->compressed) 
@@ -367,5 +367,30 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
       free(response);
     } 
 
+  return 0;
+}
+
+int carmen_localize_get_globalpos(carmen_localize_globalpos_message 
+				  **globalpos)
+{
+  IPC_RETURN_TYPE err;
+  carmen_localize_globalpos_query_message *msg;
+  static int initialized = 0;
+
+  if(!initialized) {
+    err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME);
+    initialized = 1;
+  }
+  
+  msg = carmen_default_message_create();
+  err = IPC_queryResponseData(CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME, msg, 
+			      (void **)globalpos,
+			      timeout);
+  carmen_test_ipc_return_int(err, "Could not query localize globalpos", 
+			     CARMEN_LOCALIZE_GLOBALPOS_QUERY_NAME);
   return 0;
 }
