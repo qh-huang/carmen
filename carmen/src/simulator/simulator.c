@@ -70,9 +70,6 @@ set_truepose_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
                      sizeof(carmen_simulator_set_truepose_message));
   IPC_freeByteArray(callData);
 
-  carmen_warn("Init: %f %f %f\n", msg.pose.x, msg.pose.y, 
-	      carmen_radians_to_degrees(msg.pose.theta));
-
   simulator_config->true_pose.x = msg.pose.x;
   simulator_config->true_pose.y = msg.pose.y;
   simulator_config->true_pose.theta = msg.pose.theta;
@@ -195,6 +192,27 @@ next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   }
 }
 
+static void
+truepos_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+		      void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_simulator_truepos_message response;
+  FORMATTER_PTR formatter;
+  
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  IPC_freeByteArray(callData);
+
+  response.timestamp = carmen_get_time();
+  response.host = carmen_get_host();
+  response.truepose = simulator_config->true_pose;
+  response.odometrypose = simulator_config->odom_pose;
+
+  err = IPC_respondData(msgRef, CARMEN_SIMULATOR_TRUEPOS_NAME, &response);
+  carmen_test_ipc(err, "Could not respond", CARMEN_SIMULATOR_TRUEPOS_NAME);
+
+}
+
 /* handles C^c */
 static void 
 shutdown_module(int x)
@@ -283,6 +301,12 @@ initialize_ipc(void)
   if(err != IPC_OK)
     return -1;
 
+  err = IPC_defineMsg(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME,
+                      IPC_VARIABLE_LENGTH,
+                      CARMEN_DEFAULT_MESSAGE_FMT);
+  if(err != IPC_OK)
+    return -1;
+
   err = IPC_subscribe(CARMEN_SIMULATOR_SET_TRUEPOSE_NAME, 
 		      set_truepose_handler, NULL);
   if (err != IPC_OK)
@@ -312,6 +336,11 @@ initialize_ipc(void)
   if (err != IPC_OK)
     return 1;
   IPC_setMsgQueueLength(CARMEN_SIMULATOR_NEXT_TICK_NAME, 1);
+
+  err = IPC_subscribe(CARMEN_SIMULATOR_TRUEPOS_QUERY_NAME, 
+		      truepos_query_handler, NULL);
+  if (err != IPC_OK)
+    return 1;
 
   return 0;
 }
@@ -445,69 +474,64 @@ publish_readings(void)
 }
 
 
-void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg) {
-  
-  lasercfg->angular_resolution = carmen_degrees_to_radians(lasercfg->angular_resolution);
-  
-  if (lasercfg->fov > M_PI - carmen_degrees_to_radians(1) && 
-      lasercfg->fov < M_PI + carmen_degrees_to_radians(1) ) {    
-    lasercfg->fov = M_PI;    
-  }
-  else if (lasercfg->fov > 0.5*M_PI - carmen_degrees_to_radians(1) && 
-	   lasercfg->fov < 0.5*M_PI + carmen_degrees_to_radians(1) ) {    
-    lasercfg->fov = 0.5*M_PI;    
-  }
-  else if (lasercfg->fov > carmen_degrees_to_radians(100) - carmen_degrees_to_radians(1) && 
-	   lasercfg->fov < carmen_degrees_to_radians(100) + carmen_degrees_to_radians(1) ) {    
-    lasercfg->fov = carmen_degrees_to_radians(100);    
-  }
-  else
-    lasercfg->fov = M_PI;    
-  
-  if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(1)  &&
-      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(1)) {
-    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
-  } 
-  else if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(0.5)  &&
-      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(0.5)) {
-    lasercfg->angular_resolution = carmen_degrees_to_radians(0.5);
-  } 
-  else if (lasercfg->angular_resolution > 0.98 * carmen_degrees_to_radians(0.25)  &&
-      lasercfg->angular_resolution < 1.02 * carmen_degrees_to_radians(0.25)) {
-    lasercfg->angular_resolution = carmen_degrees_to_radians(0.25);
-  } 
-  else
-    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
-  
+void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg) 
+{
+  double resolution_in_degrees;
 
-  if (lasercfg->fov == M_PI) {
-    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+  /* 1/21/06: Nick Roy was here. This function contained a number of equality
+     comparisons between floats, and a number of comparisons that involved
+     multiplying * 1.02 and * .98. I unified all of the comparisons to take
+     absolute value of the difference, and check to see that it was within
+     1/1000.
+  */ 
+  
+  resolution_in_degrees = lasercfg->angular_resolution;
+
+  if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 180) < 1 )
+    lasercfg->fov = M_PI;
+  else if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 90) < 1)
+    lasercfg->fov = 0.5*M_PI;
+  else if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 100) < 1)
+    lasercfg->fov = carmen_degrees_to_radians(100);
+  else
+    lasercfg->fov = M_PI;    
+  
+  if (fabs(resolution_in_degrees - 1) < 1e-3)
+    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
+  else if (fabs(resolution_in_degrees - .5) < 1e-3)
+    lasercfg->angular_resolution = carmen_degrees_to_radians(0.5);
+  else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
+    lasercfg->angular_resolution = carmen_degrees_to_radians(0.25);
+  else
+    lasercfg->angular_resolution = carmen_degrees_to_radians(1);  
+
+  if (fabs(lasercfg->fov - M_PI) < 1e-3) {
+    if (fabs(resolution_in_degrees - 1) < 1e-3)
       lasercfg->num_lasers = 181;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+    else if (fabs(resolution_in_degrees - 0.5) < 1e-6 )
       lasercfg->num_lasers = 361;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
-      carmen_die("Invalid laser configuration! fov=PI and resolution=0.25 deg is impossible with SICKs\n");
-    }    
+    else if (fabs(resolution_in_degrees - 0.25) < 1e-6) {
+      carmen_die("Invalid laser configuration! fov=PI and resolution=0.25 "
+		 "deg is impossible with SICKs\n");
+    }
     else carmen_die("Invalid laser configuration!\n");
   }
-  else if (lasercfg->fov == carmen_degrees_to_radians(100)) {
-    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+  else if (fabs(lasercfg->fov - carmen_degrees_to_radians(100)) < 1e-3) {
+    if (fabs(resolution_in_degrees - 1) < 1e-3 )    
       lasercfg->num_lasers = 101;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+    else if (fabs(resolution_in_degrees - 0.5) < 1e-3)
       lasercfg->num_lasers = 201;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
+    else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
       lasercfg->num_lasers = 401;
-    }    
     else carmen_die("Invalid laser configuration!\n");
   }
-  else if (lasercfg->fov == 0.5*M_PI) {
-    if (lasercfg->angular_resolution == carmen_degrees_to_radians(1) )    
+  else if (fabs(lasercfg->fov - 0.5*M_PI) < 1e-3) {
+    if (fabs(resolution_in_degrees - 1) < 1e-3 )    
       lasercfg->num_lasers = 91;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.5) )    
+    else if (fabs(resolution_in_degrees - 0.5) < 1e-3)
       lasercfg->num_lasers = 181;
-    else if (lasercfg->angular_resolution == carmen_degrees_to_radians(0.25) ) {
+    else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
       lasercfg->num_lasers = 361;
-    }    
     else 
       carmen_die("Invalid laser configuration!\n");
   }
