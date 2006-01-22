@@ -41,8 +41,7 @@ static carmen_map_placelist_t placelist;
 static double last_navigator_status = 0.0;
 static int is_graphics_up = 0;
 
-void 
-navigator_status_handler(carmen_navigator_status_message *msg)
+void navigator_status_handler(carmen_navigator_status_message *msg)
 {  
   carmen_traj_point_t new_robot;
   carmen_world_point_t new_goal;
@@ -66,14 +65,12 @@ navigator_status_handler(carmen_navigator_status_message *msg)
     navigator_graphics_update_display(&new_robot, NULL, msg->autonomous);
 }
 
-void 
-navigator_plan_handler(carmen_navigator_plan_message *plan)
+void navigator_plan_handler(carmen_navigator_plan_message *plan)
 {
   navigator_graphics_update_plan(plan->path, plan->path_length);
 }
 
-void 
-navigator_get_map(carmen_navigator_map_t type) 
+void navigator_get_map(carmen_navigator_map_t type) 
 {
   carmen_map_t new_map;
   int index;
@@ -118,8 +115,7 @@ navigator_get_map(carmen_navigator_map_t type)
     navigator_graphics_change_map(map);
 }
 
-void 
-map_update_handler(carmen_map_t *new_map) 
+void map_update_handler(carmen_map_t *new_map) 
 {
   carmen_map_destroy(&map);
   map = carmen_map_copy(new_map);
@@ -127,40 +123,34 @@ map_update_handler(carmen_map_t *new_map)
     navigator_graphics_change_map(map);
 }
 
-void 
-navigator_update_robot(carmen_world_point_p robot) 
+void navigator_update_robot(carmen_world_point_p robot) 
 {
   carmen_point_t std = {0.2, 0.2, carmen_degrees_to_radians(4.0)};
 
-  if (robot == NULL) 
-    {
-      carmen_localize_initialize_uniform_command();
-    }
-  else
-    {
-      carmen_verbose("Set robot position to %d %d\n", 
-		     carmen_round(robot->pose.x), 
-		     carmen_round(robot->pose.y)); 
-      
-      carmen_localize_initialize_gaussian_command(robot->pose, std);
-    }
+  if (robot == NULL) {
+    carmen_localize_initialize_uniform_command();
+  } else {
+    carmen_verbose("Set robot position to %d %d %f\n", 
+		   carmen_round(robot->pose.x), 
+		   carmen_round(robot->pose.y),
+		carmen_radians_to_degrees(robot->pose.theta)); 
+    
+    carmen_localize_initialize_gaussian_command(robot->pose, std);
+  }
 }
 
-void 
-navigator_set_goal(double x, double y) 
+void navigator_set_goal(double x, double y) 
 {
   carmen_verbose("Set goal to %.1f %.1f\n", x, y);
   carmen_navigator_set_goal(x, y);
 }
 
-void 
-navigator_set_goal_by_place(carmen_place_p place) 
+void navigator_set_goal_by_place(carmen_place_p place) 
 {
   carmen_navigator_set_goal_place(place->name);
 }
 
-void 
-navigator_stop_moving(void) 
+void navigator_stop_moving(void) 
 {
   if (!carmen_navigator_stop()) 
     carmen_verbose("Said stop\n");
@@ -168,8 +158,7 @@ navigator_stop_moving(void)
     carmen_verbose("Could not say stop\n");
 }
 
-void 
-navigator_start_moving(void) 
+void navigator_start_moving(void) 
 {
   if (!carmen_navigator_go())
     carmen_verbose("Said go!\n");
@@ -178,23 +167,20 @@ navigator_start_moving(void)
     
 }
 
-static void 
-nav_shutdown(int signo __attribute__ ((unused)))
+static void nav_shutdown(int signo __attribute__ ((unused)))
 {
   static int done = 0;
   
-  if(!done) 
-    {
-      done = 1;
-      carmen_ipc_disconnect();
-      exit(-1);
-    }
+  if(!done) {
+    done = 1;
+    carmen_ipc_disconnect();
+    exit(-1);
+  }
 }
 
-static gint 
-handle_ipc(gpointer *data __attribute__ ((unused)), 
-	   gint source __attribute__ ((unused)), 
-	   GdkInputCondition condition __attribute__ ((unused))) 
+static gint handle_ipc(gpointer *data __attribute__ ((unused)), 
+		       gint source __attribute__ ((unused)), 
+		       GdkInputCondition condition __attribute__ ((unused))) 
 {
   carmen_ipc_sleep(0.01);
   
@@ -203,8 +189,7 @@ handle_ipc(gpointer *data __attribute__ ((unused)),
   return 1;
 }
 
-static void
-globalpos_handler(carmen_localize_globalpos_message *msg) 
+static void globalpos_handler(carmen_localize_globalpos_message *msg) 
 {
   carmen_traj_point_t new_robot;
 
@@ -223,22 +208,19 @@ globalpos_handler(carmen_localize_globalpos_message *msg)
   navigator_graphics_update_display(&new_robot, NULL, 0);
 }
 
-static void 
-truepos_handler(carmen_simulator_truepos_message *msg)
+static void truepos_handler(carmen_simulator_truepos_message *msg)
 {
   navigator_graphics_update_simulator_truepos(msg->truepose);
 }
 
-static void 
-objects_handler(carmen_simulator_objects_message *msg)
+static void objects_handler(carmen_simulator_objects_message *msg)
 {
   navigator_graphics_update_simulator_objects
     (msg->num_objects, msg->objects_list);
 }
 
-static void
-display_config_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		       void *clientData __attribute__ ((unused)))
+static void display_config_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+				   void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err = IPC_OK;
   FORMATTER_PTR formatter;
@@ -262,10 +244,11 @@ display_config_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     free(msg.status_message);
 }
 
-static void
-read_parameters(int argc, char *argv[], carmen_robot_config_t *robot_config, 
-		carmen_navigator_config_t *nav_config,
-		carmen_navigator_panel_config_t *navivator_panel_config)
+static void read_parameters(int argc, char *argv[], 
+			    carmen_robot_config_t *robot_config, 
+			    carmen_navigator_config_t *nav_config,
+			    carmen_navigator_panel_config_t 
+			    *navigator_panel_config)
 {
   int num_items;
   
@@ -299,23 +282,23 @@ read_parameters(int argc, char *argv[], carmen_robot_config_t *robot_config,
      &(nav_config->goal_theta_tolerance), 1, NULL},
 
     {"navigator_panel", "initial_map_zoom", CARMEN_PARAM_DOUBLE,
-     &(navivator_panel_config->initial_map_zoom), 1, NULL},
+     &(navigator_panel_config->initial_map_zoom), 1, NULL},
     {"navigator_panel", "track_robot", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->track_robot), 1, NULL},
+     &(navigator_panel_config->track_robot), 1, NULL},
     {"navigator_panel", "draw_waypoints", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->draw_waypoints), 1, NULL},
+     &(navigator_panel_config->draw_waypoints), 1, NULL},
     {"navigator_panel", "show_particles", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_particles), 1, NULL},
+     &(navigator_panel_config->show_particles), 1, NULL},
     {"navigator_panel", "show_gaussians", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_gaussians), 1, NULL},
+     &(navigator_panel_config->show_gaussians), 1, NULL},
     {"navigator_panel", "show_laser", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_lasers), 1, NULL},
+     &(navigator_panel_config->show_lasers), 1, NULL},
     {"navigator_panel", "show_simulator_objects", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_simulator_objects), 1, NULL},
+     &(navigator_panel_config->show_simulator_objects), 1, NULL},
     {"navigator_panel", "show_true_pos", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_true_pos), 1, NULL},
+     &(navigator_panel_config->show_true_pos), 1, NULL},
     {"navigator_panel", "show_tracked_objects", CARMEN_PARAM_ONOFF,
-     &(navivator_panel_config->show_tracked_objects), 1, NULL}
+     &(navigator_panel_config->show_tracked_objects), 1, NULL}
   };
   
   num_items = sizeof(param_list)/sizeof(param_list[0]);
@@ -323,8 +306,7 @@ read_parameters(int argc, char *argv[], carmen_robot_config_t *robot_config,
   carmen_param_install_params(argc, argv, param_list, num_items);
 }
 
-int 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   carmen_robot_config_t robot_config;
   carmen_navigator_config_t nav_config;
@@ -372,7 +354,8 @@ main(int argc, char **argv)
   carmen_test_ipc_exit(err, "Could not subscribe message",
 		       CARMEN_NAVIGATOR_DISPLAY_CONFIG_NAME);
   
-  navigator_graphics_init(argc, argv, &globalpos, &robot_config, &nav_config, &nav_panel_config);
+  navigator_graphics_init(argc, argv, &globalpos, &robot_config, &nav_config, 
+			  &nav_panel_config);
   navigator_graphics_add_ipc_handler((GdkInputFunction)handle_ipc);
 
   is_graphics_up = 1;
