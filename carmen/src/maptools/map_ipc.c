@@ -470,7 +470,7 @@ carmen_map_initialize_ipc(void)
   carmen_test_ipc_exit(err, "Could not define", CARMEN_MAP_GRIDMAP_NAME);
 
   err = IPC_defineMsg(CARMEN_MAP_GRIDMAP_UPDATE_NAME, IPC_VARIABLE_LENGTH, 
-		      CARMEN_DEFAULT_MESSAGE_FMT);
+		      CARMEN_MAP_GRIDMAP_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_MAP_GRIDMAP_UPDATE_NAME);
 
