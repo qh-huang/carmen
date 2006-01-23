@@ -23,6 +23,9 @@
  * HISTORY: Based on version by Carroll Thronesbery, Metrica (Sept 2000)
  *
  * $Log$
+ * Revision 1.3  2006/01/23 21:43:19  nickr
+ * Updated to match new carmen message formats.
+ *
  * Revision 1.2  2005/12/12 23:52:26  nickr
  * Made message classes inherit
  *
@@ -50,6 +53,7 @@ package IPC;
 import java.lang.*;
 import java.util.*;
 import java.io.*;
+import LDLoad.*;
 
 public class IPC {
 
@@ -938,6 +942,6 @@ public class IPC {
   }
 
   static {
-    System.loadLibrary("ipcjava");
+    LDLoad.loadFromJar("Carmen.jar", "libipcjava.so");
   }
 }

@@ -15,8 +15,6 @@ public class Arm {
     ServoArmMessage(double servos[]) {
       this.servos = servos;
       numServos=servos.length;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
     }
   }    
 

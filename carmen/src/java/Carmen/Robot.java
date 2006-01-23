@@ -6,85 +6,65 @@ import IPC.*;
 public class Robot {
   private static final String CARMEN_ROBOT_VELOCITY_NAME = "carmen_robot_vel";
   private static final String CARMEN_ROBOT_VELOCITY_FMT = 
-    "{double,string,double,double}";
+    "{double,double,double,string}";
 
   private static final String CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME =
     "carmen_robot_follow_trajectory";
   private static final String CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT = 
-    "{double,string,int,<{double,double,double,double,double}:3>,{double,double,double,double,double}}";
+    "{int,<{double,double,double,double,double}:1>,{double,double,double,double,double},double,string}";
 
   private static final String CARMEN_ROBOT_VECTOR_MOVE_NAME = 
     "carmen_robot_vector_move";
   private static final String CARMEN_ROBOT_VECTOR_MOVE_FMT = 
-    "{double,string,double,double}";
+    "{double,double,double,string}";
 
   private static final String CARMEN_ROBOT_VECTOR_STATUS_NAME =
     "carmen_robot_vector_status";
   private static final String CARMEN_ROBOT_VECTOR_STATUS_FMT =
-    "{double, string, double, double}";
+    "{double,double,double,string}";
   
   private static final String CARMEN_BASE_RESET_COMMAND_NAME = "carmen_base_reset_command";
   private static final String CARMEN_BASE_RESET_COMMAND_FMT = 
   	"{double,string}";
 
   /** Event Handler receives this and can set its fields */
-  public static class CarmenBaseResetMessage {
-    public double timestamp;
-    public char host[];
-
-  /** Event Handler receives this and can set its fields */
-    CarmenBaseResetMessage() {
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
-    }
+  public static class CarmenBaseResetMessage extends Message {
   }
 
 
 /** Event Handler receives this and can set its fields */
-  public static class RobotVelocityMessage {
+  public static class RobotVelocityMessage extends Message {
     public double tv, rv;
-    public double timestamp;
-    public char host[];
 
   /** Event Handler receives this and can set its fields */
     RobotVelocityMessage(double tv, double rv) {
       this.tv = tv;
       this.rv = rv;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
     }
   }
 
 
   /** Event Handler receives this and can set its fields */
-  public static class RobotVectorMoveMessage {
+  public static class RobotVectorMoveMessage extends Message {
     public double distance, theta;
-    public double timestamp;
-    public char host[];
 
     RobotVectorMoveMessage(double distance, double theta) {
       this.distance = distance;
       this.theta = theta;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
     }
   }
 
   /** Event Handler receives this and can set its fields */
-  public static class RobotFollowTrajectoryMessage {
+  public static class RobotFollowTrajectoryMessage extends Message {
     public int trajectory_length;
     public TrajPoint trajectory [];
     public TrajPoint robotPosition;
-    public double timestamp;
-    public char host[];
     
     RobotFollowTrajectoryMessage(TrajPoint trajectory [], TrajPoint
 				 robotPosition) {
       this.trajectory_length = trajectory.length;
       this.trajectory = trajectory;
       this.robotPosition = robotPosition;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();      
     }
   }
 

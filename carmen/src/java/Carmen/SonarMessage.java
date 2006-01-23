@@ -20,7 +20,7 @@ public class SonarMessage extends Message {
 
   private static final String CARMEN_ROBOT_SONAR_NAME = "robot_sonar";
   private static final String CARMEN_ROBOT_SONAR_FMT =
-    "{double,string,int,double,<double:3>,<{double,double,double}:3>,{double,double,double},double,double}";
+    "{int,double,<double:1>,<{double,double,double}:1>,{double,double,double},double,double,double,string}";
 
   private static class PrivateSonarHandler implements IPC.HANDLER_TYPE {
     private static SonarHandler userHandler = null;

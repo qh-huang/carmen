@@ -15,7 +15,7 @@ public class OdometryMessage extends Message {
 
   private static final String CARMEN_ROBOT_ODOMETRY_NAME = "carmen_base_odometry";
   private static final String CARMEN_ROBOT_ODOMETRY_FMT = 
-  	"{double, string, double, double, double, double, double, double}";
+  	"{double, double, double, double, double, double, double, string}";
 
   private static class PrivateOdometryHandler implements IPC.HANDLER_TYPE {
     private static OdometryHandler userHandler = null;

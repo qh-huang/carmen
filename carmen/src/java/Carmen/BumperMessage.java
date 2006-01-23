@@ -19,7 +19,7 @@ public class BumperMessage extends Message {
   private static final String CARMEN_ROBOT_BUMPER_NAME =
     "carmen_robot_bumper";
   private static final String CARMEN_ROBOT_BUMPER_FMT = 
-    "{double, string, int, <char:3>, {double,double,double}, double, double}";
+    "{int, <char:3>, {double,double,double}, double, double, double, string}";
 
   private static class PrivateBumperHandler implements IPC.HANDLER_TYPE {
     private static BumperHandler userHandler = null;

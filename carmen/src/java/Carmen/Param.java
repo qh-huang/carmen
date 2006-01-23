@@ -2,6 +2,8 @@ package Carmen;
 
 import java.util.HashMap;
 import IPC.*;
+import java.lang.reflect.*;
+
 /**  Carmen class for handling robot parameters in file carmen.ini 
    */
 public class Param {
@@ -11,22 +13,22 @@ public class Param {
   private static final String CARMEN_PARAM_VARIABLE_CHANGE_NAME = 
     "carmen_param_variable_change";
   private static final String CARMEN_PARAM_VARIABLE_CHANGE_FMT =
-    "{string, string, string, int, double, [char:10]}";
+    "{string, string, string, int, int, double, string}";
 
   private static final String CARMEN_PARAM_QUERY_NAME =
     "carmen_param_query_string";
   private static final String CARMEN_PARAM_QUERY_FMT = 
-    "{string, string, double, [char:10]}";
+    "{string, string, double, string}";
 
   private static final String CARMEN_PARAM_RESPONSE_STRING_NAME =
     "carmen_param_respond_string";
   private static final String CARMEN_PARAM_RESPONSE_STRING_FMT =
-    "{string, string, string, int, double, [char:10]}";
+    "{string, string, string, int, int, double, string}";
 
   private static final String CARMEN_PARAM_SET_NAME =
     "carmen_param_set";
   private static final String CARMEN_PARAM_SET_FMT =
-    "{string, string, string, double, [char:10]}";
+    "{string, string, string, double, string}";
 
   private static class ParamPrivateParamChange implements IPC.HANDLER_TYPE {
     ParamPrivateParamChange() {
@@ -45,43 +47,34 @@ public class Param {
     }
   }
   /** Class method that handles query of current parameter values by module and variable */
-  public static class ParamQuery {
+  public static class ParamQuery extends Message {
     public String moduleName;
     public String variableName;
-    public double timestamp;
-    public char host[];
 
     ParamQuery(String moduleName, String variableName) {
       this.moduleName = moduleName;
       this.variableName = variableName;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
     }
   }
   /** inner class of Param */
-  public static class ParamResponse {
+  public static class ParamResponse extends Message {
     public String moduleName;
     public String variableName;
     public String value;
+    public int expert;
     public int status;
-    public double timestamp;
-    public char host[];
   }
 
   /** inner class of Param */
-  public static class ParamSet {
+  public static class ParamSet extends Message {
     public String moduleName;
     public String variableName;
     public String value;
-    public double timestamp;
-    public char host[];
 
     ParamSet(String moduleName, String variableName, String value) {
       this.moduleName = moduleName;
       this.variableName = variableName;
       this.value = value;
-      timestamp = Util.getTimeMs();
-      host = Util.getHostName();
     }
   }
 

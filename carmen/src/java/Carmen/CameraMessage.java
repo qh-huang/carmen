@@ -18,7 +18,8 @@ public class CameraMessage extends Message {
 
   private static final String CARMEN_CAMERA_IMAGE_NAME = 
     "carmen_camera_image";    
-  private static final String CARMEN_CAMERA_IMAGE_FMT = "{double,string,int,int,int,int,<char:6>}";
+  private static final String CARMEN_CAMERA_IMAGE_FMT = 
+    "{int,int,int,int,<char:4>,double,string}";
 
   private static boolean defined = false;
 
@@ -49,8 +50,6 @@ public class CameraMessage extends Message {
       IPC.defineMsg(CARMEN_CAMERA_IMAGE_NAME, CARMEN_CAMERA_IMAGE_FMT);
       defined = true;
     }
-    timestamp = Util.getTimeMs();
-    host = Util.getHostName();
     IPC.publishData(CARMEN_CAMERA_IMAGE_NAME, this);
   }
 }

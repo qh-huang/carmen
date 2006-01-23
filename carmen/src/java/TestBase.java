@@ -12,7 +12,7 @@ public class TestBase implements OdometryHandler{
     }
     message.timestamp -= startTime;
     System.out.println("OdometryHandler: Got message at "+message.timestamp+
-		       " from "+String.copyValueOf(message.host));
+		       " from "+message.host);
     if (message.timestamp > 2) {
       System.exit(0);
     }

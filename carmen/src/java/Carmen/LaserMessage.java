@@ -25,7 +25,7 @@ public class LaserMessage extends Message {
     "carmen_robot_rearlaser";
 
   private static final String CARMEN_ROBOT_LASER_FMT = 
-    "{double,string,int,<float:1>,<char:1>,double,double,double,double,double,double,double,double,double,double,double}";
+    "{int,<float:1>,<char:1>,double,double,double,double,double,double,double,double,double,double,double,double,string}";
 
   private static class PrivateFrontLaserHandler implements 
 						       IPC.HANDLER_TYPE {

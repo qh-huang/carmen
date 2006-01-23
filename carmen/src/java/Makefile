@@ -23,12 +23,14 @@ libipcjava.so: ipcjava.o
 	@ld -o $@ -G -dy $^ -L ../ipc -lipc
 
 Carmen.jar: 
+	$(ECHO) "    ---- Compiling LDLoad (Java)"
+	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . LDLoad/*.java
 	$(ECHO) "    ---- Compiling IPC (Java)"
-	$(SILENT) $(JAVA_HOME)/bin/javac -d . IPC/*.java
+	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . IPC/*.java
 	$(ECHO) "    ---- Compiling Carmen (Java)"
 	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . Carmen/*.java
 	$(ECHO) "    ---- Creating $@"
-	$(SILENT) $(JAVA_HOME)/bin/jar cf Carmen.jar Carmen/*.class IPC/*.class 
+	$(SILENT) $(JAVA_HOME)/bin/jar cf Carmen.jar Carmen/*.class IPC/*.class LDLoad/*.class libipcjava.so
 
 %.class: %.java
 	$(ECHO) "    ---- Compiling $@ (Java)"

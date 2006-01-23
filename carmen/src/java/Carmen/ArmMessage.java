@@ -12,7 +12,7 @@ public class ArmMessage extends Message {
   private static final String CARMEN_BASE_ARM_STATE_NAME = 
     "carmen_base_arm_state";
   private static final String CARMEN_BASE_ARM_STATE_FMT =  
-    "{double, string, <double:4>, int, <double:6>, int, int}";
+    "{<double:2>, int, <double:4>, int, int, double, string}";
   private static boolean defined = false;
 
   private static class PrivateArmHandler implements IPC.HANDLER_TYPE {

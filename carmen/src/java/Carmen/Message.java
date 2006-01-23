@@ -5,11 +5,11 @@ import IPC.*;
 
 public class Message {
   public double timestamp;
-  public char host[];  
+  public String host;  
 
   /** New message has timestamp from this host and host name */
   Message() {
-    timestamp = Util.getTimeMs();
+    timestamp = Util.getTime();
     host = Util.getHostName();
   }
 

@@ -1,12 +1,10 @@
 package Carmen;
 /** Carmen ParamChangeHandler's message */
 
-public class ParamChangeMessage {
+public class ParamChangeMessage extends Message {
   public String moduleName;
   public String variableName;
   public String newValue;
   public int status;
-  public double timestamp;
-  public char host[];
 }
 

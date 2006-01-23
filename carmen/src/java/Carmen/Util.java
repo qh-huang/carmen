@@ -3,7 +3,7 @@ package Carmen;
  */
 
 public class Util {
-  public static double getTimeMs() {
+  public static double getTime() {
     return (double)(System.currentTimeMillis() / 1000.0);
   }
   /** returns the length of hypotenuse of right angled triangle */
@@ -30,7 +30,7 @@ public class Util {
   }
 
   /** returns host name */
-  public static char [] getHostName() {
+  public static String getHostName() {
     String hostname = null;
 
     try {
@@ -45,13 +45,7 @@ public class Util {
       System.exit(-1);
     }
 
-    if (hostname.length() > 10) {
-      char charArray[] = new char[10];
-      hostname.getChars(0, 10, charArray, 0);
-      return charArray;
-    } 
-
-    return hostname.toCharArray();    
+    return hostname;    
   }
 }
 

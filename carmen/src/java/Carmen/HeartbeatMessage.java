@@ -12,7 +12,7 @@ public class HeartbeatMessage extends Message {
   private static final String CARMEN_HEARTBEAT_NAME =
     "carmen_heartbeat";
   private static final String CARMEN_HEARTBEAT_FMT =
-    "{double, string, string, int}";
+    "{string, int, double, string}";
 
   private static boolean defined = false;
 
@@ -51,8 +51,6 @@ public class HeartbeatMessage extends Message {
     HeartbeatMessage msg = new HeartbeatMessage();
     msg.module = module;
     msg.pid = (int)IPC.getPID();
-    msg.timestamp = Util.getTimeMs();
-    msg.host = Util.getHostName();
     msg.publish();
   }
 
