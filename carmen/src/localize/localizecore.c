@@ -212,6 +212,8 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   float angle, prob, ctheta, stheta;
   carmen_point_t point;
   queue_node_p mark;
+  int *beam_valid;
+
 
   /* compute the correct laser_skip */
   if (filter->param->laser_skip <= 0) {   
@@ -226,6 +228,15 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   carmen_test_alloc(laser_x);
   laser_y = (float *)calloc(laser->num_readings, sizeof(float));
   carmen_test_alloc(laser_y);
+  beam_valid = (int *)calloc(laser->num_readings, sizeof(int));
+  carmen_test_alloc(beam_valid);
+  
+  for(i = 0; i < laser->num_readings; i++) {
+      if (laser->range[i] >= laser->config.maximum_range) 
+	  beam_valid[i] = 0;
+      else
+	  beam_valid[i] = 1;
+  }
 
   /* do all calculations in map coordinates */
   for(i = 0; i < laser->num_readings; i++) {
@@ -257,13 +268,17 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
     for(j = 0; j < laser->num_readings && 
 	  (queue->last == NULL || prob > queue->last->prob);
 	j += filter->param->laser_skip) {
-      x_l = point.x + laser_x[j] * ctheta - laser_y[j] * stheta;
-      y_l = point.y + laser_x[j] * stheta + laser_y[j] * ctheta;
-      if(x_l >= 0 && y_l >= 0 && x_l < map->config.x_size &&
-	 y_l < map->config.y_size)
-	prob += map->gprob[x_l][y_l];
-      else
-	prob -= 100;
+
+	if (beam_valid[j]) {
+	    x_l = point.x + laser_x[j] * ctheta - laser_y[j] * stheta;
+	    y_l = point.y + laser_x[j] * stheta + laser_y[j] * ctheta;
+	
+	    if(x_l >= 0 && y_l >= 0 && x_l < map->config.x_size &&
+	       y_l < map->config.y_size)
+		prob += map->gprob[x_l][y_l];
+	    else
+		prob -= 100;
+	}
     }
     priority_queue_add(queue, point, prob);
   }
@@ -279,6 +294,8 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   priority_queue_free(queue);
   free(laser_x);
   free(laser_y);
+  free(beam_valid);
+
 
   if(filter->param->do_scanmatching) {
     for(i = 0; i < filter->param->num_particles; i++) {
