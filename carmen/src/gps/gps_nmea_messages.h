@@ -6,8 +6,6 @@ extern "C" {
 #endif
 
 typedef struct {
-  double              timestamp;
-  char*                host;
   int                 nr;             /* number of the gps unit */
   
   double              utc;            /* Universal Time Coordinated (UTC) */
@@ -33,9 +31,11 @@ typedef struct {
 					 in seconds since last SC104 type 1 or
 					 9 update, null field when DGPS is not
 					 used */
+  double              timestamp;
+  char*                host;
 } carmen_gps_gpgga_message;
 
-#define CARMEN_GPS_GPGGA_MESSAGE_FMT "{double,string,int, double,double,char,double,char,int,int,double,double,double,double,double,int}"
+#define CARMEN_GPS_GPGGA_MESSAGE_FMT "{int, double,double,char,double,char,int,int,double,double,double,double,double,int,double,string}"
 #define CARMEN_GPS_GPGGA_MESSAGE_NAME "carmen_gps_nmea_gpgga"
 
 #ifdef __cplusplus

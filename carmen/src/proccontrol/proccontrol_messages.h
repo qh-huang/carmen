@@ -6,24 +6,24 @@ extern "C" {
 #endif
 
 typedef struct {
-  double timestamp;
-  char *host;
   char *group_name;
   int requested_state;
+  double timestamp;
+  char *host;
 } carmen_proccontrol_groupset_message;
 
 #define     CARMEN_PROCCONTROL_GROUPSET_NAME    "carmen_proccontrol_groupset"
-#define     CARMEN_PROCCONTROL_GROUPSET_FMT     "{double,string,string,int}"
+#define     CARMEN_PROCCONTROL_GROUPSET_FMT     "{string,int,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   char *module_name;
   int requested_state;
+  double timestamp;
+  char *host;
 } carmen_proccontrol_moduleset_message;
 
 #define     CARMEN_PROCCONTROL_MODULESET_NAME   "carmen_proccontrol_moduleset"
-#define     CARMEN_PROCCONTROL_MODULESET_FMT    "{double,string,string,int}"
+#define     CARMEN_PROCCONTROL_MODULESET_FMT    "{string,int,double,string}"
 
 typedef struct {
   char *group_name, *module_name;
@@ -31,24 +31,24 @@ typedef struct {
 } carmen_proccontrol_process_t, *carmen_proccontrol_process_p;
 
 typedef struct {
-  double timestamp;
-  char *host;
   int num_processes;
   carmen_proccontrol_process_p process;
+  double timestamp;
+  char *host;
 } carmen_proccontrol_pidtable_message;
 
 #define     CARMEN_PROCCONTROL_PIDTABLE_NAME     "carmen_proccontrol_pidtable"
-#define     CARMEN_PROCCONTROL_PIDTABLE_FMT      "{double,string,int,<{string,string,int,int,int}:3>}"
+#define     CARMEN_PROCCONTROL_PIDTABLE_FMT      "{int,<{string,string,int,int,int}:1>,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int pid;
   char *output;
+  double timestamp;
+  char *host;
 } carmen_proccontrol_output_message;
 
 #define     CARMEN_PROCCONTROL_OUTPUT_NAME       "carmen_proccontrol_output"
-#define     CARMEN_PROCCONTROL_OUTPUT_FMT        "{double,string,int,string}"
+#define     CARMEN_PROCCONTROL_OUTPUT_FMT        "{int,string,double,string}"
 
 #ifdef __cplusplus
 }

@@ -55,26 +55,26 @@ typedef struct {
 
 
 typedef struct {
-  double timestamp;
-  char *host;
   carmen_laser_laser_config_t config;
   int num_readings;
   float *range;
   int num_remissions;
   float *remission;
+  double timestamp;
+  char *host;
 } carmen_laser_laser_message;
 
 #define      CARMEN_LASER_FRONTLASER_NAME       "carmen_laser_frontlaser"
-#define      CARMEN_LASER_FRONTLASER_FMT        "{double,string,{int,double,double,double,double,double,int},int,<float:4>,int,<float:6>}"
+#define      CARMEN_LASER_FRONTLASER_FMT        "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
 #define      CARMEN_LASER_REARLASER_NAME        "carmen_laser_rearlaser"
-#define      CARMEN_LASER_REARLASER_FMT         "{double,string,{int,double,double,double,double,double,int},int,<float:4>,int,<float:6>}"
+#define      CARMEN_LASER_REARLASER_FMT         "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
 #define      CARMEN_LASER_LASER3_NAME           "carmen_laser_laser3"
-#define      CARMEN_LASER_LASER3_FMT            "{double,string,{int,double,double,double,double,double,int},int,<float:4>,int,<float:6>}"
+#define      CARMEN_LASER_LASER3_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
 #define      CARMEN_LASER_LASER4_NAME           "carmen_laser_laser4"
-#define      CARMEN_LASER_LASER4_FMT            "{double,string,{int,double,double,double,double,double,int},int,<float:4>,int,<float:6>}"
+#define      CARMEN_LASER_LASER4_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
 typedef struct {
   int frontlaser_stalled;

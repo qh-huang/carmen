@@ -42,128 +42,128 @@ typedef carmen_default_message carmen_base_reset_occurred_message;
 typedef carmen_default_message carmen_base_reset_command_message;
 
 typedef struct {
-  double timestamp;
-  char *host;
   double x, y, theta;
   double tv, rv;
   double acceleration;
+  double timestamp;
+  char *host;
 } carmen_base_odometry_message;
 
 #define      CARMEN_BASE_ODOMETRY_NAME       "carmen_base_odometry"
-#define      CARMEN_BASE_ODOMETRY_FMT        "{double,string,double,double,double,double,double,double}"
+#define      CARMEN_BASE_ODOMETRY_FMT        "{double,double,double,double,double,double,double,string}"
 
 typedef struct {
+  double tv, rv;
   double timestamp;
   char *host;
-  double tv, rv;
 } carmen_base_velocity_message;
 
 #define      CARMEN_BASE_VELOCITY_NAME       "carmen_base_velocity"
-#define      CARMEN_BASE_VELOCITY_FMT        "{double,string,double,double}"
+#define      CARMEN_BASE_VELOCITY_FMT        "{double,double,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   double xv;
   double yv;
   double rv;
+  double timestamp;
+  char *host;
 } carmen_base_holonomic_velocity_message;
 
 #define      CARMEN_BASE_HOLONOMIC_VELOCITY_NAME       "carmen_base_holonomic_velocity"
-#define      CARMEN_BASE_HOLONOMIC_VELOCITY_FMT        "{double,double,double,double,[char:10]}"
+#define      CARMEN_BASE_HOLONOMIC_VELOCITY_FMT        "{double,double,double,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int num_sonars;
   double sensor_angle;                    //width of sonar cone
   double *range;
   carmen_point_p positions;
+  double timestamp;
+  char *host;
 } carmen_base_sonar_message;
 
 #define      CARMEN_BASE_SONAR_NAME          "carmen_base_sonar"
-#define      CARMEN_BASE_SONAR_FMT           "{double,string,int,double,<double:3>,<{double,double,double}:3>}"
+#define      CARMEN_BASE_SONAR_FMT           "{int,double,<double:1>,<{double,double,double}:1>,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int rate;
   int num_sonars;
   int *order;
   carmen_point_t *sonar_offsets;
+  double timestamp;
+  char *host;
 } carmen_base_sonar_conf_message;
 
 #define      CARMEN_BASE_SONAR_CONF_NAME          "carmen_base_sonar_conf"
-#define      CARMEN_BASE_SONAR_CONF_FMT           "{double,string,int,int,<int:3><{double,double,double}:3>}"
+#define      CARMEN_BASE_SONAR_CONF_FMT           "{int,int,<int:2>,<{double,double,double}:2>,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int num_bumpers;
   unsigned char *state;
+  double timestamp;
+  char *host;
 } carmen_base_bumper_message;
 
 #define      CARMEN_BASE_BUMPER_NAME          "carmen_base_bumper"
-#define      CARMEN_BASE_BUMPER_FMT           "{double,string,int,<char:3>}"
+#define      CARMEN_BASE_BUMPER_FMT           "{int,<char:1>,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int num_irs;
   double *range;
+  double timestamp;
+  char *host;
 } carmen_base_ir_message;
 
 #define      CARMEN_BASE_IR_NAME          "carmen_base_ir"
-#define      CARMEN_BASE_IR_FMT           "{double,string,int,<double:3>}"
+#define      CARMEN_BASE_IR_FMT           "{int,<double:1>,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int history;
   int num_irs;
   int order[32];
+  double timestamp;
+  char *host;
 } carmen_base_ir_conf_message;
 
 #define      CARMEN_BASE_IR_CONF_NAME          "carmen_base_ir_conf"
-#define      CARMEN_BASE_IR_CONF_FMT           "{double,string,int,int,[int:32]}"
+#define      CARMEN_BASE_IR_CONF_FMT           "{int,int,[int:32],double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   unsigned char *data;
   int size;
+  double timestamp;
+  char *host;
 } carmen_base_binary_data_message;
 
 #define CARMEN_BASE_BINARY_COMMAND_NAME "carmen_base_binary_command"
-#define CARMEN_BASE_BINARY_COMMAND_FMT "{double,string,<char:4>,int}"
+#define CARMEN_BASE_BINARY_COMMAND_FMT "{<char:2>,int,double,string}"
 
 #define CARMEN_BASE_BINARY_DATA_NAME "carmen_base_binary_data"
-#define CARMEN_BASE_BINARY_DATA_FMT "{double,string,<char:4>,int}"
+#define CARMEN_BASE_BINARY_DATA_FMT "{<char:2>,int,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   double *servos;
   int num_servos;
+  double timestamp;
+  char *host;
 } carmen_base_servo_message;
 
 
 #define CARMEN_BASE_SERVO_ARM_COMMAND_NAME  "carmen_base_servo_arm_command"
-#define CARMEN_BASE_SERVO_ARM_COMMAND_FMT "{double,string,<double:4>,int}"
+#define CARMEN_BASE_SERVO_ARM_COMMAND_FMT "{<double:2>,int,double,string}"
 
 
 typedef struct {
-  double timestamp;
-  char *host;
   double *servos;
   int num_servos;
   double *servo_currents;
   int num_currents;
   int gripper;
+  double timestamp;
+  char *host;
 } carmen_base_arm_state_message;
 
 #define CARMEN_BASE_SERVO_ARM_STATE_NAME "carmen_base_arm_state"
-#define CARMEN_BASE_SERVO_ARM_STATE_FMT "{double,string,<double:4>,int,<double:6>,int,int}"
+#define CARMEN_BASE_SERVO_ARM_STATE_FMT "{<double:2>,int,<double:4>,int,int,double,string}"
 
 #ifdef __cplusplus
 }

@@ -45,53 +45,53 @@ typedef enum {CARMEN_SIMULATOR_RANDOM_OBJECT, CARMEN_SIMULATOR_LINE_FOLLOWER,
 	      CARMEN_SIMULATOR_OTHER_ROBOT} carmen_simulator_object_t;
 
 typedef struct {
+  carmen_point_t pose;
   double timestamp;
   char *host;
-  carmen_point_t pose;
 } carmen_simulator_set_truepose_message;
 
 #define CARMEN_SIMULATOR_SET_TRUEPOSE_NAME "carmen_simulator_set_truepose"
-#define CARMEN_SIMULATOR_SET_TRUEPOSE_FMT  "{double,string,{double,double,double}}"
+#define CARMEN_SIMULATOR_SET_TRUEPOSE_FMT  "{{double,double,double},double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   carmen_point_t truepose;
   carmen_point_t odometrypose;
+  double timestamp;
+  char *host;
 } carmen_simulator_truepos_message;
 
 #define      CARMEN_SIMULATOR_TRUEPOS_NAME       "carmen_simulator_truepos"
-#define      CARMEN_SIMULATOR_TRUEPOS_FMT        "{double,string,{double,double,double},{double,double,double}}"
+#define      CARMEN_SIMULATOR_TRUEPOS_FMT        "{{double,double,double},{double,double,double},double,string}"
 
 typedef struct {
+  char *other_central;
   double timestamp;
   char *host;
-  char *other_central;
 } carmen_simulator_connect_robots_message;
 
 #define CARMEN_SIMULATOR_CONNECT_ROBOTS_NAME "carmen_simulator_connect_robots"
-#define CARMEN_SIMULATOR_CONNECT_ROBOTS_FMT  "{double,string,string}"
+#define CARMEN_SIMULATOR_CONNECT_ROBOTS_FMT  "{string,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   carmen_point_t pose;
   double speed;
   carmen_simulator_object_t type;
+  double timestamp;
+  char *host;
 } carmen_simulator_set_object_message;
 
 #define CARMEN_SIMULATOR_SET_OBJECT_NAME "carmen_simulator_set_object"
-#define CARMEN_SIMULATOR_SET_OBJECT_FMT  "{double,string,{double,double,double},double,int}"
+#define CARMEN_SIMULATOR_SET_OBJECT_FMT  "{{double,double,double},double,int,double,string}"
 
 typedef struct {
-  double timestamp;
-  char *host;
   int num_objects;
   carmen_traj_point_t *objects_list;
+  double timestamp;
+  char *host;
 } carmen_simulator_objects_message;
 
 #define CARMEN_SIMULATOR_OBJECTS_NAME "carmen_simulator_objects"
-#define CARMEN_SIMULATOR_OBJECTS_FMT  "{double,string,int,<{double,double,double,double,double}:3>}"
+#define CARMEN_SIMULATOR_OBJECTS_FMT  "{int,<{double,double,double,double,double}:1>,double,string}"
 
 #ifdef __cplusplus
 }

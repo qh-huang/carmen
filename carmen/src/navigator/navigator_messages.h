@@ -45,57 +45,57 @@ typedef carmen_default_message carmen_navigator_stop_message;
 typedef carmen_default_message carmen_navigator_go_message;
   
 typedef struct {
-  double timestamp;
-  char *host;
   int autonomous;
   int goal_set;
   carmen_point_t goal;
   carmen_traj_point_t robot;
+  double timestamp;
+  char *host;
 } carmen_navigator_status_message;
   
 #define CARMEN_NAVIGATOR_STATUS_NAME       "carmen_navigator_status"
-#define CARMEN_NAVIGATOR_STATUS_FMT        "{double,string,int,int,{double, double, double},{double, double, double, double, double}}"
+#define CARMEN_NAVIGATOR_STATUS_FMT        "{int,int,{double, double, double},{double, double, double, double, double},double,string}"
   
 typedef struct {
-  double timestamp;
-  char *host;
   carmen_traj_point_t *path;
   int path_length;
+  double timestamp;
+  char *host;
 } carmen_navigator_plan_message;
   
 #define      CARMEN_NAVIGATOR_PLAN_NAME       "carmen_navigator_plan"
-#define      CARMEN_NAVIGATOR_PLAN_FMT        "{double,string,<{double, double, double, double, double}:4>,int}"
+#define      CARMEN_NAVIGATOR_PLAN_FMT        "{<{double, double, double, double, double}:2>,int,double,string}"
   
 typedef struct {
+  double x, y;
   double timestamp;
   char *host;
-  double x, y;
 } carmen_navigator_set_goal_message;
   
 #define      CARMEN_NAVIGATOR_SET_GOAL_NAME         "carmen_navigator_set_goal"
-#define      CARMEN_NAVIGATOR_SET_GOAL_FMT          "{double,string,double,double}"
+#define      CARMEN_NAVIGATOR_SET_GOAL_FMT          "{double,double,double,string}"
   
 typedef struct {
+  carmen_point_t goal;
   double timestamp;
   char *host;
-  carmen_point_t goal;
 } carmen_navigator_set_goal_triplet_message;
   
 #define      CARMEN_NAVIGATOR_SET_GOAL_TRIPLET_NAME         "carmen_navigator_set_goal_triplet"
-#define      CARMEN_NAVIGATOR_SET_GOAL_TRIPLET_FMT          "{double,string,{double,double,double}}"
+#define      CARMEN_NAVIGATOR_SET_GOAL_TRIPLET_FMT          "{{double,double,double},double,string}"
   
 typedef enum{CARMEN_NAVIGATOR_GOAL_REACHED_v,
 	       CARMEN_NAVIGATOR_USER_STOPPED_v,
 	       CARMEN_NAVIGATOR_UNKNOWN_v} carmen_navigator_reason_t;
   
 typedef struct {
+  carmen_navigator_reason_t reason;
   double timestamp;
   char *host;
-  carmen_navigator_reason_t reason;
 } carmen_navigator_autonomous_stopped_message;
   
 #define      CARMEN_NAVIGATOR_AUTONOMOUS_STOPPED_NAME "carmen_navigator_autonomous_stopped"
-#define      CARMEN_NAVIGATOR_AUTONOMOUS_STOPPED_FMT "{double,string,int}"
+#define      CARMEN_NAVIGATOR_AUTONOMOUS_STOPPED_FMT "{int,double,string}"
   
 typedef enum {CARMEN_NAVIGATOR_MAP_v, CARMEN_NAVIGATOR_ENTROPY_v, 
 	      CARMEN_NAVIGATOR_COST_v, CARMEN_NAVIGATOR_UTILITY_v,
@@ -103,45 +103,45 @@ typedef enum {CARMEN_NAVIGATOR_MAP_v, CARMEN_NAVIGATOR_ENTROPY_v,
   carmen_navigator_map_t;
   
 typedef struct {
+  carmen_navigator_map_t map_type;
   double timestamp;
   char *host;
-  carmen_navigator_map_t map_type;
 } carmen_navigator_map_request_message;
   
 #define CARMEN_NAVIGATOR_MAP_REQUEST_NAME "carmen_navigator_map_request"
-#define CARMEN_NAVIGATOR_MAP_REQUEST_FMT "{double,string,int}"
+#define CARMEN_NAVIGATOR_MAP_REQUEST_FMT "{int,double,string}"
   
   typedef struct {
-    double timestamp;
-    char *host;
     unsigned char *data;    
     int size;
     int compressed;
     carmen_map_config_t config;
     carmen_navigator_map_t map_type;
+    double timestamp;
+    char *host;
   } carmen_navigator_map_message;  
   
 #define CARMEN_NAVIGATOR_MAP_NAME "carmen_navigator_map"
-#define CARMEN_NAVIGATOR_MAP_FMT "{double,string,<char:4>,int,int,{int,int,double,string},int}"
+#define CARMEN_NAVIGATOR_MAP_FMT "{<char:2>,int,int,{int,int,double,string},int,double,string}"
   
 typedef struct {
+  char *placename;
   double timestamp;
   char *host;
-  char *placename;
 } carmen_navigator_placename_message;
   
 #define CARMEN_NAVIGATOR_SET_GOAL_PLACE_NAME "carmen_navigator_set_goal_place"
-#define CARMEN_NAVIGATOR_SET_GOAL_PLACE_FMT "{double,string,string}"
+#define CARMEN_NAVIGATOR_SET_GOAL_PLACE_FMT "{string,double,string}"
   
 typedef struct {
-  double timestamp;
-  char *host;
   int code;
   char *error;
+  double timestamp;
+  char *host;
 } carmen_navigator_return_code_message;
   
 #define CARMEN_NAVIGATOR_RETURN_CODE_NAME "carmen_navigator_return_code"
-#define CARMEN_NAVIGATOR_RETURN_CODE_FMT "{double,string,int,string}"
+#define CARMEN_NAVIGATOR_RETURN_CODE_FMT "{int,string,double,string}"
   
   /*
     Attribute can be one of:
@@ -169,16 +169,16 @@ typedef struct {
   */
   
 typedef struct {
-  double timestamp;
-  char *host;
   char *attribute;
   int value;
   char *status_message;
   int reset_all_to_defaults;
+  double timestamp;
+  char *host;
 } carmen_navigator_display_config_message;
   
 #define CARMEN_NAVIGATOR_DISPLAY_CONFIG_NAME "carmen_navigator_display_config"
-#define CARMEN_NAVIGATOR_DISPLAY_CONFIG_FMT "{double, string, string, int, string, int}"
+#define CARMEN_NAVIGATOR_DISPLAY_CONFIG_FMT "{string, int, string, int, double, string}"
   
 #ifdef __cplusplus
 }
