@@ -29,10 +29,11 @@
 #include <ctype.h>
 #include "map_io.h"
 #include "map_graphics.h"
-#include <gdk_imlib.h>
+
+#include <wand/magick_wand.h>
 
 void imgtocarmen_print_usage(char* argv0) {
-   carmen_die("Usage: %s -resolution <map_resolution> <image_filename> <carmen_filename>\n", argv0);}
+   carmen_die("Usage: %s -resolution/-res/--res/--resolution/-r <map_resolution> <image_filename> <carmen_filename>\n", argv0);}
 
 int
 main(int argc, char **argv) 
@@ -46,7 +47,12 @@ main(int argc, char **argv)
   resolution = -1.0;
 
   for (i=1; i<argc-2; i++) {
-    if (!strcmp(argv[i],"-resolution") && (argc>i+1)) {
+    if ( ( (!strcmp(argv[i],"-resolution")) || 
+	   (!strcmp(argv[i],"--resolution")) ||
+	   (!strcmp(argv[i],"-res")) ||
+	   (!strcmp(argv[i],"--res")) || 
+	   (!strcmp(argv[i],"-r")) ) && 
+	 (argc>i+1)) {
       resolution = atof(argv[++i]);
     }
     else {
@@ -59,7 +65,6 @@ main(int argc, char **argv)
     imgtocarmen_print_usage(argv[0]);
   
   gdk_init(&argc,&argv);
-  gdk_imlib_init();
   
   in_filename  = argv[argc-2];
   out_filename = argv[argc-1];
