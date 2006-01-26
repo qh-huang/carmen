@@ -23,11 +23,10 @@ TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
-SOURCES += map_graphics.c map_test.c img_to_map.c
+SOURCES += map_graphics.c map_test.c 
 PUBLIC_INCLUDES += map_graphics.h
 PUBLIC_LIBRARIES += libmap_graphics.a 
-TARGETS += libmap_graphics.a map_test img_to_map
-PUBLIC_BINARIES += img_to_map
+TARGETS += libmap_graphics.a map_test
 else
  CFLAGS += -DNO_GRAPHICS
 endif
@@ -55,8 +54,6 @@ maptool: maptool.o libmap_util.a libmap_io.a libmap_interface.a
 generate_blank : generate_blank.o libmap_io.a
 
 bee2carmen : bee2carmen.o libmap_io.a
-
-img_to_map : img_to_map.o libmap_io.a
 
 include  ../Makefile.rules
 

@@ -156,7 +156,8 @@ static void tomap(int argc, char *argv[])
 	       "<ppm filename>\n\n", argv[0]); 
   }
 
-  resolution = (double)(atof(argv[next_arg+1]) / 90);
+  resolution = (double)atof(argv[next_arg+1]);
+
   if (resolution == 0) 
     carmen_die("%s translated to a resolution of 0.\n"
 		"A positive, non-zero resolution is required.\n", 
