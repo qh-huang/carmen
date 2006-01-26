@@ -105,7 +105,7 @@ typedef struct {
 } carmen_localize_sensor_message;
 
 #define CARMEN_LOCALIZE_SENSOR_NAME "carmen_localize_sensor"
-#define CARMEN_LOCALIZE_SENSOR_FMT  "{{int,double,double,double,double,double,int},int,int,<float:4>,<char:4>,{double,double,double},int,double,string}"
+#define CARMEN_LOCALIZE_SENSOR_FMT  "{{int,double,double,double,double,double,int},int,int,<float:2>,<char:2>,{double,double,double},int,double,string}"
 
 typedef struct {
   int global;
