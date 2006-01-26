@@ -44,6 +44,9 @@
 
 #endif
 
+Display *gdk_x11_cursor_get_xdisplay (GdkCursor *cursor);
+Cursor gdk_x11_cursor_get_xcursor (GdkCursor *cursor);
+
 #define BUTTON_WIDTH 250
 #define BUTTON_HEIGHT 30
 #define GRADIENT_COLORS 40
@@ -213,35 +216,35 @@ sync_mode(GtkWidget *widget __attribute__ ((unused)),
      NULL);
 }
 
-typedef struct _GdkCursorPrivate
+static void change_cursor(GdkColor *fg, GdkColor *bg)
 {
-  GdkCursor cursor;
-  Cursor xcursor;
+  XColor xfg, xbg;
   Display *xdisplay;
-} GdkCursorPrivate;
+  Cursor xcursor;
+  GdkCursor *cursor = gdk_cursor_new(GDK_DOT);
+
+  xfg.pixel = fg->pixel;
+  xfg.red = fg->red;
+  xfg.blue = fg->blue;
+  xfg.green = fg->green;
+
+  xbg.pixel = bg->pixel;
+  xbg.red = bg->red;
+  xbg.blue = bg->blue;
+  xbg.green = bg->green;
+
+  xdisplay = gdk_x11_cursor_get_xdisplay (cursor);
+  xcursor = gdk_x11_cursor_get_xcursor (cursor);
+  XRecolorCursor(xdisplay, xcursor, &xfg, &xbg);
+
+  gdk_window_set_cursor (map_view->image_widget->window, cursor);
+}
 
 static void 
 place_robot(GtkWidget *widget __attribute__ ((unused)), 
 	    gpointer data __attribute__ ((unused))) 
 {
-  XColor xfg, xbg;
-  GdkCursor *cursor = gdk_cursor_new(GDK_DOT);
-
-  xfg.pixel = carmen_red.pixel;
-  xfg.red = carmen_red.red;
-  xfg.blue = carmen_red.blue;
-  xfg.green = carmen_red.green;
-
-  xbg.pixel = carmen_black.pixel;
-  xbg.red = carmen_black.red;
-  xbg.blue = carmen_black.blue;
-  xbg.green = carmen_black.green;
-
-  XRecolorCursor(((GdkCursorPrivate *)cursor)->xdisplay, 
-		 ((GdkCursorPrivate *)cursor)->xcursor, &xfg, &xbg);
-
-  gdk_window_set_cursor (map_view->image_widget->window, cursor);
-
+  change_cursor(&carmen_red, &carmen_black);
   placement_status = PLACING_ROBOT;
 }
 
@@ -249,24 +252,7 @@ static void
 place_simulator(GtkWidget *widget __attribute__ ((unused)), 
 		gpointer data __attribute__ ((unused))) 
 {
-  XColor xfg, xbg;
-  GdkCursor *cursor = gdk_cursor_new(GDK_DOT);
-
-  xfg.pixel = carmen_red.pixel;
-  xfg.red = carmen_red.red;
-  xfg.blue = carmen_red.blue;
-  xfg.green = carmen_red.green;
-
-  xbg.pixel = carmen_black.pixel;
-  xbg.red = carmen_black.red;
-  xbg.blue = carmen_black.blue;
-  xbg.green = carmen_black.green;
-
-  XRecolorCursor(((GdkCursorPrivate *)cursor)->xdisplay, 
-		 ((GdkCursorPrivate *)cursor)->xcursor, &xfg, &xbg);
-
-  gdk_window_set_cursor (map_view->image_widget->window, cursor);
-
+  change_cursor(&carmen_red, &carmen_black);
   placement_status = PLACING_SIMULATOR;
 }
 
@@ -274,24 +260,7 @@ static void
 place_person(GtkWidget *w __attribute__ ((unused)), 
 	     int arg __attribute__ ((unused)))
 {
-  XColor xfg, xbg;
-  GdkCursor *cursor = gdk_cursor_new(GDK_DOT);
-
-  xfg.pixel = carmen_orange.pixel;
-  xfg.red = carmen_orange.red;
-  xfg.blue = carmen_orange.blue;
-  xfg.green = carmen_orange.green;
-
-  xbg.pixel = carmen_black.pixel;
-  xbg.red = carmen_black.red;
-  xbg.blue = carmen_black.blue;
-  xbg.green = carmen_black.green;
-
-  XRecolorCursor(((GdkCursorPrivate *)cursor)->xdisplay, 
-		 ((GdkCursorPrivate *)cursor)->xcursor, &xfg, &xbg);
-
-  gdk_window_set_cursor (map_view->image_widget->window, cursor);
-
+  change_cursor(&carmen_orange, &carmen_black);
   placement_status = PLACING_PERSON;
 }
 
@@ -306,24 +275,7 @@ static void
 place_goal(GtkWidget *widget __attribute__ ((unused)), 
 	    gpointer data __attribute__ ((unused))) 
 {
-  XColor xfg, xbg;
-  GdkCursor *cursor = gdk_cursor_new(GDK_DOT);
-
-  xfg.pixel = carmen_yellow.pixel;
-  xfg.red = carmen_yellow.red;
-  xfg.blue = carmen_yellow.blue;
-  xfg.green = carmen_yellow.green;
-
-  xbg.pixel = carmen_black.pixel;
-  xbg.red = carmen_black.red;
-  xbg.blue = carmen_black.blue;
-  xbg.green = carmen_black.green;
-
-  XRecolorCursor(((GdkCursorPrivate *)cursor)->xdisplay, 
-		 ((GdkCursorPrivate *)cursor)->xcursor, &xfg, &xbg);
-
-  gdk_window_set_cursor (map_view->image_widget->window, cursor);
-
+  change_cursor(&carmen_yellow, &carmen_black);
   placement_status = PLACING_GOAL;
 }
 
