@@ -213,9 +213,6 @@ regenerate_trajectory(carmen_navigator_config_t *nav_conf)
   int index;
   carmen_traj_point_p path_point;
   
-  if (fabs(robot.x) < 0.1 && fabs(robot.y) < 0.1)
-    return;
-
   gettimeofday(&start, NULL);
   if (extract_path_from_value_function() < 0) 
     carmen_planner_util_clear_path(&path);
