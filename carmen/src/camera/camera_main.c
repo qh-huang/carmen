@@ -36,7 +36,7 @@ int main(int argc, char **argv)
   int param_err;
 
   /* connect to IPC server */
-  carmen_initialize_ipc(argv[0]);
+  carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
   err = IPC_defineMsg(CARMEN_CAMERA_IMAGE_NAME, IPC_VARIABLE_LENGTH, 
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   carmen_test_ipc_exit(err, "Could not define", CARMEN_CAMERA_IMAGE_NAME);  
 
   carmen_param_allow_unfound_variables(0);
-  param_err = carmen_param_get_double("camera_interframe_sleep", &interframe_sleep);
+  param_err = carmen_param_get_double("camera_interframe_sleep", &interframe_sleep, NULL);
   if (param_err < 0)
     carmen_die("Could not find parameter in carmen.ini file: camera_interframe_sleep\n");
 
