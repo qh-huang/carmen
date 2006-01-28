@@ -32,14 +32,21 @@ int main(int argc, char **argv)
 {
   carmen_camera_image_t *image;
   IPC_RETURN_TYPE err;
+  double interframe_sleep = 5.0;
+  int param_err;
 
   /* connect to IPC server */
-  carmen_ipc_initialize(argc, argv);
+  carmen_initialize_ipc(argv[0]);
   carmen_param_check_version(argv[0]);
 
   err = IPC_defineMsg(CARMEN_CAMERA_IMAGE_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_CAMERA_IMAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_CAMERA_IMAGE_NAME);  
+
+  carmen_param_allow_unfound_variables(0);
+  param_err = carmen_param_get_double("camera_interframe_sleep", &interframe_sleep);
+  if (param_err < 0)
+    carmen_die("Could not find parameter in carmen.ini file: camera_interframe_sleep\n");
 
   image = carmen_camera_start(argc, argv);
   if (image == NULL)
@@ -54,9 +61,10 @@ int main(int argc, char **argv)
       image->is_new = 0;
     }
   
-    // We are rate-controlling the camera at 10 Hz.
+    // We are rate-controlling the camera.
 
-    carmen_ipc_sleep(0.1);
+    carmen_publish_heartbeat("camera_daemon");
+    carmen_ipc_sleep(interframe_sleep);
   }
   return 0;
 }
