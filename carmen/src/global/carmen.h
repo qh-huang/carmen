@@ -79,6 +79,7 @@ extern "C" {
 #include <carmen/pswrap.h>
 
 #include <carmen/base_interface.h>
+#include <carmen/arm_interface.h>
 
 #include <carmen/param_interface.h>
 
@@ -111,6 +112,9 @@ extern "C" {
 
 #include <carmen/navigator_interface.h>
 #include <carmen/navigator_messages.h>
+
+#include <carmen/gps_nmea_interface.h>
+#include <carmen/gps_nmea_messages.h>
 
 #include <carmen/logger.h>
 #include <carmen/logger_messages.h>
