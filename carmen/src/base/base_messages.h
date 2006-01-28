@@ -34,8 +34,6 @@ extern "C" {
 
 // These messages are generic format messages
 
-#define CARMEN_BASE_SERVO_ARM_QUERY_NAME "carmen_base_servo_arm_query"
-typedef carmen_default_message carmen_base_servo_arm_query_message;
 #define CARMEN_BASE_RESET_OCCURRED_NAME "carmen_base_reset_occurred"
 typedef carmen_default_message carmen_base_reset_occurred_message;
 #define CARMEN_BASE_RESET_COMMAND_NAME "carmen_base_reset_command"
@@ -139,31 +137,6 @@ typedef struct {
 
 #define CARMEN_BASE_BINARY_DATA_NAME "carmen_base_binary_data"
 #define CARMEN_BASE_BINARY_DATA_FMT "{<char:2>,int,double,string}"
-
-typedef struct {
-  double *servos;
-  int num_servos;
-  double timestamp;
-  char *host;
-} carmen_base_servo_message;
-
-
-#define CARMEN_BASE_SERVO_ARM_COMMAND_NAME  "carmen_base_servo_arm_command"
-#define CARMEN_BASE_SERVO_ARM_COMMAND_FMT "{<double:2>,int,double,string}"
-
-
-typedef struct {
-  double *servos;
-  int num_servos;
-  double *servo_currents;
-  int num_currents;
-  int gripper;
-  double timestamp;
-  char *host;
-} carmen_base_arm_state_message;
-
-#define CARMEN_BASE_SERVO_ARM_STATE_NAME "carmen_base_arm_state"
-#define CARMEN_BASE_SERVO_ARM_STATE_FMT "{<double:2>,int,<double:4>,int,int,double,string}"
 
 #ifdef __cplusplus
 }

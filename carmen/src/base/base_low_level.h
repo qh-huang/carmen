@@ -59,6 +59,8 @@ void carmen_base_direct_arm_set(double servos[], int num_servos);
 void carmen_base_direct_arm_set_limits(double min_angle, double max_angle,
 				       int min_pwm, int max_pwm);
 
+int carmen_base_query_encoders(double *disp_p, double *rot_p,
+			       double *tv_p, double *rv_p);
 #ifdef __cplusplus
 }
 #endif

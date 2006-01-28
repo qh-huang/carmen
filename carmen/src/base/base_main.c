@@ -28,6 +28,11 @@
 #include <carmen/carmen.h>
 #include <carmen/base_low_level.h>
 
+#ifdef BASE_HAS_ARM
+#include <carmen/arm_messages.h> 
+#include "arm_low_level.h"
+#endif
+
 void x_ipcRegisterExitProc(void (*)(void));
 
 static int moving = 0;
@@ -58,10 +63,10 @@ static int odometry_inverted;
 static char *model_name;
 static char *dev_name;
 
-//Edsinger: added
-static carmen_base_arm_state_message arm_state;
-static int has_arm = 0;
-static int num_arm_servos;
+#ifdef BASE_HAS_ARM
+static int num_arm_joints;
+static carmen_arm_state_message arm_state;
+#endif
 
 static int 
 initialize_robot(void)
@@ -105,34 +110,101 @@ initialize_robot(void)
   return 0;
 }
 
+#ifdef BASE_HAS_ARM
 
-//Edsinger: added
-static void initialize_arm_message(carmen_base_arm_state_message * arm)
+static void arm_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+				void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+  carmen_arm_command_message msg;
+  FORMATTER_PTR formatter;
+
+  formatter = IPC_msgInstanceFormatter(msgRef);
+  err = IPC_unmarshallData(formatter, callData, &msg,
+			   sizeof(carmen_arm_command_message));
+  IPC_freeByteArray(callData);
+  
+  if (msg.num_joints > 0) {
+    carmen_arm_direct_set(msg.joint_angles, msg.num_joints);
+    free(msg.joint_angles);
+  }
+}
+
+static void arm_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			      void *clientData __attribute__ ((unused)))
+{
+  IPC_RETURN_TYPE err;
+
+  IPC_freeByteArray(callData);
+
+  if (num_arm_joints > 0) 
+    carmen_arm_direct_get_state(arm_state.joint_angles, 
+				arm_state.joint_currents,
+				arm_state.joint_angular_vels,
+				&arm_state.gripper_closed, num_arm_joints);
+
+  arm_state.timestamp = carmen_get_time();
+  arm_state.host = carmen_get_host();
+  err = IPC_respondData(msgRef, CARMEN_ARM_STATE_NAME, &arm_state);
+}
+
+static void initialize_arm_message(void)
 {
   int err;
 
   carmen_param_allow_unfound_variables(FALSE); 
-  err = carmen_param_get_int("arm_num_servos", &num_arm_servos, NULL);
+  err = carmen_param_get_int("arm_num_joints", &num_arm_joints, NULL);
   if (err < 0)
-    carmen_die("\nThe base_has_arm parameter is on, but the arm_num_servos "
-	       "parameter is\nmissing. Please set the arm_num_servos "
+    carmen_die("\nThe base_has_arm parameter is on, but the arm_num_joints "
+	       "parameter is\nmissing. Please set the arm_num_joints "
 	       "parameter.\n");
-  arm->num_servos=num_arm_servos;
-  if (num_arm_servos > 0) {
-    arm->servos = (double *)calloc(num_arm_servos, sizeof(double));
-    carmen_test_alloc(arm->servos);
-    if (num_arm_servos == 1)
-      arm->num_currents = 1;
-    else
-      arm->num_currents = 2;
-    
-    arm->servo_currents = (double *)
-      calloc(arm->num_currents, sizeof(double));
-    carmen_test_alloc(arm->servo_currents);
+  arm_state.num_joints = num_arm_joints;
+  if (num_arm_joints > 0) {
+    arm_state.joint_angles = (double *)calloc(num_arm_joints, sizeof(double));
+    carmen_test_alloc(arm_state.joint_angles);
+
+    if(carmen_arm_direct_num_currents(num_arm_joints)) {
+      arm_state.flags |= CARMEN_ARM_HAS_CURRENT_STATES;
+      arm_state.num_currents = carmen_arm_direct_num_currents(num_arm_joints);
+      arm_state.joint_currents = (double*)calloc
+	( arm_state.num_currents, sizeof( double ) );
+      carmen_test_alloc( arm_state.joint_currents );
+    }
+    if(carmen_arm_direct_num_velocities(num_arm_joints)) {
+      arm_state.flags |= CARMEN_ARM_HAS_ANGULAR_VEL_STATES;
+      arm_state.num_vels = carmen_arm_direct_num_velocities(num_arm_joints);
+      arm_state.joint_angular_vels = (double*)calloc
+	( arm_state.num_vels, sizeof( double ) );
+      carmen_test_alloc( arm_state.joint_angular_vels );
+    }
   }
 
+  err = IPC_defineMsg(CARMEN_ARM_COMMAND_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_ARM_COMMAND_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_ARM_COMMAND_NAME);
+
+  err = IPC_defineMsg(CARMEN_ARM_QUERY_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_DEFAULT_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_ARM_QUERY_NAME);
+
+  err = IPC_defineMsg(CARMEN_ARM_STATE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_ARM_STATE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_ARM_STATE_NAME);
+
+  err = IPC_subscribe(CARMEN_ARM_COMMAND_NAME, arm_command_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", 
+		       CARMEN_ARM_COMMAND_NAME);
+  IPC_setMsgQueueLength(CARMEN_ARM_COMMAND_NAME, 1);
+
+  err = IPC_subscribe(CARMEN_ARM_QUERY_NAME, arm_query_handler, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe", 
+                       CARMEN_ARM_QUERY_NAME);
+  IPC_setMsgQueueLength(CARMEN_ARM_QUERY_NAME, 100);
 }
 
+#endif
 
 static void
 initialize_sonar_message(carmen_base_sonar_message *sonar)
@@ -197,7 +269,6 @@ read_parameters(int argc, char **argv)
      0, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, 
      handle_sonar_change}, 
-    {"robot", "has_arm", CARMEN_PARAM_ONOFF, &has_arm, 0, NULL}, 
     {"robot", "acceleration", CARMEN_PARAM_DOUBLE, 
      &(robot_config.acceleration), 1, NULL},
     {"robot", "deceleration", CARMEN_PARAM_DOUBLE, 
@@ -223,9 +294,9 @@ read_parameters(int argc, char **argv)
     carmen_param_install_params(argc, argv, extra_params, num_items);      
   }
 
-  if (has_arm > 0) {
-    initialize_arm_message(&arm_state);
-  }
+#ifdef BASE_HAS_ARM  
+  initialize_arm_message();
+#endif
 
   if (robot_config.acceleration > deceleration) 
     carmen_die("ERROR: robot_deceleration must be greater or equal than "
@@ -330,61 +401,6 @@ binary_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     }
 }
 
-
-
-static void
-arm_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		  void *clientData __attribute__ ((unused)))
-{
-  IPC_RETURN_TYPE err;
-  carmen_base_arm_state_message response;
-
-  printf("Edsinger: arm_query_handler\n");
-
-  IPC_freeByteArray(callData);
-
-  response.num_servos = num_arm_servos;
-  if (num_arm_servos > 0) {
-    response.servos = (double *)calloc(num_arm_servos, sizeof(double));
-    carmen_test_alloc(response.servos);
-    if (num_arm_servos == 1)
-      response.num_currents = 1;
-    else
-      response.num_currents = 2;
-    response.servo_currents = (double *)
-      calloc(response.num_currents, sizeof(double));
-    carmen_test_alloc(response.servo_currents);
-    carmen_base_direct_arm_get(response.servos, response.num_servos, 
-			       response.servo_currents, &response.gripper);
-  }
-  response.timestamp = carmen_get_time();
-  response.host = carmen_get_host();
-  err = IPC_respondData(msgRef, CARMEN_BASE_SERVO_ARM_STATE_NAME, &response);
-  if (num_arm_servos > 0) {
-    free(response.servos);
-    free(response.servo_currents);
-  }
-}
-
-static void
-arm_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		    void *clientData __attribute__ ((unused)))
-{
-  IPC_RETURN_TYPE err;
-  carmen_base_servo_message msg;
-  FORMATTER_PTR formatter;
-
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  err = IPC_unmarshallData(formatter, callData, &msg,
-			   sizeof(carmen_base_servo_message));
-  IPC_freeByteArray(callData);
-  
-  if (msg.num_servos > 0) {
-    carmen_base_direct_arm_set(msg.servos, msg.num_servos);
-    free(msg.servos);
-  }
-}
-
 static void 
 reset_odometry()
 {
@@ -394,32 +410,21 @@ reset_odometry()
   odometry.theta=0;
 }
 
-static void 
-reset_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-	      void *clientData __attribute__ ((unused)))
+static void reset_handler(MSG_INSTANCE msgRef __attribute__ ((unused)), 
+			  BYTE_ARRAY callData,
+			  void *clientData __attribute__ ((unused)))
 {
-  IPC_RETURN_TYPE err;
   int base_err;
-  carmen_default_message msg;
 
-  FORMATTER_PTR formatter;
-  
-  formatter = IPC_msgInstanceFormatter(msgRef);
-  err = IPC_unmarshallData(formatter, callData, &msg,
-			   sizeof(carmen_default_message));
   IPC_freeByteArray(callData);
-  carmen_test_ipc_return(err, "Could not unmarshall", 
-			 IPC_msgInstanceName(msgRef));
 
-  do 
-    {
-      base_err = carmen_base_direct_reset();
-      //Edsinger: Reset hack
-      reset_odometry();
-      if (base_err < 0)
-	initialize_robot();
-    }
-  while (base_err < 0);
+  do {
+    base_err = carmen_base_direct_reset();
+    //Edsinger: Reset hack
+    reset_odometry();
+    if (base_err < 0)
+      initialize_robot();
+  } while (base_err < 0);
 }
 
 int 
@@ -467,20 +472,6 @@ carmen_base_initialize_ipc(void)
   carmen_test_ipc_exit(err, "Could not define", 
                        CARMEN_BASE_BINARY_DATA_NAME);
 
-  err = IPC_defineMsg(CARMEN_BASE_SERVO_ARM_COMMAND_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_SERVO_ARM_COMMAND_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_SERVO_ARM_COMMAND_NAME);
-
-  err = IPC_defineMsg(CARMEN_BASE_SERVO_ARM_QUERY_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_DEFAULT_MESSAGE_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
-		       CARMEN_BASE_SERVO_ARM_QUERY_NAME);
-
-  err = IPC_defineMsg(CARMEN_BASE_SERVO_ARM_STATE_NAME, IPC_VARIABLE_LENGTH,
-                      CARMEN_BASE_SERVO_ARM_STATE_FMT);
-  carmen_test_ipc_exit(err, "Could not define", 
-		       CARMEN_BASE_SERVO_ARM_STATE_NAME);
-
   /* setup incoming message handlers */
 
   err = IPC_subscribe(CARMEN_BASE_VELOCITY_NAME, velocity_handler, NULL);
@@ -497,20 +488,6 @@ carmen_base_initialize_ipc(void)
   carmen_test_ipc_exit(err, "Could not subscribe", 
                        CARMEN_BASE_BINARY_COMMAND_NAME);
   IPC_setMsgQueueLength(CARMEN_BASE_BINARY_COMMAND_NAME, 1);
-
-  err = IPC_subscribe(CARMEN_BASE_SERVO_ARM_COMMAND_NAME, arm_command_handler,
-		      NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", 
-		       CARMEN_BASE_SERVO_ARM_COMMAND_NAME);
-  IPC_setMsgQueueLength(CARMEN_BASE_SERVO_ARM_COMMAND_NAME, 1);
-
-  err = IPC_subscribe(CARMEN_BASE_SERVO_ARM_QUERY_NAME, 
-                      arm_query_handler, NULL);
-  carmen_test_ipc_exit(err, "Could not subscribe", 
-                       CARMEN_BASE_SERVO_ARM_QUERY_NAME);
-  // Yes, unlike the others, this should be 100 so that we don't drop
-  // any queries on the floor.
-  IPC_setMsgQueueLength(CARMEN_BASE_SERVO_ARM_QUERY_NAME, 100);
 
   return IPC_No_Error;
 }
@@ -529,6 +506,9 @@ carmen_base_start(int argc, char **argv)
   if(initialize_robot() < 0) {
     carmen_warn("\nError: Could not connect to robot on %s. "
 		"Did you remember to turn the base on?\n", dev_name);
+    carmen_warn("     : Are the permissions on %s correct (0666)?\n", dev_name);
+    carmen_warn("     : Do you have the line speed set correctly?\n");
+    carmen_warn("     : Is the robot cable plugged in securely?\n");
     return -1;
   }
 
@@ -564,7 +544,7 @@ carmen_base_run(void)
 {
   IPC_RETURN_TYPE err;
   int index;
-  static carmen_default_message reset = {0, 0};  
+  static carmen_base_reset_occurred_message reset = {0, 0};  
   int base_err;
   double tv, rv;
   double displacement, rotation;
@@ -655,12 +635,12 @@ carmen_base_run(void)
 			 CARMEN_BASE_SONAR_NAME);
   }
 
+  bumper.num_bumpers = 
+    carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
   if (bumper.state == NULL) {
     bumper.state = (unsigned char *)calloc(bumper.num_bumpers, sizeof(char));
     carmen_test_alloc(bumper.state);
   }
-  bumper.num_bumpers = 
-    carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
 
   if (bumper.num_bumpers > 0) {
     bumper.timestamp = carmen_get_time();
@@ -670,17 +650,17 @@ carmen_base_run(void)
 			 CARMEN_BASE_BUMPER_NAME);
   }
 
-  //Edsinger: added 
-  if (num_arm_servos> 0) {
-    arm_state.timestamp = carmen_get_time();
-    arm_state.host = carmen_get_host();
-    carmen_base_direct_arm_get(arm_state.servos, arm_state.num_servos, 
-			       arm_state.servo_currents, &arm_state.gripper);
-    err = IPC_publishData(CARMEN_BASE_SERVO_ARM_STATE_NAME, &arm_state);
-    carmen_test_ipc_exit(err, "Could not publish", 
-			CARMEN_BASE_SERVO_ARM_STATE_NAME );
-  }
+#if BASE_HAS_ARM
+  if (num_arm_joints > 0) 
+    carmen_arm_direct_get_state(arm_state.joint_angles, 
+				arm_state.joint_currents,
+				arm_state.joint_angular_vels, 
+				&arm_state.gripper_closed, num_arm_joints);
 
+  arm_state.timestamp = carmen_get_time();
+  arm_state.host = carmen_get_host();
+  err = IPC_publishData(CARMEN_ARM_STATE_NAME, &arm_state);
+#endif
 
   return 1;
 }
