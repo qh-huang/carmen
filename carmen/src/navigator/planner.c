@@ -310,6 +310,31 @@ carmen_planner_update_goal(carmen_point_p new_goal, int any_orientation,
   return 1;
 }
 
+void carmen_planner_update_grid(carmen_map_p new_map, 
+				carmen_traj_point_p new_position, 
+				carmen_robot_config_t *robot_conf,
+				carmen_navigator_config_t *nav_conf)
+{
+  carmen_world_point_t world_point;
+
+  carmen_map_point_t map_point;
+  carmen_planner_map = new_map;
+
+  if (true_map != NULL) 
+    carmen_map_destroy(&true_map);
+
+  true_map = carmen_map_copy(carmen_planner_map);
+
+  world_point.pose.x = new_position->x;
+  world_point.pose.y = new_position->y;
+  world_point.pose.theta = new_position->theta;
+  world_point.map = carmen_planner_map;
+
+  carmen_world_to_map(&world_point, &map_point);
+
+  carmen_conventional_build_costs(robot_conf, &map_point, nav_conf);  
+}
+
 void
 carmen_planner_set_map(carmen_map_p new_map, carmen_robot_config_t *robot_conf)
 {
@@ -323,6 +348,7 @@ carmen_planner_set_map(carmen_map_p new_map, carmen_robot_config_t *robot_conf)
   map_modify_clear(true_map, carmen_planner_map);
   carmen_conventional_build_costs(robot_conf, NULL, NULL);
 }
+
 
 void
 carmen_planner_reset_map(carmen_robot_config_t *robot_conf)

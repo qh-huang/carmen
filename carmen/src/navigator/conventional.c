@@ -241,10 +241,9 @@ insert_into_queue(state_ptr new_state, queue the_queue)
     }
 }
 
-void 
-carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
-				carmen_map_point_t *robot_posn,
-				carmen_navigator_config_t *navigator_conf) 
+void carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
+				     carmen_map_point_t *robot_posn,
+				     carmen_navigator_config_t *navigator_conf)
 {
   int x_index = 0, y_index = 0;
   double value;
@@ -260,131 +259,116 @@ carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
   carmen_verbose("Building costs...");
 
   if (x_size != carmen_planner_map->config.x_size ||
-      y_size != carmen_planner_map->config.y_size)
-    {
-      free(costs);
-      costs = NULL;
-      free(utility);
-      utility = NULL;
-    }
+      y_size != carmen_planner_map->config.y_size) {
+    free(costs);
+    costs = NULL;
+    free(utility);
+    utility = NULL;
+  }
 
   x_size = carmen_planner_map->config.x_size;
   y_size = carmen_planner_map->config.y_size;
 
-  if (costs == NULL)
-    {
-      costs = (double *)calloc(x_size*y_size, sizeof(double));
-      carmen_test_alloc(costs);
-      for (index = 0; index < x_size*y_size; index++)
-	costs[index] = carmen_planner_map->complete_map[index];
-
-    }
+  if (costs == NULL) {
+    costs = (double *)calloc(x_size*y_size, sizeof(double));
+    carmen_test_alloc(costs);
+    for (index = 0; index < x_size*y_size; index++)
+      costs[index] = carmen_planner_map->complete_map[index];
+  }
 
   resolution = carmen_planner_map->config.resolution;
 
-  if (robot_posn && navigator_conf)
-    {
-      x_start = robot_posn->x - navigator_conf->max_collision_range/
-	robot_posn->map->config.resolution;
-      x_start = carmen_clamp(0, x_start, x_size);
-      y_start = robot_posn->y - navigator_conf->max_collision_range/
-	robot_posn->map->config.resolution;
-      y_start = carmen_clamp(0, y_start, y_size);
-      x_end = robot_posn->x + navigator_conf->max_collision_range/
-	robot_posn->map->config.resolution;
-      x_end = carmen_clamp(0, x_end, x_size);
-      y_end = robot_posn->y + navigator_conf->max_collision_range/
-	robot_posn->map->config.resolution;
-      y_end = carmen_clamp(0, y_end, y_size);
-
-      cost_ptr = costs+x_start*y_size;
-      map_ptr = carmen_planner_map->complete_map+x_start*y_size;
-      for (x_index = x_start; x_index < x_end; x_index++) 
-	{
-	  for (y_index = y_start; y_index < y_end; y_index++)
-	    cost_ptr[y_index] = map_ptr[y_index];
-	  cost_ptr += y_size;
-	  map_ptr += y_size;
-	}      
-    }
-  else 
-    {
-      x_start = 0;
-      y_start = 0;
-      x_end = x_size;
-      y_end = y_size;
-
-      for (index = 0; index < x_size*y_size; index++) 
-	costs[index] = carmen_planner_map->complete_map[index]; 
-    }
-
+  if (robot_posn && navigator_conf) {
+    x_start = robot_posn->x - navigator_conf->max_collision_range/
+      robot_posn->map->config.resolution;
+    x_start = carmen_clamp(0, x_start, x_size);
+    y_start = robot_posn->y - navigator_conf->max_collision_range/
+      robot_posn->map->config.resolution;
+    y_start = carmen_clamp(0, y_start, y_size);
+    x_end = robot_posn->x + navigator_conf->max_collision_range/
+      robot_posn->map->config.resolution;
+    x_end = carmen_clamp(0, x_end, x_size);
+    y_end = robot_posn->y + navigator_conf->max_collision_range/
+      robot_posn->map->config.resolution;
+    y_end = carmen_clamp(0, y_end, y_size);
+    
+    cost_ptr = costs+x_start*y_size;
+    map_ptr = carmen_planner_map->complete_map+x_start*y_size;
+    for (x_index = x_start; x_index < x_end; x_index++) {
+      for (y_index = y_start; y_index < y_end; y_index++)
+	cost_ptr[y_index] = map_ptr[y_index];
+      cost_ptr += y_size;
+      map_ptr += y_size;
+    }      
+  } else {
+    x_start = 0;
+    y_start = 0;
+    x_end = x_size;
+    y_end = y_size;
+    
+    for (index = 0; index < x_size*y_size; index++) 
+      costs[index] = carmen_planner_map->complete_map[index]; 
+  }
+  
 
   /* Initialize cost function to match map, where empty cells have
      MIN_COST cost and filled cells have MAX_UTILITY cost */
 
-  for (x_index = x_start; x_index < x_end; x_index++) 
-    {
-      cost_ptr = costs+x_index*y_size+y_start;
-      for (y_index = y_start; y_index < y_end; y_index++) 
-	{
-	  value = *(cost_ptr);
-	  if (value >= 0 && value < MIN_COST)
-	    value = MIN_COST;
-	  else
-	    value = MAX_UTILITY;
-	  *(cost_ptr++) = value;
-	}
+  for (x_index = x_start; x_index < x_end; x_index++) {
+    cost_ptr = costs+x_index*y_size+y_start;
+    for (y_index = y_start; y_index < y_end; y_index++) {
+      value = *(cost_ptr);
+      if (value >= 0 && value < MIN_COST)
+	value = MIN_COST;
+      else
+	value = MAX_UTILITY;
+      *(cost_ptr++) = value;
     }
-
+  }
+  
   /* Loop through cost map, starting at top left, updating cost of cell
      as max of itself and most expensive neighbour less the cost 
      downgrade. */
 
-  for (x_index = x_start; x_index < x_end; x_index++) 
-    {
-      cost_ptr = costs+x_index*y_size+y_start;
-      for (y_index = y_start; y_index < y_end; y_index++, cost_ptr++)
-	{
-	  if (x_index < 1 || x_index >= x_size-1 || y_index < 1 || 
-	      y_index >= y_size-1) 
-	    continue;
-					
-	  for (index = 0; index < NUM_ACTIONS; index++) 
-	    {
-	      x = x_index + carmen_planner_x_offset[index];
-	      y = y_index + carmen_planner_y_offset[index];
-	      
-	      value = *(costs+x*y_size+y) - resolution*MAX_UTILITY;
-	      if (value > *cost_ptr) 
-		*cost_ptr = value; 
-	    }
-	}
+  for (x_index = x_start; x_index < x_end; x_index++) {
+    cost_ptr = costs+x_index*y_size+y_start;
+    for (y_index = y_start; y_index < y_end; y_index++, cost_ptr++) {
+      if (x_index < 1 || x_index >= x_size-1 || y_index < 1 || 
+	  y_index >= y_size-1) 
+	continue;
+      
+      for (index = 0; index < NUM_ACTIONS; index++) {
+	x = x_index + carmen_planner_x_offset[index];
+	y = y_index + carmen_planner_y_offset[index];
+	
+	value = *(costs+x*y_size+y) - resolution*MAX_UTILITY;
+	if (value > *cost_ptr) 
+	  *cost_ptr = value; 
+      }
     }
+  }
 
   /* Loop through cost map again, starting at bottom right, updating cost of 
      cell as max of itself and most expensive neighbour less the cost 
      downgrade. */
 
-  for (x_index = x_end-1; x_index >= x_start; x_index--) 
-    {
-      cost_ptr = costs+x_index*y_size+y_end-1;
-      for (y_index = y_end-1; y_index >= y_start; y_index--, cost_ptr--)
-	{
-	  if (x_index < 1 || x_index >= x_size-1 || y_index < 1 || 
-	      y_index >= y_size-1) 
-	    continue;
-	  
-	  for (index = 0; index < NUM_ACTIONS; index++) 
-	    {
-	      x = x_index + carmen_planner_x_offset[index];
-	      y = y_index + carmen_planner_y_offset[index];
-	      
-	      value = *(costs+x*y_size+y) - resolution*MAX_UTILITY;
-	      if (value > *cost_ptr) 
-		*cost_ptr = value; 
-	    }
-	}
+  for (x_index = x_end-1; x_index >= x_start; x_index--) {
+    cost_ptr = costs+x_index*y_size+y_end-1;
+    for (y_index = y_end-1; y_index >= y_start; y_index--, cost_ptr--) {
+      if (x_index < 1 || x_index >= x_size-1 || y_index < 1 || 
+	  y_index >= y_size-1) 
+	continue;
+      
+      for (index = 0; index < NUM_ACTIONS; index++) {
+	x = x_index + carmen_planner_x_offset[index];
+	y = y_index + carmen_planner_y_offset[index];
+	
+	value = *(costs+x*y_size+y) - resolution*MAX_UTILITY;
+	if (value > *cost_ptr) 
+	  *cost_ptr = value; 
+      }
     }
+  }
 
   robot_distance = robot_conf->width/2*MAX_UTILITY;
 
@@ -392,28 +376,24 @@ carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
      impassable. Also, rescale cost function so that the max cost
      is 0.5 */
 
-  for (x_index = x_start; x_index < x_end; x_index++) 
-    {
-      cost_ptr = costs+x_index*y_size+y_start;
-      for (y_index = y_start; y_index < y_end; y_index++)
-	{
-	  value = *(cost_ptr);
-	  if (value < MAX_UTILITY - robot_distance) 
-	    {
-	      value = value / (2*MAX_UTILITY);
-	      if (value < MIN_COST)
-		value = MIN_COST;
-	    }
-	  else 
-	    value = 1.0;
-	  *(cost_ptr++) = value;
-	}
+  for (x_index = x_start; x_index < x_end; x_index++) {
+    cost_ptr = costs+x_index*y_size+y_start;
+    for (y_index = y_start; y_index < y_end; y_index++) {
+      value = *(cost_ptr);
+      if (value < MAX_UTILITY - robot_distance) {
+	value = value / (2*MAX_UTILITY);
+	if (value < MIN_COST)
+	  value = MIN_COST;
+      } else 
+	value = 1.0;
+      *(cost_ptr++) = value;
     }
-
+  }
+  
   if (robot_posn != NULL) {
     x_index = robot_posn->x / carmen_planner_map->config.resolution;
     y_index = robot_posn->y / carmen_planner_map->config.resolution;
-		
+    
     if (x_index >= 0 && x_index < x_size && y_index >= 0 && y_index < y_size)
       *(costs+x_index*y_size+y_index) = MIN_COST;
   }

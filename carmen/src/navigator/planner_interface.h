@@ -77,6 +77,11 @@ extern "C" {
 				 carmen_navigator_config_t *nav_config,
 				 carmen_robot_config_t *robot_conf);
   
+  void carmen_planner_update_grid(carmen_map_p new_map, 
+				  carmen_traj_point_p new_position, 
+				  carmen_robot_config_t *robot_conf,
+				  carmen_navigator_config_t *nav_conf);
+
   carmen_navigator_map_message* carmen_planner_get_map_message
   (carmen_navigator_map_t map_type);
   
