@@ -26,7 +26,9 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
+#ifndef NO_MAP_SERVER
 #include <carmen/map_io.h>
+#endif
 
 #include <ctype.h>
 #include <getopt.h>
@@ -61,7 +63,9 @@ static char *default_list[] = {"carmen.ini", "../carmen.ini",
 static carmen_ini_param_p param_list = NULL;
 static int num_params = 0;
 static int param_table_capacity = 0;
+#ifndef NO_MAP_SERVER
 static char *map_filename = NULL;
+#endif
 static char *selected_robot = NULL;
 static char *param_filename = NULL;
 
@@ -486,8 +490,13 @@ static void usage(char *progname, char *fmt, ...)
       progname++;
     }
 
+#ifndef NO_MAP_SERVER
   fprintf(stderr, "usage: %s [-achnpr] [map_filename] [ini filename] \n\n", 
 	  progname);
+#else
+  fprintf(stderr, "usage: %s [-achnpr] [ini filename] \n\n", 
+	  progname);
+#endif
 
   exit(-1);
 }
@@ -502,25 +511,40 @@ static void help(char *progname)
 
   fprintf(stderr, "usage: %s "
 	  //"[-achnpr] "
+#ifndef NO_MAP_SERVER
 	  "[map_filename] [ini filename] \n\n", 
+#else
+	  "[ini filename] \n\n", 
+#endif
 	  progname);
   fprintf
     (stderr, " --alphabetize\talphabetize parameters when listing\n"
      " --robot=ROBOT\tuse parameters for ROBOT\n"     
      "\n\n"
+#ifndef NO_MAP_SERVER
      "[map_filename] and [ini filename] are both optional arguments. \n"
      "If you do not provide [map_filename], then no map will be served by \n"
      "the %s. If you do not provide an [ini filename], then \n"
+#else
+     "If you do not provide an [ini filename], then \n"
+#endif
      "%s will look for carmen.ini in the current directory, \n"
      "and then look for ../carmen.ini, and then ../src/carmen.ini. \n"
      "If you provide no ini filename, and %s cannot find\n"
      "the carmen.ini, then you will get this error message. \n"
      "\n"
+#ifndef NO_MAP_SERVER
      "If you only provide one file name, then %s will try to infer\n"
      "whether it is a map or not and process it accordingly. \n"
+#endif
      "\n"
      "The ini file must provide a section of parameters that matches the \n"
-     "robot name.  \n\n", progname, progname, progname, progname);
+     "robot name.  \n\n", 
+#ifndef NO_MAP_SERVER
+     progname, progname, progname, progname);
+#else
+     progname, progname);
+#endif
 
   exit(-1);
 }
@@ -592,6 +616,7 @@ read_commandline(int argc, char **argv)
     }
   }
 
+#ifndef NO_MAP_SERVER
   /* look for a map file */
   map_filename = NULL;
   for (cur_arg = optind; cur_arg < argc; cur_arg++) {
@@ -604,11 +629,14 @@ read_commandline(int argc, char **argv)
       strcpy(map_filename, argv[cur_arg]);
     }
   }
+#endif
     
   param_filename = NULL;
   for (cur_arg = optind; cur_arg < argc; cur_arg++) {
+#ifndef NO_MAP_SERVER
     if (map_filename && strcmp(map_filename, argv[cur_arg]) == 0) 
       continue;
+#endif
     if (param_filename && carmen_file_exists(argv[cur_arg])) {
       usage(argv[0], "Too many ini files given: %s and %s",
 	    param_filename, argv[cur_arg]);
@@ -1276,12 +1304,13 @@ main(int argc, char **argv)
   if(initialize_param_ipc() < 0) 
     carmen_die("Error: could not connect to IPC Server\n");
 
+#ifndef NO_MAP_SERVER
   if (map_filename) {
     if (carmen_map_initialize_ipc() < 0)
       carmen_die("Error: could initialize map IPC calls.\n");
     carmen_map_set_filename(map_filename);
   }
-
+#endif
   IPC_dispatch();
 
   return 0;
