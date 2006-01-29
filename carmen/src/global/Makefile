@@ -14,7 +14,7 @@ MODULE_COMMENT = "CARMEN global functions"
 
 SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
 	  carmen-config.c keyctrl.c multicentral.c test_multicentral.c \
-	movement.c test_movement.c
+	  ipc_wrapper.c movement.c test_movement.c
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
 	  	  carmen.h serial.h keyctrl.h multicentral.h movement.h
 PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
