@@ -14,7 +14,7 @@ PUBLIC_INCLUDES = base_messages.h arm_messages.h base_interface.h \
  	arm_interface.h base_low_level.h
 PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a
 
-TARGETS = libbase_interface.a libarm_interface.a base_test base_main.o 
+TARGETS = libbase_interface.a libarm_interface.a base_test 
 
 TARGETS += $(ROBOT_TYPES)
 PUBLIC_BINARIES += $(ROBOT_TYPES)
