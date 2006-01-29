@@ -43,8 +43,12 @@ carmen_map_t *carmen_planner_map = NULL;
 static carmen_map_t *true_map = NULL;
 
 static int have_plan = 0;
+
 static int allow_any_orientation = 0;
-static carmen_point_t goal;
+static carmen_point_t requested_goal;
+static carmen_point_t intermediate_goal;
+static int goal_is_accessible;
+
 static carmen_traj_point_t robot;
 static carmen_planner_path_t path = {NULL, 0, 0};
 
@@ -65,9 +69,19 @@ extract_path_from_value_function(void)
 
   carmen_trajectory_to_map(&robot, &cur_point, carmen_planner_map);
 
-  map_goal.x = carmen_round(goal.x / carmen_planner_map->config.resolution);
-  map_goal.y = carmen_round(goal.y / carmen_planner_map->config.resolution);
-  map_goal.map = carmen_planner_map;
+  if (goal_is_accessible) {
+    map_goal.x = carmen_round(requested_goal.x / 
+			      carmen_planner_map->config.resolution);
+    map_goal.y = carmen_round(requested_goal.y / 
+			      carmen_planner_map->config.resolution);
+    map_goal.map = carmen_planner_map;
+  } else {
+    map_goal.x = carmen_round(intermediate_goal.x / 
+			      carmen_planner_map->config.resolution);
+    map_goal.y = carmen_round(intermediate_goal.y / 
+			      carmen_planner_map->config.resolution);
+    map_goal.map = carmen_planner_map;
+  }
 
   do {
     prev_point = cur_point;
@@ -177,11 +191,66 @@ smooth_path(carmen_navigator_config_t *nav_conf)
   new_cost = cost_of_path();
 }
 
+static int find_nearest_free_point_to_goal(void)
+{
+  carmen_world_point_t goal_world;
+  double *util_ptr;
+  int x, y;
+  double closest_free_dist;
+  carmen_map_point_t closest_free;
+  double dist;
+  int goal_x, goal_y;
+
+  goal_x = carmen_round(robot.x / carmen_planner_map->config.resolution);
+  goal_y = carmen_round(robot.y / carmen_planner_map->config.resolution);
+
+  carmen_conventional_dynamic_program(goal_x, goal_y);
+
+  util_ptr = carmen_conventional_get_utility_ptr();
+
+  if (util_ptr == NULL) {
+    carmen_warn("No accessible goal.\n");
+    return 0;
+  }
+
+  goal_x = carmen_round(requested_goal.x / 
+			carmen_planner_map->config.resolution);
+  goal_y = carmen_round(requested_goal.y / 
+			carmen_planner_map->config.resolution);
+
+  closest_free_dist = MAXDOUBLE;
+  closest_free.map = carmen_planner_map;
+  for (x = 0; x < carmen_planner_map->config.x_size; x++)
+    for (y = 0; y < carmen_planner_map->config.y_size; y++) {
+      dist = hypot(x-goal_x, y-goal_y);
+      if (*util_ptr >= 0 && dist < closest_free_dist) {
+	closest_free.x = x;
+	closest_free.y = y;
+	closest_free_dist = dist;
+      }
+      util_ptr++;
+    }
+  
+  if (closest_free_dist > MAXDOUBLE/2) {
+    carmen_warn("No accessible goal.\n");
+    return 0;
+  }
+
+  carmen_conventional_dynamic_program(closest_free.x, closest_free.y);
+
+  carmen_map_to_world(&closest_free, &goal_world);
+  intermediate_goal.x = goal_world.pose.x;
+  intermediate_goal.y = goal_world.pose.y;
+
+  return 1;
+}
+
 static void 
 plan(carmen_navigator_config_t *nav_conf) 
 {
   static int old_goal_x, old_goal_y;
   static carmen_traj_point_t old_robot;
+  static carmen_map_point_t map_pt;
   static double last_plan_time = 0;
   int goal_x, goal_y;
 
@@ -192,16 +261,29 @@ plan(carmen_navigator_config_t *nav_conf)
     }
   }
 
-  goal_x = carmen_round(goal.x / carmen_planner_map->config.resolution);
-  goal_y = carmen_round(goal.y / carmen_planner_map->config.resolution);
+  goal_x = carmen_round(requested_goal.x / 
+			carmen_planner_map->config.resolution);
+  goal_y = carmen_round(requested_goal.y / 
+			carmen_planner_map->config.resolution);
 
   carmen_verbose("Doing DP to %d %d\n", goal_x, goal_y);
   carmen_conventional_dynamic_program(goal_x , goal_y);
+
+  carmen_trajectory_to_map(&robot, &map_pt, carmen_planner_map);
+
+  if (carmen_conventional_get_utility(map_pt.x, map_pt.y) < 0) {
+    goal_is_accessible = 0;
+    if (nav_conf->plan_to_nearest_free_point) 
+      have_plan = find_nearest_free_point_to_goal();
+  } else {
+    have_plan = 1;
+    goal_is_accessible = 1;
+  }
+
   last_plan_time = carmen_get_time();
   old_goal_x = goal_x;
   old_goal_y = goal_y;
   old_robot = robot;
-  have_plan = 1;
 }
 
 //we need to make regenerate trajectory polymorphic somehow
@@ -231,11 +313,11 @@ regenerate_trajectory(carmen_navigator_config_t *nav_conf)
       index++;
     }
     if (path.length > 1) {
-      if (allow_any_orientation)
+      if (!goal_is_accessible || allow_any_orientation)
 	path.points[path.length-1].theta = 
 	  path.points[path.length-2].theta;
       else
-	path.points[path.length-1].theta = goal.theta;
+	path.points[path.length-1].theta = requested_goal.theta;
     }
     
     /* End of adding path orientations */
@@ -299,7 +381,7 @@ carmen_planner_update_goal(carmen_point_p new_goal, int any_orientation,
 		 new_goal->x, new_goal->y, carmen_planner_map->config.x_size, 
 		 carmen_planner_map->config.y_size);
   
-  goal = *new_goal;
+  requested_goal = *new_goal;
   allow_any_orientation = any_orientation;
   goal_set = 1;
 
@@ -333,6 +415,13 @@ void carmen_planner_update_grid(carmen_map_p new_map,
   carmen_world_to_map(&world_point, &map_point);
 
   carmen_conventional_build_costs(robot_conf, &map_point, nav_conf);  
+
+  if (!goal_set)
+    return;
+  
+  plan(nav_conf);
+      
+  regenerate_trajectory(nav_conf);  
 }
 
 void
@@ -392,7 +481,7 @@ carmen_planner_get_status(carmen_planner_status_p status)
 {
   int index;
 
-  status->goal = goal;
+  status->goal = requested_goal;
   status->robot = robot;
   status->goal_set = goal_set;
   status->path.length = path.length;
@@ -440,14 +529,13 @@ carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
 
   delta_dist = carmen_distance_traj(waypoint, point);
 
-  if (delta_dist < 2*nav_conf->goal_size && path.length - next_point == 1) 
-    {
-      if (allow_any_orientation)
-	return 1;
-      delta_theta = fabs(waypoint->theta - goal.theta) ;
-      if (delta_theta < nav_conf->goal_theta_tolerance)
-	return 1;      
-    }
+  if (delta_dist < 2*nav_conf->goal_size && path.length - next_point == 1) {
+    if (allow_any_orientation || !goal_is_accessible)
+      return 1;
+    delta_theta = fabs(waypoint->theta - requested_goal.theta) ;
+    if (delta_theta < nav_conf->goal_theta_tolerance)
+      return 1;      
+  }
 
   if (path.length <= 2)
     *is_goal = 1;
@@ -550,8 +638,8 @@ double *carmen_planner_get_utility(void)
 
 int carmen_planner_goal_reachable(void)
 { 
-  if (path.length <= 1)
-    return 0;
+  if (goal_set && goal_is_accessible)
+    return 1;
 
-  return 1;
+  return 0;
 }

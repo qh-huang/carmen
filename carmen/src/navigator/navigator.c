@@ -405,7 +405,9 @@ read_parameters(int argc, char **argv)
     {"navigator", "smooth_path", CARMEN_PARAM_ONOFF, 
      &nav_config.smooth_path, 1, NULL},
     {"navigator", "dont_integrate_odometry", CARMEN_PARAM_ONOFF,
-     &nav_config.dont_integrate_odometry, 1, NULL}
+     &nav_config.dont_integrate_odometry, 1, NULL},
+    {"navigator", "plan_to_nearest_free_point", CARMEN_PARAM_ONOFF,
+     &nav_config.plan_to_nearest_free_point, 1, NULL}
   };
 
   num_items = sizeof(param_list)/sizeof(param_list[0]);

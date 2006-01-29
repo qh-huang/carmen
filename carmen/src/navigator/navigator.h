@@ -45,6 +45,7 @@ extern "C" {
     double goal_size;
     double goal_theta_tolerance;
     int dont_integrate_odometry;
+    int plan_to_nearest_free_point;
   } carmen_navigator_config_t;
 
   void carmen_navigator_goal_triplet(carmen_point_p point);
