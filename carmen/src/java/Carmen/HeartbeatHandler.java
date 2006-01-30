@@ -11,5 +11,5 @@ public interface HeartbeatHandler {
   /**
    *  event handler for odometry messages
    */
-  public void handleHeartbeat (HeartbeatMessage message);
+  public void handle (HeartbeatMessage message);
 }
