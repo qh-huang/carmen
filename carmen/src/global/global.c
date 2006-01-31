@@ -642,11 +642,18 @@ carmen_normalize_theta(double theta)
   return theta;
 } 
 
- inline void carmen_erase_structure(void* ptr, int size_of_struture)
+inline void carmen_erase_structure(void* ptr, int size_of_struture)
 {
   memset(ptr, 0, size_of_struture);
 }
 
+
+inline double 
+carmen_knots_to_meters_per_second(double knots)
+{
+  /// KNOTS_TO_METERS_PER_SECOND 0.5148
+  return (0.5148 * knots);
+}
 
 
 inline double 

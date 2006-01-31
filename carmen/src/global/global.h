@@ -49,6 +49,8 @@ extern "C" {
 #define M_PI 3.14159265358979323846  /* pi */
 #endif
 
+
+
 /* Useful macros */
 
 typedef struct {
@@ -243,6 +245,12 @@ extern inline double carmen_normalize_theta(double theta)
     theta += 2*M_PI;
 
   return theta;
+}
+
+extern inline double carmen_knots_to_meters_per_second(double knots)
+{
+  /// KNOTS_TO_METERS_PER_SECOND 0.5148
+  return (0.5148 * knots);
 }
 
 extern inline double carmen_radians_to_degrees(double theta)
