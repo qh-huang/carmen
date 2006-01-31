@@ -18,22 +18,30 @@
 #include "gps-ipc.h"
 #include "gps-io.h"
 
+
 void
 read_parameters(SerialDevice *dev, int argc, char **argv)
 {
+  char* device;
+
   carmen_param_t gps_dev[] = {
-    {"gps", "nmea_dev", CARMEN_PARAM_STRING, &(dev->ttyport), 0, NULL},
-    {"gps", "nmea_baud", CARMEN_PARAM_INT, &(dev->baud), 0, NULL}};
+    {"gps", "nmea_dev",  CARMEN_PARAM_STRING, &device, 0, NULL},
+    {"gps", "nmea_baud", CARMEN_PARAM_INT,    &(dev->baud),    0, NULL}};
   
   carmen_param_install_params(argc, argv, gps_dev, 
-			      sizeof(carmen_param_t) / sizeof(gps_dev[0]));
+			      sizeof(gps_dev) / sizeof(gps_dev[0]));
   
+  strncpy( dev->ttyport, device, MAX_NAME_LENGTH );
+
+  free(device);
+
 }
 
 void
 print_usage( void )
 {
-  fprintf( stderr, "gps-nmea [-nr NR] [-dev DEVICE]\n");
+  //  fprintf( stderr, "gps-nmea [-nr NR] [-dev DEVICE]\n");
+  fprintf( stderr, "Syntax: gps-nmea\n");
 }
 
 /**************************************************************************
@@ -48,9 +56,13 @@ main(int argc, char *argv[])
   carmen_gps_gpgga_message    gpgga;
   carmen_gps_gprmc_message    gprmc;
 
+  carmen_erase_structure(&gpgga, sizeof(carmen_gps_gpgga_message) );
+  carmen_erase_structure(&gprmc, sizeof(carmen_gps_gprmc_message) );
+  
   gpgga.host = carmen_get_host();
+  gprmc.host = carmen_get_host();
+  DEVICE_init_params( &dev );
 
-  //gethostname( gpgga.host, 10 );
   carmen_ipc_initialize( argc, argv );
   ipc_initialize_messages();
  
@@ -60,13 +72,12 @@ main(int argc, char *argv[])
   carmen_extern_gpgga_ptr->nr = gps_nr;
   carmen_extern_gprmc_ptr = &gprmc;
   carmen_extern_gprmc_ptr->nr = gps_nr;
-  DEVICE_init_params( &dev );
 
   fprintf( stderr, "INFO: ************************\n" );
   fprintf( stderr, "INFO: ********* GPS   ********\n" );
   fprintf( stderr, "INFO: ************************\n" );
 
-  fprintf( stderr, "INFO: open device (%s) ", dev.ttyport );
+  fprintf( stderr, "INFO: open device: %s\n", dev.ttyport );
   if (DEVICE_connect_port( &dev )<0) {
     fprintf( stderr, "ERROR: can't open device !!!\n\n" );
     exit(1);
