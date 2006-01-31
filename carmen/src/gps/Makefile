@@ -3,7 +3,7 @@ include ../Makefile.conf
 MODULE_NAME = "GPS"
 MODULE_COMMENT = "NMEA GPS Module"
 
-CFLAGS +=
+CFLAGS += #-DPARSE_DEBUG
 IFLAGS += 
 LFLAGS += -lparam_interface -lserial -lipc -lglobal
 

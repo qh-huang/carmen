@@ -16,6 +16,7 @@
 #include "gps.h"
 
 carmen_gps_gpgga_message       * carmen_extern_gpgga_ptr =  NULL;
+carmen_gps_gprmc_message       * carmen_extern_gprmc_ptr =  NULL;
 
 void
 ipc_publish_position( void )
@@ -25,7 +26,13 @@ ipc_publish_position( void )
     err = IPC_publishData (CARMEN_GPS_GPGGA_MESSAGE_NAME, 
 			   carmen_extern_gpgga_ptr );
     carmen_test_ipc(err, "Could not publish", CARMEN_GPS_GPGGA_MESSAGE_NAME);
-    fprintf( stderr, "(p)" );
+    fprintf( stderr, "(gga)" );
+  }
+  if (carmen_extern_gprmc_ptr!=NULL) {
+    err = IPC_publishData (CARMEN_GPS_GPRMC_MESSAGE_NAME, 
+			   carmen_extern_gprmc_ptr );
+    carmen_test_ipc(err, "Could not publish", CARMEN_GPS_GPRMC_MESSAGE_NAME);
+    fprintf( stderr, "(rmc)" );
   }
 }
 
@@ -37,5 +44,9 @@ ipc_initialize_messages( void )
   err = IPC_defineMsg(CARMEN_GPS_GPGGA_MESSAGE_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_GPS_GPGGA_MESSAGE_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_GPS_GPGGA_MESSAGE_NAME);
+
+  err = IPC_defineMsg(CARMEN_GPS_GPRMC_MESSAGE_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_GPS_GPRMC_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_GPS_GPRMC_MESSAGE_NAME);
 
 }

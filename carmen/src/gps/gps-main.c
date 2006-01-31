@@ -46,6 +46,7 @@ main(int argc, char *argv[])
   int                         gps_nr = 0;
   SerialDevice                dev;
   carmen_gps_gpgga_message    gpgga;
+  carmen_gps_gprmc_message    gprmc;
 
   gpgga.host = carmen_get_host();
 
@@ -57,7 +58,8 @@ main(int argc, char *argv[])
 
   carmen_extern_gpgga_ptr = &gpgga;
   carmen_extern_gpgga_ptr->nr = gps_nr;
-  
+  carmen_extern_gprmc_ptr = &gprmc;
+  carmen_extern_gprmc_ptr->nr = gps_nr;
   DEVICE_init_params( &dev );
 
   fprintf( stderr, "INFO: ************************\n" );
@@ -77,6 +79,8 @@ main(int argc, char *argv[])
     if ( DEVICE_bytes_waiting( dev.fd )>10 ) {
       if (DEVICE_read_data( dev )) {
 	gpgga.timestamp = carmen_get_time();
+	gprmc.timestamp = carmen_get_time();
+
 	ipc_publish_position();
       }
       usleep(100000);

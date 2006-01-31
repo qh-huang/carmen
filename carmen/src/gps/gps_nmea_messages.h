@@ -35,8 +35,41 @@ typedef struct {
   char*                host;
 } carmen_gps_gpgga_message;
 
+
 #define CARMEN_GPS_GPGGA_MESSAGE_FMT "{int, double,double,char,double,char,int,int,double,double,double,double,double,int,double,string}"
+
+
 #define CARMEN_GPS_GPGGA_MESSAGE_NAME "carmen_gps_nmea_gpgga"
+
+
+
+
+typedef struct {
+ 
+
+  int                 nr;             /* number of the gps unit */
+  int                 validity;       /* 1 ok, 0 invalid       */
+  double              utc;            /* Universal Time Coordinated (UTC) */
+  double              latitude;
+  char                lat_orient;     /* N or S (North or South) */
+  double              longitude;
+  char                long_orient;    /* E or W (East or West) */
+ 
+  double              speed;          /* Speed over ground in m/s in the direction of true_course */
+  double              true_course;    /* heading to north (in rads) */
+  int                 date;           /* UT Date  */
+  double              variation;      /* Magnetic variation degrees (E or W) subtracts 
+					 from true course  */
+  char                var_dir;
+
+  double              timestamp;
+  char*                host;
+
+ 
+} carmen_gps_gprmc_message;
+
+#define CARMEN_GPS_GPRMC_MESSAGE_FMT  "{int, char,double,double,char,double,char,double,double,int,double,char,double,string}"
+#define CARMEN_GPS_GPRMC_MESSAGE_NAME "carmen_gps_nmea_gprmc"
 
 #ifdef __cplusplus
 }

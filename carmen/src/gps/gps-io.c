@@ -287,13 +287,14 @@ static int get_line(char **buffer, size_t *buffer_len, char delim, FILE *fp)
   num_read = 0;
   do {
     read_char = fgetc(fp);
+    //fprintf( stderr, "%c",read_char );
     if (read_char == EOF)
       return -1;
     (*buffer)[num_read] = read_char;
     num_read++;
     if (num_read == *buffer_len) {
       *buffer_len = *buffer_len+1;
-      *buffer = (char *)realloc(*buffer, sizeof(char));
+      *buffer = (char *)realloc(*buffer, *buffer_len*sizeof(char));
       carmen_test_alloc(*buffer);
     }
   } while (read_char != delim);
@@ -334,8 +335,12 @@ DEVICE_read_data( SerialDevice dev )
 	  fprintf( stderr, ")\n" );
 #else
 	  fprintf( stderr, "." );
-#endif
+#endif	  
+
+	  //fprintf( stderr,"%c", line[start]);
 	  return(carmen_gps_parse_data( &(line[start]), len-start ));
+	  
+
 	}	
       }
     }

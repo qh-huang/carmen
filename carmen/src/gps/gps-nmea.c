@@ -16,7 +16,7 @@
 
 #include "gps.h"
 #include "gps-io.h"
-
+ 
 int
 gps_parse_gga( char * line, int num_chars )
 {
@@ -89,6 +89,69 @@ gps_parse_gga( char * line, int num_chars )
 }
 
 int
+gps_parse_rmc( char * line, int num_chars )
+{
+  char * ptr;
+  int    i;
+  for (i=1; i<num_chars-1; i++) {
+    if (line[i]=='$' || line[i]=='*')
+      return(FALSE);
+  }
+  if (num_chars>0 && carmen_extern_gpgga_ptr!=NULL) {
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->utc = atof(ptr);
+ 
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->validity = (ptr[0] == 'A')?1:0;
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->latitude = atof(ptr);
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->lat_orient = ptr[0];
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->longitude = atof(ptr);
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->long_orient = ptr[0];
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->speed = carmen_knots_to_meters_per_second( atof(ptr) );
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->true_course = carmen_degrees_to_radians( atoi(ptr) );
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->date = atof(ptr);
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->variation = atof(ptr);
+
+    ptr = strsep( &line, ",");
+    if (ptr==NULL) return(FALSE);
+    carmen_extern_gprmc_ptr->var_dir =ptr[0];
+
+    return(TRUE);
+  }
+  return(FALSE);
+}
+
+int
 carmen_gps_parse_data( char * line, int num_chars )
 {
 #ifdef GPGGA_PARSE_DEBUG
@@ -114,9 +177,11 @@ carmen_gps_parse_data( char * line, int num_chars )
       fprintf( stderr, "(GPGLL)" );
 #endif
     } else if (!strncmp( "$GPRMC", line, 6 ) ) {
+      return(gps_parse_rmc( line, num_chars ));
 #ifdef PARSE_DEBUG
       fprintf( stderr, "(GPRMC)" );
 #endif
+      
     } else if (!strncmp( "$GPGSV", line, 6 ) ) {
 #ifdef PARSE_DEBUG
       fprintf( stderr, "(GPGSV)" );
@@ -124,8 +189,8 @@ carmen_gps_parse_data( char * line, int num_chars )
     } else if (!strncmp( "$GPGSA", line, 6 ) ) {
 #ifdef PARSE_DEBUG
       fprintf( stderr, "(GPGSA)" );
-#endif
-    } else {
+#endif 
+} else {
 #ifdef PARSE_DEBUG
       fprintf( stderr, "[" );
       j=1;

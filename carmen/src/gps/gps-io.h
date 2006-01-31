@@ -1,4 +1,4 @@
-#define DEFAULT_GPS_PORT      "/dev/ttyS0"
+#define DEFAULT_GPS_PORT      "/dev/usb/ttyUSB0"
 #define DEFAULT_GPS_BAUD      4800
 #define DEFAULT_GPS_PARITY    NO
 #define DEFAULT_GPS_DATABITS  8
