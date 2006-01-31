@@ -5,7 +5,7 @@
 <p>
 This section is designed to give the users of CARMEN more of the theory behind the CARMEN programs. The papers listed here are downloadable in PDF format.
 <p>
-<h3><a name="localize">2&nbsp;&nbsp;Papers on Localization</a></h3>
+<h3><a name="localize">Papers on Localization</a></h3>
 <p>
 <b><a name="mcl">Robust Monte Carlo Localization for Mobile Robots</b>
 <p>
@@ -17,7 +17,7 @@ This paper was published in the journal <b>Artificial Intelligence</b>, volume 1
 <p>
 Download this paper <a href="papers/thrun.robust-mcl.pdf">here</a>.
 <p>
-<h3><a name="mapping">3&nbsp;&nbsp;Papers on Mapping</a></h3>
+<h3><a name="mapping">Papers on Mapping</a></h3>
 <p>
 <b><a name="survey">Robotic Mapping: A Survey</b>
 <p>
