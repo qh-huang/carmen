@@ -25,6 +25,9 @@ carmen_robot_laser_message laser1, laser2, laser3, laser4;
 carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4;
 carmen_localize_globalpos_message globalpos;
 
+carmen_gps_gpgga_message gpsgga;
+carmen_gps_gprmc_message gpsrmc;
+
 void print_playback_status(void)
 {
   char str[100];
@@ -134,7 +137,18 @@ void register_ipc_messages(void)
                       CARMEN_LOCALIZE_GLOBALPOS_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_LOCALIZE_GLOBALPOS_NAME);
-
+  
+  err = IPC_defineMsg(CARMEN_GPS_GPGGA_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_GPS_GPGGA_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_GPS_GPGGA_MESSAGE_NAME);
+  
+  err = IPC_defineMsg(CARMEN_GPS_GPRMC_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_GPS_GPRMC_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_GPS_GPRMC_MESSAGE_NAME);
+  
+  
   carmen_subscribe_message(CARMEN_PLAYBACK_COMMAND_NAME, 
                            CARMEN_PLAYBACK_COMMAND_FMT,
                            NULL, sizeof(carmen_playback_command_message),
@@ -200,6 +214,10 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_robot_laser_message, &laser3, 0},
   {"ROBOLASER4", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser4, 0},
+  {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
+   (converter_func)carmen_string_to_gps_gpgga_message, &gpsgga, 0},
+  {"NMEARMC", CARMEN_GPS_GPRMC_MESSAGE_NAME, 
+   (converter_func)carmen_string_to_gps_gpgga_message, &gpsrmc, 0},
 };
 
 int read_message(int message_num, int publish)
@@ -354,6 +372,9 @@ int main(int argc, char **argv)
   memset(&rawlaser2, 0, sizeof(rawlaser2));
   memset(&rawlaser3, 0, sizeof(rawlaser3));
   memset(&rawlaser4, 0, sizeof(rawlaser4));
+  memset(&gpsgga, 0, sizeof(gpsgga));
+  memset(&gpsrmc, 0, sizeof(gpsrmc));
+
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);

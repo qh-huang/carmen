@@ -140,6 +140,27 @@ static void sync_handler(carmen_logger_sync_message *sync)
   carmen_logwrite_write_sync(sync, outfile);
 }
 
+void ipc_gps_gpgga_handler( carmen_gps_gpgga_message *gps_data)
+{
+  if(gps_data->num_satellites ==0)
+    fprintf(stderr, "(G)");
+  else
+    fprintf(stderr, "G");
+  
+  carmen_logger_write_gps_gpgga(gps_data, outfile, carmen_get_time() - logger_starttime);
+}
+
+
+void ipc_gps_gprmc_handler( carmen_gps_gprmc_message *gps_data)
+{
+  fprintf(stderr, "g");
+  carmen_logger_write_gps_gprmc(gps_data, outfile, carmen_get_time() - logger_starttime);
+}
+
+
+
+
+
 void register_ipc_messages(void)
 {
   carmen_subscribe_message(CARMEN_LOGGER_SYNC_NAME, CARMEN_LOGGER_SYNC_FMT,
@@ -226,6 +247,14 @@ int main(int argc, char **argv)
 					     carmen_simulator_truepos_handler,
                                              CARMEN_SUBSCRIBE_ALL);
   
+  carmen_gps_subscribe_nmea_message( NULL,
+				     (carmen_handler_t) ipc_gps_gpgga_handler,
+				     CARMEN_SUBSCRIBE_ALL );
+  
+  carmen_gps_subscribe_nmea_rmc_message( NULL,
+					 (carmen_handler_t) ipc_gps_gprmc_handler,
+					 CARMEN_SUBSCRIBE_ALL );
+
   signal(SIGINT, shutdown_module);
   logger_starttime = carmen_get_time();
   carmen_ipc_dispatch();

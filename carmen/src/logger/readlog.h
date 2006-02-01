@@ -45,6 +45,15 @@ char *carmen_string_to_robot_laser_message(char *string,
 char *carmen_string_to_laser_laser_message(char *string,
 					   carmen_laser_laser_message *laser);
 
+char *carmen_string_to_gps_gprmc_message(char *string,
+					 carmen_gps_gprmc_message *gps_msg);
+
+char *carmen_string_to_gps_gpgga_message(char *string,
+					 carmen_gps_gpgga_message *gps_msg);
+
+
+
+
 #ifdef __cplusplus
 }
 #endif

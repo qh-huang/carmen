@@ -162,3 +162,60 @@ void carmen_logwrite_write_localize(carmen_localize_globalpos_message *msg,
 		 msg->odometrypos.theta, msg->timestamp, msg->host, timestamp);
 }
 
+void carmen_logger_write_gps_gpgga(carmen_gps_gpgga_message *gps_msg, 
+				  carmen_FILE *outfile, double timestamp)
+{
+  char lat_o  = gps_msg->lat_orient;
+  char long_o = gps_msg->long_orient;
+
+  if (lat_o == '\0')
+    lat_o = 'N';
+  
+  if (long_o == '\0')
+    long_o = 'E';
+
+  carmen_fprintf(outfile,"NMEAGGA %d %lf %lf %c %lf %c %d %d %lf %lf %lf %lf %lf %d %lf %s %lf\n", 
+		 gps_msg->nr,
+		 gps_msg->utc,
+		 gps_msg->latitude, 
+		 lat_o, 
+		 gps_msg->longitude,
+		 long_o, 
+		 gps_msg->gps_quality, gps_msg->num_satellites,
+		 gps_msg->hdop,
+		 gps_msg->sea_level,
+		 gps_msg->altitude,
+		 gps_msg->geo_sea_level,
+		 gps_msg->geo_sep,
+		 gps_msg->data_age,
+		 gps_msg->timestamp, gps_msg->host, timestamp);
+}
+
+
+
+void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg, 
+				  carmen_FILE *outfile, double timestamp)
+{
+  char lat_o  = gps_msg->lat_orient;
+  char long_o = gps_msg->long_orient;
+
+  if (lat_o == '\0')
+    lat_o = 'N';
+  
+  if (long_o == '\0')
+    long_o = 'E';
+
+  carmen_fprintf(outfile,"NMEARMC %d %d %lf %lf %c %lf %c %lf %lf %lf %c %d %lf %s %lf\n", 
+		 gps_msg->nr, 
+		 gps_msg->validity, 
+		 gps_msg->utc,
+		 gps_msg->latitude, 
+		 lat_o, 
+		 gps_msg->longitude,
+		 long_o, 
+		 gps_msg->speed, 
+		 gps_msg->true_course, 
+		 gps_msg->variation, gps_msg->var_dir,
+		 gps_msg->date,
+		 gps_msg->timestamp, gps_msg->host, timestamp);
+}

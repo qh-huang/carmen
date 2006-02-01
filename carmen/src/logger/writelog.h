@@ -62,4 +62,12 @@ void carmen_logwrite_write_truepos(carmen_simulator_truepos_message *truepos,
 void carmen_logwrite_write_localize(carmen_localize_globalpos_message *msg, 
 				    carmen_FILE *outfile, double timestamp);
 
+void carmen_logger_write_gps_gpgga(carmen_gps_gpgga_message *gps_msg, 
+				   carmen_FILE *outfile, 
+				   double timestamp);
+
+void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg, 
+				   carmen_FILE *outfile, 
+				   double timestamp);
+
 #endif

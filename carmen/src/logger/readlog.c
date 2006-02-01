@@ -172,6 +172,7 @@ void copy_host_string(char **host, char **string)
 
 #define CLF_READ_DOUBLE(str) strtod(*(str), (str))
 #define CLF_READ_INT(str) (int)strtol(*(str), (str), 10)
+#define CLF_READ_CHAR(str) (char) ( ( (*str)++)[0] )
 
 char *carmen_string_to_base_odometry_message(char *string,
 					     carmen_base_odometry_message
@@ -433,3 +434,57 @@ char *carmen_string_to_robot_laser_message(char *string,
 }
 
 
+
+char *carmen_string_to_gps_gpgga_message(char *string,
+				       carmen_gps_gpgga_message *gps_msg)
+{
+  char *current_pos = string;
+  
+  if (strncmp(current_pos, "NMEAGGA", 7) == 0)
+    current_pos = carmen_next_word(current_pos); 
+  
+  gps_msg->nr               = CLF_READ_INT(&current_pos);
+  gps_msg->utc              = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->latitude         = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->lat_orient       = CLF_READ_CHAR(&current_pos);
+  gps_msg->longitude        = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->long_orient      = CLF_READ_CHAR(&current_pos);
+  gps_msg->gps_quality      = CLF_READ_INT(&current_pos);
+  gps_msg->num_satellites   = CLF_READ_INT(&current_pos);
+  gps_msg->hdop             = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->sea_level        = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->altitude         = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->geo_sea_level    = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->geo_sep          = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->data_age         = CLF_READ_INT(&current_pos);
+  gps_msg->timestamp        = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&gps_msg->host, &current_pos);
+
+  return current_pos;
+}
+
+char *carmen_string_to_gps_gprmc_message(char *string,
+					 carmen_gps_gprmc_message *gps_msg)
+{
+  char *current_pos = string;
+  
+  if (strncmp(current_pos, "NMEARMC", 7) == 0)
+    current_pos = carmen_next_word(current_pos); 
+  
+  gps_msg->nr               = CLF_READ_INT(&current_pos);
+  gps_msg->validity         = CLF_READ_INT(&current_pos);
+  gps_msg->utc              = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->latitude         = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->lat_orient       = CLF_READ_CHAR(&current_pos);
+  gps_msg->longitude        = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->long_orient      = CLF_READ_CHAR(&current_pos);
+  gps_msg->speed            = CLF_READ_INT(&current_pos);
+  gps_msg->true_course      = CLF_READ_INT(&current_pos);
+  gps_msg->variation        = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->var_dir          = CLF_READ_CHAR(&current_pos);
+  gps_msg->date             = CLF_READ_INT(&current_pos);
+  gps_msg->timestamp        = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&gps_msg->host, &current_pos);
+
+  return current_pos;
+}
