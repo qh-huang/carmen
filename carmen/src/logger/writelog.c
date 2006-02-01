@@ -211,7 +211,7 @@ void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg,
     long_o = 'E';
 
   if (vardir == '\0')
-    vardir = 'X';
+    vardir = 'E';
 
 
   carmen_fprintf(outfile,"NMEARMC %d %d %lf %lf %c %lf %c %lf %lf %lf %c %d %lf %s %lf\n", 
