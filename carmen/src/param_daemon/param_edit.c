@@ -215,6 +215,7 @@ static gint params_save_delayed(gpointer ptr __attribute__ ((unused))) {
 	else {
 	  status = 1;
 	  update_param_mask[m][p] = 0;
+	  gtk_label_set_pattern(GTK_LABEL(labels[m][p]), "");
 	}
       }
     }
@@ -230,13 +231,34 @@ static gint params_save_delayed(gpointer ptr __attribute__ ((unused))) {
   return FALSE;
 }
 
-static void params_save(GtkWidget *w __attribute__ ((unused)),
-			GdkEvent *event,
-			gpointer pntr __attribute__ ((unused))) {
+static gint radio_key_release(GtkWidget *w __attribute__ ((unused)),
+			      GdkEventKey *event,
+			      gpointer pntr __attribute__ ((unused))) 
+{
+  
+  if ((event->keyval == gdk_keyval_from_name("Enter")) ||
+      (event->keyval == gdk_keyval_from_name("Return")))
+    gtk_idle_add(params_save_delayed, NULL); 
 
-  if ((event->key.keyval == gdk_keyval_from_name("Enter")) ||
-      (event->key.keyval == gdk_keyval_from_name("Return")))
-    gtk_idle_add(params_save_delayed, NULL);
+  return TRUE;
+}
+
+static gint entry_key_release(GtkWidget *w, GdkEventKey *event, 
+			      gpointer pntr __attribute__ ((unused))) 
+{
+  GType type;
+  GtkEntryClass *widget_class;
+  if ((event->keyval == gdk_keyval_from_name("Enter")) ||
+      (event->keyval == gdk_keyval_from_name("Return"))) {
+    gtk_idle_add(params_save_delayed, NULL); 
+    return TRUE;
+  }
+
+  type = g_type_from_name("GtkEntry");
+  widget_class = g_type_class_peek(type);
+  if (widget_class != NULL)
+    return GTK_WIDGET_CLASS(widget_class)->key_release_event(w, event);
+  return TRUE;
 }
 
 static int params_save_as_ini(char *filename) {
@@ -770,11 +792,11 @@ static GtkWidget *notebook_init() {
 			   GTK_SIGNAL_FUNC(radio_button_toggled),
 			   (gpointer) param_id);
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][0]),
-			   "key_press_event", GTK_SIGNAL_FUNC(params_save),
-			   NULL);
+			   "key_release_event", 
+			   GTK_SIGNAL_FUNC(radio_key_release), NULL);
 	gtk_signal_connect(GTK_OBJECT(radio_buttons[m][p][1]),
-			   "key_press_event", GTK_SIGNAL_FUNC(params_save),
-			   NULL);
+			   "key_release_event", 
+			   GTK_SIGNAL_FUNC(radio_key_release), NULL);
 
 	if (expert[m][p]) {
 	  gtk_table_attach_defaults(GTK_TABLE(expert_tables[m]), hbox2, 1, 2, expert_cnt, expert_cnt + 1);
@@ -795,8 +817,8 @@ static GtkWidget *notebook_init() {
 	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "changed",
 			   GTK_SIGNAL_FUNC(entry_changed),
 			   (gpointer) param_id);
-	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "key_press_event",
-			   GTK_SIGNAL_FUNC(params_save), NULL);
+	gtk_signal_connect(GTK_OBJECT(entries[m][p]), "key_release_event",
+			   GTK_SIGNAL_FUNC(entry_key_release), NULL);
 
 	if (expert[m][p]) {
 	  gtk_table_attach_defaults(GTK_TABLE(expert_tables[m]), entries[m][p], 1, 2, expert_cnt, expert_cnt + 1);
