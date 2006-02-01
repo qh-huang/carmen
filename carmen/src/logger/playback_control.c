@@ -27,7 +27,7 @@
 
 #include <carmen/carmen_graphics.h>
 
-GdkGC *rewind_gc, *stop_gc, *play_gc, *ffwd_gc;
+GdkGC *rrwd_gc, *rewind_gc, *stop_gc, *play_gc, *fwd_gc, *ffwd_gc;
 GtkWidget *playback_speed_widget_label, *playback_speed_widget;
 int speed_pending_update = 0;
 double playback_speed = 1.0;
@@ -144,10 +144,10 @@ int main(int argc, char *argv[])
   rrwd = gtk_button_new();
   rrwd_darea = gtk_drawing_area_new();
   gtk_widget_set_usize(rrwd_darea, 30, 40);
-  rewind_gc = gdk_gc_new(window->window);
-  gdk_gc_set_foreground(rewind_gc, &Blue);
-  gdk_gc_set_line_attributes(rewind_gc, 2, GDK_LINE_SOLID,
-			     10, 10);
+  rrwd_gc = gdk_gc_new(window->window);
+  gdk_gc_set_foreground(rrwd_gc, &Blue);
+  gdk_gc_set_line_attributes(rrwd_gc, 2, GDK_LINE_SOLID,
+			     GDK_CAP_BUTT, GDK_JOIN_MITER);
   gtk_signal_connect(GTK_OBJECT(rrwd_darea), "expose_event",
 		     (GtkSignalFunc)Redraw, "RRW");
   gtk_container_add(GTK_CONTAINER(rrwd), rrwd_darea);
@@ -158,6 +158,10 @@ int main(int argc, char *argv[])
   rwd = gtk_button_new();
   rwd_darea = gtk_drawing_area_new();
   gtk_widget_set_usize(rwd_darea, 30, 40);
+  rewind_gc = gdk_gc_new(window->window);
+  gdk_gc_set_foreground(rewind_gc, &Blue);
+  gdk_gc_set_line_attributes(rewind_gc, 2, GDK_LINE_SOLID,
+			     GDK_CAP_BUTT, GDK_JOIN_MITER);
   gtk_signal_connect(GTK_OBJECT(rwd_darea), "expose_event",
 		     (GtkSignalFunc)Redraw, "RW");
   gtk_container_add(GTK_CONTAINER(rwd), rwd_darea);
@@ -194,10 +198,10 @@ int main(int argc, char *argv[])
   gtk_widget_set_usize(fwd_darea, 30, 40);
   gtk_signal_connect(GTK_OBJECT(fwd_darea), "expose_event",
 		     (GtkSignalFunc)Redraw, "FW");
-  ffwd_gc = gdk_gc_new(window->window);
-  gdk_gc_set_foreground(ffwd_gc, &Blue);
-  gdk_gc_set_line_attributes(ffwd_gc, 2, GDK_LINE_SOLID,
-			     10, 10);
+  fwd_gc = gdk_gc_new(window->window);
+  gdk_gc_set_foreground(fwd_gc, &Blue);
+  gdk_gc_set_line_attributes(fwd_gc, 2, GDK_LINE_SOLID,
+			     GDK_CAP_BUTT, GDK_JOIN_MITER);
   gtk_container_add(GTK_CONTAINER(fwd), fwd_darea);
   gtk_box_pack_start(GTK_BOX(hbox), fwd, FALSE, FALSE, 5);
   gtk_signal_connect(GTK_OBJECT(fwd), "clicked",
@@ -206,6 +210,10 @@ int main(int argc, char *argv[])
   ffwd = gtk_button_new();
   ffwd_darea = gtk_drawing_area_new();
   gtk_widget_set_usize(ffwd_darea, 30, 40);
+  ffwd_gc = gdk_gc_new(window->window);
+  gdk_gc_set_foreground(ffwd_gc, &Blue);
+  gdk_gc_set_line_attributes(ffwd_gc, 2, GDK_LINE_SOLID,
+			     GDK_CAP_BUTT, GDK_JOIN_MITER);
   gtk_signal_connect(GTK_OBJECT(ffwd_darea), "expose_event",
 		     (GtkSignalFunc)Redraw, "FFW");
   gtk_container_add(GTK_CONTAINER(ffwd), ffwd_darea);
@@ -275,15 +283,15 @@ void Redraw (GtkWidget *widget __attribute__ ((unused)),
     triangle[1].y = mid_v;
     triangle[2].x = mid_h;
     triangle[2].y = bottom;
-    gdk_draw_polygon(widget->window, rewind_gc, 1, triangle, 3);
+    gdk_draw_polygon(widget->window, rrwd_gc, 1, triangle, 3);
     triangle[0].x = right;
     triangle[0].y = top;
     triangle[1].x = mid_h;
     triangle[1].y = mid_v;
     triangle[2].x = right;
     triangle[2].y = bottom;
-    gdk_draw_polygon(widget->window, rewind_gc, 1, triangle, 3);
-    gdk_draw_line(widget->window, rewind_gc, left, top, left, bottom);
+    gdk_draw_polygon(widget->window, rrwd_gc, 1, triangle, 3);
+    gdk_draw_line(widget->window, rrwd_gc, left, top, left, bottom);
   } else if (strcmp(data, "RW") == 0) {
     triangle[0].x = mid_h;
     triangle[0].y = top;
@@ -317,8 +325,8 @@ void Redraw (GtkWidget *widget __attribute__ ((unused)),
     triangle[1].y = mid_v;
     triangle[2].x = mid_h;
     triangle[2].y = bottom;
-    gdk_draw_polygon(widget->window, ffwd_gc, 1, triangle, 3);
-    gdk_draw_line(widget->window, ffwd_gc, right, top, right, bottom);
+    gdk_draw_polygon(widget->window, fwd_gc, 1, triangle, 3);
+    gdk_draw_line(widget->window, fwd_gc, right, top, right, bottom);
   } else if (strcmp(data, "RESET") == 0) {
     gdk_draw_line(widget->window, stop_gc, left, top, left, bottom);
     gdk_draw_line(widget->window, stop_gc, left, top, right, top);
