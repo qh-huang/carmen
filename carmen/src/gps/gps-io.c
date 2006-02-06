@@ -275,6 +275,7 @@ DEVICE_send( SerialDevice dev, unsigned char *cmd, int len )
 
 static int get_line(char **buffer, size_t *buffer_len, char delim, FILE *fp)
 {
+  int read_result;
   char read_char;
   size_t num_read;
 
@@ -286,9 +287,10 @@ static int get_line(char **buffer, size_t *buffer_len, char delim, FILE *fp)
 
   num_read = 0;
   do {
-    read_char = fgetc(fp);
+    read_result = fgetc(fp);
+    read_char = (char) read_result;
     //fprintf( stderr, "%c",read_char );
-    if (read_char == EOF)
+    if (read_result == EOF)
       return -1;
     (*buffer)[num_read] = read_char;
     num_read++;
