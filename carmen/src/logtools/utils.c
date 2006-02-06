@@ -10,9 +10,9 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <zlib.h>
 #include <stdarg.h>
 
+#include <carmen/carmen.h>
 #include <carmen/logtools.h>
 #include "defines.h"
 
