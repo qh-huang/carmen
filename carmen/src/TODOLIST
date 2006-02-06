@@ -1,3 +1,4 @@
+adapt configure so that it takes care of NO_WAND (for logtools/log2pic)
 clean up ini files
 IPC message size test
 command shell
