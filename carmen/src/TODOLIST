@@ -1,4 +1,4 @@
-adapt configure so that it takes care of NO_WAND (for logtools/log2pic)
+adapt configure so that it takes care of X11/xpm.h (used by camera)
 clean up ini files
 IPC message size test
 command shell
