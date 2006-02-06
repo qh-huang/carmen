@@ -35,11 +35,13 @@
 static int read_string(char *buf, int size, carmen_FILE *fp)
 {
   int i;
+  int result;
   char c;
 
   for (i = 0; i < size || size < 0; i++) {
-    c = carmen_fgetc(fp);
-    if (c == EOF)
+    result = carmen_fgetc(fp);
+    c = (char) result;
+    if ( result == EOF)
       return -1;
     if (c == '\0') {
       if (size >= 0)
@@ -58,10 +60,12 @@ int carmen_map_read_comment_chunk(carmen_FILE *fp)
 {
   char comment_str[100], c;
   char *err, id[1024];
+  int result;
 
   do {
-    c = carmen_fgetc(fp);
-    if(c == EOF)
+    result = carmen_fgetc(fp);
+    c = (char) result;
+    if(result == EOF)
       return -1;
     else if(c == '#') 
       {
