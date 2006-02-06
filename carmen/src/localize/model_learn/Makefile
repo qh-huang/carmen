@@ -2,8 +2,8 @@ include ../../Makefile.conf
 
 SUBDIRS = learn_model
 
-CC = g++
-LINK = g++
+CC = $(CXX)
+LINK = $(CXX)
 
 CFLAGS += 
 IFLAGS += 
