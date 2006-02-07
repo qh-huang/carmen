@@ -151,6 +151,7 @@ if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
 } else {
   print OUTPUT "JAVA_HOME =\n";
+  print OUTPUT "NO_JAVA = 1\n";
 }
 print OUTPUT "INSTALL_PATH = $install_path\n";
 print OUTPUT "ROBOT_TYPES = ".(join ' ', @robots)."\n";
