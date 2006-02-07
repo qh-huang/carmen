@@ -125,6 +125,7 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
 				       carmen_localize_map_p map, int num_readings, 
 				       float *range, double forward_offset, 
 				       double angular_resolution,
+				       double laser_maxrange,
 				       double first_beam_angle,
 				       int backwards);
 

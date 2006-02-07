@@ -232,12 +232,13 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
   carmen_test_alloc(beam_valid);
   
   for(i = 0; i < laser->num_readings; i++) {
-      if (laser->range[i] >= laser->config.maximum_range) 
-	  beam_valid[i] = 0;
-      else
-	  beam_valid[i] = 1;
+    if (laser->range[i] < laser->config.maximum_range &&
+	laser->range[i] < filter->param->max_range) 
+      beam_valid[i] = 1;
+    else
+      beam_valid[i] = 0;
   }
-
+  
   /* do all calculations in map coordinates */
   for(i = 0; i < laser->num_readings; i++) {
     angle = laser->config.start_angle + 
@@ -570,6 +571,7 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
 				       carmen_localize_map_p map, int num_readings, 
 				       float *range, double forward_offset, 
 				       double angular_resolution,
+				       double laser_maxrange,
 				       double first_beam_angle,
 				       int backwards)
 {
@@ -607,7 +609,8 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
       laser_y[i] = -laser_y[i];
     }
     if((i % filter->param->laser_skip) == 0 && 
-       range[i] < filter->param->max_range)
+       range[i] < filter->param->max_range && 
+       range[i] < laser_maxrange)
       filter->laser_mask[i] = 1;
     else
       filter->laser_mask[i] = 0;
@@ -778,6 +781,7 @@ void carmen_localize_run(carmen_localize_particle_filter_p filter, carmen_locali
     carmen_localize_incorporate_laser(filter, map, laser->num_readings, 
 				      laser->range, forward_offset, 
 				      laser->config.angular_resolution,
+				      laser->config.maximum_range,
 				      laser->config.start_angle,
 				      backwards);
     
