@@ -44,7 +44,11 @@ main( int argc, char *argv[] )
   carmen_point_t                  old_pos = {0.0, 0.0, 0.0};
   carmen_point_t                  old_corrpos = {0.0, 0.0, 0.0};
   int use_flaser = 0;
-  
+
+  carmen_FILE stdout_carmen;
+  stdout_carmen.compressed = 0;  
+  stdout_carmen.fp = stdout;
+
   if (argc < 2) {
     print_usage();
     exit(1);
@@ -135,7 +139,7 @@ main( int argc, char *argv[] )
 
       l.laser_pose = corrpos;
 
-      carmen_logwrite_write_robot_laser(&l,1,(carmen_FILE*)stdout, time);
+      carmen_logwrite_write_robot_laser(&l,1,&stdout_carmen, time);
       fflush(stdout);
    
       old_pos     = pos;
