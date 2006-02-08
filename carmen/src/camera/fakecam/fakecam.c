@@ -1,26 +1,35 @@
 #include <carmen/carmen.h>
 #include <assert.h>
 #include "img3.xpm"
-#include <X11/xpm.h>
 #include "../camera_hw_interface.h"
 
 static carmen_camera_image_t saved_image;
+
+int lookup_colour(char *xpm_ptr, char *colour_table[], int num_colours)
+{
+  int i;
+
+  for (i = 0; i < num_colours; i++) {
+    if (strncmp(xpm_ptr, colour_table[i], 2) == 0) 
+      return strtol(colour_table[i]+6, NULL, 16);
+  }
+  return 0;
+}
+
 
 carmen_camera_image_t *carmen_camera_start(int argc __attribute__ ((unused)), 
 					   char **argv __attribute__ ((unused)))
 {
   carmen_camera_image_t *image;
-  XpmImage xpm_image;
-  XpmInfo xpm_info;  
-  unsigned int *xpm_ptr;
+  char *xpm_ptr;
   char *image_ptr;
-  int i;
+  int x, y;
   long int colour;
+  int num_colours;
+  
+  sscanf(img3[0], "%d %d %d", &(saved_image.width), &(saved_image.height),
+	 &num_colours);
 
-  XpmCreateXpmImageFromData(img3, &xpm_image, &xpm_info);
-
-  saved_image.width = xpm_image.width;
-  saved_image.height = xpm_image.height;
   saved_image.bytes_per_pixel = 3;
 
   saved_image.image_size = saved_image.width*saved_image.height*
@@ -31,19 +40,18 @@ carmen_camera_image_t *carmen_camera_start(int argc __attribute__ ((unused)),
   saved_image.image = (char *)calloc(saved_image.image_size, sizeof(char));
   carmen_test_alloc(saved_image.image);
 
-  xpm_ptr = xpm_image.data;
   image_ptr = saved_image.image;
-
-  for (i = 0; i < saved_image.width*saved_image.height; i++) {
-    assert ((unsigned int)*xpm_ptr < xpm_image.ncolors);
-    colour = strtol(xpm_image.colorTable[*xpm_ptr].c_color+1, NULL, 16);
-    
-    image_ptr[0] = (colour >> 16) & 0xFF;
-    image_ptr[1] = (colour >> 8) & 0xFF;
-    image_ptr[2] = colour & 0xFF;
-
-    xpm_ptr++;
-    image_ptr += 3;
+  for (y = 0; y < saved_image.height; y++) {
+    xpm_ptr = img3[num_colours+y+1];
+    for (x = 0; x < saved_image.width; x++) {    
+      colour = lookup_colour(xpm_ptr, img3+1, num_colours);    
+      image_ptr[0] = (colour >> 16) & 0xFF;
+      image_ptr[1] = (colour >> 8) & 0xFF;
+      image_ptr[2] = colour & 0xFF;
+      
+      xpm_ptr += 2;
+      image_ptr += 3;
+    }
   }
   
   image = (carmen_camera_image_t *)calloc(1, sizeof(carmen_camera_image_t));

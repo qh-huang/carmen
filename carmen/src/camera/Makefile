@@ -9,7 +9,7 @@ ifeq ($(shell uname -p),x86_64)
 LFLAGS += -L/usr/lib64 -L/usr/X11/lib64
 endif
 
-LFLAGS += -lparam_interface -lipc -lglobal -L/usr/X11R6/lib -lXpm
+LFLAGS += -lparam_interface -lipc -lglobal 
 SOURCES = camera_main.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h
 PUBLIC_LIBRARIES = libcamera_interface.a
