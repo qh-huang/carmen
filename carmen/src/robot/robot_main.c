@@ -103,7 +103,7 @@ void carmen_robot_update_skew(int data_type, int *count, double time,
     *count = CARMEN_ROBOT_ESTIMATES_CONVERGE;
   
   if(*count <= CARMEN_ROBOT_ESTIMATES_CONVERGE)
-    *count++;
+    (*count)++;
 
   carmen_running_average_add(data_type, carmen_get_time() - time);
 }
