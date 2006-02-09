@@ -5,9 +5,21 @@
 
 <table>
 <tr>
+<td valign=top>02/2006<td>
+<td width=20>&nbsp;</td>
+<td>Improved gps support (nmea-gga and nmea-rmc).</td>
+</tr>
+<!-- ---- -->
+<tr>
+<td valign=top>02/2006<td>
+<td width=20>&nbsp;</td>
+<td>From now on, Carmen uses gtk2.</td>
+</tr>
+<!-- ---- -->
+<tr>
 <td valign=top>01/2006<td>
 <td width=20>&nbsp;</td>
-<td><b>New Carmen website at http://carmen.sourceforge.net</td>
+<td><b>New Carmen website</b> at <a href="http://carmen.sourceforge.net">http://carmen.sourceforge.net</a>.</td>
 </tr>
 <!-- ---- -->
 <tr>
