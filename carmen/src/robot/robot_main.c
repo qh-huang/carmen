@@ -37,6 +37,8 @@ carmen_robot_config_t carmen_robot_config;
 carmen_base_odometry_message carmen_robot_latest_odometry;
 carmen_base_odometry_message carmen_robot_odometry[CARMEN_ROBOT_MAX_READINGS];
 double carmen_robot_collision_avoidance_frequency = 10.0;
+double carmen_robot_sensor_time_of_last_update = -1;
+
 
 static char *robot_host;
 static double turn_before_driving_if_heading_bigger_than = M_PI/2;
@@ -56,7 +58,7 @@ static double control_lookahead_approach_dist = 0.3;
 static double theta_gain;
 static double theta_d_gain;
 static double disp_gain;
-static double robot_timeout = 10.0;
+static double robot_sensor_timeout = 3.0;
 static double command_tv = 0, command_rv = 0;
 static double time_of_last_command;
 
@@ -622,8 +624,8 @@ static int read_robot_parameters(int argc, char **argv)
      &carmen_robot_config.allow_rear_motion, 1, NULL},
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &use_laser, 1, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, NULL},
-    {"robot", "timeout", CARMEN_PARAM_DOUBLE,
-     &robot_timeout, 1, NULL},
+    {"robot", "sensor_watchdog_timeout", CARMEN_PARAM_DOUBLE,
+     &robot_sensor_timeout, 1, NULL},
     {"robot", "collision_avoidance", CARMEN_PARAM_ONOFF, 
      &collision_avoidance, 1, NULL},
     {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE,
@@ -677,11 +679,11 @@ int carmen_robot_start(int argc, char **argv)
 
 int carmen_robot_run(void)
 {
-  if (carmen_get_time() - time_of_last_command > robot_timeout) {
-    if (command_tv != 0.0) {
-      carmen_warn("Command timed out. Stopping robot.\n");
-      carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
-    }
+  if (carmen_robot_sensor_time_of_last_update >= 0 && 
+      carmen_get_time() - carmen_robot_sensor_time_of_last_update > 
+      robot_sensor_timeout) {
+    carmen_warn("Sensor timed out. Stopping robot.\n");
+    carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
   } 
   else if (following_vector) 
     follow_vector();

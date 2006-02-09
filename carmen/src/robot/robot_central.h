@@ -64,11 +64,8 @@ extern carmen_robot_config_t carmen_robot_config;
 extern char *carmen_robot_host;
 
 extern double carmen_robot_collision_avoidance_frequency;
+extern double carmen_robot_sensor_time_of_last_update;
   
- /* cyrill: this leads to an error (gcc 4.0.2, SuSE 10.0), since */
- /* carmen_robot_laser_bearing_skip_rate is declared static. */
-    
- /* extern double carmen_robot_laser_bearing_skip_rate; */
 
 double carmen_robot_get_fraction(double timestamp, double skew,
 				 int *low, int *high);

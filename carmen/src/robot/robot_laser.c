@@ -246,12 +246,13 @@ laser_frontlaser_handler(void)
 
   robot_front_laser.config = front_laser.config;
 
+  carmen_robot_sensor_time_of_last_update = carmen_get_time();
 
-  if (carmen_get_time() - time_since_last_process < 
+  if (carmen_robot_sensor_time_of_last_update - time_since_last_process < 
       1.0/carmen_robot_collision_avoidance_frequency)
     return;
 
-  time_since_last_process = carmen_get_time();
+  time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
   safety_distance = 
     carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist + 
@@ -426,11 +427,13 @@ laser_rearlaser_handler(void)
 
   robot_rear_laser.config = rear_laser.config;
 
-  if (carmen_get_time() - time_since_last_process < 
+  carmen_robot_sensor_time_of_last_update = carmen_get_time();
+
+  if (carmen_robot_sensor_time_of_last_update - time_since_last_process < 
       1.0/carmen_robot_collision_avoidance_frequency)
     return;
 
-  time_since_last_process = carmen_get_time();
+  time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
   safety_distance = 
     carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist + 

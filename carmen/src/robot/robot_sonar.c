@@ -150,7 +150,12 @@ static void sonar_handler(void)
 	 sizeof(carmen_point_t));
   robot_sonar.timestamp = base_sonar.timestamp;
   robot_sonar.sensor_angle=base_sonar.sensor_angle;
-  strncpy(robot_sonar.host, base_sonar.host, 10);
+
+  robot_sonar.host =  base_sonar.host;
+ 
+
+  carmen_robot_sensor_time_of_last_update = carmen_get_time();
+
 
   if (collision_avoidance) {
     safety_distance = 
