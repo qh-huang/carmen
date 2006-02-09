@@ -5,8 +5,6 @@
 <li>How to get the latest development version of carmen?</li>
 
 <ul>
-	<li> cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/carmen login </li>
-	<li> You will be aked for password, use: anonymous</li>
 	<li> cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/carmen co -P carmen</li>
 </ul>
 
