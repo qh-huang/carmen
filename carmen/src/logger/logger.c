@@ -32,6 +32,32 @@
 carmen_FILE *outfile = NULL;
 double logger_starttime;
 
+static int log_odometry = 1;
+static int log_laser	= 1;
+static int log_robot_laser = 1;
+static int log_localize = 1;
+static int log_simulator = 1;
+static int log_params = 1;
+static int log_gps = 1;
+
+void get_logger_params(int argc, char** argv) {
+
+  int num_items;
+
+  carmen_param_t param_list[] = {
+    {"logger", "odometry",    CARMEN_PARAM_ONOFF, &log_odometry, 0, NULL},
+    {"logger", "laser",       CARMEN_PARAM_ONOFF, &log_laser, 0, NULL},
+    {"logger", "robot_laser", CARMEN_PARAM_ONOFF, &log_robot_laser, 0, NULL},
+    {"logger", "localize",    CARMEN_PARAM_ONOFF, &log_localize, 0, NULL},
+    {"logger", "params",      CARMEN_PARAM_ONOFF, &log_params, 0, NULL},
+    {"logger", "simulator",   CARMEN_PARAM_ONOFF, &log_simulator, 0, NULL},
+    {"logger", "gps",         CARMEN_PARAM_ONOFF, &log_gps, 0, NULL}
+  };
+
+  num_items = sizeof(param_list)/sizeof(param_list[0]);
+  carmen_param_install_params(argc, argv, param_list, num_items);
+}
+
 void get_all_params(void)
 {
   char **variables, **values, **modules;
@@ -212,48 +238,72 @@ int main(int argc, char **argv)
     carmen_die("Error: Could not open file %s for writing.\n", filename);
   carmen_logwrite_write_header(outfile);
 
-  get_all_params();
+
+  get_logger_params(argc, argv);
+
+  if  ( !(log_odometry && log_laser && log_robot_laser ) )
+    carmen_warn("\nWARNING: You are neither logging laser nor odometry messages!\n");
+  
+
+
+  if (log_params)
+    get_all_params();
+
   register_ipc_messages();
 
-  carmen_base_subscribe_odometry_message(NULL, (carmen_handler_t)
-					 base_odometry_handler, 
-					 CARMEN_SUBSCRIBE_ALL);
 
-  carmen_robot_subscribe_frontlaser_message(NULL, (carmen_handler_t)
-					    robot_frontlaser_handler, 
-					    CARMEN_SUBSCRIBE_ALL);
-  carmen_robot_subscribe_rearlaser_message(NULL, (carmen_handler_t)
-					   robot_rearlaser_handler, 
+  if (log_odometry) 
+    carmen_base_subscribe_odometry_message(NULL, (carmen_handler_t)
+					   base_odometry_handler, 
 					   CARMEN_SUBSCRIBE_ALL);
 
-  carmen_laser_subscribe_laser1_message(NULL, (carmen_handler_t)
-					laser_laser1_handler, 
-					CARMEN_SUBSCRIBE_ALL);
-  carmen_laser_subscribe_laser2_message(NULL, (carmen_handler_t)
-					laser_laser2_handler, 
-					CARMEN_SUBSCRIBE_ALL);
-  carmen_laser_subscribe_laser3_message(NULL, (carmen_handler_t)
-					laser_laser3_handler, 
-					CARMEN_SUBSCRIBE_ALL);
-  carmen_laser_subscribe_laser4_message(NULL, (carmen_handler_t)
-					laser_laser4_handler, 
-					CARMEN_SUBSCRIBE_ALL);
-
-  carmen_localize_subscribe_globalpos_message(NULL, (carmen_handler_t)
-					      localize_handler,
+  if (log_robot_laser) {
+    carmen_robot_subscribe_frontlaser_message(NULL, (carmen_handler_t)
+					      robot_frontlaser_handler, 
 					      CARMEN_SUBSCRIBE_ALL);
+    carmen_robot_subscribe_rearlaser_message(NULL, (carmen_handler_t)
+					     robot_rearlaser_handler, 
+					     CARMEN_SUBSCRIBE_ALL);
+  }
+
+  if (log_laser) {
+    carmen_laser_subscribe_laser1_message(NULL, (carmen_handler_t)
+					  laser_laser1_handler, 
+					  CARMEN_SUBSCRIBE_ALL);
+    carmen_laser_subscribe_laser2_message(NULL, (carmen_handler_t)
+					  laser_laser2_handler, 
+					  CARMEN_SUBSCRIBE_ALL);
+    carmen_laser_subscribe_laser3_message(NULL, (carmen_handler_t)
+					  laser_laser3_handler, 
+					  CARMEN_SUBSCRIBE_ALL);
+    carmen_laser_subscribe_laser4_message(NULL, (carmen_handler_t)
+					  laser_laser4_handler, 
+					  CARMEN_SUBSCRIBE_ALL);
+  }
+
+  if (log_localize) {
+    carmen_localize_subscribe_globalpos_message(NULL, (carmen_handler_t)
+						localize_handler,
+						CARMEN_SUBSCRIBE_ALL);
+  }
+
+  if (log_simulator) {
+
+    carmen_simulator_subscribe_truepos_message(NULL, (carmen_handler_t)  
+					       carmen_simulator_truepos_handler,
+					       CARMEN_SUBSCRIBE_ALL);
+  }
   
-  carmen_simulator_subscribe_truepos_message(NULL, (carmen_handler_t)  
-					     carmen_simulator_truepos_handler,
-                                             CARMEN_SUBSCRIBE_ALL);
   
-  carmen_gps_subscribe_nmea_message( NULL,
-				     (carmen_handler_t) ipc_gps_gpgga_handler,
-				     CARMEN_SUBSCRIBE_ALL );
-  
-  carmen_gps_subscribe_nmea_rmc_message( NULL,
-					 (carmen_handler_t) ipc_gps_gprmc_handler,
-					 CARMEN_SUBSCRIBE_ALL );
+  if (log_gps) {
+    carmen_gps_subscribe_nmea_message( NULL,
+				       (carmen_handler_t) ipc_gps_gpgga_handler,
+				       CARMEN_SUBSCRIBE_ALL );
+    
+    carmen_gps_subscribe_nmea_rmc_message( NULL,
+					   (carmen_handler_t) ipc_gps_gprmc_handler,
+					   CARMEN_SUBSCRIBE_ALL );
+  }
 
   signal(SIGINT, shutdown_module);
   logger_starttime = carmen_get_time();
