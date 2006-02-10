@@ -580,7 +580,7 @@ read_parameters(int argc, char *argv[],
      1,NULL} };
 
   carmen_param_t param_list_front_laser[] = {
-    {"robot", "front_laser_max", CARMEN_PARAM_DOUBLE, 
+    {"simulator", "front_laser_maxrange", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.max_range), 1, NULL},
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.offset), 1, NULL},
@@ -598,7 +598,7 @@ read_parameters(int argc, char *argv[],
      &(config->front_laser_config.variance), 1, NULL}};
 
   carmen_param_t param_list_rear_laser[] = {
-    {"robot", "rear_laser_max", CARMEN_PARAM_DOUBLE, 
+    {"simulator", "rear_laser_maxrange", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.max_range), 1, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.offset), 1, NULL},

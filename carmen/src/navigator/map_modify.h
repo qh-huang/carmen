@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-  void map_modify_update(float *range, int num_readings, 
+  void map_modify_update(carmen_robot_laser_message *laser_msg, 
 			 carmen_navigator_config_t *navigator_config,
 			 carmen_world_point_p world_point, 
 			 carmen_map_p true_map, carmen_map_p modify_map);

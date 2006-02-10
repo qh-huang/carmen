@@ -211,23 +211,28 @@ trace_laser(int x_1, int y_1, int x_2, int y_2, carmen_map_p true_map,
 {
   carmen_bresenham_param_t params;
   int X, Y;
-  double map_value;
+  double true_map_value;
+  double modified_map_value;
 
   carmen_get_bresenham_parameters(x_1, y_1, x_2, y_2, &params);
-
+  
   do {
     carmen_get_current_point(&params, &X, &Y);
     if (!is_in_map(X, Y, modify_map))
       break;
-    map_value = true_map->map[X][Y];
-    if (!is_empty(map_value)) 
+    true_map_value = true_map->map[X][Y];
+    modified_map_value = modify_map->map[X][Y];
+    
+    if (!is_empty(modified_map_value)  &&   is_empty(true_map_value)) 
       add_clear_point(X, Y, true_map, modify_map);
   } while (carmen_get_next_point(&params));
 }
 
 void 
-map_modify_update(float *range, int num_readings, carmen_navigator_config_t *config,
-		  carmen_world_point_p world_point, carmen_map_p true_map, 
+map_modify_update(carmen_robot_laser_message *laser_msg, 
+		  carmen_navigator_config_t *config,
+		  carmen_world_point_p world_point, 
+		  carmen_map_p true_map, 
 		  carmen_map_p modify_map) 
 {
   int index;
@@ -237,6 +242,11 @@ map_modify_update(float *range, int num_readings, carmen_navigator_config_t *con
   int increment;
   carmen_map_point_t map_point;  
   int count;
+  
+  int maxrange_beam;
+
+  if (!config->map_update_freespace &&  !config->map_update_obstacles)
+    return;
 
   if (true_map == NULL || modify_map == NULL)
     {
@@ -257,44 +267,66 @@ map_modify_update(float *range, int num_readings, carmen_navigator_config_t *con
 
   update_existing_data(true_map, modify_map);
 
-  if (num_readings < config->num_lasers_to_use)
-    {
-      increment = 1;
-      separation = carmen_normalize_theta(M_PI / (num_readings+1));
-    } 
-  else 
-    {
-      increment = num_readings / config->num_lasers_to_use;
-      separation = carmen_normalize_theta(M_PI / (config->num_lasers_to_use+1));
+  if (laser_msg->num_readings < config->num_lasers_to_use)   {
+    increment = 1;
+    separation = laser_msg->config.angular_resolution;
+  } 
+  else  {
+    increment = laser_msg->num_readings / config->num_lasers_to_use;
+    if (increment != 1) 
+      separation = carmen_normalize_theta(laser_msg->config.fov / (config->num_lasers_to_use+1));
+    else
+      separation = laser_msg->config.angular_resolution;
+  }
+
+  angle = carmen_normalize_theta(world_point->pose.theta + 
+				 laser_msg->config.start_angle);
+  carmen_world_to_map(world_point, &map_point); 
+  
+  count = 0;
+  for (index = 0; index < laser_msg->num_readings; index += increment) {    
+
+    if (laser_msg->range[index] < laser_msg->config.maximum_range  )
+      maxrange_beam = 0;
+    else
+      maxrange_beam = 1;
+
+    if (config->map_update_freespace) {
+
+      dist = laser_msg->range[index] - modify_map->config.resolution;
+      if (dist < 0)
+	dist = 0;
+      if (dist > config->map_update_radius)
+	dist = config->map_update_radius;
+      
+      laser_x = carmen_round(map_point.x + (cos(angle)*dist)/
+			     modify_map->config.resolution);
+      laser_y = carmen_round(map_point.y + (sin(angle)*dist)/
+			     modify_map->config.resolution);    
+      
+      trace_laser(map_point.x, map_point.y, laser_x, laser_y, true_map, modify_map);
     }
 
-  angle = carmen_normalize_theta(world_point->pose.theta + carmen_degrees_to_radians(-90));
-  carmen_world_to_map(world_point, &map_point); 
+    if (config->map_update_obstacles) {
 
-  count = 0;
-  for (index = 0; index < num_readings; index += increment) {    
-    dist = range[index] - modify_map->config.resolution;
-    if (dist < 0)
-      dist = 0;
-    if (dist > config->max_collision_range)
-      dist = config->max_collision_range;
+      // add obstacle only if it is not a maxrange reading!
+      if (!maxrange_beam) {
+	
+	dist = laser_msg->range[index];
+	
+	
+	laser_x = carmen_round(map_point.x + (cos(angle)*dist)/
+			       modify_map->config.resolution);
+	laser_y = carmen_round(map_point.y + (sin(angle)*dist)/
+			       modify_map->config.resolution);
 
-    laser_x = carmen_round(map_point.x + (cos(angle)*dist)/
-			   modify_map->config.resolution);
-    laser_y = carmen_round(map_point.y + (sin(angle)*dist)/
-			   modify_map->config.resolution);    
-    //    trace_laser(map_point.x, map_point.y, laser_x, laser_y, true_map, modify_map);
-
-    dist = range[index];
-    laser_x = carmen_round(map_point.x + (cos(angle)*dist)/
-			   modify_map->config.resolution);
-    laser_y = carmen_round(map_point.y + (sin(angle)*dist)/
-			   modify_map->config.resolution);
-    if (is_in_map(laser_x, laser_y, modify_map) && 
-	dist < config->max_collision_range &&
-	dist < (config->max_range - 2*modify_map->config.resolution)) {
-      count++;
-      add_filled_point(laser_x, laser_y, true_map, modify_map);
+	if (is_in_map(laser_x, laser_y, modify_map) && 
+	    dist < config->map_update_radius &&
+	    dist < (laser_msg->config.maximum_range - 2*modify_map->config.resolution)) {
+	  count++;
+	  add_filled_point(laser_x, laser_y, true_map, modify_map);
+	}
+      }
     }
     angle += separation;
   }

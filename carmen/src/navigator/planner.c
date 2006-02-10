@@ -462,8 +462,9 @@ carmen_planner_update_map(carmen_robot_laser_message *laser_msg,
   world_point.pose.theta = laser_msg->laser_pose.theta;
   world_point.map = carmen_planner_map;
 
-  map_modify_update(laser_msg->range, laser_msg->num_readings, nav_conf, 
-		    &world_point, true_map, carmen_planner_map);
+  /// CYRILL: HIER UEBERGABE AENDERN! (laser cfg)
+
+  map_modify_update(laser_msg, nav_conf, &world_point, true_map, carmen_planner_map);
 
   carmen_world_to_map(&world_point, &map_point);
   carmen_conventional_build_costs(robot_conf, &map_point, nav_conf);

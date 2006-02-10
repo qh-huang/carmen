@@ -64,7 +64,7 @@ carmen_linemapping_get_params( int argc, char **argv,
 {
   carmen_param_t param_list[] = {
     
-    {"linemapping", "laser_max_length", CARMEN_PARAM_DOUBLE, 
+    {"linemapping", "laser_maxrange", CARMEN_PARAM_DOUBLE, 
      &param->laser_max_length, 0, NULL},
     {"linemapping", "sam_tolerance", CARMEN_PARAM_DOUBLE, 
      &param->sam_tolerance, 0, NULL},

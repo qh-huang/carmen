@@ -68,7 +68,7 @@ static void initialize_people_graphics(int argc, char *argv[])
   gtk_container_border_width (GTK_CONTAINER (main_box), 0); 
   gtk_container_add (GTK_CONTAINER (window), main_box);
 
-  map_view = carmen_map_graphics_new_viewer(400, 400, 30.0);
+  map_view = carmen_map_graphics_new_viewer(400, 400, 100.0);
   gtk_box_pack_start(GTK_BOX (main_box), map_view->map_box, FALSE, FALSE, 0);
 
   assert (map != NULL);
@@ -106,12 +106,13 @@ robot_frontlaser_handler(carmen_robot_laser_message *msg)
   world_point.pose.theta = msg->laser_pose.theta;
   world_point.map = map;
 
-  nav_conf.max_range = 50.0;
-  nav_conf.max_collision_range = 3.0;
-  nav_conf.num_lasers_to_use = 360;
+  nav_conf.map_update_radius = 3.0;
+  nav_conf.num_lasers_to_use = 361;
+  nav_conf.map_update_freespace = 1;
+  nav_conf.map_update_obstacles = 1;
+
   
-  map_modify_update(msg->range, msg->num_readings, &nav_conf, 
-		    &world_point, true_map, map);
+  map_modify_update(msg, &nav_conf, &world_point, true_map, map);
 
   carmen_map_graphics_modify_map(map_view, map->complete_map, 0);
   carmen_map_graphics_adjust_scrollbars(map_view, &world_point);    

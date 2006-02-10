@@ -279,16 +279,16 @@ void carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
   resolution = carmen_planner_map->config.resolution;
 
   if (robot_posn && navigator_conf) {
-    x_start = robot_posn->x - navigator_conf->max_collision_range/
+    x_start = robot_posn->x - navigator_conf->map_update_radius/
       robot_posn->map->config.resolution;
     x_start = carmen_clamp(0, x_start, x_size);
-    y_start = robot_posn->y - navigator_conf->max_collision_range/
+    y_start = robot_posn->y - navigator_conf->map_update_radius/
       robot_posn->map->config.resolution;
     y_start = carmen_clamp(0, y_start, y_size);
-    x_end = robot_posn->x + navigator_conf->max_collision_range/
+    x_end = robot_posn->x + navigator_conf->map_update_radius/
       robot_posn->map->config.resolution;
     x_end = carmen_clamp(0, x_end, x_size);
-    y_end = robot_posn->y + navigator_conf->max_collision_range/
+    y_end = robot_posn->y + navigator_conf->map_update_radius/
       robot_posn->map->config.resolution;
     y_end = carmen_clamp(0, y_end, y_size);
     

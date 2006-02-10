@@ -175,7 +175,8 @@ robot_frontlaser_handler(void)
      can't integrate laser data into the map.
   */
 
-  if (globalpos.timestamp <= 0 || !nav_config.update_map ||
+  if (globalpos.timestamp <= 0 || 
+      !(nav_config.map_update_obstacles || nav_config.map_update_freespace)    ||
       !autonomous_status) 
     return;
 
@@ -197,7 +198,8 @@ robot_rearlaser_handler(void)
      can't integrate laser data into the map.
   */
 
-  if (globalpos.timestamp <= 0 || !nav_config.update_map) 
+  if (globalpos.timestamp <= 0 || 
+      !(nav_config.map_update_obstacles || nav_config.map_update_freespace) ) 
     return;
 
   carmen_localize_correct_laser(&rearlaser, &globalpos);
@@ -387,19 +389,19 @@ read_parameters(int argc, char **argv)
     {"robot", "curvature", CARMEN_PARAM_DOUBLE, 
      &robot_config.curvature, 1, NULL},
 
-    {"navigator", "max_collision_range", CARMEN_PARAM_INT, 
-     &nav_config.max_collision_range, 1, NULL},
     {"navigator", "goal_size", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_size, 1, NULL},
     {"navigator", "goal_theta_tolerance", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_theta_tolerance, 1, NULL},
 
-    {"navigator", "num_lasers", CARMEN_PARAM_INT, 
+    {"navigator", "map_update_radius", CARMEN_PARAM_DOUBLE, 
+     &nav_config.map_update_radius, 1, NULL},
+    {"navigator", "map_update_num_laser_beams", CARMEN_PARAM_INT, 
      &nav_config.num_lasers_to_use, 1, NULL},
-    {"navigator", "update_map", CARMEN_PARAM_ONOFF, 
-     &nav_config.update_map, 1, NULL},
-    {"navigator", "max_laser_range", CARMEN_PARAM_INT, 
-     &nav_config.max_range, 1, NULL},
+    {"navigator", "map_update_obstacles", CARMEN_PARAM_ONOFF, 
+     &nav_config.map_update_obstacles, 1, NULL},
+    {"navigator", "map_update_freespace", CARMEN_PARAM_ONOFF, 
+     &nav_config.map_update_freespace, 1, NULL},
     {"navigator", "replan_frequency", CARMEN_PARAM_DOUBLE, 
      &nav_config.replan_frequency, 1, NULL},
     {"navigator", "smooth_path", CARMEN_PARAM_ONOFF, 

@@ -624,7 +624,7 @@ static int read_robot_parameters(int argc, char **argv)
      &carmen_robot_config.allow_rear_motion, 1, NULL},
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &use_laser, 1, NULL},
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, NULL},
-    {"robot", "sensor_watchdog_timeout", CARMEN_PARAM_DOUBLE,
+    {"robot", "sensor_timeout", CARMEN_PARAM_DOUBLE,
      &robot_sensor_timeout, 1, NULL},
     {"robot", "collision_avoidance", CARMEN_PARAM_ONOFF, 
      &collision_avoidance, 1, NULL},

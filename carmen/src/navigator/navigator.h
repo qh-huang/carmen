@@ -37,9 +37,9 @@ extern "C" {
   typedef struct {
     int num_lasers_to_use;
     int use_fast_laser;
-    int max_range;
-    int max_collision_range;
-    int update_map;
+    double map_update_radius;
+    int map_update_obstacles;
+    int map_update_freespace;
     double replan_frequency;
     int smooth_path;
     double goal_size;
