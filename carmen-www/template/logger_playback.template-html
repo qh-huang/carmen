@@ -45,6 +45,10 @@ The logfile will begin with the following message, which explains the format of 
 #   num_readings [range_readings] laser_pose_x laser_pose_y laser_pose_theta
 #   robot_pose_x robot_pose_y robot_pose_theta 
 #   laser_tv laser_rv forward_safety_dist side_safty_dist
+# NMEAGGA gpsnr utc latitude lat_orient longitude long_orient gps_quality 
+#   num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age
+# NMEARMC gpsnr validity utc latitude lat_orient longitude long_orient 
+#   speed course variation var_dir date
 # 
 # OLD LOG MESSAGES: 
 # (old) # FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta
