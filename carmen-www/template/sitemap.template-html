@@ -43,7 +43,7 @@
 <a href="using_carmen.html">Running Carmen</a>
 <ul>
    <a href="map_editor.html">Map Editor</a><br>
-   <a href="navigator_panel.html">Navigator Panel</a><br>
+   <a href="navigatorgui.html">Navigator GUI</a><br>
    <a href="http://www.cs.cmu.edu/~ipc">IPC</a><br>
    <a href="other_programs.html">Other Carmen Programs</a><br>
    <ul>

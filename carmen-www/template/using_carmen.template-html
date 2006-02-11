@@ -19,7 +19,7 @@ This program plays back a log file and send the stored messages to the other mod
 <li><a href="map_editor.html">map_editor</a><br>
 This program allows for creating or editting maps for use by Carmen.
 
-<li><a href="navigator_panel.html">navigator_panel</a><br>
+<li><a href="navigatorgui.html">navigatorgui</a><br>
 This program provides a graphic interface which shows the robot's position and destiation on the pre-built map and allows setting of the current position and orientation, and selection of destinations.
 
 <li><a href="config_param.html#edit">param_edit</a><br>
@@ -107,9 +107,9 @@ The command above will start the param_deamon such that it serves parameters for
    cd carmen/bin ; ./simulator
 </pre>
 <p>
-4. In window 4, start the navigator_panel program<p>
+4. In window 4, start the navigatorgui program<p>
 <pre>
-   cd carmen/bin ; ./navigator_panel
+   cd carmen/bin ; ./navigatorgui
 </pre>
 This will open a graphic display. Place the simulated robot in the map by left-clicking on the "Place Simulator" button, and then left-clicking once on the desired location on the map. Then move the cursor away from the blue dot that appears, in the direction you wish the robot to face. A blue line appears between the cursor (now two curved arrows) and the simulated robot, indicating the facing of the robot. Left-click again to fix the facing of the robot.
 <p>
@@ -276,17 +276,17 @@ This begins as if you were teleoperating the robot, but with a change in the par
 </pre>
 9. In window 9, Run the path planner graphics module<p>
 <pre>
-   cd carmen/bin ; ./navigator_panel
+   cd carmen/bin ; ./navigatorgui
 </pre>
 Here is more detail on the new programs.<p>
 <ul>
 <li>localize <br>
 This program takes sensor data from base_services and compares it to the map to localize the robot on that map.
 
-<li>navigate <br>
+<li>navigator <br>
 This program plans the path from the robot's current location to its destination and tells base_services how to move the robot.
 
-<li>navigate_panel <br>
+<li>navigatorgui <br>
 This program provides a user interface for telling the robot where it is and where to go. To set the robot position on the map display, simply left-click the "Place Robot" button, then left-click the desired location on the map. The cursor will change into a pair of curved arrows, and a red dot appears ti indicate the robot location. A line between the dot and the cursor indicates the direction the robot's orientation. Left-click again to fix the robot orientation. If you are using a simulated robot, this will also place and orient the simulated robot. To separate the simulated robot from it's perceived location, you must set the simulator location after setting the robot location.
 </ul>
 <p>

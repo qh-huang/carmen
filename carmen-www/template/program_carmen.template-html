@@ -874,7 +874,7 @@ carmen_navigator_query_status(carmen_navigator_status_message **status);
 <p>
 The <tt>autonomous</tt> field is 1 if the robot is currently trying to
 autonomously navigate to the goal, perhaps because a user clicked the
-<tt>Autonomous</tt> button in the navigator_panel display. When the robot
+<tt>Autonomous</tt> button in the navigatorgui display. When the robot
 changes to non-autonomous mode, a
 <tt>carmen_navigator_autonomous_stopped_message</tt> is emitted (see below), and
 contains the reason for changing to non-autonomous mode.
@@ -955,7 +955,7 @@ reached the goal destination (that is, is within the
 <tt>robot_approach_dist</tt> of the goal).<p></li>
 
 <li> <tt>CARMEN_NAVIGATOR_USER_STOPPED_v</tt> - This means that some other
-process (such as the navigator_panel) published a
+process (such as the navigatorgui) published a
 <tt>carmen_navigator_stop_message</tt>.<p></li>
 
 <li> <tt>CARMEN_NAVIGATOR_UNKNOWN_v</tt> - This means some (unknown) reason

@@ -71,7 +71,7 @@ are SUBSTANTIALLY more accurate than before.
 <li>Global localization is potentially faster and more accurate.
 <li>There is a new option called use_scanmatching, which uses
 gradient descent to fine-tune the output of localize.
-<li>Localizegraph is no more.  navigator_panel does everything you might
+<li>Localizegraph is no more.  navigatorgui does everything you might
 need.
 </ul>
 
