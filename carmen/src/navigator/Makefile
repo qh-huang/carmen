@@ -34,8 +34,8 @@ endif
 
 SOURCES += navigator_graphics.c navigator_panel.c test_map_modify.c \
 	test_panel_config.c 
-PUBLIC_BINARIES += navigator_gui test_gui_config
-TARGETS += navigator_gui test_map_modify test_gui_config
+PUBLIC_BINARIES += navigatorgui test_gui_config
+TARGETS += navigatorgui test_map_modify test_gui_config
 endif
 
 navigator: navigator.o navigator_ipc.o conventional.o planner.o \
@@ -43,7 +43,7 @@ navigator: navigator.o navigator_ipc.o conventional.o planner.o \
 
 libnavigator_interface.a: navigator_interface.o
 
-navigator_gui: navigator_panel.o navigator_graphics.o \
+navigatorgui: navigator_panel.o navigator_graphics.o \
 	libnavigator_interface.a 
 
 libconventional.a: 	conventional.o planner.o trajectory.o map_modify.o
