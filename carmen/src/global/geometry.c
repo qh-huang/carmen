@@ -31,6 +31,11 @@
 int carmen_geometry_x_offset[CARMEN_NUM_OFFSETS] = {0, 1, 1, 1, 0, -1, -1, -1};
 int carmen_geometry_y_offset[CARMEN_NUM_OFFSETS] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
+#if 0
+
+// This was the old compute_velocity_at_side. Yes, I wrote it, but I don't
+// understand it, and it looks wrong to me. 
+
 static double 
 compute_velocity_at_side(carmen_traj_point_t robot, 
 			 carmen_traj_point_t dest_pt,
@@ -62,14 +67,11 @@ compute_velocity_at_side(carmen_traj_point_t robot,
 		 2*(forward_safety_distance-forward_distance)/
 		 robot_config->acceleration);
 	  
-	  if (velocity > max_velocity)
-	    velocity = max_velocity;
 	}      
     } 
-  else if (radius < robot_config->curvature)
+  else if (radius > 500) {
     velocity = max_velocity;
-  else 
-    {
+  } else {
       robot.x -= centre.x;
       robot.y -= centre.y;
       dest_pt.x -= centre.x;
@@ -84,15 +86,70 @@ compute_velocity_at_side(carmen_traj_point_t robot,
 	sqrt(robot_config->reaction_time*robot_config->reaction_time - 
 	     2*(forward_safety_distance-forward_distance)/
 	     robot_config->acceleration);      
-      
-      if (velocity > max_velocity)
-	velocity = max_velocity;
     }
+
+  if (velocity > max_velocity)
+    velocity = max_velocity;
 
   assert (!isnan(velocity));
   
   return velocity;
 }
+
+#endif
+
+static double compute_velocity_at_side(carmen_traj_point_t robot, 
+				       carmen_traj_point_t dest_pt,
+				       carmen_traj_point_t centre, 
+				       double radius, 
+				       carmen_robot_config_t *robot_config) 
+{
+  double rotation_angle;
+  double forward_distance;
+  double velocity;
+  double max_velocity = robot_config->max_t_vel;
+
+  double forward_safety_distance =  robot_config->length / 2.0 + 
+    robot_config->approach_dist;
+  
+  double neg_b;  
+  double four_a_c;
+
+  if (radius > 500) 
+    velocity = max_velocity;
+  else {
+    if (fabs(radius) < 0.01) 
+      forward_distance = dest_pt.x;    
+    else {
+      robot.x -= centre.x;
+      robot.y -= centre.y;
+      dest_pt.x -= centre.x;
+      dest_pt.y -= centre.y;
+      
+      rotation_angle = atan2(dest_pt.y, dest_pt.x) - atan2(robot.y, robot.x);
+      rotation_angle = carmen_normalize_theta(rotation_angle);
+      
+      forward_distance = fabs(rotation_angle * radius);
+    }
+
+    if (forward_distance < -robot_config->length/2.0) 
+      velocity = max_velocity;
+    else if (forward_distance < forward_safety_distance)
+      velocity = 0;
+    else {
+      forward_distance -= forward_safety_distance;
+
+      neg_b = -2*robot_config->acceleration*robot_config->reaction_time;
+      four_a_c = 4*2*robot_config->acceleration*forward_distance;
+      velocity = neg_b + sqrt(neg_b*neg_b + four_a_c);
+    }
+  }
+
+  assert (!isnan(velocity));
+  
+  return velocity;
+}
+
 
 void 
 carmen_geometry_compute_centre_and_curvature(carmen_traj_point_t start_point, 
