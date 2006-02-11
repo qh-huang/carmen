@@ -629,7 +629,7 @@ void carmen_map_graphics_draw_circle(GtkMapViewer *map_view, GdkColor *colour,
   
   world_to_screen(world_point, &point, map_view);
   
-  radius /= (map_view->internal_map->config.resolution*map_view->rescale_size);
+  radius /= (map_view->internal_map->config.resolution/map_view->rescale_size);
 
   rect.x = carmen_round(point.x - radius);
   rect.y = carmen_round(point.y - radius);
@@ -662,7 +662,7 @@ void carmen_map_graphics_draw_arc(GtkMapViewer *map_view, GdkColor *colour,
   
   world_to_screen(world_point, &point, map_view);
   
-  radius /= (map_view->internal_map->config.resolution*map_view->rescale_size);
+  radius /= (map_view->internal_map->config.resolution/map_view->rescale_size);
   rect.x = point.x - radius;
   rect.y = point.y - radius;
 
@@ -713,8 +713,11 @@ void carmen_map_graphics_draw_polygon(GtkMapViewer *map_view, GdkColor *colour,
     carmen_test_alloc(poly);
   }
   
-  for (i = 0; i < num_points; i++) 
+  for (i = 0; i < num_points; i++) {
     world_to_screen(points+i, &p1, map_view);  
+    poly[i].x = p1.x;
+    poly[i].y = p1.y;
+  }
 
   gdk_gc_set_foreground(map_view->drawing_gc, colour);
   
@@ -888,18 +891,16 @@ carmen_map_graphics_redraw(GtkMapViewer *map_view)
   double difference;
 
   difference = carmen_get_time() - time_of_last_redraw;
-  if (count > 0)
-    {
-      average += difference;
-      if ((average / count) < 0.1 && carmen_get_time() - 
-	  time_of_last_warning > 10)
-	{
-	  carmen_warn("carmen_map_graphics_redraw requests average more "
-		      "than 10 Hz.\nX will not be able to keep up with these "
-		      "requests. This is a bug\nand needs to be fixed.\n\n");
-	  time_of_last_warning = carmen_get_time();
-	}
+  if (count > 0) {
+    average += difference;
+    if ((average / count) < 0.1 && carmen_get_time() - 
+	time_of_last_warning > 10) {
+      carmen_warn("carmen_map_graphics_redraw requests average more "
+		  "than 10 Hz.\nX will not be able to keep up with these "
+		  "requests. This is a bug\nand needs to be fixed.\n\n");
+      time_of_last_warning = carmen_get_time();
     }
+  }
   else
     average = difference;
 
