@@ -365,7 +365,7 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
      &param->use_rear_laser, 0, NULL},
     {"localize", "num_particles", CARMEN_PARAM_INT, 
      &param->num_particles, 0, NULL},
-    {"localize", "max_range", CARMEN_PARAM_DOUBLE, &param->max_range, 1, NULL},
+    {"localize", "laser_max_range", CARMEN_PARAM_DOUBLE, &param->max_range, 1, NULL},
     {"localize", "min_wall_prob", CARMEN_PARAM_DOUBLE, 
      &param->min_wall_prob, 0, NULL},
     {"localize", "outlier_fraction", CARMEN_PARAM_DOUBLE, 
