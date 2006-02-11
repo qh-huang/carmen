@@ -42,9 +42,8 @@ static int publish_readings(void);
 
 /* handlers */
 
-static void
-set_object_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
-		   void *clientData __attribute__ ((unused)))
+static void set_object_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+			       void *clientData __attribute__ ((unused)))
 {
   carmen_simulator_set_object_message msg;
   FORMATTER_PTR formatter;
@@ -58,9 +57,8 @@ set_object_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 				 CARMEN_SIMULATOR_RANDOM_OBJECT, msg.speed);
 }
 
-static void
-set_truepose_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
-		   void *clientData __attribute__ ((unused)))
+static void set_truepose_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+				 void *clientData __attribute__ ((unused)))
 {
   carmen_simulator_set_truepose_message msg;
   FORMATTER_PTR formatter;
@@ -94,9 +92,8 @@ connect_robots_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
 
 
-static void
-clear_objects_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
-		     void *clientData __attribute__ ((unused)))
+static void clear_objects_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+				  void *clientData __attribute__ ((unused)))
 {
   carmen_simulator_clear_objects_message msg;
   FORMATTER_PTR formatter;
@@ -109,25 +106,22 @@ clear_objects_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_simulator_clear_objects();	
 }
 
-static void 
-init_handler(carmen_localize_initialize_message *init_msg)
+static void init_handler(carmen_localize_initialize_message *init_msg)
 {
-  if(init_msg->distribution == CARMEN_INITIALIZE_GAUSSIAN) 
-    {
-      simulator_config->true_pose.x = init_msg->mean[0].x;
-      simulator_config->true_pose.y = init_msg->mean[0].y;
-      simulator_config->true_pose.theta = init_msg->mean[0].theta;
-      simulator_config->tv = 0;
-      simulator_config->rv = 0;
-      simulator_config->target_tv = 0;
-      simulator_config->target_rv = 0;
-    }
+  if(init_msg->distribution == CARMEN_INITIALIZE_GAUSSIAN) {
+    simulator_config->true_pose.x = init_msg->mean[0].x;
+    simulator_config->true_pose.y = init_msg->mean[0].y;
+    simulator_config->true_pose.theta = init_msg->mean[0].theta;
+    simulator_config->tv = 0;
+    simulator_config->rv = 0;
+    simulator_config->target_tv = 0;
+    simulator_config->target_rv = 0;
+  }
 }
 
 /* handles base velocity messages */ 
-static void 
-velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
-		 void *clientData __attribute__ ((unused)))
+static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
+			     void *clientData __attribute__ ((unused)))
 {
   carmen_base_velocity_message vel;
   FORMATTER_PTR formatter;
@@ -138,10 +132,10 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   IPC_freeByteArray(callData);
   simulator_config->target_tv = vel.tv;
   simulator_config->target_rv = vel.rv;
+  simulator_config->time_of_last_command = carmen_get_time();
 }
 
-void 
-map_update_handler(carmen_map_t *new_map) 
+void map_update_handler(carmen_map_t *new_map) 
 {
   carmen_map_p map_ptr;
   int map_x, map_y;
@@ -165,17 +159,15 @@ map_update_handler(carmen_map_t *new_map)
      map_y < 0 || map_y >= simulator_config->map.config.y_size ||
      simulator_config->map.map[map_x][map_y] > .15 ||
      carmen_simulator_object_too_close(simulator_config->true_pose.x, 
-				       simulator_config->true_pose.y, -1))
-    {
-      simulator_config->odom_pose = zero;
-      simulator_config->true_pose = zero;
-    }
+				       simulator_config->true_pose.y, -1)) {
+    simulator_config->odom_pose = zero;
+    simulator_config->true_pose = zero;
+  }
   
 }
 
-static void
-next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
-		  void *clientData __attribute__ ((unused)))
+static void next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+			      void *clientData __attribute__ ((unused)))
 {
   carmen_simulator_next_tick_message msg;
   FORMATTER_PTR formatter;
@@ -192,9 +184,8 @@ next_tick_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   }
 }
 
-static void
-truepos_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
-		      void *clientData __attribute__ ((unused)))
+static void truepos_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData, 
+				  void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err;
   carmen_simulator_truepos_message response;
@@ -214,23 +205,18 @@ truepos_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 }
 
 /* handles C^c */
-static void 
-shutdown_module(int x)
+static void shutdown_module(int x)
 {
   if(x == SIGINT) {
-		
     if (use_robot) 
-      {
-	carmen_robot_shutdown(x);
-      }
+      carmen_robot_shutdown(x);
     carmen_ipc_disconnect();
     carmen_warn("\nDisconnected.\n");
     exit(1);
   }
 }
 
-static int 
-initialize_ipc(void)
+static int initialize_ipc(void)
 {
   IPC_RETURN_TYPE err;
 
@@ -362,54 +348,61 @@ publish_readings(void)
   static carmen_simulator_truepos_message position;
   static carmen_simulator_objects_message objects;
 
+  double delta_time;
   double timestamp;
 
-  if (first)
-    {
-
-      odometry.host = carmen_get_host();
-      position.host = carmen_get_host();
-
-      objects.host = carmen_get_host();
-
-      odometry.x = position.truepose.x;
-      odometry.y = position.truepose.y;
-      odometry.theta = position.truepose.theta;
-      
-      odometry.tv = odometry.rv = 0;
-
-      if (simulator_config->use_front_laser) {
-	flaser.host = carmen_get_host();
-	flaser.num_readings = 
-	  simulator_config->front_laser_config.num_lasers;
-	flaser.range = (float *)calloc
-	  (simulator_config->front_laser_config.num_lasers, sizeof(float));
-	carmen_test_alloc(flaser.range);
+  if (first) {
+    odometry.host = carmen_get_host();
+    position.host = carmen_get_host();
+    
+    objects.host = carmen_get_host();
+    
+    odometry.x = position.truepose.x;
+    odometry.y = position.truepose.y;
+    odometry.theta = position.truepose.theta;
+    
+    odometry.tv = odometry.rv = 0;
+    
+    if (simulator_config->use_front_laser) {
+      flaser.host = carmen_get_host();
+      flaser.num_readings = 
+	simulator_config->front_laser_config.num_lasers;
+      flaser.range = (float *)calloc
+	(simulator_config->front_laser_config.num_lasers, sizeof(float));
+      carmen_test_alloc(flaser.range);
       }
+    
+    if (simulator_config->use_rear_laser) {
+      rlaser.host = carmen_get_host();
       
-      if (simulator_config->use_rear_laser) {
-	rlaser.host = carmen_get_host();
-	
-	rlaser.num_readings = simulator_config->rear_laser_config.num_lasers;
-	rlaser.range = (float *)calloc
-	  (simulator_config->rear_laser_config.num_lasers, sizeof(float));
-	carmen_test_alloc(rlaser.range);
-      }
-      
-      if (simulator_config->use_sonar) {
-	sonar.host = carmen_get_host();
-	sonar.num_sonars = simulator_config->sonar_config.num_sonars;
-	sonar.sensor_angle = simulator_config->sonar_config.sensor_angle;
-	
-	sonar.range = (double *)calloc
-	  (simulator_config->sonar_config.num_sonars, sizeof(double));
-	carmen_test_alloc(sonar.range);	  
-      }
-      first = 0;
+      rlaser.num_readings = simulator_config->rear_laser_config.num_lasers;
+      rlaser.range = (float *)calloc
+	(simulator_config->rear_laser_config.num_lasers, sizeof(float));
+      carmen_test_alloc(rlaser.range);
     }
+    
+    if (simulator_config->use_sonar) {
+      sonar.host = carmen_get_host();
+      sonar.num_sonars = simulator_config->sonar_config.num_sonars;
+      sonar.sensor_angle = simulator_config->sonar_config.sensor_angle;
+      
+      sonar.range = (double *)calloc
+	(simulator_config->sonar_config.num_sonars, sizeof(double));
+      carmen_test_alloc(sonar.range);	  
+    }
+    first = 0;
+  }
 
   timestamp = carmen_get_time();
 
+  if (simulator_config->real_time && !simulator_config->sync_mode) {
+    delta_time = timestamp - simulator_config->time_of_last_command;
+    if ((simulator_config->tv > 0 || simulator_config->rv > 0) && 
+	delta_time > simulator_config->motion_timeout) {
+      simulator_config->target_tv = 0;
+      simulator_config->target_rv = 0;
+    }
+  }
   carmen_simulator_recalc_pos(simulator_config);
   
   odometry.x = simulator_config->odom_pose.x;
@@ -438,36 +431,33 @@ publish_readings(void)
   carmen_test_ipc(err, "Could not publish simulator_objects_message", 
 		  CARMEN_SIMULATOR_OBJECTS_NAME);
 
-  if (simulator_config->use_front_laser) 
-    {
-      carmen_simulator_calc_laser_msg(&flaser, simulator_config, 0);
-
-      flaser.timestamp = timestamp;
-      err = IPC_publishData(CARMEN_LASER_FRONTLASER_NAME, &flaser);
-      carmen_test_ipc(err, "Could not publish laser_frontlaser_message", 
-		      CARMEN_LASER_FRONTLASER_NAME);
-    }
-
-  if (simulator_config->use_rear_laser)
-    {
-      carmen_simulator_calc_laser_msg(&rlaser, simulator_config, 1);
-
-      rlaser.timestamp = timestamp;
-      err = IPC_publishData(CARMEN_LASER_REARLASER_NAME, &rlaser);
-      carmen_test_ipc(err, "Could not publish laser_rearlaser_message", 
-		      CARMEN_LASER_REARLASER_NAME);
-    }
-
-  if (simulator_config->use_sonar)
-    {
-      carmen_simulator_calc_sonar_msg(&sonar, simulator_config);
+  if (simulator_config->use_front_laser) {
+    carmen_simulator_calc_laser_msg(&flaser, simulator_config, 0);
     
-      sonar.timestamp = timestamp;
-      err=IPC_publishData(CARMEN_BASE_SONAR_NAME, &sonar);
-      carmen_test_ipc(err, "Could not publish base_sonar_message", 
-		      CARMEN_BASE_SONAR_NAME);
-    }
+    flaser.timestamp = timestamp;
+    err = IPC_publishData(CARMEN_LASER_FRONTLASER_NAME, &flaser);
+    carmen_test_ipc(err, "Could not publish laser_frontlaser_message", 
+		    CARMEN_LASER_FRONTLASER_NAME);
+  }
+  
+  if (simulator_config->use_rear_laser) {
+    carmen_simulator_calc_laser_msg(&rlaser, simulator_config, 1);
+    
+    rlaser.timestamp = timestamp;
+    err = IPC_publishData(CARMEN_LASER_REARLASER_NAME, &rlaser);
+    carmen_test_ipc(err, "Could not publish laser_rearlaser_message", 
+		    CARMEN_LASER_REARLASER_NAME);
+  }
 
+  if (simulator_config->use_sonar) {
+    carmen_simulator_calc_sonar_msg(&sonar, simulator_config);
+    
+    sonar.timestamp = timestamp;
+    err=IPC_publishData(CARMEN_BASE_SONAR_NAME, &sonar);
+    carmen_test_ipc(err, "Could not publish base_sonar_message", 
+		    CARMEN_BASE_SONAR_NAME);
+  }
+  
   carmen_publish_heartbeat("simulator");
 
   return 1;
@@ -548,9 +538,8 @@ void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg)
 
 }
 
-static void
-read_parameters(int argc, char *argv[], 
-		carmen_simulator_config_t *config)
+static void read_parameters(int argc, char *argv[], 
+			    carmen_simulator_config_t *config)
 {
   char *offset_string;
   int num_items;
@@ -562,14 +551,15 @@ read_parameters(int argc, char *argv[],
      &(config->real_time), 1, NULL},
     {"simulator", "sync_mode", CARMEN_PARAM_ONOFF,
      &(config->sync_mode), 1, NULL},
-    {"simulator", "use_robot", CARMEN_PARAM_ONOFF,
-     &use_robot, 1, NULL},
+    {"simulator", "use_robot", CARMEN_PARAM_ONOFF, &use_robot, 1, NULL},
 #ifdef OLD_MOTION_MODEL
     {"localize", "odom_a1", CARMEN_PARAM_DOUBLE, &(config->odom_a1), 1, NULL},
     {"localize", "odom_a2", CARMEN_PARAM_DOUBLE, &(config->odom_a2), 1, NULL},
     {"localize", "odom_a3", CARMEN_PARAM_DOUBLE, &(config->odom_a3), 1, NULL},
     {"localize", "odom_a4", CARMEN_PARAM_DOUBLE, &(config->odom_a4), 1, NULL},
 #endif
+    {"base", "motion_timeout", CARMEN_PARAM_DOUBLE, &(config->motion_timeout),
+     1, NULL},
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &(config->use_front_laser), 
      1, NULL},
     {"simulator", "use_rear_laser", CARMEN_PARAM_ONOFF, 
@@ -636,43 +626,40 @@ read_parameters(int argc, char *argv[],
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
 
-  if(config->use_front_laser)
-    {
-      num_items = sizeof(param_list_front_laser)/
-	sizeof(param_list_front_laser[0]);
-      carmen_param_install_params(argc, argv, param_list_front_laser, 
-				  num_items);
-    }
+  if(config->use_front_laser) {
+    num_items = sizeof(param_list_front_laser)/
+      sizeof(param_list_front_laser[0]);
+    carmen_param_install_params(argc, argv, param_list_front_laser, 
+				num_items);
+  }
 
-  if(config->use_rear_laser)
-    {
-      num_items = sizeof(param_list_rear_laser)/
-	sizeof(param_list_rear_laser[0]);
-      carmen_param_install_params(argc, argv, param_list_rear_laser, 
-				  num_items);
-    }
-
-  if(config->use_sonar)
-    {
-      num_items = sizeof(param_list_sonar)/sizeof(param_list_sonar[0]);
-      carmen_param_install_params(argc, argv, param_list_sonar, num_items);
-
-      config->sonar_config.offsets =
-	(carmen_point_p)calloc(config->sonar_config.num_sonars, 
-			       sizeof(carmen_point_t));
-      carmen_test_alloc(config->sonar_config.offsets);
-      
-      carmen_parse_sonar_offsets
-	(offset_string, config->sonar_config.offsets,
-	 config->sonar_config.num_sonars);
-    }
-
+  if(config->use_rear_laser) {
+    num_items = sizeof(param_list_rear_laser)/
+      sizeof(param_list_rear_laser[0]);
+    carmen_param_install_params(argc, argv, param_list_rear_laser, 
+				num_items);
+  }
+  
+  if(config->use_sonar) {
+    num_items = sizeof(param_list_sonar)/sizeof(param_list_sonar[0]);
+    carmen_param_install_params(argc, argv, param_list_sonar, num_items);
+    
+    config->sonar_config.offsets =
+      (carmen_point_p)calloc(config->sonar_config.num_sonars, 
+			     sizeof(carmen_point_t));
+    carmen_test_alloc(config->sonar_config.offsets);
+    
+    carmen_parse_sonar_offsets
+      (offset_string, config->sonar_config.offsets,
+       config->sonar_config.num_sonars);
+  }
+  
   config->motion_model = carmen_localize_motion_initialize(argc, argv);
-
+  
   fill_laser_config_data( &(config->front_laser_config) );
 
   if(config->use_rear_laser)
-    fill_laser_config_data( &(config->rear_laser_config) );
+    fill_laser_config_data( &(config->rear_laser_config));
   
 }
 

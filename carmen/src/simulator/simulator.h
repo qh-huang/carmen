@@ -88,6 +88,8 @@ typedef struct {
   double delta_t;
   double real_time;
   int sync_mode;
+  double motion_timeout;
+  double time_of_last_command;
 } carmen_simulator_config_t, *carmen_simulator_config_p;
 
 #ifdef __cplusplus
