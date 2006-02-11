@@ -386,8 +386,6 @@ read_parameters(int argc, char **argv)
      &robot_config.acceleration, 1, NULL},
     {"robot", "reaction_time", CARMEN_PARAM_DOUBLE, 
      &robot_config.reaction_time, 0, NULL},
-    {"robot", "curvature", CARMEN_PARAM_DOUBLE, 
-     &robot_config.curvature, 1, NULL},
 
     {"navigator", "goal_size", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_size, 1, NULL},

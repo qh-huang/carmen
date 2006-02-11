@@ -745,8 +745,7 @@ static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
 
 }
 
-static void draw_gaussians(GtkMapViewer *the_map_view, 
-			   double pixel_size __attribute__ ((unused)))
+static void draw_gaussians(GtkMapViewer *the_map_view) 
 {
   carmen_world_point_t mean;
 
@@ -832,7 +831,7 @@ static void draw_robot_shape(GtkMapViewer *the_map_view,
 
   if (!robot_config->rectangular) {
     robot_radius = robot_config->width/2.0;
-    if (robot_radius < pixel_size*5)
+    if (robot_radius/pixel_size < 5)
       robot_radius = pixel_size*5;
 
     carmen_map_graphics_draw_circle(the_map_view, colour, filled, 
@@ -843,9 +842,9 @@ static void draw_robot_shape(GtkMapViewer *the_map_view,
   width2 = robot_config->width/2;
   length2 = robot_config->length/2;
 
-  if (width2 < pixel_size*5)
+  if (width2/pixel_size < 5)
     width2 = pixel_size*5;
-  if (length2 < pixel_size*5)
+  if (length2/pixel_size < 5)
     length2 = pixel_size*5;
 
   wp[0].pose.x = x_coord(length2, width2, location);
@@ -893,7 +892,7 @@ static void draw_simulated_robot(GtkMapViewer *the_map_view, double pixel_size)
     return;
 
   robot_size = robot_config->width/2.0;
-  if (robot_size < pixel_size*5)
+  if (robot_size/pixel_size < 5)
     robot_size = pixel_size*5;
   
   draw_robot_shape(the_map_view, &simulator_trueposition, TRUE, &carmen_blue,
@@ -925,8 +924,8 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
   if (the_map_view->internal_map == NULL)
     return;
 
-  pixel_size = 1*map_view->internal_map->config.resolution*
-    map_view->rescale_size;
+  pixel_size = 1/map_view->rescale_size*
+    map_view->internal_map->config.resolution;
 
   // carmen_fmax
   //    (map_view->internal_map->config.x_size/(double)map_view->port_size_x,
@@ -941,7 +940,7 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 
   if (received_robot_pose()) {
     draw_particles(the_map_view, pixel_size);
-    draw_gaussians(the_map_view, pixel_size);
+    draw_gaussians(the_map_view);
     draw_lasers(the_map_view, pixel_size);
     draw_robot(the_map_view, pixel_size);
   } 
@@ -981,7 +980,7 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 
   if (goal.pose.x > 0 && goal.pose.y > 0 && goal.map != NULL) {
     goal_size = nav_config->goal_size/2;
-    if (goal_size < pixel_size*5)
+    if (goal_size/pixel_size < 5)
       goal_size = pixel_size*5;
     
     carmen_map_graphics_draw_circle(the_map_view, &goal_colour, TRUE, &goal, 

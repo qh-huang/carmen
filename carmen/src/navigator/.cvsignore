@@ -6,12 +6,12 @@ test_Path_Refine
 testProject
 testCircles
 output
-navigator_panel
+navigator_gui
 navGraph
 screenshots
 profile
 navigator_map
 test_map_modify
-test_panel_config
+test_gui_config
 navigator_test
 random_nav

@@ -269,8 +269,6 @@ static void read_parameters(int argc, char *argv[],
      &(robot_config->acceleration), 1, NULL},
     {"robot", "reaction_time", CARMEN_PARAM_DOUBLE, 
      &(robot_config->reaction_time), 0, NULL},
-    {"robot", "curvature", CARMEN_PARAM_DOUBLE, 
-     &(robot_config->curvature), 1, NULL},
     {"robot", "rectangular", CARMEN_PARAM_INT, 
      &(robot_config->rectangular), 1, NULL},
 
