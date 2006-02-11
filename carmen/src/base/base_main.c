@@ -263,6 +263,7 @@ read_parameters(int argc, char **argv)
   carmen_param_t param_list[] = {
     {"base", "dev", CARMEN_PARAM_STRING, &dev_name, 0, NULL},
     {"base", "model", CARMEN_PARAM_STRING, &model_name, 0, NULL},
+    {"base", "motion_timeout", CARMEN_PARAM_DOUBLE, &motion_timeout, 0, NULL},
     {"base", "use_hardware_integrator", CARMEN_PARAM_ONOFF, 
      &use_hardware_integrator, 0, NULL},
     {"robot", "odometry_inverted", CARMEN_PARAM_ONOFF, &odometry_inverted, 
