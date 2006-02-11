@@ -71,7 +71,6 @@ typedef struct {
   double max_r_vel;
   double max_t_vel;
   double acceleration;
-  double curvature;
   double approach_dist;
   double side_dist;
   double length;
