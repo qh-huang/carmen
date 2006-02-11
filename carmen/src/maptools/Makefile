@@ -15,10 +15,10 @@ PUBLIC_INCLUDES = linemapping.h map.h map_io.h map_messages.h map_interface.h \
 	 map_util.h
 PUBLIC_LIBRARIES = libclfconvert.a liblinemapping.a libmap_interface.a \
 	libmap_util.a libmap_io.a
-PUBLIC_BINARIES = clf2linemap map
+PUBLIC_BINARIES = clf2linemap map maptool
 
 TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
-	libmap_io.a
+	libmap_io.a maptool
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
