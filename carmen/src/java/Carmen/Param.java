@@ -30,22 +30,6 @@ public class Param {
   private static final String CARMEN_PARAM_SET_FMT =
     "{string, string, string, double, string}";
 
-  private static class ParamPrivateParamChange implements IPC.HANDLER_TYPE {
-    ParamPrivateParamChange() {
-    }
-    /** handles parameter changes */
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      ParamChangeMessage message = (ParamChangeMessage)callData;
-      String key = new 
-	StringBuffer().append(message.moduleName).append(message.variableName).toString();
-      ParamChangeHandler userHandler = 
-	(ParamChangeHandler)handlerMap.get(key);
-      if (userHandler != null) {
-	userHandler.handleParamChange(message.moduleName, 
-				      message.variableName, message.newValue);
-      }
-    }
-  }
   /** Class method that handles query of current parameter values by module and variable */
   public static class ParamQuery extends Message {
     public String moduleName;
@@ -99,23 +83,6 @@ public class Param {
     return false;
   }
 
-  /** Class method for subscribing to parameter data */
-  public static void subscribe(String moduleName, String variable, 
-			       ParamChangeHandler handler) {
-    if (!started) {
-      IPC.defineMsg(CARMEN_PARAM_VARIABLE_CHANGE_NAME, 
-		    CARMEN_PARAM_VARIABLE_CHANGE_FMT);
-      IPC.subscribeData(CARMEN_PARAM_VARIABLE_CHANGE_NAME, 
-			new ParamPrivateParamChange(),
-			ParamChangeMessage.class);
-      handlerMap = new HashMap();
-      started = true;
-    }
-    String key = new 
-      StringBuffer().append(moduleName).append(variable).toString();
-    handlerMap.put(key, handler);
-  }
-  
   public static boolean parseBoolean(String value) {
     if (value.equalsIgnoreCase("1"))
       return true;

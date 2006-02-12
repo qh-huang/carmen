@@ -6,6 +6,5 @@ package Carmen;
  */
 
 public interface ParamChangeHandler {
-  public void handleParamChange (String moduleName, String variableName, 
-				 String newValue);
+  public void handle(ParamChangeMessage message);
 }

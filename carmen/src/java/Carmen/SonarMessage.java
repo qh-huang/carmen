@@ -14,7 +14,7 @@ public class SonarMessage extends Message {
   /** location of each sonar with respect to robot as a Point */
   public Point sonar_positions[];
   /** robot state: point location */
-  public Point robot_location;
+  public Point robot_pose;
   public double tv;
   public double rv;
 
@@ -22,26 +22,12 @@ public class SonarMessage extends Message {
   private static final String CARMEN_ROBOT_SONAR_FMT =
     "{int,double,<double:1>,<{double,double,double}:1>,{double,double,double},double,double,double,string}";
 
-  private static class PrivateSonarHandler implements IPC.HANDLER_TYPE {
-    private static SonarHandler userHandler = null;
-    PrivateSonarHandler(SonarHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      SonarMessage message = (SonarMessage)callData;
-      userHandler.handleSonar(message);
-    }
-  }
-
   /** Application module calls this to subscribe to SonarMessage.
    *  Application module must extend SonarHandler
    */
   public static void subscribe(SonarHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_SONAR_NAME, CARMEN_ROBOT_SONAR_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_SONAR_NAME, 
-		      new PrivateSonarHandler(handler),
-		      SonarMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_SONAR_NAME, 1);
+    subscribe(CARMEN_ROBOT_SONAR_NAME, CARMEN_ROBOT_SONAR_FMT, handler, 
+	      SonarMessage.class, "handle");
   }
 
 }
