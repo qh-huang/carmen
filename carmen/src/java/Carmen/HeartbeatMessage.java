@@ -16,7 +16,7 @@ public class HeartbeatMessage extends Message {
   public static void subscribe(HeartbeatHandler handler)
   {
     subscribe(CARMEN_HEARTBEAT_NAME, CARMEN_HEARTBEAT_FMT, handler, 
-	      HeartbeatMessage.class);
+	      HeartbeatMessage.class, "handle");
   }
 
   public void publish(String module)

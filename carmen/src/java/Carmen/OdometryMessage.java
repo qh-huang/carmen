@@ -17,26 +17,12 @@ public class OdometryMessage extends Message {
   private static final String CARMEN_ROBOT_ODOMETRY_FMT = 
   	"{double, double, double, double, double, double, double, string}";
 
-  private static class PrivateOdometryHandler implements IPC.HANDLER_TYPE {
-    private static OdometryHandler userHandler = null;
-    PrivateOdometryHandler(OdometryHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      OdometryMessage message = (OdometryMessage)callData;
-      userHandler.handleOdometry(message);
-    }
-  }
-
   /** Application module calls this to subscribe to OdometryMessage.
    *  Application module must extend OdometryHandler.
    */
   public static void subscribe(OdometryHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_ODOMETRY_NAME, CARMEN_ROBOT_ODOMETRY_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_ODOMETRY_NAME, 
-		      new PrivateOdometryHandler(handler),
-		      OdometryMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_ODOMETRY_NAME, 1);
+    subscribe(CARMEN_ROBOT_ODOMETRY_NAME, CARMEN_ROBOT_ODOMETRY_FMT, handler, 
+	      OdometryMessage.class, "handle");
   }
   
 }

@@ -3,40 +3,22 @@ package Carmen;
 import IPC.*;
  
 public class ArmMessage extends Message {
-  public double servos[];
-  public int numServos;
-  public double servoCurrents[];
-  public int numCurrents;
-  public int gripperState;
+  public int flags;
+  public int num_joints;
+  public double joint_angles[];
+  public int num_currents;
+  public double joint_currents[];
+  public int num_vels;
+  public double joint_angular_vels[];
+  public int gripper_closed;
   
-  private static final String CARMEN_BASE_ARM_STATE_NAME = 
-    "carmen_base_arm_state";
-  private static final String CARMEN_BASE_ARM_STATE_FMT =  
-    "{<double:2>, int, <double:4>, int, int, double, string}";
-  private static boolean defined = false;
+  private static final String CARMEN_ARM_STATE_NAME = 
+    "carmen_arm_state";
+  private static final String CARMEN_ARM_STATE_FMT =  
+    "{int,int,<double:2>,int,<double:4>,int,<double:6>,int,double,string}";
 
-  private static class PrivateArmHandler implements IPC.HANDLER_TYPE {
-    private static ArmHandler userHandler = null;
-    PrivateArmHandler(ArmHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      ArmMessage message = (ArmMessage)callData;
-      userHandler.handleArm(message);
-    }
+  public static void subscribe(CameraHandler handler) {
+    subscribe(CARMEN_ARM_STATE_NAME, CARMEN_ARM_STATE_FMT, handler, 
+	      ArmMessage.class, "handle");
   }
-
-  public static void subscribe(ArmHandler handler)
-  {
-    if (!defined) {
-      IPC.defineMsg(CARMEN_BASE_ARM_STATE_NAME, CARMEN_BASE_ARM_STATE_FMT);
-      defined = true;
-    }
-
-    IPC.subscribeData(CARMEN_BASE_ARM_STATE_NAME,
-                      new PrivateArmHandler(handler),
-                      ArmMessage.class);
-    IPC.setMsgQueueLength(CARMEN_BASE_ARM_STATE_NAME, 1);
-  }
-
 }

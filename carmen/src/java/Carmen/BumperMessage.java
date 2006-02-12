@@ -4,8 +4,8 @@ import IPC.*;
 
 /**  Carmen BumperHandler's message
    */
-public class BumperMessage extends Message {
-  
+public class BumperMessage extends Message 
+{  
   public int num_bumpers; 
   /** state of bumper */
   public char bumper[]; 
@@ -19,28 +19,11 @@ public class BumperMessage extends Message {
   private static final String CARMEN_ROBOT_BUMPER_NAME =
     "carmen_robot_bumper";
   private static final String CARMEN_ROBOT_BUMPER_FMT = 
-    "{int, <char:3>, {double,double,double}, double, double, double, string}";
+    "{int, <char:1>, {double,double,double}, double, double, double, string}";
 
-  private static class PrivateBumperHandler implements IPC.HANDLER_TYPE {
-    private static BumperHandler userHandler = null;
-    PrivateBumperHandler(BumperHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      BumperMessage message = (BumperMessage)callData;
-      userHandler.handleBumper(message);
-    }
-  }
-
-  /** Application module calls this to subscribe to BumperMessage.
-      Application module must extend BumperHandler.
-   */
   public static void subscribe(BumperHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_BUMPER_NAME, CARMEN_ROBOT_BUMPER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_BUMPER_NAME, 
-		      new PrivateBumperHandler(handler),
-		      BumperMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_BUMPER_NAME, 1);
+    subscribe(CARMEN_ROBOT_BUMPER_NAME, CARMEN_ROBOT_BUMPER_FMT, handler,
+	      BumperMessage.class, "handle");
   }
 
 }

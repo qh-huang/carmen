@@ -21,7 +21,7 @@ public class Message {
 
   private static void verifyFormatString(String msgFormat, Class msgClass)
   {
-
+    
   }
 
   private static void verifyFormatString(String msgFormat, Object msgInstance)
@@ -34,30 +34,21 @@ public class Message {
     private Object userHandler;
     private Class handlerClass;
     private Class messageClass;
+    private Method handleMethod;
 
-    PrivateHandler(Object userHandler, Class handlerClass, Class messageClass) 
+    PrivateHandler(Object userHandler, Method handleMethod,
+		   Class handlerClass, Class messageClass) 
     {
       this.userHandler = userHandler;
+      this.handleMethod = handleMethod;
       this.handlerClass = handlerClass;
       this.messageClass = messageClass;
-   }
+    }
 
     public void handle(IPC.MSG_INSTANCE msgInstance, Object callData) 
     {
-      Method handleMethod;
-
       try {
-	handleMethod = handlerClass.getMethod("handle", messageClass);
-      }
-      catch (NoSuchMethodException e) {
-	System.err.println("You subscribed to "+messageClass+" but you used a"+
-			   " handler "+handlerClass+" that doesn't\n"+
-			   "have a method handle("+messageClass+")\n");
-	throw new Error(e.toString());
-      }
-      
-      try {
-	handleMethod.invoke(callData);
+	handleMethod.invoke(userHandler, callData);
       }
       catch (IllegalAccessException e) {
 	System.err.println(e.toString());
@@ -72,11 +63,11 @@ public class Message {
 	System.exit(-1);
       }
     }
-
   }  
 
   protected static void subscribe(String messageName, String messageFmt, 
-				  Object handler, Class messageClass) 
+				  Object handler, Class messageClass, 
+				  String handlerFuncName) 
   {
     if (!defined_messages.contains(messageName)) {
       verifyFormatString(messageFmt, messageClass);
@@ -86,8 +77,9 @@ public class Message {
 
     Class handlerClass = handler.getClass();
 
+    Method handleMethod;
     try {
-      Method handleMethod = handlerClass.getMethod("handle", messageClass);
+      handleMethod = handlerClass.getMethod(handlerFuncName, messageClass);
     }
     catch (NoSuchMethodException e) {
       System.err.println("You subscribed to "+messageClass+" but you used a "+
@@ -96,10 +88,11 @@ public class Message {
       throw new Error(e.toString());
     }
 
-    PrivateHandler pvtHandler = new PrivateHandler(handler, handlerClass,
-						   messageClass);
+    PrivateHandler pvtHandler = new PrivateHandler(handler, handleMethod,
+						   handlerClass, messageClass);
 
     IPC.subscribeData(messageName, pvtHandler, messageClass);
+    IPC.setMsgQueueLength(messageName, 1);
   }
 
   public void publish(String msgName, String msgFmt, Object message) 

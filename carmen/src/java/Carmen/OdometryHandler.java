@@ -11,5 +11,5 @@ public interface OdometryHandler {
   /**
    *  event handler for odometry messages
    */
-  public void handleOdometry (OdometryMessage message);
+  public void handle (OdometryMessage message);
 }

@@ -5,6 +5,6 @@ package Carmen;
  * @version 1.0, Mar 1, 2005
  */
 
-public interface FrontLaserHandler {
-  public void handleFrontLaser (LaserMessage message);
+public interface RearLaserHandler {
+  public void handleRearLaser (LaserMessage message);
 }

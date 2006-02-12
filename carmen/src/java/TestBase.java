@@ -1,10 +1,11 @@
 import Carmen.*;
 
-public class TestBase implements OdometryHandler{
+public class TestBase implements OdometryHandler
+{
   private boolean initialized = false;
   private double startTime = 0;
 
-  public void handleOdometry (OdometryMessage message) {
+  public void handle(OdometryMessage message) {
     if (!initialized) {
       startTime = message.timestamp;
       initialized = true;

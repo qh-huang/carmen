@@ -6,13 +6,16 @@ import IPC.*;
    */
 
 public class LaserMessage extends Message {
+  public LaserConfig config;
   public int num_readings;
   public float range[];
   public char tooclose[];
-  /** position of the laser on the robot */
-  public double x, y, theta;
-  /** position of the center of the robot  */
-  public double odom_x, odom_y, odom_theta; 
+  public int num_remissions;
+  public float remission[];
+  /** position of the center of the laser **/
+  public Point laser_pose; 
+  /** position of the center of the robot **/
+  public Point robot_pose; 
   /** robot state: translational velocity and rotational velocity */
   public double tv, rv;
   /** application defined safety distance in metres */
@@ -25,52 +28,22 @@ public class LaserMessage extends Message {
     "carmen_robot_rearlaser";
 
   private static final String CARMEN_ROBOT_LASER_FMT = 
-    "{int,<float:1>,<char:1>,double,double,double,double,double,double,double,double,double,double,double,double,string}";
-
-  private static class PrivateFrontLaserHandler implements 
-						       IPC.HANDLER_TYPE {
-    private static FrontLaserHandler userHandler = null;
-    PrivateFrontLaserHandler(FrontLaserHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      LaserMessage message = (LaserMessage)callData;
-      userHandler.handleFrontLaser(message);
-    }
-  }
-
-  private static class PrivateRearLaserHandler implements 
-						       IPC.HANDLER_TYPE {
-    private static RearLaserHandler userHandler = null;
-    PrivateRearLaserHandler(RearLaserHandler userHandler) {
-      this.userHandler = userHandler;
-    }
-    public void handle (IPC.MSG_INSTANCE msgInstance, Object callData) {
-      LaserMessage message = (LaserMessage)callData;
-      userHandler.handleRearLaser(message);
-    }
-  }
+    "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,{double,double,double},{double,double,double},double,double,double,double,double,double,string}";
 
   /** Application module calls this to subscribe to LaserMessage.
    *  Application module must extend either FrontLaserHandler or RearLaserHandler.
    */
   public static void subscribeFront(FrontLaserHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_FRONTLASER_NAME, CARMEN_ROBOT_LASER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_FRONTLASER_NAME, 
-		      new PrivateFrontLaserHandler(handler),
-		      LaserMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_FRONTLASER_NAME, 1);
+    subscribe(CARMEN_ROBOT_FRONTLASER_NAME, CARMEN_ROBOT_LASER_FMT, handler, 
+	      LaserMessage.class, "handleFrontLaser");
   }
 
   /** Application module calls this to subscribe to LaserMessage.
    *  Application module must extend either FrontLaserHandler or RearLaserHandler.
    */
   public static void subscribeRear(RearLaserHandler handler) {
-    IPC.defineMsg(CARMEN_ROBOT_REARLASER_NAME, CARMEN_ROBOT_LASER_FMT);
-    IPC.subscribeData(CARMEN_ROBOT_REARLASER_NAME, 
-		      new PrivateRearLaserHandler(handler),
-		      LaserMessage.class);
-    IPC.setMsgQueueLength(CARMEN_ROBOT_REARLASER_NAME, 1);
+    subscribe(CARMEN_ROBOT_FRONTLASER_NAME, CARMEN_ROBOT_LASER_FMT, handler, 
+	      LaserMessage.class, "handleRearLaser");
   }
 
 }
