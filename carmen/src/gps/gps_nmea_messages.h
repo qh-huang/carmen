@@ -1,3 +1,15 @@
+
+/** @addtogroup gps **/
+// @{
+
+/** \file gps_messages.h
+ * \brief Definition of the messages for this module.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
+
 #ifndef GPS_NMEA_MESSAGES_H
 #define GPS_NMEA_MESSAGES_H
 
@@ -45,8 +57,6 @@ typedef struct {
 
 
 typedef struct {
- 
-
   int                 nr;             /* number of the gps unit */
   int                 validity;       /* 1 ok, 0 invalid       */
   double              utc;            /* Universal Time Coordinated (UTC) */
@@ -57,10 +67,11 @@ typedef struct {
  
   double              speed;          /* Speed over ground in m/s in the direction of true_course */
   double              true_course;    /* heading to north (in rads) */
-  int                 date;           /* UT Date  */
-  double              variation;      /* Magnetic variation degrees (E or W) subtracts 
+  double              variation;      /* Magnetic variation (in rads) (E or W) subtracts 
 					 from true course  */
   char                var_dir;
+
+  int                 date;           /* UT Date  */
 
   double              timestamp;
   char*                host;
@@ -68,7 +79,7 @@ typedef struct {
  
 } carmen_gps_gprmc_message;
 
-#define CARMEN_GPS_GPRMC_MESSAGE_FMT  "{int, char,double,double,char,double,char,double,double,int,double,char,double,string}"
+#define CARMEN_GPS_GPRMC_MESSAGE_FMT  "{int, char,double,double,char,double,char,double,double,double,char,int,double,string}"
 #define CARMEN_GPS_GPRMC_MESSAGE_NAME "carmen_gps_nmea_gprmc"
 
 #ifdef __cplusplus
@@ -76,3 +87,5 @@ typedef struct {
 #endif
 
 #endif
+
+// @}

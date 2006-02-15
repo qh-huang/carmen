@@ -27,6 +27,9 @@ long int carmen_logfile_uncompressed_length(carmen_FILE *infile)
   }
 }
 
+/** 
+ * Builds the index structure used for parsing a carmen log file. 
+ **/
 carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
 {
   carmen_logfile_index_p index;

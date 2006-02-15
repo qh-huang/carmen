@@ -25,7 +25,7 @@
  *
  ********************************************************/
 
-/** @addtogroup laser laser **/
+/** @addtogroup laser **/
 // @{
 
 /** \file laser_messages.h

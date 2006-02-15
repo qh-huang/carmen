@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup param_daemon **/
+// @{
+
+/** \file param_messages.h
+ * \brief Definition of the messages for this module.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
+
 #ifndef CARMEN_PARAM_MESSAGES_H
 #define CARMEN_PARAM_MESSAGES_H
 
@@ -176,3 +187,5 @@ typedef struct {
 #endif
 
 #endif
+
+// @}

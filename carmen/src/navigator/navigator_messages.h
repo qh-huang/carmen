@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup navigator **/
+// @{
+
+/** \file navigator_messages.h
+ * \brief Definition of the messages for this module.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
+
 #ifndef CARMEN_NAVIGATOR_MESSAGES_H
 #define CARMEN_NAVIGATOR_MESSAGES_H
 
@@ -186,3 +197,4 @@ typedef struct {
 
 #endif
 
+// @}

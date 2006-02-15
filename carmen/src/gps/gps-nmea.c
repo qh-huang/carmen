@@ -136,11 +136,11 @@ gps_parse_rmc( char * line, int num_chars )
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gprmc_ptr->date = atof(ptr);
+    carmen_extern_gprmc_ptr->date = atoi(ptr);
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gprmc_ptr->variation = atof(ptr);
+    carmen_extern_gprmc_ptr->variation = carmen_degrees_to_radians( atoi(ptr) );
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
