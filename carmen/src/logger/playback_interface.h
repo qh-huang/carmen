@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup logger  **/
+// @{
+
+/** \file playback_interface.h
+ * \brief Definition of the interface for playback.
+ *
+ * This file specifies the intreface for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
 #ifndef CARMEN_PLAYBACK_INTERFACE_H
 #define CARMEN_PLAYBACK_INTERFACE_H
 
@@ -34,6 +44,7 @@
 extern "C" {
 #endif
 
+/**  Playback a command with playback **/
 void carmen_playback_command(int pCommand, int pArgument, float speed);
 
 #ifdef __cplusplus
@@ -41,3 +52,5 @@ void carmen_playback_command(int pCommand, int pArgument, float speed);
 #endif
 
 #endif
+
+// @}

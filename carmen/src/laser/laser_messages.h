@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup laser laser **/
+// @{
+
+/** \file laser_messages.h
+ * \brief Definition of the messages for the module laser.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
 #ifndef CARMEN_LASER_MESSAGES_H
 #define CARMEN_LASER_MESSAGES_H
 
@@ -35,18 +45,19 @@ extern "C" {
 typedef enum {SICK_LMS, SICK_PLS, HOKUYO_URG, SIMULATED_LASER, UMKNOWN_PROXIMITY_SENSOR}   
 carmen_laser_laser_type_t;
 
+  /** Possible remission values **/
 typedef enum {OFF, DIRECT, NORMALIZED}          
 carmen_laser_remission_type_t;
 
-
+  /** The laser message of the laser module (rawlaser) **/
 typedef struct {
-  carmen_laser_laser_type_t  laser_type;  /* what kind of laser is this */
-  double start_angle;                     /* angle of the first beam relative */
-                                          /* to to the center of the laser */
-  double fov;                             /* field of view of the laser */
-  double angular_resolution;              /* angular resolution of the laser */
-  double maximum_range;                   /* the maximum valid range of a measurement  */
-  double accuracy;                        /* error in the range measurements*/
+  carmen_laser_laser_type_t  laser_type;  /**< what kind of laser is this **/
+  double start_angle;                     /**< angle of the first beam relative **/
+                                          /**< to to the center of the laser **/
+  double fov;                             /**< field of view of the laser **/
+  double angular_resolution;              /**< angular resolution of the laser **/
+  double maximum_range;                   /**< the maximum valid range of a measurement  **/
+  double accuracy;                        /**< error in the range measurements **/
 
   carmen_laser_remission_type_t remission_mode;  /* if and what kind of remission values are used */
 
@@ -93,3 +104,4 @@ typedef struct {
 
 #endif
 
+// @}

@@ -25,12 +25,22 @@
  *
  ********************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/** @addtogroup logger  **/
+// @{
+
+/** \file playback_messages.h
+ * \brief Definition of the messages for  playback.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
 
 #ifndef    CARMEN_PLAYBACK_MESSAGES_H
 #define    CARMEN_PLAYBACK_MESSAGES_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define    CARMEN_PLAYBACK_COMMAND_PLAY         0
 #define    CARMEN_PLAYBACK_COMMAND_STOP         1
@@ -54,3 +64,6 @@ typedef struct {
 #ifdef __cplusplus
 }
 #endif
+
+// @}
+

@@ -1,3 +1,6 @@
+/** @addtogroup logger libreadlog **/
+// @{
+
 /** 
  * \file readlog.h 
  * \brief Library for reading log files. 
@@ -151,3 +154,5 @@ char *carmen_string_to_gps_gpgga_message(char *string,
 #endif
 
 #endif
+
+// @}

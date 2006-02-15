@@ -1,3 +1,10 @@
+/** @addtogroup laser laser **/
+// @{
+
+/** \file laser_interface.h
+ * \brief The interface for the laser module
+ **/
+
 /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
@@ -34,10 +41,13 @@
 extern "C" {
 #endif
 
+  /** Function to subscribe the raw front laser (rawlaser1) message **/
 void
 carmen_laser_subscribe_frontlaser_message(carmen_laser_laser_message *laser,
 					  carmen_handler_t handler,
 					  carmen_subscribe_t subscribe_how);
+
+  /** Function to subscribe the raw rear laser (rawlaser2) message **/
 void
 carmen_laser_subscribe_rearlaser_message(carmen_laser_laser_message *laser,
 					 carmen_handler_t handler,
@@ -75,3 +85,4 @@ carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
 #endif
 
 #endif
+// @}

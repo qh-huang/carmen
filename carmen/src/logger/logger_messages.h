@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup logger  **/
+// @{
+
+/** \file logger_messages.h
+ * \brief Definition of the messages for the module logger.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
+
 #ifndef CARMEN_LOGGER_MESSAGE_H
 #define CARMEN_LOGGER_MESSAGE_H
 
@@ -46,3 +57,6 @@ typedef struct {
 #endif
 
 #endif
+
+// @}
+
