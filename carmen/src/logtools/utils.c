@@ -602,8 +602,8 @@ logtools_compute_laser_points( logtools_rpos2_t rpos, double val,
 logtools_laser_coord2_t
 compute_laser2d_coord( logtools_lasersens2_data_t lsens, int i )
 {
-  double        val;
-  logtools_laser_coord2_t  coord;
+  double                   val;
+  logtools_laser_coord2_t  coord = { {0.0,0.0},{0.0,0.0}, 0, 0 };
   logtools_rpos2_t         rpos, npos;
 
   rpos  = logtools_rpos2_with_movement2( lsens.estpos,
