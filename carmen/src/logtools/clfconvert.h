@@ -1,4 +1,4 @@
-/** @addtogroup logtools libwclfconvert **/
+/** @addtogroup logtools libclfconvert **/
 // @{
 
 /** 
