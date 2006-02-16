@@ -25,10 +25,10 @@
  *
  ********************************************************/
 
- /** @addtogroup base libsegwar_interface **/
+ /** @addtogroup base libsegwary_interface **/
 // @{
 
-/** \file segway_messages.h
+/** \file segway_interface.h
  * \brief Definition of the messages for this module.
  *
  * This file specifies the messages for this modules used to transmit

@@ -28,7 +28,7 @@
 /** @addtogroup base **/
 // @{
 
-/** \file base_messages.h
+/** \file arm_messages.h
  * \brief Definition of the messages for this module.
  *
  * This file specifies the messages for this modules used to transmit

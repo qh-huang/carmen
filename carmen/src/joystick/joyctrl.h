@@ -29,7 +29,7 @@
 // @{
 
 /** 
- * \file joycrtl.h 
+ * \file joyctrl.h 
  * \brief Library for using joysticks.
  *
  * ...

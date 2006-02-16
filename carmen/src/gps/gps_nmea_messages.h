@@ -2,7 +2,7 @@
 /** @addtogroup gps **/
 // @{
 
-/** \file gps_messages.h
+/** \file gps_nmea_messages.h
  * \brief Definition of the messages for this module.
  *
  * This file specifies the messages for this modules used to transmit
