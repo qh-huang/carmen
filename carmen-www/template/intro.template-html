@@ -5,7 +5,7 @@
 <h3>Introduction - What's Carmen?</h3>
 <p>
 Welcome to CARMEN, the Carnegie Mellon Robot Navigation
-Toolkit. CARMEN an open-source collection of software for mobile robot
+Toolkit. CARMEN is an open-source collection of software for mobile robot
 control. CARMEN is modular software designed to provide basic
 navigation primatives including: base and sensor control, logging,
 obstacle avoidance, localization, path planning, and mapping.
