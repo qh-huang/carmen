@@ -25,6 +25,18 @@
  *
  ********************************************************/
 
+
+/** @addtogroup camera libcamera_interface **/
+// @{
+
+/** \file camera_interface.h
+ * \brief Definition of the interface of the module camera.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
+
 #ifndef CARMEN_CAMERA_INTERFACE_H
 #define CARMEN_CAMERA_INTERFACE_H
 
@@ -44,3 +56,6 @@ carmen_camera_subscribe_images(carmen_camera_image_message *image,
 #endif
 
 #endif
+
+// @}
+

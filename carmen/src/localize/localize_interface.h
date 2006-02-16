@@ -25,6 +25,18 @@
  *
  ********************************************************/
 
+
+/** @addtogroup localize liblocalize_interface **/
+// @{
+
+/** \file localize_interface.h
+ * \brief Definition of the interface of the module localize.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
+ 
 #ifndef CARMEN_LOCALIZE_INTERFACE_H
 #define CARMEN_LOCALIZE_INTERFACE_H
 
@@ -101,3 +113,4 @@ int carmen_localize_get_globalpos(carmen_localize_globalpos_message **globalpos)
 #endif
 
 #endif
+// @}

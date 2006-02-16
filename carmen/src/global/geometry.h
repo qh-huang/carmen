@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+
+/** @addtogroup global libgeometry **/
+// @{
+
+/** \file geometry.h
+ * \brief Library with geometric operations.
+ *
+ * Library for geometric operations
+ **/
+
 #ifndef GLOBAL_GEOMETRY_H
 #define GLOBAL_GEOMETRY_H
 
@@ -99,3 +109,5 @@ void carmen_rotate_2d(double *x, double *y, double theta);
 #endif
 
 #endif
+// @}
+

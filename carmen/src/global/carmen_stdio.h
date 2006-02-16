@@ -1,3 +1,13 @@
+
+/** @addtogroup global libglobal **/
+// @{
+
+/** \file carmen_stdio.h
+ * \brief stdio-functions for CARMEN in libglobal. This library supports gzipped files.
+ *
+ * stdio-functions for CARMEN. Support reading and writing gzipped files.
+ **/
+
 #ifndef DGC_MY_STDIO_H
 #define DGC_MY_STDIO_H
 
@@ -46,3 +56,4 @@ void carmen_fprintf(carmen_FILE *fp, const char *fmt, ...);
 #endif
 
 #endif
+// @}

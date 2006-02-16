@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+
+/** @addtogroup global libserial **/
+// @{
+
+/** \file serial.h
+ * \brief Serial library.
+ *
+ * Serial library.
+ **/
+
+
 #ifndef CARMEN_SERIAL_H
 #define CARMEN_SERIAL_H
 
@@ -49,3 +60,4 @@ int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars);
 #endif
 
 #endif
+// @}

@@ -10,6 +10,19 @@
  *
  ****************************************************/
 
+
+/** @addtogroup global libartwrap **/
+// @{
+
+/** \file artwrap.h
+ * \brief Wrapper around libart function calls that makes
+ * using libart more like gtk.
+ *
+ * Wrapper around libart function calls that makes
+ * using libart more like gtk.
+ **/
+
+
 #ifndef CARMEN_ARTWRAP_H
 #define CARMEN_ARTWRAP_H
 
@@ -156,3 +169,4 @@ int art_write_buffer_png(art_buffer_p buffer, char *filename);
 #endif
 
 
+// @}

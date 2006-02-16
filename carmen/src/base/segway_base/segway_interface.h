@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+ /** @addtogroup base libsegwar_interface **/
+// @{
+
+/** \file segway_messages.h
+ * \brief Definition of the messages for this module.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
 #ifndef SEGWAY_INTERFACE_H
 #define SEGWAY_INTERFACE_H
 
@@ -51,3 +61,4 @@ void carmen_segway_kill_command(void);
 #endif
 
 #endif
+// @}

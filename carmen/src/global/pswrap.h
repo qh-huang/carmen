@@ -7,6 +7,18 @@
  *
  ***********************************************************/
 
+
+/** @addtogroup global libpswrap **/
+// @{
+
+/** \file pswrap.h
+ * \brief Library for writing postscript files.
+ *
+ * Library for writing postscript files.
+ **/
+
+
+
 #ifndef CARMEN_PSWRAP_H
 #define CARMEN_PSWRAP_H
 
@@ -82,3 +94,4 @@ void carmen_ps_draw_transformed_image(carmen_ps_doc_p doc, char *srt_image,
 #endif 
 
 #endif
+// @}

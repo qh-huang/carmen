@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup logger libwritelog **/
+// @{
+
+/** 
+ * \file writelog.h 
+ * \brief Library for writing log files. 
+ *
+ * This library should be used to write logfiles. 
+ **/
+
+
 #ifndef CARMEN_LOGWRITE_H
 #define CARMEN_LOGWRITE_H
 
@@ -71,3 +82,4 @@ void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg,
 				   double timestamp);
 
 #endif
+// @}

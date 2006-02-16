@@ -1,4 +1,4 @@
-/*********************************************************
+ /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
@@ -24,6 +24,16 @@
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
+
+/** @addtogroup global libglobal **/
+// @{
+
+/** \file global.h
+ * \brief Library global. Contains a huge amount of useful things.
+ *
+ * Library global. Contains a huge amount of useful things.
+ **/
+
 
 #ifndef CARMEN_GLOBAL_H
 #define CARMEN_GLOBAL_H
@@ -388,3 +398,4 @@ carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
 #endif
 
 #endif
+// @}

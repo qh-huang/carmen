@@ -25,6 +25,18 @@
  *
  ********************************************************/
 
+
+/** @addtogroup base libarm_interface **/
+// @{
+
+/** \file arm_interface.h
+ * \brief Definition of the interface of the module arm.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
+
 #ifndef CARMEN_ARM_INTERFACE_H
 #define CARMEN_ARM_INTERFACE_H
 
@@ -50,3 +62,4 @@ void carmen_arm_command(int num_joints, double *joint_angles);
 
 
 
+// @}

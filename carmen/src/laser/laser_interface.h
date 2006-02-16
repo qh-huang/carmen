@@ -1,10 +1,3 @@
-/** @addtogroup laser laser **/
-// @{
-
-/** \file laser_interface.h
- * \brief The interface for the laser module
- **/
-
 /*********************************************************
  *
  * This source code is part of the Carnegie Mellon Robot
@@ -31,6 +24,16 @@
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
+
+/** @addtogroup laser liblaser_interface **/
+// @{
+
+/** \file laser_interface.h
+ * \brief Definition of the interface of the module laser.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
 
 #ifndef CARMEN_LASER_INTERFACE_H
 #define CARMEN_LASER_INTERFACE_H

@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+
+/** @addtogroup camera libcamera_hw_interface **/
+// @{
+
+/** \file camera_hw_interface.h
+ * \brief Definition of the interface for the camera hardware.
+ *
+ * Definition of the interface for the camera hardware.
+ **/
+
+ 
 #ifndef CARMEN_CAMERA_HW_INTERFACE_H
 #define CARMEN_CAMERA_HW_INTERFACE_H
 
@@ -51,3 +62,4 @@ extern "C" {
 #endif
 
 #endif
+// @}

@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup localize liblocalizecore **/
+// @{
+
+/** 
+ * \file localizecore.h 
+ * \brief Library for Monto-Carlo localization.
+ *
+ * This library contains all functions to perform a MCL. 
+ **/
+
+
 #ifndef CARMEN_LOCALIZECORE_H
 #define CARMEN_LOCALIZECORE_H
 
@@ -154,3 +165,4 @@ void carmen_localize_summarize(carmen_localize_particle_filter_p filter,
 #endif
 
 #endif
+// @}

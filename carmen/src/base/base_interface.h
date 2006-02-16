@@ -25,6 +25,18 @@
  *
  ********************************************************/
 
+
+/** @addtogroup base libbase_interface **/
+// @{
+
+/** \file base_interface.h
+ * \brief Definition of the interface of the module base.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
+
 #ifndef CARMEN_BASE_INTERFACE_H
 #define CARMEN_BASE_INTERFACE_H
 

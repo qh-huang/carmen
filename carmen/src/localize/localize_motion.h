@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup localize liblocalize_motion **/
+// @{
+
+/** 
+ * \file localize_motion.h 
+ * \brief Library for the new CARMEN motion_model.
+ *
+ * ...
+ **/
+
+
 #ifndef CARMEN_LOCALIZE_MOTION_H
 #define CARMEN_LOCALIZE_MOTION_H
 
@@ -68,3 +79,4 @@ double carmen_localize_sample_noisy_turn(double delta_t,
 #endif
 
 #endif
+// @}

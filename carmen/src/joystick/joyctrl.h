@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup joystick libjoyctrl **/
+// @{
+
+/** 
+ * \file joycrtl.h 
+ * \brief Library for using joysticks.
+ *
+ * ...
+ **/
+
+
 #ifndef CARMEN_JOYCTRL_H
 #define CARMEN_JOYCTRL_H
 
@@ -79,3 +90,4 @@ void carmen_joystick_control(carmen_joystick_type *joystick, double max_tv,
 #endif
 
 #endif
+// @}

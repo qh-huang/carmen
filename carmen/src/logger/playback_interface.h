@@ -25,7 +25,7 @@
  *
  ********************************************************/
 
-/** @addtogroup logger  **/
+/** @addtogroup logger libplayback_interface  **/
 // @{
 
 /** \file playback_interface.h

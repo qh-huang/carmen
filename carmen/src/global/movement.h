@@ -1,3 +1,13 @@
+/** @addtogroup global libmovement **/
+// @{
+
+/** 
+ * \file movement.h 
+ * \brief Library for relative movements.
+ *
+ * ...
+ **/
+
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
@@ -7,14 +17,14 @@ extern "C" {
 
 #include <carmen/carmen.h>
 
-/* rtr-movement (1st rotation, translation, 2nd rotation) */
+  /** rtr-movement (1st rotation, translation, 2nd rotation) **/
 typedef struct  {
   double r1;
   double d;
   double r2;
 } carmen_movement_rtr_t;
 
-/* fsr-movement (forward, sideward, rotate) */
+  /** fsr-movement (forward, sideward, rotate) **/
 typedef struct  {
   double f;
   double s;
@@ -94,3 +104,4 @@ carmen_movement_transformation_between_frames(carmen_point_t reference_pt_frame1
 
 #endif
 
+// @}

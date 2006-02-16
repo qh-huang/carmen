@@ -1,3 +1,16 @@
+
+/** @addtogroup global libglobal **/
+// @{
+
+/** \file ipc_wrapper.h
+ * \brief Definition of the wrapped IPC functions for CARMEN in libglobal.
+ *
+ * This file specifies the wrapped IPC functions for CARMEN. IPC is
+ * the communication infrastructure used to communicate messages in
+ * CARMEN.
+ **/
+
+
 #ifndef CARMEN_GENERIC_INTERFACE_H
 #define CARMEN_GENERIC_INTERFACE_H
 
@@ -15,16 +28,14 @@ typedef void (*carmen_handler_t)(void *);
 
 extern MSG_INSTANCE current_msgRef;
 
-  /* carmen_subscribe_message - generic IPC subscribe function.  It attaches 
-     a callback and a memory destination to a particular IPC message. */
-
+  /** carmen_subscribe_message - generic IPC subscribe function.  It attaches 
+     a callback and a memory destination to a particular IPC message. **/
 void 
 carmen_subscribe_message(char *message_name, char *message_fmt, 
 			 void *message_mem, int message_size, 
 			 carmen_handler_t handler, carmen_subscribe_t subscribe_how);
 
-  /* carmen_unsubscribe_message - Generic IPC unsubscribe message function. */
-
+  /** carmen_unsubscribe_message - Generic IPC unsubscribe message function. **/
 void
 carmen_unsubscribe_message(char *message_name, carmen_handler_t handler);
 
@@ -79,3 +90,4 @@ carmen_ipc_addPeriodicTimer(double interval, TIMER_HANDLER_TYPE handler,
 #endif
 
 #endif
+// @}

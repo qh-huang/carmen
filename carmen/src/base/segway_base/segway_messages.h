@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup base **/
+// @{
+
+/** \file segway_messages.h
+ * \brief Definition of the messages for this module.
+ *
+ * This file specifies the messages for this modules used to transmit
+ * data via ipc to other modules.
+ **/
+
 #ifndef SEGWAY_MESSAGES_H
 #define SEGWAY_MESSAGES_H
 
