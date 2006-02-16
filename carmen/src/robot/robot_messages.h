@@ -43,46 +43,49 @@
 extern "C" {
 #endif
 
+  /** Sonar measurement message **/
 typedef struct {
   int num_sonars;
-  double sensor_angle;          //width of sonar cone
+  double sensor_angle;               /**< width of sonar cone **/
   double *ranges;
   carmen_point_t *positions;
   carmen_point_t robot_pose;
   double tv, rv;
   double timestamp;
-  char *host;
+  char *host;                         /**< The host from which this message was sent **/
 } carmen_robot_sonar_message;
 
 #define      CARMEN_ROBOT_SONAR_NAME            "robot_sonar"
 #define      CARMEN_ROBOT_SONAR_FMT             "{int,double,<double:1>,<{double,double,double}:1>,{double,double,double},double,double,double,string}"
 
+  /** Bumper measurement message **/
 typedef struct { 
   int num_bumpers;
   char *state;
   carmen_point_t robot_pose; //position of the center of the robot
   double tv, rv;
   double timestamp;
-  char *host;
+  char *host;                          /**< The host from which this message was sent **/
 } carmen_robot_bumper_message;
 
 #define CARMEN_ROBOT_BUMPER_NAME "carmen_robot_bumper"
 #define CARMEN_ROBOT_BUMPER_FMT "{int, <char:1>, {double,double,double}, double, double, double, string}"
   
+  /** Laser measurement message with interpolated pose estimate of the robot **/
 typedef struct {
-  carmen_laser_laser_config_t config;
-  int num_readings;
-  float *range;
-  char *tooclose;
-  int num_remissions;
-  float *remission;
-  carmen_point_t laser_pose; //position of the center of the laser
-  carmen_point_t robot_pose; //position of the center of the robot
-  double tv, rv;
+  carmen_laser_laser_config_t config;   /**< Configuration of the laser sensor **/
+  int num_readings;                     /**< Number of beams in this message **/
+  float *range;                         /**< Array of proximity measurements **/
+  char *tooclose;                       /**< Is the robot too close to an obstacle?  **/
+  int num_remissions;                   /**< Number of remission values (0 = no remission available **/ **/
+  float *remission;                    /**< Array of remission measurements **/
+  carmen_point_t laser_pose;           /**< Position of the center of the laser **/
+  carmen_point_t robot_pose;           /**< Position of the center of the robot **/
+  double tv, rv;                       /**< Translational and rotational velocities **/
   double forward_safety_dist, side_safety_dist;
   double turn_axis;
-  double timestamp;
-  char *host;
+  double timestamp;                    /**< Timestamp when the laser data was recorded (received by the devide driver) **/
+  char *host;                          /**< The host from which this message was sent **/
 } carmen_robot_laser_message;
 
 #define      CARMEN_ROBOT_FRONTLASER_NAME       "carmen_robot_frontlaser"
@@ -95,7 +98,7 @@ typedef struct {
   double vector_distance;
   double vector_angle;
   double timestamp;
-  char *host;
+  char *host;                   /**< The host from which this message was sent **/
 } carmen_robot_vector_status_message;
 
 #define CARMEN_ROBOT_VECTOR_STATUS_NAME "carmen_robot_vector_status"
@@ -104,7 +107,7 @@ typedef struct {
 typedef struct {
   double tv, rv;
   double timestamp;
-  char *host;
+  char *host;                   /**< The host from which this message was sent **/
 } carmen_robot_velocity_message;
 
 #define      CARMEN_ROBOT_VELOCITY_NAME         "carmen_robot_vel"
@@ -115,7 +118,7 @@ typedef struct {
   carmen_traj_point_t *trajectory;
   carmen_traj_point_t robot_position;
   double timestamp;
-  char *host;
+  char *host;                 /**< The host from which this message was sent **/
 } carmen_robot_follow_trajectory_message;
 
 #define      CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME         "carmen_robot_follow_trajectory"
@@ -125,7 +128,7 @@ typedef struct {
   double distance;
   double theta;
   double timestamp;
-  char *host;
+  char *host;               /**< The host from which this message was sent **/
 } carmen_robot_vector_move_message;
 
 #define      CARMEN_ROBOT_VECTOR_MOVE_NAME         "carmen_robot_vector_move"
