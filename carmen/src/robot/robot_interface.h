@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup robot librobot_interface **/
+// @{
+
+/** \file robot_interface.h
+ * \brief Definition of the interface of the module robot.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef CARMEN_ROBOT_INTERFACE_H
 #define CARMEN_ROBOT_INTERFACE_H
 
@@ -65,3 +75,4 @@ void carmen_robot_send_base_binary_command(unsigned char *data, int length);
 #endif
 
 #endif
+// @}

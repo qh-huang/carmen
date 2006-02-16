@@ -56,4 +56,6 @@ navigator_test: navigator_test.o navigator_interface.o
 
 random_nav: random_nav.o libnavigator_interface.a
 
+followpath: followpath.o libnavigator_interface.a
+
 include ../Makefile.rules

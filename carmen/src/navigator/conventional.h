@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup navigator libconventional **/
+// @{
+
+/** 
+ * \file conventional.h 
+ * \brief Library for conventional planning.
+ *
+ * ...
+ **/
+
+
 #ifndef CONVENTIONAL_H
 #define CONVENTIONAL_H
 
@@ -49,3 +60,4 @@ extern "C" {
 #endif
 
 #endif
+// @}

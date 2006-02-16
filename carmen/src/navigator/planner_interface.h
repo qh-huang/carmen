@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+
+/** @addtogroup navigator libplanner_interface **/
+// @{
+
+/** \file planner_interface.h
+ * \brief Definition of the interface of the module navigator.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+ 
 #ifndef PLANNER_INTERFACE_H
 #define PLANNER_INTERFACE_H
 
@@ -96,3 +107,4 @@ extern "C" {
 #endif
 
 #endif
+// @}

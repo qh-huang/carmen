@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+
+/** @addtogroup navigator libnavigator_interface **/
+// @{
+
+/** \file navigator_interface.h
+ * \brief Definition of the interface of the module navigator.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef NAVIGATOR_INTERFACE_H
 #define NAVIGATOR_INTERFACE_H
 
@@ -65,3 +76,4 @@ int carmen_navigator_get_map(carmen_navigator_map_t map_type,
 #endif
 
 #endif
+// @}

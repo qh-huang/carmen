@@ -1,3 +1,13 @@
+/** @addtogroup vasco libvascocore **/
+// @{
+
+/** 
+ * \file vascocore.h 
+ * \brief Library for scan-matching. 
+ *
+ * Libfrary for the CARMEN mapper. 
+ **/
+
 #ifndef VASCOCORE_UTILS_H
 #define VASCOCORE_UTILS_H
 
@@ -154,3 +164,4 @@ vascocore_scan_match_general(int num_readings, float *range, float *angle,
 
 #endif /* ifdef BD_UTILS_H */
 
+// @}

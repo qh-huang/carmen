@@ -1,3 +1,14 @@
+
+/** @addtogroup proccontrol libproccontrol_interface **/
+// @{
+
+/** \file proccontrol_interface.h
+ * \brief Definition of the interface of the module proccontrol.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef CARMEN_PROCCONTROL_INTERFACE_H
 #define CARMEN_PROCCONTROL_INTERFACE_H
 
@@ -35,3 +46,4 @@ carmen_proccontrol_set_group_state(char *group_name, int requested_state);
 #endif
 
 #endif
+// @}

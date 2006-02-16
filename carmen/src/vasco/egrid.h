@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup vasco libegrid **/
+// @{
+
+/** 
+ * \file egrid.h 
+ * \brief Library for the vasco grid structure.
+ *
+ * ...
+ **/
+
+
 #ifndef EGRID_H
 #define EGRID_H
 
@@ -84,3 +95,4 @@ void carmen_mapper_finish_evidence_grid(evidence_grid *grid, int downsample,
 
 #endif
 
+// @}

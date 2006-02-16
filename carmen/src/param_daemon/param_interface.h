@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup param_daemon libparam_interface **/
+// @{
+
+/** \file param_interface.h
+ * \brief Definition of the interface of the module param_daemon.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef CARMEN_PARAMETER_INTERFACE_H
 #define CARMEN_PARAMETER_INTERFACE_H
 
@@ -125,3 +135,4 @@ int carmen_param_check_version(char *prog_name);
 #endif
 
 #endif
+// @}

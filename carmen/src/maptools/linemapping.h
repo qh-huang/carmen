@@ -1,3 +1,13 @@
+/** @addtogroup maptools liblinemapping **/
+// @{
+
+/** 
+ * \file linemapping.h 
+ * \brief Library for generating linemaps
+ *
+ * Split'n'Merge based library for generating linemaps fram range data.
+ **/
+
 #ifndef CARMEN_LINEMAPPING_H
 #define CARMEN_LINEMAPPING_H
 
@@ -83,3 +93,4 @@ carmen_linemapping_distance_linesegment_linesegment(const carmen_linemapping_seg
 #endif 
 
 
+// @}

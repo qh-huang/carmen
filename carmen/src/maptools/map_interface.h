@@ -25,9 +25,14 @@
  *
  ********************************************************/
 
-/**********************************************
- * library of function for mapserver clients  *
- **********************************************/
+/** @addtogroup maptools libmap_interface **/
+// @{
+
+/** \file map_interface.h
+ * \brief Library of function for mapserver clients.
+ *
+ * Library of function for mapserver clients.
+ **/
 
 #ifndef CARMEN_MAP_INTERFACE_H
 #define CARMEN_MAP_INTERFACE_H
@@ -103,3 +108,4 @@ void carmen_map_destroy(carmen_map_p *map);
 #endif
 
 #endif
+// @}

@@ -25,6 +25,16 @@
  *
  ********************************************************/
 
+/** @addtogroup simulator libsimulator_interface **/
+// @{
+
+/** \file simulator_interface.h
+ * \brief Definition of the interface of the module simulator.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef SIMULATOR_INTERFACE_H
 #define SIMULATOR_INTERFACE_H
 
@@ -68,3 +78,4 @@ void carmen_simulator_next_tick(void);
 #endif
 
 #endif
+// @}

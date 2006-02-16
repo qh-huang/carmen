@@ -25,6 +25,17 @@
  *
  ********************************************************/
 
+/** @addtogroup robot librobot **/
+// @{
+
+/** 
+ * \file robot_central.h 
+ * \brief Library for robot.
+ *
+ * ...
+ **/
+
+
 #ifndef CARMEN_ROBOT_H
 #define CARMEN_ROBOT_H
 
@@ -79,3 +90,4 @@ void carmen_robot_update_skew(int data_type, int *count, double time,
 #endif
 
 #endif
+// @}

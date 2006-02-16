@@ -1,3 +1,14 @@
+
+/** @addtogroup pantilt libpantilt_interface   **/
+// @{
+
+/** \file pantilt_interface.h
+ * \brief Definition of the interface of the module pantilt.
+ *
+ * This file specifies the interface to subscribe the messages of
+ * that module and to receive its data via ipc.
+ **/
+
 #ifndef CARMEN_PANTILT_INTERFACE_H
 #define CARMEN_PANTILT_INTERFACE_H
 
@@ -29,3 +40,4 @@ carmen_pantilt_move_tilt( double tilt );
 #endif
 
 #endif
+// @}
