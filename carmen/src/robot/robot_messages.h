@@ -77,7 +77,7 @@ typedef struct {
   int num_readings;                     /**< Number of beams in this message **/
   float *range;                         /**< Array of proximity measurements **/
   char *tooclose;                       /**< Is the robot too close to an obstacle?  **/
-  int num_remissions;                   /**< Number of remission values (0 = no remission available **/ **/
+  int num_remissions;                   /**< Number of remission values (0 = no remission available **/
   float *remission;                    /**< Array of remission measurements **/
   carmen_point_t laser_pose;           /**< Position of the center of the laser **/
   carmen_point_t robot_pose;           /**< Position of the center of the robot **/
