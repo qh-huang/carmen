@@ -1,3 +1,13 @@
+/** @addtogroup logtools libwclfconvert **/
+// @{
+
+/** 
+ * \file clfconvert.h 
+ * \brief Library for converting data. 
+ *
+ * ... 
+ **/
+
 #ifndef CLFCONVERT_H
 #define CLFCONVERT_H
 
@@ -40,3 +50,4 @@ carmen_clfconvert_transform_truepos_message(carmen_point_t refpose_currentframe,
 
 #endif
 
+// @}
