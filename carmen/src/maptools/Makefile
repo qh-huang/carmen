@@ -17,8 +17,10 @@ PUBLIC_LIBRARIES = liblinemapping.a libmap_interface.a \
 	libmap_util.a libmap_io.a
 PUBLIC_BINARIES = clf2linemap map maptool
 
-TARGETS = map libmap_interface.a liblinemapping.a clf2linemap libmap_util.a \
+TARGETS = map libmap_interface.a  libmap_util.a \
 	libmap_io.a maptool
+
+# liblinemapping.a clf2linemap
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
