@@ -11,6 +11,10 @@
 #ifndef CARMEN_LINEMAPPING_H
 #define CARMEN_LINEMAPPING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <carmen/carmen.h>
 
 #define CARMEN_LINEMAPPING_ROBOT_FRAME  1
@@ -89,6 +93,13 @@ carmen_linemapping_distance_point_linesegment(const carmen_linemapping_segment_t
 double 
 carmen_linemapping_distance_linesegment_linesegment(const carmen_linemapping_segment_t *l1,
 						    const carmen_linemapping_segment_t *l2);
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif 
 

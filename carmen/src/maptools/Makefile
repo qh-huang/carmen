@@ -7,13 +7,13 @@ LFLAGS += -lparam_interface -lglobal -lipc -lm
 MODULE_NAME = MAPTOOLS
 MODULE_COMMENT = Tools for mapping etc.
 
-SOURCES = bee2carmen.c clfconvert.c generate_blank.c map.c \
+SOURCES = bee2carmen.c generate_blank.c map.c \
 	linemapping.cpp map_interface.c map_ipc.c map_read.c \
 	maptool.c map_util.c map_write.c
 
 PUBLIC_INCLUDES = linemapping.h map.h map_io.h map_messages.h map_interface.h \
 	 map_util.h
-PUBLIC_LIBRARIES = libclfconvert.a liblinemapping.a libmap_interface.a \
+PUBLIC_LIBRARIES = liblinemapping.a libmap_interface.a \
 	libmap_util.a libmap_io.a
 PUBLIC_BINARIES = clf2linemap map maptool
 

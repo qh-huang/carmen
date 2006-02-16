@@ -1,14 +1,6 @@
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-#include <carmen/carmen.h>
 #include "linemapping.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #include "dynamictable.h"
 
