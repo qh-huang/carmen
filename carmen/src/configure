@@ -26,7 +26,7 @@ my ($xr4000Kernel) = "2.0.20";
 
 my @min_gtk_version = (1, 2);
 
-my ($nographics, $nojoystick, $notcpd, $nojpeg, $nozlib,
+my ($nographics, $nojoystick, $nodoxygen, $notcpd, $nojpeg, $nozlib,
     $noreadline, $nolibart, $nowand, $nojava, $install_path);
 
 $nolibart = 1;
@@ -45,6 +45,7 @@ Options: [--nographics]  : compile without graphics
 	 [--nozlib]      : compile without ZLib support
 	 [--nowand]      : compile without ImageMagick support
 	 [--nojava]      : compile without java support
+	 [--nodoxygen]   : no doxygen support for creating the documentation
 	 [-L<libpath>]   : compile with additional library paths
                            (can have multiple -L option switchs)
 EOF
@@ -55,6 +56,9 @@ EOF
   }
   if (/nographics/) {
     $nographics = 1;
+  }
+  if (/nodoxygen/) {
+    $nodoxygen = 1;
   }
   if (/nojoystick/) {
     $nojoystick = 1;
@@ -110,6 +114,7 @@ my $readline = verify_readline(\@user_libs) unless ($noreadline);
 my $libart = verify_libart(\@user_libs) unless ($nolibart);
 my $wand = verify_wand() unless ($nowand);
 my $java = verify_java() unless ($nojava);
+my $doxygen = verify_doxygen() unless ($nodoxygen);
 my $install_path = get_install_path() unless ($install_path);
 my @robots = get_robot_types($os_type, $kernel, $canlib);
 
@@ -147,6 +152,7 @@ if ($readline) {
 } else {
   print OUTPUT "NO_READLINE = 1\n";
 }
+print OUTPUT "NO_DOXYGEN = 1\n" unless ($doxygen);
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
 } else {
@@ -564,6 +570,20 @@ sub verify_wand {
 
   print "Searching for Wand... ";
   $error = system ("pkg-config Wand");
+  if (!$error) {
+    print "found\n";
+    return 1;
+  }  
+
+  print "${red}not found${normal}\n";
+  return undef;
+}
+
+sub verify_doxygen {
+  my $error = undef;
+
+  print "Searching for doxygen... ";
+  $error = system ("doxygen --version > /dev/null  2>&1");
   if (!$error) {
     print "found\n";
     return 1;

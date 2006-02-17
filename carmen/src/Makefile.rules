@@ -292,9 +292,14 @@ loud:
 	$(ECHO) "    ---- Archiving $^ into $@ (C)"
 	$(SILENT) $(CXX) -shared -o $@ $^
 
+%.doxygen:	
+	$(ECHO) "    ---- Compiling $< (Doxygen)"
+	$(SILENT) $(DOXYGEN) $<
+
 %:	
 	$(ECHO) "    ---- Linking $^ to $@ (C)"
 	$(SILENT) $(LINK) $(CFLAGS) $(IFLAGS) $(filter %.o, $^) $(filter %.a, $^) -o $@ -L. $(patsubst lib%.a,-l%,$(filter %.a, $^)) $(LFLAGS) $(LFLAGS_POST)
+
 
 ifeq (Makefile.depend, $(wildcard Makefile.depend))
 include Makefile.depend
