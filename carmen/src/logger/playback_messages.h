@@ -59,10 +59,11 @@ typedef struct {
 #define CARMEN_PLAYBACK_COMMAND_NAME     "carmen_playback_command"
 #define CARMEN_PLAYBACK_COMMAND_FMT      "{int,int,float}"
 
-#endif
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 // @}
