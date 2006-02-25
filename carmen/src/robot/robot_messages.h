@@ -71,6 +71,7 @@ typedef struct {
 #define CARMEN_ROBOT_BUMPER_NAME "carmen_robot_bumper"
 #define CARMEN_ROBOT_BUMPER_FMT "{int, <char:1>, {double,double,double}, double, double, double, string}"
   
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
   /** Laser measurement message with interpolated pose estimate of the robot **/
 typedef struct {
   carmen_laser_laser_config_t config;   /**< Configuration of the laser sensor **/
@@ -93,6 +94,7 @@ typedef struct {
 
 #define      CARMEN_ROBOT_REARLASER_NAME        "carmen_robot_rearlaser"
 #define      CARMEN_ROBOT_REARLASER_FMT         "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,double,double,double,double,double,double,double,double,double,double,double,double,string}"
+#endif
 
 typedef struct {
   double vector_distance;

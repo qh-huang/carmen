@@ -11,6 +11,8 @@ TARGETS = liborc.a orc_test
 
 orc_test:	orc_test.o liborc.a
 
+orc_arm:	arm_main.o orc_arm_lib.o
+
 liborc.a:  	orc_lib.o
 
 include ../../Makefile.rules

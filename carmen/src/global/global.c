@@ -28,6 +28,8 @@
 #include <carmen/carmen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
 #include <unistd.h>
 
 #define        NUM_ROBOT_NAMES        7

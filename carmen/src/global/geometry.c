@@ -28,8 +28,10 @@
 #include <carmen/carmen.h>
 #include <assert.h>
 
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 int carmen_geometry_x_offset[CARMEN_NUM_OFFSETS] = {0, 1, 1, 1, 0, -1, -1, -1};
 int carmen_geometry_y_offset[CARMEN_NUM_OFFSETS] = {-1, -1, 0, 1, 1, 1, 0, -1};
+#endif
 
 #if 0
 
@@ -292,6 +294,7 @@ carmen_geometry_compute_velocity(carmen_traj_point_t robot,
   return max_velocity;
 }
 
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 void 
 carmen_geometry_project_point(int x, int y, double theta, int *x2, int *y2, 
 			      carmen_map_config_t map_defn) 
@@ -359,6 +362,7 @@ carmen_geometry_project_point(int x, int y, double theta, int *x2, int *y2,
       *y2 = carmen_round(y + tan(delta_theta)*fabs(delta_x));
     }
 }
+#endif
 
 void 
 carmen_geometry_move_pt_to_rotating_ref_frame(carmen_traj_point_p obstacle_pt,
@@ -570,6 +574,15 @@ carmen_geometry_compute_radius_and_centre(carmen_traj_point_p prev,
   return radius;
 }
 
+void carmen_rotate_2d(double *x, double *y, double theta) {
+
+  double x2 = *x;
+
+  *x = cos(theta)*(*x) - sin(theta)*(*y);
+  *y = sin(theta)*x2 + cos(theta)*(*y);
+}
+
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 double 
 carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point, 
 					  double theta, carmen_map_p map) 
@@ -914,10 +927,4 @@ carmen_geometry_map_to_cspace(carmen_map_p map,
     }
 }
 
-void carmen_rotate_2d(double *x, double *y, double theta) {
-
-  double x2 = *x;
-
-  *x = cos(theta)*(*x) - sin(theta)*(*y);
-  *y = sin(theta)*x2 + cos(theta)*(*y);
-}
+#endif

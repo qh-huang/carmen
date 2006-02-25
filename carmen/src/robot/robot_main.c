@@ -27,7 +27,10 @@
 
 #include <carmen/carmen.h>
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 #include "robot_laser.h"
+#endif
+
 #include "robot_sonar.h"
 #include "robot_bumper.h"
 
@@ -44,7 +47,11 @@ static char *robot_host;
 static double turn_before_driving_if_heading_bigger_than = M_PI/2;
 static int odometry_count = 0;
 static double odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS];
+
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 static int use_laser = 1;
+#endif
+
 static int use_sonar = 1;
 static int use_bumper = 0;
 
@@ -257,8 +264,10 @@ static void base_odometry_handler(void)
     carmen_robot_correct_sonar_and_publish();
   if (use_bumper)
     carmen_robot_correct_bumper_and_publish();
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
   if (use_laser)
     carmen_robot_correct_laser_and_publish();
+#endif
 }
 
 static void publish_vector_status(double distance, double angle)
@@ -620,7 +629,9 @@ static int read_robot_parameters(int argc, char **argv)
 
     {"robot", "allow_rear_motion", CARMEN_PARAM_ONOFF, 
      &carmen_robot_config.allow_rear_motion, 1, NULL},
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
     {"robot", "use_laser", CARMEN_PARAM_ONOFF, &use_laser, 1, NULL},
+#endif
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, NULL},
     {"robot", "sensor_timeout", CARMEN_PARAM_DOUBLE,
      &robot_sensor_timeout, 1, NULL},
@@ -665,8 +676,10 @@ int carmen_robot_start(int argc, char **argv)
     (&carmen_robot_latest_odometry, (carmen_handler_t)base_odometry_handler,
      CARMEN_SUBSCRIBE_LATEST);
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
   if (use_laser)
     carmen_robot_add_laser_handlers();
+#endif
   if (use_sonar)
     carmen_robot_add_sonar_handler();
   if (use_bumper)

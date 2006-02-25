@@ -27,6 +27,7 @@
 
 #include <carmen/carmen.h>
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 void 
 carmen_robot_subscribe_frontlaser_message(carmen_robot_laser_message *laser,
 					  carmen_handler_t handler,
@@ -48,6 +49,7 @@ carmen_robot_subscribe_rearlaser_message(carmen_robot_laser_message *laser,
 			   laser, sizeof(carmen_robot_laser_message),
 			   handler, subscribe_how);
 }
+#endif
 
 void
 carmen_robot_subscribe_sonar_message(carmen_robot_sonar_message *sonar,

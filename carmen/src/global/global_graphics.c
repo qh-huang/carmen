@@ -87,6 +87,153 @@ void carmen_graphics_update_ipc_callbacks(GdkInputFunction callback_Func)
   }
 }
 
+static GdkColormap *cmap = NULL;
+
+static void _add_color(GdkColor *color, char *name)
+{
+  if(cmap == NULL)
+    cmap = gdk_colormap_get_system();
+
+  if (!gdk_color_parse (name, color)) {
+    g_error("couldn't parse color");
+    return;
+  }
+
+  if(!gdk_colormap_alloc_color(cmap, color, FALSE, TRUE))
+    g_error("couldn't allocate color");
+}
+
+void
+carmen_graphics_setup_colors(void)
+{
+  _add_color(&carmen_red, "red");
+  _add_color(&carmen_blue, "blue");
+  _add_color(&carmen_white, "white");
+  _add_color(&carmen_yellow, "yellow");
+  _add_color(&carmen_green, "green");
+  _add_color(&carmen_light_blue, "DodgerBlue");
+  _add_color(&carmen_black, "black");
+  _add_color(&carmen_orange, "tomato");
+  _add_color(&carmen_grey, "ivory4");
+  _add_color(&carmen_light_grey, "grey79");
+  _add_color(&carmen_purple, "purple");
+}
+
+GdkColor carmen_graphics_add_color(char *name) 
+{
+  GdkColor color;
+
+  _add_color(&color, name);
+  return color;
+}
+
+GdkColor carmen_graphics_add_color_rgb(int r, int g, int b) 
+{
+  GdkColor color;
+
+  if(cmap == NULL)
+    cmap = gdk_colormap_get_system();
+
+  color.red = r * 256;
+  color.green = g * 256;
+  color.blue = b * 256;
+
+  if(!gdk_colormap_alloc_color(cmap, &color, FALSE, TRUE))
+    g_error("couldn't allocate color");
+
+  return color;
+}
+
+#define ELLIPSE_POINTS 30
+
+void carmen_graphics_draw_ellipse(GdkPixmap *pixmap, GdkGC *GC, double x, 
+				  double y, double a, double b, double c, 
+				  double k);
+
+/* There was a copy of draw_ellipse from localizegraph.c here, but it takes
+   things in funny units. x/y should be world points, and a/b/c should also
+   be defined with respect to the world, not the map. This needs to be
+   fixed. */
+
+static void write_pixbuf_as_png(GdkPixbuf *pixbuf, char *user_filename) 
+{
+  char basefilename[100] = "video";
+  char filename[100];
+  GError *error;
+  static int image_count = 0;
+  
+  if (user_filename == NULL)
+    sprintf(filename, "%s%04d.png", basefilename, image_count);
+  else
+    snprintf(filename, 100, "%s", user_filename);
+
+  carmen_verbose("Saving image to %s... ", filename);
+  
+  error = NULL;
+  gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL);
+
+  image_count++;
+}
+
+void carmen_graphics_write_pixmap_as_png(GdkPixmap *pixmap, 
+					 char *user_filename, 
+					 int x, int y, int w, int h)
+{
+  GdkPixbuf *pixbuf;
+  pixbuf = gdk_pixbuf_get_from_drawable(NULL, pixmap, NULL,
+					x, y, 0, 0, w, h);
+  write_pixbuf_as_png(pixbuf, user_filename);
+  g_object_unref(pixbuf);
+}
+
+/* generates a pixmap from Image_Data */
+static void pixbuf_destroyed(guchar *pixels, 
+			     gpointer data __attribute__ ((unused)))
+{
+  free(pixels);
+}
+
+void carmen_graphics_write_data_as_png(unsigned char *data, 
+				       char *user_filename, int w, int h)
+{
+  GdkPixbuf *image, *rotated_image;
+
+  image = gdk_pixbuf_new_from_data((guchar *)data, GDK_COLORSPACE_RGB,
+				    FALSE, 8, h, w, h*3, pixbuf_destroyed, 
+				    NULL);
+
+  rotated_image = gdk_pixbuf_rotate_simple
+    (image, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+  g_object_unref(image);  
+
+  write_pixbuf_as_png(rotated_image, user_filename);
+  g_object_unref(rotated_image);
+}
+
+
+/* image to map */
+
+int carmen_map_image_to_map_color_unknown(unsigned char r, unsigned char g, 
+					  unsigned char b) 
+{
+  if (   ( r == 0 && g == 0 &&   b==255) ||
+	 ( r == 0 && g == 255 && b==0) )
+    return 1;
+  return 0;
+}
+
+float carmen_map_image_to_map_color_occupancy(unsigned char r, unsigned char g,
+					      unsigned char b) 
+{
+  float occ =( ((float)r) + ((float)g) + ((float)b)  ) / (3.0 * 255.0);
+  if (occ < 0.001)
+    occ = 0.001;
+  if (occ > 0.999)
+    occ = 0.999;
+  return 1.0 - occ;
+}
+
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags) 
 {
   register float *data_ptr;
@@ -168,81 +315,6 @@ unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags)
   return image_data;
 }
 
-static GdkColormap *cmap = NULL;
-
-static void _add_color(GdkColor *color, char *name)
-{
-  if(cmap == NULL)
-    cmap = gdk_colormap_get_system();
-
-  if (!gdk_color_parse (name, color)) {
-    g_error("couldn't parse color");
-    return;
-  }
-
-  if(!gdk_colormap_alloc_color(cmap, color, FALSE, TRUE))
-    g_error("couldn't allocate color");
-}
-
-void
-carmen_graphics_setup_colors(void)
-{
-  _add_color(&carmen_red, "red");
-  _add_color(&carmen_blue, "blue");
-  _add_color(&carmen_white, "white");
-  _add_color(&carmen_yellow, "yellow");
-  _add_color(&carmen_green, "green");
-  _add_color(&carmen_light_blue, "DodgerBlue");
-  _add_color(&carmen_black, "black");
-  _add_color(&carmen_orange, "tomato");
-  _add_color(&carmen_grey, "ivory4");
-  _add_color(&carmen_light_grey, "grey79");
-  _add_color(&carmen_purple, "purple");
-}
-
-GdkColor carmen_graphics_add_color(char *name) 
-{
-  GdkColor color;
-
-  _add_color(&color, name);
-  return color;
-}
-
-GdkColor carmen_graphics_add_color_rgb(int r, int g, int b) 
-{
-  GdkColor color;
-
-  if(cmap == NULL)
-    cmap = gdk_colormap_get_system();
-
-  color.red = r * 256;
-  color.green = g * 256;
-  color.blue = b * 256;
-
-  if(!gdk_colormap_alloc_color(cmap, &color, FALSE, TRUE))
-    g_error("couldn't allocate color");
-
-  return color;
-}
-
-#define ELLIPSE_POINTS 30
-
-void carmen_graphics_draw_ellipse(GdkPixmap *pixmap, GdkGC *GC, double x, 
-				  double y, double a, double b, double c, 
-				  double k);
-
-/* There was a copy of draw_ellipse from localizegraph.c here, but it takes
-   things in funny units. x/y should be world points, and a/b/c should also
-   be defined with respect to the world, not the map. This needs to be
-   fixed. */
-
-/* generates a pixmap from Image_Data */
-static void pixbuf_destroyed(guchar *pixels, 
-			     gpointer data __attribute__ ((unused)))
-{
-  free(pixels);
-}
-
 GdkPixmap * 
 carmen_graphics_generate_pixmap(GtkWidget* drawing_area, 
 				unsigned char* data,
@@ -282,77 +354,6 @@ carmen_graphics_generate_pixmap(GtkWidget* drawing_area,
   g_object_unref(final_image);  
 
   return pixmap;
-}
-
-static void write_pixbuf_as_png(GdkPixbuf *pixbuf, char *user_filename) 
-{
-  char basefilename[100] = "video";
-  char filename[100];
-  GError *error;
-  static int image_count = 0;
-  
-  if (user_filename == NULL)
-    sprintf(filename, "%s%04d.png", basefilename, image_count);
-  else
-    snprintf(filename, 100, "%s", user_filename);
-
-  carmen_verbose("Saving image to %s... ", filename);
-  
-  error = NULL;
-  gdk_pixbuf_save(pixbuf, filename, "png", &error, NULL);
-
-  image_count++;
-}
-
-void carmen_graphics_write_pixmap_as_png(GdkPixmap *pixmap, 
-					 char *user_filename, 
-					 int x, int y, int w, int h)
-{
-  GdkPixbuf *pixbuf;
-  pixbuf = gdk_pixbuf_get_from_drawable(NULL, pixmap, NULL,
-					x, y, 0, 0, w, h);
-  write_pixbuf_as_png(pixbuf, user_filename);
-  g_object_unref(pixbuf);
-}
-
-void carmen_graphics_write_data_as_png(unsigned char *data, 
-				       char *user_filename, int w, int h)
-{
-  GdkPixbuf *image, *rotated_image;
-
-  image = gdk_pixbuf_new_from_data((guchar *)data, GDK_COLORSPACE_RGB,
-				    FALSE, 8, h, w, h*3, pixbuf_destroyed, 
-				    NULL);
-
-  rotated_image = gdk_pixbuf_rotate_simple
-    (image, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
-  g_object_unref(image);  
-
-  write_pixbuf_as_png(rotated_image, user_filename);
-  g_object_unref(rotated_image);
-}
-
-
-/* image to map */
-
-int carmen_map_image_to_map_color_unknown(unsigned char r, unsigned char g, 
-					  unsigned char b) 
-{
-  if (   ( r == 0 && g == 0 &&   b==255) ||
-	 ( r == 0 && g == 255 && b==0) )
-    return 1;
-  return 0;
-}
-
-float carmen_map_image_to_map_color_occupancy(unsigned char r, unsigned char g,
-					      unsigned char b) 
-{
-  float occ =( ((float)r) + ((float)g) + ((float)b)  ) / (3.0 * 255.0);
-  if (occ < 0.001)
-    occ = 0.001;
-  if (occ > 0.999)
-    occ = 0.999;
-  return 1.0 - occ;
 }
 
 carmen_map_p carmen_pixbuf_to_map(GdkPixbuf* pixbuf, double resolution )
@@ -442,4 +443,4 @@ carmen_map_p carmen_map_imagefile_to_map(char *filename, double resolution)
 
  return map;
 }
-
+#endif

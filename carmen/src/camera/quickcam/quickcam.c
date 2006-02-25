@@ -1,6 +1,10 @@
 #include <carmen/carmen.h>
 #include <linux/videodev.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "pwc-ioctl.h"
 #include "ccvt.h"
 #include "../camera_hw_interface.h"

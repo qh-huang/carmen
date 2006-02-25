@@ -47,19 +47,6 @@ void carmen_geometry_compute_centre_and_curvature(carmen_traj_point_t start_poin
 						carmen_traj_point_t *centre, double *radius);
 
 /* 
-   Project a ray from (x, y) in direction theta to the edge of the map defined
-   by map_defn. Stores the co-ordinate of the last point in the map in 
-   (*x2, *y2).
-
-   For example, if the map is 100x100, then project_point(50, 50, M_PI/2) 
-   should give back (50, 100).
-   
-*/
-
-void carmen_geometry_project_point(int x, int y, double theta, int *x2, int *y2, 
-				 carmen_map_config_t map_defn);
-
-/* 
    Compute the maximum allowable velocity from the current pose of the 
    robot, given by robot, constrained by an obstacle at dest_pt, and the
    configuration of the robot given by robot_config.
@@ -78,6 +65,22 @@ double carmen_geometry_compute_radius_and_centre(carmen_traj_point_p prev, carme
 
 void carmen_geometry_move_pt_to_rotating_ref_frame(carmen_traj_point_p obstacle_pt, 
 						 double tv, double rv);
+
+void carmen_rotate_2d(double *x, double *y, double theta);
+
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT 
+/* 
+   Project a ray from (x, y) in direction theta to the edge of the map defined
+   by map_defn. Stores the co-ordinate of the last point in the map in 
+   (*x2, *y2).
+
+   For example, if the map is 100x100, then project_point(50, 50, M_PI/2) 
+   should give back (50, 100).
+   
+*/
+
+void carmen_geometry_project_point(int x, int y, double theta, int *x2, int *y2, 
+				 carmen_map_config_t map_defn);
 
 void carmen_geometry_generate_laser_data(float *laser_data, carmen_traj_point_p traj_point,
 				       double start_theta, double end_theta, int num_points, 
@@ -101,8 +104,7 @@ extern int carmen_geometry_x_offset[];
 extern int carmen_geometry_y_offset[];
 
 void carmen_geometry_map_to_cspace(carmen_map_p map, carmen_robot_config_t *robot_conf);
-
-void carmen_rotate_2d(double *x, double *y, double theta);
+#endif
 
 #ifdef __cplusplus
 }

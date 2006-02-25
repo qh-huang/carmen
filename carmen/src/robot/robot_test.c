@@ -27,6 +27,7 @@
 
 #include <carmen/carmen.h>
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 void robot_frontlaser_handler(carmen_robot_laser_message *front_laser)
 {
   carmen_warn("front_laser\n");
@@ -42,6 +43,7 @@ void robot_rearlaser_handler(carmen_robot_laser_message *rear_laser)
 	      rear_laser->robot_pose.y, 
 	      carmen_radians_to_degrees(rear_laser->robot_pose.theta));
 }
+#endif
 
 void robot_sonar_handler(carmen_robot_sonar_message *sonar_message)
 {
@@ -77,7 +79,6 @@ void robot_sonar_handler(carmen_robot_sonar_message *sonar_message)
 
 void base_odometry_handler(carmen_base_odometry_message *odometry)
 {
-  carmen_warn("\nrear_laser\n");
   carmen_warn("%.2f %.2f %.2f\n", odometry->x, odometry->y, 
 	    carmen_radians_to_degrees(odometry->theta));
 }
@@ -100,12 +101,14 @@ int main(int argc, char **argv)
   
   signal(SIGINT, shutdown_module);
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
   carmen_robot_subscribe_frontlaser_message
     (NULL, (carmen_handler_t)robot_frontlaser_handler,
      CARMEN_SUBSCRIBE_LATEST);
   carmen_robot_subscribe_rearlaser_message
     (NULL,(carmen_handler_t)robot_rearlaser_handler,
      CARMEN_SUBSCRIBE_LATEST);
+#endif
   carmen_robot_subscribe_sonar_message
     (NULL, (carmen_handler_t)robot_sonar_handler,
      CARMEN_SUBSCRIBE_LATEST);

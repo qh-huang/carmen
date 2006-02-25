@@ -56,23 +56,12 @@ extern "C" {
   void carmen_graphics_setup_colors(void);
   GdkColor carmen_graphics_add_color_rgb(int r, int g, int b);
 
-#ifndef NO_JPEG
-  void carmen_graphics_write_map_as_jpeg(char *filename, carmen_map_p map, 
-					 int flags);
-#endif
-
-  unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags);
-
   void carmen_graphics_write_pixmap_as_png(GdkPixmap *pixmap, 
 					   char *user_filename,
 					   int x, int y, int w, int h);
   void carmen_graphics_write_data_as_png(unsigned char *data, 
 					 char *user_filename, int w, int h);
 
-  GdkPixmap *carmen_graphics_generate_pixmap(GtkWidget* drawing_area, 
-					     unsigned char* data,
-					     carmen_map_config_p config, 
-					     double zoom);
   void carmen_graphics_write_pixmap_as_png(GdkPixmap *pixmap, 
 					   char *user_filename, 
 					   int x, int y, int w, int h);
@@ -80,11 +69,25 @@ extern "C" {
 					 char *user_filename, int w, int h);
   int carmen_map_image_to_map_color_unknown(unsigned char r, unsigned char g, 
 					    unsigned char b);
+
+  #ifndef COMPILE_WITHOUT_MAP_SUPPORT
+
+  #ifndef NO_JPEG
+  void carmen_graphics_write_map_as_jpeg(char *filename, carmen_map_p map, 
+					 int flags);
+  #endif
+
+  unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags);
+
   carmen_map_p carmen_pixbuf_to_map(GdkPixbuf* pixbuf, double resolution);
   carmen_map_p carmen_map_imagefile_to_map(char *filename, double resolution);
+  GdkPixmap *carmen_graphics_generate_pixmap(GtkWidget* drawing_area, 
+					     unsigned char* data,
+					     carmen_map_config_p config, 
+					     double zoom);
   
   #include <carmen/map_graphics.h>
-
+  #endif
 
 #ifdef __cplusplus
 }

@@ -83,11 +83,15 @@ extern "C" {
 
 #include <carmen/param_interface.h>
 
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/simulator_messages.h>
 #include <carmen/simulator_interface.h>
+#endif
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 #include <carmen/laser_messages.h>
 #include <carmen/laser_interface.h>
+#endif
 
 #include <carmen/robot_messages.h>
 #include <carmen/robot_interface.h>
@@ -95,17 +99,22 @@ extern "C" {
 #include <carmen/camera_messages.h>
 #include <carmen/camera_interface.h>
 
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
 #include <carmen/keyctrl.h>
+#endif
 
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/map.h>
 #include <carmen/map_io.h>
 #include <carmen/map_messages.h>
 #include <carmen/map_interface.h>
 #include <carmen/map_util.h>
+#endif
 
 #include <carmen/geometry.h>
 #include <carmen/movement.h>
 
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/localizecore.h>
 #include <carmen/localize_messages.h>
 #include <carmen/localize_interface.h>
@@ -122,6 +131,7 @@ extern "C" {
 #include <carmen/readlog.h>
 #include <carmen/playback_interface.h>
 #include <carmen/playback_messages.h>
+#endif
 
 #ifdef CARMEN_MEMORY_DEBUG
 #include <dmalloc.h>
