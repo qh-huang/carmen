@@ -43,11 +43,6 @@ int carmen_arm_direct_update_status(void);
   void carmen_arm_control( void );
   void carmen_arm_reset( void );
   
-  void carmen_arm_direct_set( double shoulder_desired_angle, double elbow_desired_angle, double gripper_desired_angle );
-  void carmen_arm_get_theta_state( double *shoulder_angle, double *elbow_angle, double *gripper_angle );
-  void carmen_arm_get_state( double *shoulder_avel, double *elbow_avel );
-  //void carmen_arm_direct_set(double servos[], int num_servos);
-
 void carmen_arm_direct_set_limits(double min_angle, double max_angle,
 				  int min_pwm, int max_pwm);
 
