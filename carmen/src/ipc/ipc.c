@@ -11,6 +11,9 @@
  * REVISION HISTORY
  *
  * $Log$
+ * Revision 1.3  2006/02/26 03:35:25  nickr
+ * Changes to address 64 bit warnings
+ *
  * Revision 1.2  2005/12/12 23:51:36  nickr
  * Added support for PID access. Needed for java
  *
@@ -883,7 +886,11 @@ IPC_RETURN_TYPE ipcReturnValue(X_IPC_RETURN_VALUE_TYPE retVal)
    Stick the handler name into the "hndName" string (already allocated!) */
 void ipcHandlerName (const char *msgName, HANDLER_TYPE handler, char *hndName)
 {
+#if (defined(__x86_64__))
+  sprintf(hndName, "HND-%s%ld", msgName, (long)handler);
+#else
   sprintf(hndName, "HND-%s%d", msgName, (int)handler);
+#endif
 }
 
 void ipcSetError  (IPC_ERROR_TYPE error)

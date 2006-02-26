@@ -16,6 +16,9 @@
  * REVISION HISTORY 
  *
  * $Log$
+ * Revision 1.3  2006/02/26 03:35:25  nickr
+ * Changes to address 64 bit warnings
+ *
  * Revision 1.2  2006/01/15 21:22:33  nickr
  * Added support for Mac
  *
@@ -1180,8 +1183,13 @@ void x_ipcHandleClosedConnection(int sd, CONNECTION_PTR connection)
     x_ipc_hashTableRemove((char *)&sd,
 			  (GET_C_GLOBAL(moduleConnectionTable)));
     /* Need to reset the direct info for messages */
+#if (defined(__x86_64__))
+    x_ipc_hashTableIterate((HASH_ITER_FN)x_ipc_resetDirect,
+			   GET_C_GLOBAL(messageTable), (void *)(long)sd);
+#else
     x_ipc_hashTableIterate((HASH_ITER_FN)x_ipc_resetDirect,
 			   GET_C_GLOBAL(messageTable), (void *)sd);
+#endif
     x_ipcFree((char *)connection);
   }
   UNLOCK_CM_MUTEX;

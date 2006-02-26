@@ -12,8 +12,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:16  tomkol
- * Initial revision
+ * Revision 1.2  2006/02/26 03:35:25  nickr
+ * Changes to address 64 bit warnings
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:16  tomkol
+ * Initial Import
  *
  * Revision 1.4  2003/04/20 02:28:13  nickr
  * Upgraded to IPC 3.7.6.
@@ -208,8 +211,13 @@ IPC_RETURN_TYPE IPC_addTimerGetRef(unsigned long tdelay, long count,
          for backwards compatibility */  
       timer = ipcGetTimer(handler);
       if (timer && timer->status != Timer_Deleted) {
+#if (defined(__x86_64__))
+	X_IPC_MOD_WARNING1("Replacing existing timer for handler (%#lx)\n",
+			   (long)handler);
+#else
 	X_IPC_MOD_WARNING1("Replacing existing timer for handler (%#x)\n",
 			   (int)handler);
+#endif
       } else {
 	timer = NEW(TIMER_TYPE);
 	LOCK_M_MUTEX;

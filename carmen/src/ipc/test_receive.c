@@ -44,8 +44,13 @@ static void msgHandler (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
                            sizeof(carmen_test_ipc_message));
   IPC_freeByteArray(callData);
   
+#if (defined(__x86_64__))
+  fprintf(stderr, "Got message from client %ld : time %f\n",
+	  (long)clientData, msg.timestamp);
+#else
   fprintf(stderr, "Got message from client %d : time %f\n",
 	  (int)clientData, msg.timestamp);
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -59,7 +64,11 @@ int main(int argc, char *argv[])
   for (cur_context = 0; cur_context < num_contexts; cur_context++) {
     IPC_connectModule(argv[0], argv[cur_context+1]);
     context[cur_context] = IPC_getContext();
+#if (defined(__x86_64__))
+    IPC_subscribe(CARMEN_TEST_IPC_NAME, msgHandler, (void *)(long)cur_context);
+#else
     IPC_subscribe(CARMEN_TEST_IPC_NAME, msgHandler, (void *)cur_context);
+#endif
     IPC_setMsgQueueLength(CARMEN_TEST_IPC_NAME, 1);
   }
 

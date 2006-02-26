@@ -32,8 +32,13 @@ static void msgHandler (MSG_INSTANCE msgRef, BYTE_ARRAY callData,
                            sizeof(carmen_test_ipc_message));
   IPC_freeByteArray(callData);
   
+#if (defined(__x86_64__))
+  fprintf(stderr, "Got message from client %ld : time %f\n",
+	  (long)clientData, msg.timestamp);
+#else
   fprintf(stderr, "Got message from client %d : time %f\n",
 	  (int)clientData, msg.timestamp);
+#endif
 }
 
 IPC_RETURN_TYPE connect_ipc(void)
