@@ -26,7 +26,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/map_io.h>
 #endif
 
@@ -63,7 +63,7 @@ static char *default_list[] = {"carmen.ini", "../carmen.ini",
 static carmen_ini_param_p param_list = NULL;
 static int num_params = 0;
 static int param_table_capacity = 0;
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 static char *map_filename = NULL;
 #endif
 static char *selected_robot = NULL;
@@ -490,7 +490,7 @@ static void usage(char *progname, char *fmt, ...)
       progname++;
     }
 
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
   fprintf(stderr, "usage: %s [-achnpr] [map_filename] [ini filename] \n\n", 
 	  progname);
 #else
@@ -511,7 +511,7 @@ static void help(char *progname)
 
   fprintf(stderr, "usage: %s "
 	  //"[-achnpr] "
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
 	  "[map_filename] [ini filename] \n\n", 
 #else
 	  "[ini filename] \n\n", 
@@ -521,7 +521,7 @@ static void help(char *progname)
     (stderr, " --alphabetize\talphabetize parameters when listing\n"
      " --robot=ROBOT\tuse parameters for ROBOT\n"     
      "\n\n"
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
      "[map_filename] and [ini filename] are both optional arguments. \n"
      "If you do not provide [map_filename], then no map will be served by \n"
      "the %s. If you do not provide an [ini filename], then \n"
@@ -533,14 +533,14 @@ static void help(char *progname)
      "If you provide no ini filename, and %s cannot find\n"
      "the carmen.ini, then you will get this error message. \n"
      "\n"
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
      "If you only provide one file name, then %s will try to infer\n"
      "whether it is a map or not and process it accordingly. \n"
 #endif
      "\n"
      "The ini file must provide a section of parameters that matches the \n"
      "robot name.  \n\n", 
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
      progname, progname, progname, progname);
 #else
      progname, progname);
@@ -616,7 +616,7 @@ read_commandline(int argc, char **argv)
     }
   }
 
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
   /* look for a map file */
   map_filename = NULL;
   for (cur_arg = optind; cur_arg < argc; cur_arg++) {
@@ -633,7 +633,7 @@ read_commandline(int argc, char **argv)
     
   param_filename = NULL;
   for (cur_arg = optind; cur_arg < argc; cur_arg++) {
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
     if (map_filename && strcmp(map_filename, argv[cur_arg]) == 0) 
       continue;
 #endif
@@ -1304,7 +1304,7 @@ main(int argc, char **argv)
   if(initialize_param_ipc() < 0) 
     carmen_die("Error: could not connect to IPC Server\n");
 
-#ifndef NO_MAP_SERVER
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
   if (map_filename) {
     if (carmen_map_initialize_ipc() < 0)
       carmen_die("Error: could initialize map IPC calls.\n");
