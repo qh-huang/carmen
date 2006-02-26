@@ -13,7 +13,7 @@ libccvt.a: ccvt_mmx.o ccvt_misc.o
 
 libquickcam.a: quickcam.o
 
-ifeq ($(shell uname -p),x86_64)
+ifeq ($(PROCESSOR),x86_64)
 32BIT_MODE = -m32
 endif
 

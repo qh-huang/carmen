@@ -5,10 +5,6 @@ MODULE_COMMENT = "General Camera Module"
 
 SUBDIRS = fakecam
 
-ifeq ($(shell uname -p),x86_64)
-LFLAGS += -L/usr/lib64 -L/usr/X11/lib64
-endif
-
 LFLAGS += -lparam_interface -lipc -lglobal 
 SOURCES = camera_main.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h
@@ -21,9 +17,11 @@ error:
 	$(ECHO) "QuickCam must be run in Linux; you are using Cygwin!"
 else 
 ifneq ($(VENDOR),apple) 
+ifneq ($(PROCESSOR),x86_64)
 SUBDIRS += quickcam
 PUBLIC_BINARIES += camera_quickcam
 TARGETS += camera_quickcam
+endif
 endif
 endif
 
