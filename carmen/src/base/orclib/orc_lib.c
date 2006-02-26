@@ -10,14 +10,43 @@
 
 #define ORC_STATUS 0x2A
 
-#define ORC_LEFT_SONAR_PING 4
-#define ORC_RIGHT_SONAR_PING 6
+// Sonar defines
 
-#define ORC_LEFT_SONAR_ECHO 49
-#define ORC_RIGHT_SONAR_ECHO 51
+#define ORC_LEFT_SONAR_PING_PIN 4
+#define ORC_LEFT_SONAR_ECHO_PIN 5
+#define ORC_RIGHT_SONAR_PING_PIN 6
+#define ORC_RIGHT_SONAR_ECHO_PIN 7
+#define ORC_SONAR_PING_MODE 6
+#define ORC_SONAR_ECHO_MODE 7
 
-#define ORC_SONAR_PING 6
-#define ORC_SONAR_ECHO 7
+#define ORC_LEFT_SONAR_PING 0
+#define ORC_RIGHT_SONAR_PING 1
+#define ORC_LEFT_SONAR_RANGE 49
+#define ORC_RIGHT_SONAR_RANGE 51
+
+// Arm defines
+
+#define ORC_SERVO_PIN_0 0
+#define ORC_SERVO_PIN_1 1
+#define ORC_SERVO_PIN_2 2
+#define ORC_SERVO_PIN_3 3
+
+#define ORC_GRIPPER_PIN 12
+
+#define ORC_SERVO_CURRENT 35
+#define ORC_SERVO_PWM_STATE 8
+#define ORC_SERVO_MODE 5
+
+// Bumper defines
+
+
+#define ORC_BUMPER_PIN_0 8
+#define ORC_BUMPER_PIN_1 9
+#define ORC_BUMPER_PIN_2 10
+#define ORC_BUMPER_PIN_3 11
+
+#define ORC_DIGITAL_IN_PULL_UP 1
+#define ORC_DIGITAL_IN 6
 
 // Configuring IR sensor to use Sonar ports
 #define ORC_LEFT_IR_PING 5
@@ -76,13 +105,6 @@
 #define ORC_WHEEL_BASE .43
 #define ORC_ENCODER_RESOLUTION 500
 #define ORC_GEAR_RATIO 65.5
-
-#define ORC_DIGITAL_IN_PULL_UP 1
-#define ORC_DIGITAL_IN 6
-
-#define ORC_SERVO_CURRENT 35
-#define ORC_SERVO_PWM_STATE 8
-#define ORC_SERVO_PIN 5
 
 static double acceleration;
 static double deceleration;
@@ -443,13 +465,13 @@ static void unpack_master_packet(unsigned char *buffer)
   //carmen_warn("Got master packet\n");
   //printf("unpack_master_packet\n");
 
-  range = unpack_short(buffer, ORC_LEFT_SONAR_ECHO);
+  range = unpack_short(buffer, ORC_LEFT_SONAR_RANGE);
   if (range == 0xffff)
     left_range = 0;
   else
     left_range = range/1000000.0*331.46/2.0;
 
-  range = unpack_short(buffer, ORC_RIGHT_SONAR_ECHO);
+  range = unpack_short(buffer, ORC_RIGHT_SONAR_RANGE);
   if (range == 0xffff)
     right_range = 0;
   else
@@ -657,8 +679,7 @@ int carmen_base_direct_sonar_on(void)
   return 2;
 }
 
-int
-carmen_base_direct_sonar_off(void)
+int carmen_base_direct_sonar_off(void)
 {
   sonar_on = 0;
   return 2;
@@ -676,12 +697,86 @@ int carmen_base_direct_reset(void)
   return 0;
 }
 
+static int orc_set_encoder_quad_phase_fast(int motor) 
+{
+  unsigned char buffer[5];
+
+  buffer[0] = 'C';
+  buffer[1] = motor; // Motor Encoder 0
+  buffer[2] = ORC_QUAD_PHASE_FAST; // Quad Phase Fast
+
+  fprintf(stderr, "Setting motor channel %d into quad phase fast mode... ",
+	  motor);
+  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
+    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+    return -1;
+  }
+  fprintf(stderr, "ok.\n");
+
+  return 0;
+}
+
+static int orc_set_motor_slew(int motor, int slew) 
+{
+  unsigned char buffer[5];
+
+  buffer[0] = 'W';
+  buffer[1] = motor;
+  buffer[2] = slew;
+  fprintf(stderr, "Setting %s motor slew to %d... ", 
+	  (motor == ORC_LEFT_MOTOR ? "left" : "right") , slew);
+  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
+    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+    return -1;
+  }
+  fprintf(stderr, "ok.\n");
+
+  return 0;
+}
+
+int orc_set_pin(int pin, char *description, int pin_mode) 
+{
+  unsigned char buffer[5];
+  char *modes[15] = {"digital in", "digital in (pull-up)",
+		    "digital in (pull-down)", "digital out",
+		    "digital out (slow)", "servo", "sonar ping",
+		    "sonar echo", "analog in", "analog out",
+		    "clock generator out", "quadrature phase",
+		    "mono phase", "unknown", "quad-phase fast"};
+  buffer[0] = 'C';
+  buffer[1] = pin; // Servo0
+  buffer[2] = pin_mode; //Servo
+  fprintf(stderr, "Setting %s pin %d into %s mode... ", description, pin,
+	  modes[pin_mode]);
+  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
+    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+    return -1;
+  }
+  fprintf(stderr, "ok.\n");
+
+  return 0;
+}
+
+int orc_set_pwm(int motor, int dir, int pwm)
+{
+  unsigned char buffer[5];
+
+  buffer[0] = 0x4D;
+  buffer[1] = motor;
+  buffer[2] = dir;
+  buffer[3] = pwm;
+  if (send_packet_and_ack(buffer, 4, ORC_SLAVE) < 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
 
 int carmen_base_direct_initialize_robot(char *model __attribute__ ((unused)),
           char *dev)
 {
   int result;
-  unsigned char buffer[5];
 
   result = carmen_serial_connect(&serial_fd, dev);
   if(result == -1) {
@@ -704,191 +799,71 @@ int carmen_base_direct_initialize_robot(char *model __attribute__ ((unused)),
   carmen_serial_ClearInputBuffer(serial_fd);
   fprintf(stderr, " ok.\n");
 
-  buffer[0] = 'C';
-  buffer[1] = 0; // Motor Encoder 0
-  buffer[2] = 14; // Quad Phase Fast
+  // Set pins for Motor Encoder 0 into fast mode
 
-  fprintf(stderr, "Setting motor encoder 0 into quad phase fast mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_encoder_quad_phase_fast(ORC_LEFT_MOTOR) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 1; // Motor Encoder 0
-  fprintf(stderr, "Setting motor encoder 1 into quad phase fast mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_encoder_quad_phase_fast(ORC_LEFT_MOTOR+1) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
 
-  buffer[1] = 2; // Motor Encoder 1
-  fprintf(stderr, "Setting motor encoder 2 into quad phase fast mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  // Set pins for Motor Encoder 1 into fast mode
+
+  if (orc_set_encoder_quad_phase_fast(ORC_RIGHT_MOTOR) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 3; // Motor Encoder 1
-  fprintf(stderr, "Setting motor encoder 3 into quad phase fast mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_encoder_quad_phase_fast(ORC_RIGHT_MOTOR+1) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
 
-  buffer[0] = 'W';
-  buffer[1] = ORC_LEFT_MOTOR; 
-  buffer[2] = 10;             // Quad Phase Fast
-  fprintf(stderr, "Setting left motor slew to %d... ", buffer[2]);
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  // Set motor slew rates 
+
+  if (orc_set_motor_slew(ORC_LEFT_MOTOR, 10) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = ORC_RIGHT_MOTOR; 
-  fprintf(stderr, "Setting right motor slew to %d... ", buffer[2]);
-  if (send_packet_and_ack(buffer, 3, ORC_SLAVE) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_motor_slew(ORC_RIGHT_MOTOR, 10) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");  
 
-  buffer[0] = 'C';
-  buffer[1] = 0; // Servo0
-  buffer[2] = ORC_SERVO_PIN; //Servo
-  fprintf(stderr, "Setting servo pin 0 into servo mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  // Set servo pins into servo mode
+  
+  if (orc_set_pin(ORC_SERVO_PIN_0, "servo", ORC_SERVO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 1; // Servo1
-  buffer[2] = ORC_SERVO_PIN; //Servo
-  fprintf(stderr, "Setting servo pin 1 into servo mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_SERVO_PIN_1, "servo", ORC_SERVO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 2; // Servo2
-  buffer[2] = ORC_SERVO_PIN; //Servo
-  fprintf(stderr, "Setting servo pin 2 into servo mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_SERVO_PIN_2, "servo", ORC_SERVO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 3; // Servo3
-  buffer[2] = ORC_SERVO_PIN; //Servo
-  fprintf(stderr, "Setting servo pin 3 into servo mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_SERVO_PIN_3, "servo", ORC_SERVO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
 
-  buffer[1] = 4; // Sonar 0
-  buffer[2] = ORC_SONAR_PING;
-  fprintf(stderr, "Setting sonar 0 pin 0 into sonar mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_LEFT_SONAR_PING_PIN, "left sonar ping",
+		  ORC_SONAR_PING_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 6; // Sonar 1
-  buffer[2] = ORC_SONAR_PING;
-  fprintf(stderr, "Setting sonar 1 pin 0 into sonar mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_LEFT_SONAR_ECHO_PIN, "left sonar echo",
+		  ORC_SONAR_ECHO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 5; // Sonar 0
-  buffer[2] = ORC_SONAR_ECHO;
-  fprintf(stderr, "Setting sonar 0 pin 1 into sonar mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_RIGHT_SONAR_PING_PIN, "right sonar ping",
+		  ORC_SONAR_PING_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 7; // Sonar 1
-  buffer[2] = ORC_SONAR_ECHO;
-  fprintf(stderr, "Setting sonar 1 pin 1 into sonar mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_RIGHT_SONAR_ECHO_PIN, "right sonar echo",
+		  ORC_SONAR_ECHO_MODE) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
 
-  buffer[1] = 8; // Bumper
-  buffer[2] = ORC_DIGITAL_IN_PULL_UP;
-  fprintf(stderr, "Setting bumper 0 into digital pull-up mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_BUMPER_PIN_0, "bumper", ORC_DIGITAL_IN_PULL_UP) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 9; // Bumper
-  buffer[2] = ORC_DIGITAL_IN_PULL_UP;
-  fprintf(stderr, "Setting bumper 1 into digital pull-up mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_BUMPER_PIN_1, "bumper", ORC_DIGITAL_IN_PULL_UP) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-  buffer[1] = 10; // Bumper
-  buffer[2] = ORC_DIGITAL_IN_PULL_UP;
-  fprintf(stderr, "Setting bumper 2 into digital pull-up mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_BUMPER_PIN_2, "bumper", ORC_DIGITAL_IN_PULL_UP) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 11; // Bumper
-  buffer[2] = ORC_DIGITAL_IN_PULL_UP;
-  fprintf(stderr, "Setting bumper 3 into digital pull-up mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_BUMPER_PIN_3, "bumper", ORC_DIGITAL_IN_PULL_UP) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
-
-  buffer[1] = 12; // Gripper
-  buffer[2] = ORC_DIGITAL_IN_PULL_UP;
-  fprintf(stderr, "Setting gripper into digital pull-up mode... ");
-  if (send_packet_and_ack(buffer, 3, ORC_MASTER) < 0) {
-    fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
+  if (orc_set_pin(ORC_GRIPPER_PIN, "gripper sensor", 
+		  ORC_DIGITAL_IN_PULL_UP) < 0)
     return -1;
-  }
-  fprintf(stderr, "ok.\n");
 
-
-  buffer[0] = 0x4D;
-  buffer[1] = ORC_LEFT_MOTOR;
-  buffer[2] = 0;
-  buffer[3] = 0;
   fprintf(stderr, "Zeroing left motor velocity ... ");
-  if (send_packet_and_ack(buffer, 4, ORC_SLAVE) < 0) {
+  if (orc_set_pwm(ORC_LEFT_MOTOR, 0, 0) < 0) {
     fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
     return -1;
   }
   fprintf(stderr, "ok.\n");
-
-  buffer[1] = ORC_RIGHT_MOTOR;
-  fprintf(stderr, "Zeroing right motor velocity... ");
-  if (send_packet_and_ack(buffer, 4, ORC_SLAVE) < 0) {
+  fprintf(stderr, "Zeroing right motor velocity ... ");
+  if (orc_set_pwm(ORC_RIGHT_MOTOR, 0, 0) < 0) {
     fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
     return -1;
   }
@@ -1103,32 +1078,6 @@ int carmen_base_direct_get_bumpers(unsigned char *bumpers_p, int num_bumpers)
     bumpers_p[2] = bumpers[2];
   if (num_bumpers >= 4)
     bumpers_p[3] = bumpers[3];
-
-  /*
-  printf("carmen_base_direct_get_bumpers");
-  if (bumpers[0])
-    printf(" 0 ");
-  else
-    printf(" 0*");
-
-  if (bumpers[1])
-    printf(" 1 ");
-  else
-    printf(" 1*");
-
-  if (bumpers[2])
-    printf(" 2 ");
-  else
-    printf(" 2*");
-
-  if (bumpers[3])
-    printf(" 3 ");
-  else
-    printf(" 3*");
-
-  printf("\n");
-  */
-
   return 4;
 }
 
