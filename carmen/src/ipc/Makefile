@@ -2,6 +2,10 @@ include ../Makefile.conf
 
 CFLAGS = -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes -Wmissing-declarations -O3 -DREDHAT_52 -DREDHAT_6 -DREDHAT_71 -g
 
+ifeq ($(PROCESSOR),x86_64)
+CFLAGS += -fPIC
+endif
+
 ifndef NO_TCPD
 CFLAGS += -DACCESS_CONTROL
 LFLAGS = -lnsl -lwrap
