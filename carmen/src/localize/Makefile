@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = learn_model
+SUBDIRS = model_learn
 
 CFLAGS +=
 IFLAGS += 
