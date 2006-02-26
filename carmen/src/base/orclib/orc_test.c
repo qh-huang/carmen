@@ -1,6 +1,8 @@
 #include <carmen/carmen.h>
 #include <carmen/base_low_level.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 int carmen_base_query_low_level(double *left_disp, double *right_disp,
 				double *delta_time);
