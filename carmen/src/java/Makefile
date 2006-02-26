@@ -8,6 +8,9 @@ LFLAGS += -L ../../lib
 CFLAGS += -DREDHAT_52 -DREDHAT_6 -DREDHAT_71 
 CFLAGS += -Wno-unused-parameter
 
+ifeq ($(PROCESSOR),x86_64)
+CFLAGS += -fPIC
+endif
 
 MODULE_NAME = JAVA LIBRARIES
 MODULE_COMMENT = Module for interfacing java programs with Carmen!
@@ -20,7 +23,7 @@ CLASSFILES = Carmen/*.class IPC/*.class
 
 libipcjava.so: ipcjava.o
 	$(ECHO) "    ---- Creating shared library (C)"
-	@ld -o $@ -G -dy $^ -L ../ipc -lipc
+	$(SILENT) ld -o $@ -G -dy $^ -L ../ipc -lipc
 
 Carmen.jar: 
 	$(ECHO) "    ---- Compiling LDLoad (Java)"

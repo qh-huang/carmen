@@ -7,6 +7,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if (defined(__x86_64__))
+typedef jlong ptraddr;
+#else
+typedef jint ptraddr;
+#endif
+
 #undef IPC_IPC_WAIT_FOREVER
 #define IPC_IPC_WAIT_FOREVER -1LL
 #undef IPC_TRIGGER_FOREVER
@@ -144,7 +151,7 @@ JNIEXPORT jboolean JNICALL Java_IPC_IPC_IPC_1isMsgDefined
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1dataLength
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     IPC
@@ -152,15 +159,15 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1dataLength
  * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_IPC_IPC_IPC_1msgInstanceName
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     IPC
  * Method:    IPC_msgInstanceFormatter
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1msgInstanceFormatter
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1msgInstanceFormatter
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     IPC
@@ -200,7 +207,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1unsubscribeFD
  * Signature: (Ljava/lang/String;II)I
  */
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1publish
-  (JNIEnv *, jclass, jstring, jint, jint);
+  (JNIEnv *, jclass, jstring, jint, ptraddr);
 
 /*
  * Class:     IPC
@@ -344,7 +351,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1numHandlers
  * Signature: (ILjava/lang/String;II)I
  */
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1respond
-  (JNIEnv *, jclass, jint, jstring, jint, jint);
+  (JNIEnv *, jclass, ptraddr, jstring, jint, ptraddr);
 
 /*
  * Class:     IPC
@@ -352,7 +359,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1respond
  * Signature: (Ljava/lang/String;III)I
  */
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1queryNotify
-  (JNIEnv *, jclass, jstring, jint, jint, jint);
+  (JNIEnv *, jclass, jstring, jint, ptraddr, jint);
 
 /*
  * Class:     IPC
@@ -360,7 +367,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1queryNotify
  * Signature: (Ljava/lang/String;IILIPC/IPC$queryResponse;J)I
  */
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1queryResponse
-  (JNIEnv *, jclass, jstring, jint, jint, jobject, jlong);
+  (JNIEnv *, jclass, jstring, jint, ptraddr, jobject, jlong);
 
 /*
  * Class:     IPC
@@ -383,7 +390,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1checkMsgFormats
  * Method:    IPC_getContext
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1getContext
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1getContext
   (JNIEnv *, jclass);
 
 /*
@@ -391,8 +398,8 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1getContext
  * Method:    IPC_setContext
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1setContext
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1setContext
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     IPC
@@ -400,14 +407,14 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1setContext
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_IPC_IPC_IPC_1freeByteArray
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     IPC
  * Method:    IPC_msgFormatter
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1msgFormatter
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1msgFormatter
   (JNIEnv *, jclass, jstring);
 
 /*

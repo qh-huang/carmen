@@ -71,7 +71,7 @@ extern "C" {
  * Signature: (I)C
  */
 JNIEXPORT jchar JNICALL Java_IPC_primFmttrs_formatGetChar
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -79,7 +79,7 @@ JNIEXPORT jchar JNICALL Java_IPC_primFmttrs_formatGetChar
  * Signature: (IC)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutChar
-  (JNIEnv *, jclass, jint, jchar);
+  (JNIEnv *, jclass, ptraddr, jchar);
 
 /*
  * Class:     primFmttrs
@@ -87,7 +87,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutChar
  * Signature: (I)Z
  */
 JNIEXPORT jboolean JNICALL Java_IPC_primFmttrs_formatGetBoolean
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -95,7 +95,7 @@ JNIEXPORT jboolean JNICALL Java_IPC_primFmttrs_formatGetBoolean
  * Signature: (IZ)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutBoolean
-  (JNIEnv *, jclass, jint, jboolean);
+  (JNIEnv *, jclass, ptraddr, jboolean);
 
 /*
  * Class:     primFmttrs
@@ -103,7 +103,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutBoolean
  * Signature: (I)B
  */
 JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetByte
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -111,7 +111,7 @@ JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetByte
  * Signature: (IB)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutByte
-  (JNIEnv *, jclass, jint, jbyte);
+  (JNIEnv *, jclass, ptraddr, jbyte);
 
 /*
  * Class:     primFmttrs
@@ -119,7 +119,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutByte
  * Signature: (I)B
  */
 JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetUByte
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -127,7 +127,7 @@ JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetUByte
  * Signature: (IB)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUByte
-  (JNIEnv *, jclass, jint, jbyte);
+  (JNIEnv *, jclass, ptraddr, jbyte);
 
 /*
  * Class:     primFmttrs
@@ -135,7 +135,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUByte
  * Signature: (I)S
  */
 JNIEXPORT jshort JNICALL Java_IPC_primFmttrs_formatGetShort
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -143,7 +143,7 @@ JNIEXPORT jshort JNICALL Java_IPC_primFmttrs_formatGetShort
  * Signature: (IS)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutShort
-  (JNIEnv *, jclass, jint, jshort);
+  (JNIEnv *, jclass, ptraddr, jshort);
 
 /*
  * Class:     primFmttrs
@@ -151,7 +151,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutShort
  * Signature: (I)S
  */
 JNIEXPORT jshort JNICALL Java_IPC_primFmttrs_formatGetUShort
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -159,7 +159,7 @@ JNIEXPORT jshort JNICALL Java_IPC_primFmttrs_formatGetUShort
  * Signature: (IS)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUShort
-  (JNIEnv *, jclass, jint, jshort);
+  (JNIEnv *, jclass, ptraddr, jshort);
 
 /*
  * Class:     primFmttrs
@@ -167,7 +167,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUShort
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_IPC_primFmttrs_formatGetInt
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -175,7 +175,7 @@ JNIEXPORT jint JNICALL Java_IPC_primFmttrs_formatGetInt
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutInt
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, ptraddr, jint);
 
 /*
  * Class:     primFmttrs
@@ -183,7 +183,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutInt
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_IPC_primFmttrs_formatGetUInt
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -191,7 +191,7 @@ JNIEXPORT jint JNICALL Java_IPC_primFmttrs_formatGetUInt
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUInt
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, ptraddr, jint);
 
 /*
  * Class:     primFmttrs
@@ -199,7 +199,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUInt
  * Signature: (I)J
  */
 JNIEXPORT jlong JNICALL Java_IPC_primFmttrs_formatGetLong
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -207,7 +207,7 @@ JNIEXPORT jlong JNICALL Java_IPC_primFmttrs_formatGetLong
  * Signature: (IJ)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutLong
-  (JNIEnv *, jclass, jint, jlong);
+  (JNIEnv *, jclass, ptraddr, jlong);
 
 /*
  * Class:     primFmttrs
@@ -215,7 +215,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutLong
  * Signature: (I)F
  */
 JNIEXPORT jfloat JNICALL Java_IPC_primFmttrs_formatGetFloat
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -223,7 +223,7 @@ JNIEXPORT jfloat JNICALL Java_IPC_primFmttrs_formatGetFloat
  * Signature: (IF)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutFloat
-  (JNIEnv *, jclass, jint, jfloat);
+  (JNIEnv *, jclass, ptraddr, jfloat);
 
 /*
  * Class:     primFmttrs
@@ -231,7 +231,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutFloat
  * Signature: (I)D
  */
 JNIEXPORT jdouble JNICALL Java_IPC_primFmttrs_formatGetDouble
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -239,7 +239,7 @@ JNIEXPORT jdouble JNICALL Java_IPC_primFmttrs_formatGetDouble
  * Signature: (ID)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutDouble
-  (JNIEnv *, jclass, jint, jdouble);
+  (JNIEnv *, jclass, ptraddr, jdouble);
 
 /*
  * Class:     primFmttrs
@@ -247,7 +247,7 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutDouble
  * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_IPC_primFmttrs_formatGetString
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     primFmttrs
@@ -255,7 +255,7 @@ JNIEXPORT jstring JNICALL Java_IPC_primFmttrs_formatGetString
  * Signature: (ILjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutString
-  (JNIEnv *, jclass, jint, jstring);
+  (JNIEnv *, jclass, ptraddr, jstring);
 
 #ifdef __cplusplus
 }

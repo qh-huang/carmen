@@ -38,56 +38,56 @@ extern "C" {
  * Method:    formatType
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatType
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatType
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    formatPrimitiveProc
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatPrimitiveProc
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatPrimitiveProc
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    formatChoosePtrFormat
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatChoosePtrFormat
-  (JNIEnv *, jclass, jint, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatChoosePtrFormat
+  (JNIEnv *, jclass, ptraddr, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    formatFormatArray
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatFormatArray
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatFormatArray
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    formatFormatArrayMax
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatFormatArrayMax
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatFormatArrayMax
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    formatFormatArrayItem
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_formatFormatArrayItem
-  (JNIEnv *, jclass, jint, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_formatFormatArrayItem
+  (JNIEnv *, jclass, ptraddr, jint);
 
 /*
  * Class:     formatters
  * Method:    findNamedFormat
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_findNamedFormat
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_findNamedFormat
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
@@ -95,15 +95,15 @@ JNIEXPORT jint JNICALL Java_IPC_formatters_findNamedFormat
  * Signature: (I)Z
  */
 JNIEXPORT jboolean JNICALL Java_IPC_formatters_checkMarshallStatus
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    createBuffer
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_createBuffer
-  (JNIEnv *, jclass, jint);
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_createBuffer
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
@@ -111,7 +111,7 @@ JNIEXPORT jint JNICALL Java_IPC_formatters_createBuffer
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_IPC_formatters_freeBuffer
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
@@ -119,14 +119,14 @@ JNIEXPORT void JNICALL Java_IPC_formatters_freeBuffer
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_IPC_formatters_bufferLength
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
  * Method:    createByteArray
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_IPC_formatters_createByteArray
+JNIEXPORT ptraddr JNICALL Java_IPC_formatters_createByteArray
   (JNIEnv *, jclass, jint);
 
 /*
@@ -135,7 +135,7 @@ JNIEXPORT jint JNICALL Java_IPC_formatters_createByteArray
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_IPC_formatters_rewindBuffer
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
@@ -143,7 +143,7 @@ JNIEXPORT void JNICALL Java_IPC_formatters_rewindBuffer
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_IPC_formatters_printBuffer
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, ptraddr);
 
 /*
  * Class:     formatters
@@ -151,7 +151,7 @@ JNIEXPORT void JNICALL Java_IPC_formatters_printBuffer
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_IPC_formatters_printByteArray
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, ptraddr, jint);
 
 /*
  * Class:     formatters

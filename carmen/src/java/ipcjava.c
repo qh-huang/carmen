@@ -15,6 +15,9 @@
  * HISTORY: Based on version by Carroll Thronesbery, Metrica (Sept 2000)
  *
  * $Log$
+ * Revision 1.4  2006/02/26 04:21:06  nickr
+ * Added x86_64 support.
+ *
  * Revision 1.3  2005/08/31 20:33:47  nickr
  * *** empty log message ***
  *
@@ -65,8 +68,8 @@ static void ipcJavaMsgHandler (MSG_INSTANCE msgInstance, BYTE_ARRAY callData,
 
   (*pJavaVM)->AttachCurrentThread(pJavaVM, (void **)&env, NULL);
 
-  (*env)->CallStaticVoidMethod(env, ipcClass, msgHandlerID, (jint)handlerNum,
-			       (jint)msgInstance, (jint)callData);
+  (*env)->CallStaticVoidMethod(env, ipcClass, msgHandlerID, (ptraddr)handlerNum,
+			       (ptraddr)msgInstance, (ptraddr)callData);
   /* Does not seem to work under my version of Linux (or else I am doing
      something really wrong here */
   //(*pJavaVM)->DetachCurrentThread(pJavaVM);
@@ -79,8 +82,8 @@ static void ipcJavaQueryNotifyHandler (MSG_INSTANCE msgInstance,
 
   (*pJavaVM)->AttachCurrentThread(pJavaVM, (void **)&env, NULL);
   (*env)->CallStaticVoidMethod(env, ipcClass, queryNotifyHandlerID, 
-			       (jint)handlerNum, (jint)msgInstance, 
-			       (jint)callData);
+			       (ptraddr)handlerNum, (ptraddr)msgInstance, 
+			       (ptraddr)callData);
   /* Does not seem to work under my version of Linux (or else I am doing
      something really wrong here */
   //(*pJavaVM)->DetachCurrentThread(pJavaVM);
@@ -92,7 +95,7 @@ static void ipcJavaTimerHandler (void *handlerNum, unsigned long currentTime,
   JNIEnv* env;
 
   (*pJavaVM)->AttachCurrentThread(pJavaVM, (void **)&env, NULL);
-  (*env)->CallStaticVoidMethod(env, ipcClass, timerHandlerID, (jint)handlerNum,
+  (*env)->CallStaticVoidMethod(env, ipcClass, timerHandlerID, (ptraddr)handlerNum,
 			       (jlong)currentTime, (jlong)scheduledTime);
   /* Does not seem to work under my version of Linux (or else I am doing
      something really wrong here */
@@ -104,7 +107,7 @@ static void ipcJavaFdHandler (int fd, void *handlerNum)
   JNIEnv* env;
 
   (*pJavaVM)->AttachCurrentThread(pJavaVM, (void **)&env, NULL);
-  (*env)->CallStaticVoidMethod(env, ipcClass, fdHandlerID, (jint)fd);
+  (*env)->CallStaticVoidMethod(env, ipcClass, fdHandlerID, (ptraddr)fd);
   /* Does not seem to work under my version of Linux (or else I am doing
      something really wrong here */
   //(*pJavaVM)->DetachCurrentThread(pJavaVM);
@@ -115,10 +118,15 @@ static void ipcJavaConnectHandler (const char *moduleName, void *clientData)
   JNIEnv* env;
 
   (*pJavaVM)->AttachCurrentThread(pJavaVM, (void **)&env, NULL);
+#if (defined(__x86_64__))
+  (*env)->CallStaticVoidMethod(env, ipcClass, connectHandlerID,
+			       (*env)->NewStringUTF(env, moduleName),
+			       ((long)clientData ? JNI_TRUE : JNI_FALSE));
+#else
   (*env)->CallStaticVoidMethod(env, ipcClass, connectHandlerID,
 			       (*env)->NewStringUTF(env, moduleName),
 			       ((BOOLEAN)clientData ? JNI_TRUE : JNI_FALSE));
-
+#endif
   /* Does not seem to work under my version of Linux (or else I am doing
      something really wrong here */
   //(*pJavaVM)->DetachCurrentThread(pJavaVM);
@@ -228,14 +236,14 @@ Java_IPC_IPC_IPC_1isMsgDefined (JNIEnv *env, jclass theClass, jstring msgName)
 }
 
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1dataLength (JNIEnv *env, jclass theClass,
-						 jint msgInstance)
+						 ptraddr msgInstance)
 {
   return (jint)IPC_dataLength((MSG_INSTANCE)msgInstance);
 }
 
 JNIEXPORT jstring JNICALL
 Java_IPC_IPC_IPC_1msgInstanceName (JNIEnv *env, jclass theClass,
-			       jint msgInstance)
+			       ptraddr msgInstance)
 {
   const char *cmsgName;
 
@@ -243,11 +251,11 @@ Java_IPC_IPC_IPC_1msgInstanceName (JNIEnv *env, jclass theClass,
   return (*env)->NewStringUTF(env, cmsgName);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_IPC_IPC_1msgInstanceFormatter (JNIEnv *env, jclass theClass,
-				    jint msgInstance)
+				    ptraddr msgInstance)
 {
-  return (jint)IPC_msgInstanceFormatter((MSG_INSTANCE)msgInstance);
+  return (ptraddr)IPC_msgInstanceFormatter((MSG_INSTANCE)msgInstance);
 }
 
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1subscribe (JNIEnv *env, jclass theClass,
@@ -269,8 +277,13 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1subscribe (JNIEnv *env, jclass theClass
 
   cmsgName = (*env)->GetStringUTFChars(env, msgName, 0);
   chandlerName = (*env)->GetStringUTFChars(env, handlerName, 0);
+#if (defined(__x86_64__))
+  retVal = _IPC_subscribe(cmsgName, (char *)chandlerName, ipcJavaMsgHandler,
+			  (char *)(long)handlerNum, 0);
+#else
   retVal = _IPC_subscribe(cmsgName, (char *)chandlerName, ipcJavaMsgHandler,
 			  (char *)handlerNum, 0);
+#endif
   (*env)->ReleaseStringUTFChars(env, msgName, cmsgName);
   return retVal;
 }
@@ -313,7 +326,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1unsubscribeFD (JNIEnv *env,
 
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1publish (JNIEnv *env, jclass theClass,
 					      jstring msgName, jint length,
-					      jint byteArray)
+					      ptraddr byteArray)
 {
   const char *cmsgName;
   int retVal;
@@ -488,8 +501,8 @@ Java_IPC_IPC_IPC_1numHandlers (JNIEnv *env, jclass theClass, jstring msgName)
 }
 
 JNIEXPORT jint JNICALL
-Java_IPC_IPC_IPC_1respond (JNIEnv *env, jclass theClass, jint msgInstance,
-		       jstring msgName, jint length, jint byteArray)
+Java_IPC_IPC_IPC_1respond (JNIEnv *env, jclass theClass, ptraddr msgInstance,
+		       jstring msgName, jint length, ptraddr byteArray)
 {
   const char *cmsgName;
   int retVal;
@@ -504,7 +517,7 @@ Java_IPC_IPC_IPC_1respond (JNIEnv *env, jclass theClass, jint msgInstance,
 
 JNIEXPORT jint JNICALL
 Java_IPC_IPC_IPC_1queryNotify (JNIEnv *env, jclass theClass,
-			   jstring msgName, jint length, jint byteArray,
+			   jstring msgName, jint length, ptraddr byteArray,
 			   jint handlerNum)
 {
   const char *cmsgName;
@@ -520,8 +533,14 @@ Java_IPC_IPC_IPC_1queryNotify (JNIEnv *env, jclass theClass,
 				MSG_CALLBACK_SIGNATURE);
 
   cmsgName = (*env)->GetStringUTFChars(env, msgName, 0);
+#if (defined(__x86_64__))
+  retVal = IPC_queryNotify(cmsgName, (int)length, (BYTE_ARRAY)byteArray,
+			   ipcJavaQueryNotifyHandler, (void *)(long)handlerNum);
+#else
   retVal = IPC_queryNotify(cmsgName, (int)length, (BYTE_ARRAY)byteArray,
 			   ipcJavaQueryNotifyHandler, (void *)handlerNum);
+#endif
+
   (*env)->ReleaseStringUTFChars(env, msgName, cmsgName);
 
   return retVal;
@@ -529,7 +548,7 @@ Java_IPC_IPC_IPC_1queryNotify (JNIEnv *env, jclass theClass,
 
 JNIEXPORT jint JNICALL 
 Java_IPC_IPC_IPC_1queryResponse (JNIEnv *env, jclass theClass, jstring msgName,
-			     jint length, jint byteArray, jobject response,
+			     jint length, ptraddr byteArray, jobject response,
 			     jlong timeoutMSecs)
 {
   const char *cmsgName;
@@ -549,8 +568,8 @@ Java_IPC_IPC_IPC_1queryResponse (JNIEnv *env, jclass theClass, jstring msgName,
 						   "byteArray", "I");
     jfieldID formatterFieldID = (*env)->GetFieldID(env, queryResponseClass,
 						   "formatter", "I");
-    (*env)->SetIntField(env, response, byteArrayFieldID, (jint)replyHandle);
-    (*env)->SetIntField(env, response, formatterFieldID, (jint)replyFormat);
+    (*env)->SetIntField(env, response, byteArrayFieldID, (ptraddr)replyHandle);
+    (*env)->SetIntField(env, response, formatterFieldID, (ptraddr)replyFormat);
   }
 
   return (jint)retVal;
@@ -588,25 +607,25 @@ Java_IPC_IPC_IPC_1checkMsgFormats (JNIEnv *env, jclass theClass,
   return (jint)retVal;
 }
 
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1getContext (JNIEnv *env,
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1getContext (JNIEnv *env,
 						    jclass theClass)
 {
-  return (jint)IPC_getContext();
+  return (ptraddr)IPC_getContext();
 }
 
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1setContext (JNIEnv *env, jclass theClass,
-						 jint context)
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1setContext (JNIEnv *env, jclass theClass,
+						 ptraddr context)
 {
   return IPC_setContext((IPC_CONTEXT_PTR)context);
 }
 
 JNIEXPORT void JNICALL
-Java_IPC_IPC_IPC_1freeByteArray (JNIEnv *env, jclass theClass, jint byteArray)
+Java_IPC_IPC_IPC_1freeByteArray (JNIEnv *env, jclass theClass, ptraddr byteArray)
 {
   IPC_freeByteArray((BYTE_ARRAY)byteArray);
 }
 
-JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1msgFormatter (JNIEnv *env, jclass theClass,
+JNIEXPORT ptraddr JNICALL Java_IPC_IPC_IPC_1msgFormatter (JNIEnv *env, jclass theClass,
 						   jstring msgName)
 {
   const char *cmsgName;
@@ -616,7 +635,7 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1msgFormatter (JNIEnv *env, jclass theCl
   retVal = IPC_msgFormatter(cmsgName);
   (*env)->ReleaseStringUTFChars(env, msgName, cmsgName);
 
-  return (jint)retVal;
+  return (ptraddr)retVal;
 }
 
 JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1addTimer (JNIEnv *env, jclass theClass,
@@ -632,8 +651,13 @@ JNIEXPORT jint JNICALL Java_IPC_IPC_IPC_1addTimer (JNIEnv *env, jclass theClass,
 					       "timerCallbackHandler",
 					       TIMER_CALLBACK_SIGNATURE);
 
+#if (defined(__x86_64__))
+  return (jint)IPC_addTimer((unsigned long)tdelay, (unsigned long)count, 
+			    ipcJavaTimerHandler, (void *)(long)handlerNum);
+#else
   return (jint)IPC_addTimer((unsigned long)tdelay, (unsigned long)count, 
 			    ipcJavaTimerHandler, (void *)handlerNum);
+#endif
 }
 
 JNIEXPORT jint JNICALL 
@@ -668,103 +692,103 @@ JNIEXPORT jlong JNICALL Java_IPC_IPC_IPC_1timeInMillis (JNIEnv *env,
  * 
  ****************************************************************/
 
-JNIEXPORT jint JNICALL
-Java_IPC_formatters_formatType (JNIEnv *env, jclass theClass, jint formatter)
+JNIEXPORT ptraddr JNICALL
+Java_IPC_formatters_formatType (JNIEnv *env, jclass theClass, ptraddr formatter)
 {
-  return (jint)formatType((FORMAT_PTR)formatter);
+  return (ptraddr)formatType((FORMAT_PTR)formatter);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_formatPrimitiveProc (JNIEnv *env, jclass theClass,
-				     jint formatter)
+				     ptraddr formatter)
 {
-  return (jint)formatPrimitiveProc((FORMAT_PTR)formatter);
+  return (ptraddr)formatPrimitiveProc((FORMAT_PTR)formatter);
 }
 
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_formatChoosePtrFormat (JNIEnv *env, jclass theClass,
-				       jint formatter, jint parentFormat)
+				       ptraddr formatter, ptraddr parentFormat)
 {
-  return (jint)formatChoosePtrFormat((CONST_FORMAT_PTR)formatter,
+  return (ptraddr)formatChoosePtrFormat((CONST_FORMAT_PTR)formatter,
 				     (FORMAT_PTR)parentFormat);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_formatFormatArray (JNIEnv *env, jclass theClass,
-				     jint formatter)
+				     ptraddr formatter)
 {
-  return (jint)formatFormatArray((FORMAT_PTR)formatter);
+  return (ptraddr)formatFormatArray((FORMAT_PTR)formatter);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_formatFormatArrayMax (JNIEnv *env, jclass theClass,
-				      jint formatArray)
+				      ptraddr formatArray)
 {
-  return (jint)formatFormatArrayMax((FORMAT_ARRAY_PTR)formatArray);
+  return (ptraddr)formatFormatArrayMax((FORMAT_ARRAY_PTR)formatArray);
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_formatFormatArrayItem (JNIEnv *env, jclass theClass,
-				       jint formatArray, jint n)
+				       ptraddr formatArray, jint n)
 {
-  return (jint)formatFormatArrayItem((FORMAT_ARRAY_PTR)formatArray, (int)n);
+  return (ptraddr)formatFormatArrayItem((FORMAT_ARRAY_PTR)formatArray, (int)n);
 }
 
-JNIEXPORT jint JNICALL
-Java_IPC_formatters_findNamedFormat (JNIEnv *env, jclass theClass, jint format)
+JNIEXPORT ptraddr JNICALL
+Java_IPC_formatters_findNamedFormat (JNIEnv *env, jclass theClass, ptraddr format)
 {
-  return (jint)findNamedFormat((FORMAT_PTR)format);
+  return (ptraddr)findNamedFormat((FORMAT_PTR)format);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_IPC_formatters_checkMarshallStatus (JNIEnv *env, jclass theClass,
-				     jint formatter)
+				     ptraddr formatter)
 {
   return (checkMarshallStatus((FORMATTER_PTR)formatter) == TRUE
 	  ? JNI_TRUE : JNI_FALSE);
 }
 
-JNIEXPORT jint JNICALL
-Java_IPC_formatters_createBuffer(JNIEnv *env, jclass theClass, jint byteArray)
+JNIEXPORT ptraddr JNICALL
+Java_IPC_formatters_createBuffer(JNIEnv *env, jclass theClass, ptraddr byteArray)
 {
   BUFFER_PTR buffer = NEW(BUFFER_TYPE);
 
   buffer->bstart = 0;
   buffer->buffer = (char *)byteArray;
 
-  return (jint)buffer;
+  return (ptraddr)buffer;
 }
 
 JNIEXPORT void JNICALL
-Java_IPC_formatters_freeBuffer (JNIEnv *env, jclass theClass, jint buffer)
+Java_IPC_formatters_freeBuffer (JNIEnv *env, jclass theClass, ptraddr buffer)
 {
   free((void *)buffer);
 }
 
 JNIEXPORT jint JNICALL
-Java_IPC_formatters_bufferLength (JNIEnv *env, jclass theClass, jint buffer)
+Java_IPC_formatters_bufferLength (JNIEnv *env, jclass theClass, ptraddr buffer)
 {
   return (jint)((BUFFER_PTR)buffer)->bstart;
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT ptraddr JNICALL
 Java_IPC_formatters_createByteArray (JNIEnv *env, jclass theClass, jint length)
 {
-  return (jint)x_ipcMalloc(length);
+  return (ptraddr)x_ipcMalloc(length);
 }
 
 #ifdef NEED_DEBUGGING
 /* The following functions are for debugging purposes, only */
 
 JNIEXPORT void JNICALL
-Java_IPC_formatters_rewindBuffer (JNIEnv *env, jclass theClass, jint buffer)
+Java_IPC_formatters_rewindBuffer (JNIEnv *env, jclass theClass, ptraddr buffer)
 {
   ((BUFFER_PTR)buffer)->bstart = 0;
 }
 
 JNIEXPORT void JNICALL
-Java_IPC_formatters_printBuffer (JNIEnv *env, jclass theClass, jint buf)
+Java_IPC_formatters_printBuffer (JNIEnv *env, jclass theClass, ptraddr buf)
 {
   BUFFER_PTR buffer = (BUFFER_PTR)buf;
   int i;
@@ -777,7 +801,7 @@ Java_IPC_formatters_printBuffer (JNIEnv *env, jclass theClass, jint buf)
 
 JNIEXPORT void JNICALL
 Java_IPC_formatters_printByteArray (JNIEnv *env, jclass theClass, 
-				jint byteArray, jint length)
+				ptraddr byteArray, jint length)
 {
   int i;
   fprintf(stderr, "BYTE ARRAY: (%d) ", (int)length);
@@ -808,13 +832,13 @@ Java_IPC_formatters_parseFormat (JNIEnv *env, jclass theClass, jstring format)
  ****************************************************************/
 
 JNIEXPORT jchar JNICALL Java_IPC_primFmttrs_formatGetChar (JNIEnv *env, jclass c,
-						       jint buffer)
+						       ptraddr buffer)
 {
   return (jchar)formatGetChar((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutChar (JNIEnv *env, jclass c,
-						      jint buffer, 
+						      ptraddr buffer, 
 						      jchar theChar)
 {
   formatPutChar((BUFFER_PTR)buffer, (char)theChar);
@@ -822,75 +846,75 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutChar (JNIEnv *env, jclass c,
 
 JNIEXPORT jboolean JNICALL Java_IPC_primFmttrs_formatGetBoolean (JNIEnv *env,
 							     jclass c,
-							     jint buffer)
+							     ptraddr buffer)
 {
   return (formatGetInt((BUFFER_PTR)buffer) == FALSE ? JNI_FALSE : JNI_TRUE);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutBoolean (JNIEnv *env, jclass c,
-							 jint buffer,
+							 ptraddr buffer,
 							 jboolean theBool)
 {
   formatPutInt((BUFFER_PTR)buffer, (theBool == JNI_TRUE ? TRUE : FALSE));
 }
 
 JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetByte (JNIEnv *env, jclass c,
-						       jint buffer)
+						       ptraddr buffer)
 {
   return (jbyte)formatGetByte((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutByte (JNIEnv *env, jclass c,
-						      jint buffer, jbyte byte)
+						      ptraddr buffer, jbyte byte)
 {
   formatPutByte((BUFFER_PTR)buffer, (int32)byte);
 }
 
 JNIEXPORT jbyte JNICALL Java_IPC_primFmttrs_formatGetUByte (JNIEnv *env, jclass c,
-						       jint buffer)
+						       ptraddr buffer)
 {
   return (jbyte)formatGetUByte((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutUByte (JNIEnv *env, jclass c,
-						       jint buffer, jbyte byte)
+						       ptraddr buffer, jbyte byte)
 {
   formatPutUByte((BUFFER_PTR)buffer, (int32)byte);
 }
 
 JNIEXPORT jint JNICALL Java_IPC_primFmttrs_formatGetInt (JNIEnv *env, jclass c,
-						     jint buffer)
+						     ptraddr buffer)
 {
   return (jint)formatGetInt((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutInt (JNIEnv *env, jclass c,
-						     jint buffer, jint theInt)
+						     ptraddr buffer, jint theInt)
 {
   formatPutInt((BUFFER_PTR)buffer, (int32)theInt);
 }
 
 JNIEXPORT jlong JNICALL Java_IPC_primFmttrs_formatGetLong (JNIEnv *env, jclass c,
-						       jint buffer)
+						       ptraddr buffer)
 {
   return (jlong)formatGetInt((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutLong (JNIEnv *env, jclass c,
-						      jint buffer,
+						      ptraddr buffer,
 						      jlong theLong)
 {
   formatPutInt((BUFFER_PTR)buffer, (int32)theLong);
 }
 
 JNIEXPORT jfloat JNICALL Java_IPC_primFmttrs_formatGetFloat (JNIEnv *env, jclass c,
-							 jint buffer)
+							 ptraddr buffer)
 {
   return (jfloat)formatGetFloat((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutFloat (JNIEnv *env, jclass c,
-						       jint buffer,
+						       ptraddr buffer,
 						       jfloat theFloat)
 {
   formatPutFloat((BUFFER_PTR)buffer, (float)theFloat);
@@ -898,20 +922,20 @@ JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutFloat (JNIEnv *env, jclass c
 
 JNIEXPORT jdouble JNICALL Java_IPC_primFmttrs_formatGetDouble (JNIEnv *env,
 							   jclass c,
-							   jint buffer)
+							   ptraddr buffer)
 {
   return (jdouble)formatGetDouble((BUFFER_PTR)buffer);
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutDouble (JNIEnv *env, jclass c,
-							jint buffer,
+							ptraddr buffer,
 							jdouble theDouble)
 {
   formatPutDouble((BUFFER_PTR)buffer, (double)theDouble);
 }
 
 JNIEXPORT jstring JNICALL Java_IPC_primFmttrs_formatGetString (JNIEnv *env,
-							   jclass c, jint buf)
+							   jclass c, ptraddr buf)
 {
   BUFFER_PTR buffer = (BUFFER_PTR)buf;
   int length = formatGetInt(buffer);
@@ -939,7 +963,7 @@ JNIEXPORT jstring JNICALL Java_IPC_primFmttrs_formatGetString (JNIEnv *env,
 }
 
 JNIEXPORT void JNICALL Java_IPC_primFmttrs_formatPutString (JNIEnv *env, jclass c,
-							jint buf,
+							ptraddr buf,
 							jstring theString)
 {
   BUFFER_PTR buffer = (BUFFER_PTR)buf;
