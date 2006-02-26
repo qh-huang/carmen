@@ -222,7 +222,7 @@ install:
 
 clean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
-	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
+	$(SILENT) $(RM) *.o *.a *.so *.exe core a.out Makefile.depend Makefile.depend.bak $(TARGETS) $(patsubst %.class,'%.class',$(CLASS_FILES))
 	$(subdir_recurse)
 
 relink:
@@ -235,7 +235,7 @@ relink:
 distclean:
 	$(ECHO) "    ---- Cleaning up "$(MODULE_NAME)
 	$(SILENT) $(RM) *.o *.a *.so *.exe *~ core a.out
-	$(SILENT) $(RM) Makefile.depend Makefile.depend.bak $(TARGETS) $(CLASSFILES)
+	$(SILENT) $(RM) Makefile.depend Makefile.depend.bak $(TARGETS) $(patsubst %.class,'%.class',$(CLASS_FILES))
 	$(remove_includes)
 	$(remove_manpages)
 	$(remove_libraries)
