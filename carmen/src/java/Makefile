@@ -1,5 +1,7 @@
 include ../Makefile.conf
 
+SUBDIRS = LDLoad Carmen IPC
+
 IFLAGS += -I$(JAVA_HOME)/include 
 IFLAGS += -I$(JAVA_HOME)/include/linux 
 IFLAGS += -I/usr/include/bsd
@@ -19,19 +21,16 @@ SOURCES = ipcjava.c
 PUBLIC_LIBRARIES = libipcjava.so
 TARGETS = libipcjava.so Carmen.jar TestBase.class TestRobot.class
 
-CLASSFILES = Carmen/*.class IPC/*.class
-
 libipcjava.so: ipcjava.o
 	$(ECHO) "    ---- Creating shared library (C)"
 	$(SILENT) ld -o $@ -G -dy $^ -L ../ipc -lipc
 
-Carmen.jar: 
-	$(ECHO) "    ---- Compiling LDLoad (Java)"
-	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . LDLoad/*.java
-	$(ECHO) "    ---- Compiling IPC (Java)"
-	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . IPC/*.java
-	$(ECHO) "    ---- Compiling Carmen (Java)"
-	$(SILENT) $(JAVA_HOME)/bin/javac -classpath . -d . Carmen/*.java
+JAVA_FILES := $(wildcard $(patsubst %,%/*.java,$(SUBDIRS)))
+
+Carmen.jar: $(JAVA_FILES)
+	$(MAKE) -C LDLoad
+	$(MAKE) -C IPC
+	$(MAKE) -C Carmen
 	$(ECHO) "    ---- Creating $@"
 	$(SILENT) $(JAVA_HOME)/bin/jar cf Carmen.jar Carmen/*.class IPC/*.class LDLoad/*.class libipcjava.so
 
