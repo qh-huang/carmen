@@ -27,7 +27,7 @@ my ($xr4000Kernel) = "2.0.20";
 my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $nodoxygen, $notcpd, $nojpeg, $nozlib,
-    $noreadline, $nolibart, $nowand, $nojava, $install_path);
+    $nolibart, $nowand, $nojava, $install_path);
 
 $nolibart = 1;
 
@@ -72,9 +72,6 @@ EOF
   if (/nozlib/) {
     $nozlib = 1;
   }
-  if (/noreadline/) {
-    $noreadline = 1;
-  }
   if (/nolibart/) {
     $nolibart = 1;
   }
@@ -97,6 +94,7 @@ print "Using \$CC as $GCC...\n";
 my @min_gcc_no_strict_aliasing_version = (3, 3);
 my $no_strict_aliasing = check_gcc_version();
 
+my $processor = verify_processor();
 my ($os_type, $kernel) = verify_kernel();
 
 my ($suse) = verify_suse();
@@ -110,7 +108,6 @@ my $joystick = verify_joystick() unless ($nojoystick);
 my $tcpd = verify_tcpd(\@user_libs) unless ($notcpd);
 my $jpeg = verify_libjpeg(\@user_libs) unless ($nojpeg or !$gtk_config);
 my $zlib = verify_zlib(\@user_libs) unless ($nozlib);
-my $readline = verify_readline(\@user_libs) unless ($noreadline);
 my $libart = verify_libart(\@user_libs) unless ($nolibart);
 my $wand = verify_wand() unless ($nowand);
 my $java = verify_java() unless ($nojava);
@@ -147,12 +144,8 @@ print OUTPUT "NO_LIBART = 1\n" unless ($libart);
 print OUTPUT "NO_WAND = 1\n" unless ($wand);
 print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
 print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
-if ($readline) {
-  print OUTPUT "READLINE = $readline\n";
-} else {
-  print OUTPUT "NO_READLINE = 1\n";
-}
 print OUTPUT "NO_DOXYGEN = 1\n" unless ($doxygen);
+print OUTPUT "PROCESSOR = $processor\n";
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
 } else {
@@ -630,80 +623,6 @@ EOF
   return undef;
 }
 
-
-sub verify_readline {
-  my $lib_ref = shift;
-
-  print "Searching for readline.h... ";
-
-  my ($fh, $filename);
-  if (defined (&tempfile)) {
-    ($fh, $filename) = tempfile("readline_testXXXX");
-  } else {
-    $filename = "readline_test".int(rand(100));
-    $fh = new FileHandle("> $filename");
-  }
-
-  $filename = "./$filename" unless $filename =~ m!^/!;
-
-  print $fh <<EOF;
-  #include <stdio.h>
-  #include <unistd.h>
-  #include <readline/readline.h>
-  #include <readline/history.h>
-  static void
-  handle_stdin(char *line)
-  {
-    printf("Received %s\\n", line);
-    add_history(line);
-  }
-
-  int
-  main(int argc, char *argv[]) {
-    printf("%s\\n", rl_library_version);
-  //    rl_callback_handler_install(STDIN_FILENO, (VFunction *)handle_stdin);
-  //    using_history();
-  }
-EOF
-
-  $fh->close();
-  rename "$filename", "${filename}.c";
-
-  my $libs = join " ", @$lib_ref;
-  if ($suse) {
-    system("$GCC ${filename}.c -o $filename $libs -lreadline > /dev/null 2>&1");
-  } else {
-    system("$GCC ${filename}.c -o $filename $libs -lreadline -ltermcap > /dev/null 2>&1");
- }
-  if (! -e $filename) {
-    print "${red}not found${normal}\n";
-    unlink "${filename}.c";
-    return undef;
-  }
-
-  my $version = `$filename`;
-  chomp $version;
-
-  unlink $filename;
-  unlink "${filename}.exe";
-  unlink "${filename}.c";
-
-  print " readline $version found\n" if (defined($version));
-
-  my ($major, $minor) = $version =~ /(\d+)\.(\d+)/;
-
-  if (!defined($version) || int($major) < 4 ||
-      (int($major) < 4 && int($minor) < 1)) {
-    print "\nYou must have readline version 4.1 or later to add readline\n".
-      "support to CARMEN. Compiling without readline...\n";
-    return undef;
-  }
-
-  return "PRE_42" if (int($major) == 4 and int($minor) < 2);
-
-  return "42_OR_LATER";
-}
-
 sub verify_libart {
   my $lib_ref = shift;
   print "Searching for libart... ";
@@ -764,6 +683,21 @@ sub verify_kernel {
   my ($kernel) = $system =~ /\S+\s+\S+\s+(\S+)/;
   print "Found kernel $kernel.\n";
   return ($OSNAME, $kernel);
+}
+
+sub verify_processor {
+  my $processor = `uname -p 2>/dev/null`;
+  if ($? >> 8 != 0) {
+    $processor = `uname -m 2>/dev/null`;
+  } 
+  if ($? >> 8 != 0) {
+    print "\nI can't find uname, or at least, I can't run it.\n";
+    print "Please enter the processor type [x86/x86_64/powerpc]: ";
+    my $processor = <STDIN>;
+  }
+  chomp $processor;
+  print "Found processor $processor.\n";
+  return ($processor);
 }
 
 sub write_out_config {
