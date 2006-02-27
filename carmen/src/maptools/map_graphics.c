@@ -566,6 +566,7 @@ carmen_map_graphics_add_map(GtkMapViewer *map_view, carmen_map_p new_map,
 
   point.pose.x = (new_map->config.x_size*3/4)*new_map->config.resolution;
   point.pose.y = (new_map->config.y_size*3/4)*new_map->config.resolution;
+  point.pose.theta = 0;
   point.map = map_view->internal_map;
   map_view->centre = point;
 
