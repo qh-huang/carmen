@@ -7,7 +7,12 @@ LFLAGS += -lserial -lglobal -lipc
 ifdef QT3
 CXXFLAGS += -Wno-non-virtual-dtor
 IFLAGS += -I/usr/lib/qt3/include
-LFLAGS += -lserial -lglobal -lipc -L/usr/lib/qt3/lib64 -lqt-mt
+ifeq ($(PROCESSOR),x86_64)
+LFLAGS += -L/usr/lib/qt3/lib64
+else
+LFLAGS += -L/usr/lib/qt3/lib
+endif
+LFLAGS += -lqt-mt
 endif
 
 MODULE_NAME = PROCCONTROL
