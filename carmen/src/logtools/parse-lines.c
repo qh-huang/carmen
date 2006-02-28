@@ -537,11 +537,12 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
   static char    str5[MAX_CMD_LENGTH];
   static char    str6[MAX_CMD_LENGTH];
   static char    str7[MAX_CMD_LENGTH];
+  static char    str8[MAX_CMD_LENGTH];
   static char  * running, * valptr;
 
   float          fov = M_PI;
   double         angleDiff, time;
-  int            i, l, nVal;
+  int            i, l, nVal, numRemiss;
 
   static logtools_laser_prop2_t  lprop;
   static int                firsttime = TRUE;
@@ -594,6 +595,75 @@ carmen_parse_line( char *line, logtools_log_data_t *rec, int alloc, int mode )
       rec->numpositions++;
     }
     
+    
+  } else if (!strcmp( command, "RAWLASER1") ){
+    
+    if (sscanf( line, "%s %s %s %s %s %s %s %s %s",
+		dummy, str1, str2, str3, str4,
+		str5, str6, str7, str8 ) == EOF) {
+		
+      return(FALSE);
+      
+    } else {
+
+      rec->entry[rec->numentries].type   = LASER_VALUES;
+      rec->entry[rec->numentries].index  = rec->numlaserscans;
+      rec->numentries++;
+
+      nVal = atoi(str8);
+      rec->lsens[rec->numlaserscans].id                 = 0;
+      rec->lsens[rec->numlaserscans].laser.numvalues    = nVal;
+      rec->lsens[rec->numlaserscans].coord              = NULL;
+
+      if (alloc) {
+	rec->lsens[rec->numlaserscans].laser.val =
+	  (float *) malloc( nVal * sizeof(float) );
+	rec->lsens[rec->numlaserscans].laser.angle =
+	  (float *) malloc( nVal * sizeof(float) );
+      }
+      if (fabs(rad2deg(lprop.fov.delta)-fov)>DEFAULT_EPSILON) {
+	lprop.fov.delta = atof(str3);
+	lprop.fov.start = atof(str2);
+	lprop.fov.end   = lprop.fov.delta + lprop.fov.start;
+      }
+      rec->lsens[rec->numlaserscans].laser.fov = lprop.fov.delta;
+      rec->lsens[rec->numlaserscans].laser.offset = lprop.offset;
+      angleDiff = atof(str4);
+
+      running = line;
+      strtok( running, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      strtok( NULL, " ");
+      for (i=0;i<nVal;i++) {
+	valptr = strtok( NULL, " ");
+	if (valptr==NULL) {
+	  return(FALSE);
+	} else {
+	  rec->lsens[rec->numlaserscans].laser.val[i]       =
+	    100.0 * atof(valptr);
+	  rec->lsens[rec->numlaserscans].laser.angle[i]     =
+	    lprop.fov.start+(i*angleDiff);
+	}
+      }
+      valptr = strtok( NULL, " ");
+      numRemiss = atoi(valptr);
+      for (i=0;i<numRemiss;i++) {
+	valptr = strtok( NULL, " ");
+      }
+      if (rec->numpositions>0)
+	rec->lsens[rec->numlaserscans].estpos =
+	  rec->psens[rec->numpositions-1].rpos;
+      valptr = strtok( NULL, " ");
+      time = atof(valptr);
+      convert_time( time, &rec->lsens[rec->numlaserscans].laser.time );
+      rec->numlaserscans++;
+    }
     
   } else if (!strcmp( command, "FLASER") ){
     

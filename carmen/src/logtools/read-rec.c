@@ -203,6 +203,8 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	if (!strcmp( command, "ODOM")) {
 	  posctr++;
 	} else if (!strcmp( command, "FLASER") ){
+	  laserctr++;	
+	} else if (!strcmp( command, "RAWLASER1") ){
 	  laserctr++;
 	} else if (!strcmp( command, "ROBOTLASER1") ){
 	  laserctr++;
