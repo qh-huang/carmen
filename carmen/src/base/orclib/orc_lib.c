@@ -794,8 +794,9 @@ int carmen_base_direct_initialize_robot(char *model __attribute__ ((unused)),
 
   fprintf(stderr, "Clearing input buffer...");
   carmen_serial_ClearInputBuffer(serial_fd);
-  carmen_base_direct_update_status();
-  carmen_base_direct_update_status();
+
+  carmen_base_direct_update_status(NULL);
+  carmen_base_direct_update_status(NULL);
   carmen_serial_ClearInputBuffer(serial_fd);
   fprintf(stderr, " ok.\n");
 
@@ -870,7 +871,7 @@ int carmen_base_direct_initialize_robot(char *model __attribute__ ((unused)),
   fprintf(stderr, "ok.\n");
 
   fprintf(stderr, "Checking board status... ");
-  if (carmen_base_direct_update_status() < 0) {
+  if (carmen_base_direct_update_status(NULL) < 0) {
     fprintf(stderr, "%sfailed%s.\n", carmen_red_code, carmen_normal_code);
     return -1;
   }
@@ -923,7 +924,7 @@ int carmen_base_direct_set_velocity(double new_tv, double new_rv)
 
   printf("carmen_base_direct_set_velocity: tv=%.2f, rv=%.2f\n", 
 	 new_tv, new_rv);
-  carmen_base_direct_update_status();
+  carmen_base_direct_update_status(NULL);
 
   return 0;
 }
@@ -962,7 +963,7 @@ static unsigned char *get_status_packet(unsigned char where)
 
 }
 
-int carmen_base_direct_update_status(void)
+int carmen_base_direct_update_status(double* packet_timestamp __attribute__((unused)))
 {
   unsigned char *buffer;
   double start_time = carmen_get_time();
@@ -1015,7 +1016,7 @@ int carmen_base_query_low_level(double *left_disp, double *right_disp,
 {
   int err;
 
-  err = carmen_base_direct_update_status();
+  err = carmen_base_direct_update_status(NULL);
 
   if (err < 0)
     return -1;
@@ -1033,7 +1034,7 @@ int carmen_base_direct_get_integrated_state(double *x_p, double *y_p,
 {
   int err;
 
-  err = carmen_base_direct_update_status();
+  err = carmen_base_direct_update_status(NULL);
   if (err < 0)
     return -1;
 

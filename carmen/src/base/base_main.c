@@ -533,10 +533,17 @@ integrate_odometry(double displacement, double rotation, double tv, double rv)
     displacement *= -1;
   }
 
+  /*Giorgio 03.03.2004
+  added Rung Kutta integration.
+  */
+  /*
   odometry.x += displacement * cos (odometry.theta);
   odometry.y += displacement * sin (odometry.theta);
+  */
+  
+  odometry.x += displacement * cos (odometry.theta+0.5*rotation);
+  odometry.y += displacement * sin (odometry.theta+0.5*rotation);
   odometry.theta = carmen_normalize_theta(odometry.theta+rotation);
-
 }
 
 
@@ -575,14 +582,22 @@ carmen_base_run(void)
   }
 
   do {
-    base_err = carmen_base_direct_update_status();
-    odometry.timestamp = carmen_get_time();
+    double packet_timestamp=0.;
+    base_err = carmen_base_direct_update_status(&packet_timestamp);
+    if (packet_timestamp==0.)
+    	odometry.timestamp = carmen_get_time();
+    else
+    	odometry.timestamp = packet_timestamp;
     if (base_err < 0)
       initialize_robot();
-  } while (base_err < 0);      
+  } while (base_err < 0); 
 
   carmen_base_direct_get_binary_data(&(binary_data.data), &(binary_data.size));
   binary_data.host = carmen_get_host();
+  /*
+  Giorgio 03.03.2006
+	The binary data timestamp should be considered when reading the 1st byte of the packet.
+  */
   binary_data.timestamp = carmen_get_time();
   IPC_publishData(CARMEN_BASE_BINARY_DATA_NAME, &binary_data);
 

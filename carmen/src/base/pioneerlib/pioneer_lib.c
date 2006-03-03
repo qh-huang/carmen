@@ -183,7 +183,7 @@ pioneer_calculate_checksum(unsigned char *ptr, int length)
 
 /*** Return value:  the length of the string read                       ***/
 static int 
-pioneer_read_string(unsigned char *buf, double read_timeout) 
+pioneer_read_string(unsigned char *buf, double read_timeout, double * packet_timestamp) 
 {
   int c = 0;
   int header_length = strlen(PIONEER_PACKET_HEADER);
@@ -191,17 +191,19 @@ pioneer_read_string(unsigned char *buf, double read_timeout)
   unsigned char length_char[1];
   int i;
   double start_time, current_time;
+  double header_time;
 
   for (i = 0; i <= header_length; ++i)
     header[i] = '\0';
 
   start_time = carmen_get_time();
+  header_time = start_time;
   do 
     {                                  /* busy waits until we read the   */
       for (i = 1; i < header_length; ++i) /* command header                 */
 	header[i-1] = header[i];
       carmen_serial_readn(dev_fd, header + header_length - 1, 1);
-
+      header_time=carmen_get_time();
       if (read_timeout > 0) {
 	current_time = carmen_get_time();
 	if (current_time - start_time > read_timeout)
@@ -210,7 +212,7 @@ pioneer_read_string(unsigned char *buf, double read_timeout)
       }
     } 
   while (strcmp((char *)header, PIONEER_PACKET_HEADER) != 0);
-  
+ 
   carmen_serial_readn(dev_fd, length_char, 1);
   c = (int) length_char[0];             /* the length, including chksum   */
 
@@ -223,9 +225,10 @@ pioneer_read_string(unsigned char *buf, double read_timeout)
       for (i = 0; i < c; ++i)
 	fprintf(stderr, "%c", buf[i]);
       fprintf(stderr, "\n");
-      return pioneer_read_string(buf, read_timeout);
+      return pioneer_read_string(buf, read_timeout, NULL);
     }
-
+  if (packet_timestamp)
+	*packet_timestamp=header_time;
   return c;
 }
 
@@ -292,11 +295,11 @@ pioneer_sync0(void)
   buf[0] = !PIONEER_SYNC0;
 
   pioneer_send_command0(PIONEER_SYNC0);
-  if ((pioneer_read_string(buf, 0.2) == -1) && (pioneer_version == 1)) 
+  if ((pioneer_read_string(buf, 0.2, NULL) == -1) && (pioneer_version == 1)) 
     {
       /* sometimes the Pioneer I's want two syncs */
       pioneer_send_command0(PIONEER_SYNC0);
-      if (pioneer_read_string(buf, 0.2) == -1) 
+      if (pioneer_read_string(buf, 0.2, NULL) == -1) 
 	{
 	  carmen_warn("Could not SYNC0\n");
 	  return -1;
@@ -318,7 +321,7 @@ pioneer_sync1(void)
   unsigned char buf[256];
 
   pioneer_send_command0(PIONEER_SYNC1);
-  pioneer_read_string(buf, PIONEER_SERIAL_TIMEOUT);
+  pioneer_read_string(buf, PIONEER_SERIAL_TIMEOUT, NULL);
   if (buf[0] != PIONEER_SYNC1) 
     {
       carmen_warn("Could not SYNC1\n");
@@ -334,7 +337,7 @@ pioneer_sync2(void)
   unsigned char buf[256];
 
   pioneer_send_command0(PIONEER_SYNC2);
-  pioneer_read_string(buf, PIONEER_SERIAL_TIMEOUT);
+  pioneer_read_string(buf, PIONEER_SERIAL_TIMEOUT, NULL);
 
   return 0;
 }
@@ -547,17 +550,17 @@ carmen_base_direct_set_velocity(double tv, double rv)
 
 
 int 
-carmen_base_direct_update_status(void) 
+carmen_base_direct_update_status(double* update_timestamp) 
 {
   int read = 0;
-
+  double packet_timestamp=0.;
   pioneer_send_command0(PIONEER_PULSE);
   memset(&raw_state, 0, sizeof(struct pioneer_raw_information_packet));
   raw_state.motor_status = 0;
   do 
     {
       read = pioneer_read_string((unsigned char*) &raw_state, 
-				 PIONEER_SERIAL_TIMEOUT);
+				 PIONEER_SERIAL_TIMEOUT, &packet_timestamp);
     }
   while (carmen_serial_numChars(dev_fd) > 0);
 
@@ -569,6 +572,9 @@ carmen_base_direct_update_status(void)
       return -1;
     }
 
+  if (update_timestamp){
+    *update_timestamp=packet_timestamp;
+  }
   return 0;
   //  return read;
 }
