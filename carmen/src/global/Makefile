@@ -17,10 +17,10 @@ SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
 	  ipc_wrapper.c movement.c test_movement.c
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
 	  	  carmen.h serial.h keyctrl.h multicentral.h movement.h
-PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
+PUBLIC_LIBRARIES = libglobal.so libglobal.a libgeometry.a libpswrap.a libserial.a \
 		   libkeyctrl.a libmulticentral.a libmovement.a
 PUBLIC_BINARIES = carmen-config 
-TARGETS = libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
+TARGETS = libglobal.so libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
 	  carmen-config libkeyctrl.a libmulticentral.a \
 	  test_multicentral libmovement.a test_movement
 
@@ -53,6 +53,8 @@ CFLAGS += -DHAVE_LIBART
 endif
 
 libglobal.a:		global.o ipc_wrapper.o carmen_stdio.o
+libglobal.so:		global.o ipc_wrapper.o carmen_stdio.o
+
 
 ifndef NO_LIBJPEG
 libglobal_graphics.a:	global_graphics.o global_jpeg.o

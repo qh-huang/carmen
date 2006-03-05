@@ -23,14 +23,20 @@ SOURCES = ipc.c queryResponse.c marshall.c timer.c list.c behaviors.c \
 	globalVar.c central.c test_generate.c test_receive.c multiThread.c
 
 PUBLIC_INCLUDES = ipc.h
-PUBLIC_LIBRARIES = libipc.a 
+PUBLIC_LIBRARIES = libipc.a libipc.so
 PUBLIC_BINARIES = central
 
-TARGETS = central libipc.a test_generate test_receive ipc-endian-test ipc-die-test
+TARGETS = central libipc.so libipc.a test_generate test_receive ipc-endian-test ipc-die-test
 
 # rules
 
 libipc.a: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
+	tcModError.o datamsg.o formatters.o hash.o idtable.o key.o \
+	primFmttrs.o reg.o sendMsg.o tcaMem.o tcaRef.o comModule.o com.o \
+	globalM.o globalMUtil.o strList.o modLogging.o modVar.o resMod.o \
+	parseFmttrs.o lex.o printData.o 
+
+libipc.so: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
 	tcModError.o datamsg.o formatters.o hash.o idtable.o key.o \
 	primFmttrs.o reg.o sendMsg.o tcaMem.o tcaRef.o comModule.o com.o \
 	globalM.o globalMUtil.o strList.o modLogging.o modVar.o resMod.o \

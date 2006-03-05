@@ -156,8 +156,6 @@ char *carmen_param_pair(char *lvalue);
 
 char *carmen_param_pair_and_remove(char *lvalue);
 
-char *carmen_read_params(char *module_name, int argc, char **argv);
-
 int carmen_num_params(void);
 
 char *carmen_get_param_by_num(int param_index);
@@ -314,7 +312,6 @@ int carmen_get_next_point(carmen_bresenham_param_t *params);
 int carmen_sign(double num);
 
 void carmen_rect_to_polar(double x, double y, double *r, double *theta);
-void carmen_init_trig_tables(int size);
 
 unsigned int carmen_generate_random_seed(void);
 unsigned int carmen_randomize(int *argc, char ***argv);
