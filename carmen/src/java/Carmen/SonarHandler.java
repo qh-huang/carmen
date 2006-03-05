@@ -6,5 +6,5 @@ package Carmen;
  */
 
 public interface SonarHandler {
-  public void handleSonar (SonarMessage message);
+  public void handle (SonarMessage message);
 }

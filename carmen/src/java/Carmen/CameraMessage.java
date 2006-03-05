@@ -27,7 +27,7 @@ public class CameraMessage extends Message {
   }
 
   public void publish() {
-    IPC.publishData(CARMEN_CAMERA_IMAGE_NAME, this);
+    publish(CARMEN_CAMERA_IMAGE_NAME, CARMEN_CAMERA_IMAGE_FMT, this);
   }
 }
 

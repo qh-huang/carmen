@@ -3,39 +3,41 @@ package Carmen;
 import IPC.*;
 
 public class Arm {
-  private static final String CARMEN_BASE_SERVO_ARM_NAME = "carmen_base_servo_arm_command";
-  private static final String CARMEN_BASE_SERVO_ARM_QUERY_NAME = "carmen_base_servo_arm_query";
-  private static final String CARMEN_BASE_SERVO_ARM_FMT = 
-    "{<double:2>, int, double, [char:10]}";
+  private static final String CARMEN_ARM_QUERY_NAME = "carmen_arm_query";
 
-  public static class ServoArmMessage extends Message {
-    public double servos [];
-    public int numServos;
+  public static class ArmCommandMessage extends Message {
+    public int numJoints;
+    public double jointAngles [];
 
-    ServoArmMessage(double servos[]) {
-      this.servos = servos;
-      numServos=servos.length;
+    private static final String CARMEN_ARM_COMMAND_NAME = "carmen_arm_command";
+    private static final String CARMEN_ARM_COMMAND_FMT = 
+      "{int, <double:1>, double, string}";
+
+    ArmCommandMessage(double jointAngles[]) {
+      this.jointAngles = jointAngles;
+      this.numJoints = jointAngles.length;
     }
+    public void publish() {
+      publish(CARMEN_ARM_COMMAND_NAME, CARMEN_ARM_COMMAND_FMT, this);
+    }    
   }    
 
-  public static void servo(double servoPositions[])
+  public static void move(double jointAngles[])
   {
-    if (servoPositions.length > 4) {
-      System.out.println("Arm has only 4 servos. You called Arm.servo with "+
-			 servoPositions.length+" ints. Ignoring.");
+    if (jointAngles.length > 4) {
+      System.out.println("Arm has only 4 joints. You called Arm.move with "+
+			 jointAngles.length+" doubles. Ignoring.");
       return;
     }
-    ServoArmMessage servoMessage =
-      new ServoArmMessage(servoPositions);
-    IPC.defineMsg(CARMEN_BASE_SERVO_ARM_NAME, CARMEN_BASE_SERVO_ARM_FMT);
-    IPC.publishData(CARMEN_BASE_SERVO_ARM_NAME, servoMessage);
+    ArmCommandMessage command = new ArmCommandMessage(jointAngles);
+    command.publish();
   }
 
-  public static double [] query()
+  public static ArmMessage query()
   {
     Message msg = new Message();
-    ServoArmMessage response = (ServoArmMessage)IPC.queryResponseData
-      (CARMEN_BASE_SERVO_ARM_QUERY_NAME, msg, ServoArmMessage.class, 5000);
-    return response.servos;
+    ArmMessage response = (ArmMessage)IPC.queryResponseData
+      (CARMEN_ARM_QUERY_NAME, msg, Message.class, 5000);
+    return response;
   }
 }

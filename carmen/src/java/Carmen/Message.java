@@ -14,7 +14,7 @@ public class Message {
   private static HashSet<String> defined_messages = new HashSet<String>(); 
 
   /** New message has timestamp from this host and host name */
-  Message() {
+  public Message() {
     timestamp = Util.getTime();
     host = Util.getHostName();
   }

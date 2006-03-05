@@ -6,5 +6,5 @@ package Carmen;
  */
 
 public interface VectorStatusHandler {
-  public void handleVectorStatus (VectorStatusMessage message);
+  public void handle (VectorStatusMessage message);
 }

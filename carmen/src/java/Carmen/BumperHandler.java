@@ -11,5 +11,5 @@ public interface BumperHandler {
   /**
    *  event handler for bump sensors
    */
-  public void handleBumper (BumperMessage message);
+  public void handle(BumperMessage message);
 }

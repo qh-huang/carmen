@@ -11,5 +11,5 @@ public interface CameraHandler {
    /**
    *  event handler for camera
    */
- public void handleCamera (CameraMessage message);
+ public void handle (CameraMessage message);
 }
