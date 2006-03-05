@@ -15,8 +15,11 @@
  * REVISION HISTORY:
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2006/03/05 03:47:43  nickr
+ * Added a line to printout "Central running"
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.4  2003/04/20 02:28:12  nickr
  * Upgraded to IPC 3.7.6.
@@ -571,6 +574,8 @@ int main(int argc, char **argv)
     if (GET_S_GLOBAL(listenToStdin))
       printPrompt();
 #endif
+
+    fprintf(stderr, "central running...\n");
 
     listenLoop();
   }
