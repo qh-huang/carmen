@@ -286,7 +286,7 @@ find_valid_robots(char **robot_names, int *num_robots, int max_robots)
       left = strchr(line, '[');
       right = strchr(line, ']');
       if(left != NULL && right != NULL && left < right && 
-	 left[1] != '*') {
+	 left[1] != '*' && carmen_strncasecmp(left+1, "expert", 6) != 0) {
 	(*num_robots)++;
 
 	if(*num_robots > max_robots)
