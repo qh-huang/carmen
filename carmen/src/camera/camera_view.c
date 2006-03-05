@@ -46,7 +46,8 @@ static void image_handler(carmen_camera_image_message *image_msg)
 
   if (!received_image) {
     gtk_widget_set_usize (drawing_area, image_msg->width, image_msg->height);
-  }
+  } else
+    g_object_unref(image);
 
   data = (unsigned char *)calloc
     (image_msg->width*image_msg->height*3, sizeof(unsigned char));
