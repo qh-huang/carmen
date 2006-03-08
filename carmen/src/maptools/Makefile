@@ -13,15 +13,20 @@ SOURCES = bee2carmen.c generate_blank.c map.c \
 
 PUBLIC_INCLUDES = linemapping.h map.h map_io.h map_messages.h map_interface.h \
 	 map_util.h
-PUBLIC_LIBRARIES = liblinemapping.a libmap_interface.a \
+PUBLIC_LIBRARIES = liblinemapping.a libmap_interface.a  \
 	libmap_util.a libmap_io.a
 PUBLIC_BINARIES = clf2linemap map maptool
 
-TARGETS = map libmap_interface.a  libmap_util.a \
+TARGETS = map libmap_interface.a   libmap_util.a \
 	libmap_io.a maptool
 
-# liblinemapping.a clf2linemap
 
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libmap_interface.so
+TARGETS += libmap_interface.so
+endif
+
+# liblinemapping.a clf2linemap
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
@@ -42,6 +47,8 @@ map: map.o libmap_interface.a libmap_io.a
 map_test:       map_test.o libmap_interface.a libmap_graphics.a
 
 libmap_interface.a: map_interface.o
+
+libmap_interface.so: map_interface.o
 
 libmap_graphics.a:	map_graphics.o libmap_interface.a
 

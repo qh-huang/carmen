@@ -314,7 +314,7 @@ int carmen_localize_get_map(int global, carmen_map_t *map)
       initialized = 1;
     }
 
-  msg.global = global;
+  msg.map_is_global_likelihood = global;
   msg.timestamp = carmen_get_time();
   msg.host = carmen_get_host();
 

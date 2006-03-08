@@ -1,19 +1,24 @@
 include ../Makefile.conf
 
-LFLAGS 	+= 	-lglobal -lipc -lmap_io -lmap_interface 
+LFLAGS 	+=  -lglobal -lipc -lmap_io -lmap_interface 
 
 MODULE_NAME = PARAMDAEMON
 MODULE_COMMENT = Module providing central repository for module parameters
 
 SOURCES = param_daemon.c param_test.c param_set.c install_params.c 
 PUBLIC_INCLUDES = param_messages.h param_interface.h
-PUBLIC_LIBRARIES = libparam_interface.a
+PUBLIC_LIBRARIES = libparam_interface.a 
 PUBLIC_BINARIES = param_daemon param_set install_params 
 
 TARGETS = param_daemon libparam_interface.a param_test param_set install_params
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
+endif
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libparam_interface.so
+TARGETS += libparam_interface.so
 endif
 
 ifndef NO_GRAPHICS
@@ -27,6 +32,8 @@ endif
 param_daemon: param_daemon.o 
 
 libparam_interface.a:	param_interface.o
+
+libparam_interface.so:	param_interface.o
 
 param_test: param_test.o libparam_interface.a
 

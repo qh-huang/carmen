@@ -8,7 +8,7 @@ SUBDIRS = fakecam
 LFLAGS += -lparam_interface -lipc -lglobal 
 SOURCES = camera_main.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h
-PUBLIC_LIBRARIES = libcamera_interface.a
+PUBLIC_LIBRARIES = libcamera_interface.a 
 PUBLIC_BINARIES = camera_fakecam
 TARGETS = camera_fakecam libcamera_interface.a 
 
@@ -24,6 +24,13 @@ TARGETS += camera_quickcam
 endif
 endif
 endif
+
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libcamera_interface.so
+TARGETS += libcamera_interface.so
+endif
+
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
@@ -47,6 +54,8 @@ camera_quickcam:	camera_main.o quickcam/libquickcam.a quickcam/libccvt.a
 endif
 
 libcamera_interface.a:	camera_interface.o
+
+libcamera_interface.so:	camera_interface.o
 
 camera_view:		camera_view.o libcamera_interface.a
 

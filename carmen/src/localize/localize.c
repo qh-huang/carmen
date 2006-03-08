@@ -243,12 +243,12 @@ static void map_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
   response.config = map.config;
 
-  if (msg.global) {
-    response.global = 1;
+  if (msg.map_is_global_likelihood) {
+    response.map_is_global_likelihood = 1;
     response.data = (unsigned char *)map.complete_gprob;
     response.size = map.config.x_size*map.config.y_size*sizeof(float);
   } else {
-    response.global = 0;
+    response.map_is_global_likelihood = 0;
     response.data = (unsigned char *)map.complete_prob;
     response.size = map.config.x_size*map.config.y_size*sizeof(float);
   }

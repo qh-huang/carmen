@@ -25,8 +25,13 @@ SOURCES = ipc.c queryResponse.c marshall.c timer.c list.c behaviors.c \
 PUBLIC_INCLUDES = ipc.h
 PUBLIC_LIBRARIES = libipc.a 
 PUBLIC_BINARIES = central
+TARGETS = central  libipc.a test_generate test_receive ipc-endian-test ipc-die-test
 
-TARGETS = central libipc.a test_generate test_receive ipc-endian-test ipc-die-test
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO =  libipc.so
+TARGETS += libipc.so
+endif
+
 
 # rules
 

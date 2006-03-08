@@ -17,6 +17,7 @@ SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
 	  ipc_wrapper.c movement.c test_movement.c
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
 	  	  carmen.h serial.h keyctrl.h multicentral.h movement.h
+
 PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
 		   libkeyctrl.a libmulticentral.a libmovement.a
 PUBLIC_BINARIES = carmen-config 
@@ -31,6 +32,13 @@ error:
 	$(ECHO) "I can't find carmen-configure.c. Did you remember to run\
 (or re-run) configure?"
 endif
+
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libglobal.so
+TARGETS += libglobal.so
+endif
+
 
 ifndef NO_GRAPHICS
 SOURCES += global_graphics.c
@@ -53,6 +61,7 @@ CFLAGS += -DHAVE_LIBART
 endif
 
 libglobal.a:		global.o ipc_wrapper.o carmen_stdio.o
+
 libglobal.so:		global.o ipc_wrapper.o carmen_stdio.o
 
 
@@ -72,13 +81,13 @@ libserial.a:		serial.o
 
 libkeyctrl.a:   	keyctrl.o
 
-libmulticentral.a:	multicentral.o
+libmulticentral.a:	multicentral.o 
 
-test_multicentral:	test_multicentral.o libmulticentral.a libglobal.a
+test_multicentral:	test_multicentral.o libmulticentral.a libglobal.a 
 
 global_test: 		global_test.o libglobal.a
 
-carmen-config: 		carmen-config.o
+carmen-config: 		carmen-config.o 
 
 libmovement.a: movement.o
 

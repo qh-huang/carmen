@@ -1,18 +1,22 @@
-total:	home export phase1 phase2
+total:	home export phase1 phase2 phase3 phase4
 
 include Makefile.conf
+
 
 PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
 	   maptools mapeditor logger logtools hmap \
 	   localize navigator vasco proccontrol \
 	   camera joystick pantilt hokuyo gps 
 
+ifdef MAKE_SO
+PACKAGES += python
+endif
+
 ifdef JAVA_HOME
 PACKAGES += java 
 endif
 
 TAR_PACKAGE_LIST = $(PACKAGES) 
-
 PACKAGES += $(ROBOT_TYPES)
 TAR_PACKAGE_LIST += scout pioneer rflex xr4000 b21a b21r segway
 
@@ -78,6 +82,21 @@ phase2:
 	$(ECHO) "       B I N A R I E S"
 	$(ECHO) "       ***************"
 	$(ECHO)
+	$(RECURSE)
+
+
+phase3:
+	$(ECHO)
+	$(ECHO) "       ***************"
+	$(ECHO) "       .S O  F I L E S"
+	$(ECHO) "       ***************"
+	$(ECHO)
+	$(RECURSE)
+
+phase4:
+	$(ECHO) "       ***************"
+	$(ECHO) "         P Y T H O N  "
+	$(ECHO) "       ***************"
 	$(RECURSE)
 
 install:

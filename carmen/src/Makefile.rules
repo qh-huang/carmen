@@ -34,6 +34,16 @@ install_libraries = $(SILENT) \
 		fi; \
 	done 
 
+install_libraries_so = $(SILENT) \
+	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
+		if test -f $$i && ! $(NEWER) $(LIB_DIR)/$$i $$i ; then \
+			echo "    ---- Copying $$i to $(LIB_DIR)" ; \
+			export dir=`pwd` ; \
+			$(RM) -f $(LIB_DIR)/$$i ; \
+			$(LN) -s $$dir/$$i $(LIB_DIR)/$$i ; \
+		fi; \
+	done 
+
 install_binaries = $(SILENT) \
 	for i in $(PUBLIC_BINARIES) xxxx ; do \
 		if test -f $$i && ! $(NEWER) $(BIN_DIR)/$$i $$i ; then \
@@ -43,6 +53,8 @@ install_binaries = $(SILENT) \
 			$(LN) -s $$dir/$$i $(BIN_DIR)/$$i ; \
 		fi; \
 	done 
+
+
 
 install_manpages = $(SILENT) \
 	for i in $(MAN_PAGES) xxxx ; do \
@@ -199,6 +211,17 @@ phase2:
 	$(install_binaries)
 	$(ECHO) "  <-- Make done"
 
+phase3:
+	$(banner)
+	$(ECHO) ""
+	$(ECHO) "  --> Starting make"
+	$(SILENT) $(MAKE) binaries
+	$(install_libraries_so)
+	
+
+phase4:
+	$(banner)
+	
 all:	
 	$(banner)
 	$(ECHO) ""
@@ -210,6 +233,7 @@ ifneq (Makefile.depend, $(wildcard Makefile.depend))
 endif
 	$(SILENT) $(MAKE) libraries
 	$(install_libraries)
+	$(install_libraries_so)
 	$(SILENT) $(MAKE) binaries
 	$(install_binaries)
 	$(ECHO) "  <-- Make done"

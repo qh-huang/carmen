@@ -12,17 +12,24 @@ SOURCES = gps-io.c gps-ipc.c gps-nmea.c gps-main.c \
 
 PUBLIC_INCLUDES = gps_nmea_messages.h gps_nmea_interface.h
 
-PUBLIC_LIBRARIES = libgps_nmea_interface.a
+PUBLIC_LIBRARIES = libgps_nmea_interface.a 
 
 PUBLIC_BINARIES = gps-nmea
 
-TARGETS = gps-nmea libgps_nmea_interface.a gps-test 
+TARGETS = gps-nmea libgps_nmea_interface.a  gps-test 
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libgps_nmea_interface.so
+TARGETS += libgps_nmea_interface.so
+endif
 
 gps-nmea:			gps-io.o gps-ipc.o gps-nmea.o gps-main.o
 
 gps-test:			gps-test.o gps_nmea_interface.o
 
 libgps_nmea_interface.a:	gps_nmea_interface.o
+
+libgps_nmea_interface.so:	gps_nmea_interface.o
 
 # rules
 

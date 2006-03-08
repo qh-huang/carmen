@@ -19,10 +19,10 @@ SOURCES = logger.c playback_interface.c playback.c laserint_to_carmenlog.c \
 
 PUBLIC_INCLUDES = logger.h logger_messages.h playback_messages.h \
 		  playback_interface.h writelog.h readlog.h
-PUBLIC_LIBRARIES = libplayback_interface.a libwritelog.a libreadlog.a
+PUBLIC_LIBRARIES = libplayback_interface.a  libwritelog.a libreadlog.a
 PUBLIC_BINARIES = logger playback playback_control
 
-TARGETS = libwritelog.a libreadlog.a logger libplayback_interface.a playback \
+TARGETS = libwritelog.a libreadlog.a logger libplayback_interface.a  playback \
 	  laserint_to_carmenlog log_timestamp_repair log_corrected_laser \
 	  test_logfileread
 
@@ -33,6 +33,11 @@ LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
 TARGETS += playback_control
 endif
 
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libplayback_interface.so
+TARGETS += libplayback_interface.so
+endif
+
 logger:			logger.o libwritelog.a
 
 libwritelog.a : 	writelog.o
@@ -40,6 +45,8 @@ libwritelog.a : 	writelog.o
 libreadlog.a : 		readlog.o
 
 libplayback_interface.a:playback_interface.o
+
+libplayback_interface.so:playback_interface.o
 
 playback:		playback.o libreadlog.a
 

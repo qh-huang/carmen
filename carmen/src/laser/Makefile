@@ -8,9 +8,9 @@ IFLAGS +=
 LFLAGS += -lparam_interface -lserial -lipc -lglobal
 SOURCES = sick.c laser_ipc.c laser_main.c laser.c laser_test.c
 PUBLIC_INCLUDES = laser_messages.h laser_interface.h
-PUBLIC_LIBRARIES = liblaser_interface.a liblaser.a
+PUBLIC_LIBRARIES = liblaser_interface.a  liblaser.a
 PUBLIC_BINARIES = laser
-TARGETS = laser laser_test liblaser_interface.a liblaser.a
+TARGETS = laser laser_test liblaser_interface.a  liblaser.a
 
 ifndef NO_GRAPHICS
 ifndef NO_LIBJPEG
@@ -26,6 +26,11 @@ TARGETS += laserview
 endif
 endif
 
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = liblaser_interface.so
+TARGETS += liblaser_interface.so
+endif
+
 laser:			sick.o laser_ipc.o laser_main.o laser.o
 
 laser_test:		laser_test.o liblaser_interface.a
@@ -33,6 +38,8 @@ laser_test:		laser_test.o liblaser_interface.a
 liblaser.a:		sick.o laser_ipc.o laser_main.o
 
 liblaser_interface.a:	laser_interface.o
+
+liblaser_interface.so:	laser_interface.o
 
 laserview:		laserview.o liblaser_interface.a
 

@@ -12,18 +12,26 @@ SOURCES = simulator.c objects.c simulator_simulation.c simulator_test.c \
 	simulator_interface.c
 
 PUBLIC_INCLUDES = simulator_messages.h simulator_interface.h
-PUBLIC_LIBRARIES = libsimulator_interface.a
+PUBLIC_LIBRARIES = libsimulator_interface.a 
 PUBLIC_BINARIES = simulator simulator_connect_multiple
 MAN_PAGES =
 
-TARGETS = simulator simulator_test libsimulator_interface.a simulator_connect_multiple
+TARGETS = simulator simulator_test  libsimulator_interface.a simulator_connect_multiple
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libsimulator_interface.so
+TARGETS += libsimulator_interface.so
+endif
 
 # rules
 
 simulator:	simulator.o simulator_simulation.o objects.o
 
-libsimulator_interface.a : simulator_interface.o
+libsimulator_interface.a: simulator_interface.o
 
+ifdef MAKE_SO
+libsimulator_interface.so: simulator_interface.o
+endif
 simulator_test:	simulator_test.o
 
 simulator_connect_multiple: simulator_connect_multiple.o simulator_interface.o

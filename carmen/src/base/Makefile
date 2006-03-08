@@ -11,21 +11,29 @@ MODULE_COMMENT = Generic interface to all robot bases
 
 SOURCES = base_interface.c base_test.c base_main.c 
 PUBLIC_INCLUDES = base_messages.h arm_messages.h base_interface.h \
-	 	arm_interface.h drive_low_level.h 
+	arm_interface.h base_low_level.h drive_low_level.h
+PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a 
 
-PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a
-
-TARGETS = libbase_interface.a libarm_interface.a base_test 
+TARGETS =  libbase_interface.a libarm_interface.a  base_test 
 
 TARGETS += $(ROBOT_TYPES)
 PUBLIC_BINARIES += $(ROBOT_TYPES)
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libbase_interface.so libarm_interface.so
+TARGETS += libbase_interface.so libarm_interface.so
+endif
 
 
 # rules
 
 libbase_interface.a:	base_interface.o
 
+libbase_interface.so:	base_interface.o
+
 libarm_interface.a:	arm_interface.o
+
+libarm_interface.so:	arm_interface.o
 
 base_test:		base_test.o libbase_interface.a
 

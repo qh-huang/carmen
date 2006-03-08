@@ -119,7 +119,7 @@ typedef struct {
 #define CARMEN_LOCALIZE_SENSOR_FMT  "{{int,double,double,double,double,double,int},int,int,<float:2>,<char:2>,{double,double,double},int,double,string}"
 
 typedef struct {
-  int global;
+  int map_is_global_likelihood;
   double timestamp;
   char *host;
 } carmen_localize_map_query_message;
@@ -132,7 +132,7 @@ typedef struct {
   int size;
   carmen_map_config_t config;
   int compressed;
-  int global;
+  int map_is_global_likelihood;
   double timestamp;
   char *host;
 } carmen_localize_map_message;  

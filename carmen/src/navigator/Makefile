@@ -14,11 +14,16 @@ SOURCES = navigator.c conventional.c planner.c navigator_ipc.c \
 
 PUBLIC_INCLUDES = navigator_messages.h navigator_interface.h navigator.h \
 	planner_interface.h
-PUBLIC_LIBRARIES = libnavigator_interface.a libconventional.a
+PUBLIC_LIBRARIES =  libnavigator_interface.a libconventional.a
 
 PUBLIC_BINARIES = navigator
 
-TARGETS = libnavigator_interface.a navigator navigator_test random_nav libconventional.a
+TARGETS =  libnavigator_interface.a navigator navigator_test random_nav libconventional.a
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = libnavigator_interface.so
+TARGETS += libnavigator_interface.so
+endif
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
@@ -42,6 +47,8 @@ navigator: navigator.o navigator_ipc.o conventional.o planner.o \
 	trajectory.o map_modify.o
 
 libnavigator_interface.a: navigator_interface.o
+
+libnavigator_interface.so: navigator_interface.o
 
 navigatorgui: navigator_panel.o navigator_graphics.o \
 	libnavigator_interface.a 

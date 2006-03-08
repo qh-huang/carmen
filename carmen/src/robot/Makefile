@@ -10,10 +10,15 @@ SOURCES = robot.c robot_interface.c robot_test.c \
 	robot_sonar.c robot_bumper.c robot_main.c \
 	robot_laser.c 
 PUBLIC_INCLUDES = robot_interface.h robot_messages.h 
-PUBLIC_LIBRARIES = librobot_interface.so librobot_interface.a librobot.a 
+PUBLIC_LIBRARIES = librobot_interface.a librobot.a 
 PUBLIC_BINARIES = robot
 
-TARGETS = librobot_interface.so librobot.a robot librobot_interface.a robot_test
+TARGETS =  librobot.a robot librobot_interface.a robot_test
+
+ifdef MAKE_SO
+PUBLIC_LIBRARIES_SO = librobot_interface.so
+TARGETS += librobot_interface.so
+endif
 
 robot:	robot.o librobot.a
 
