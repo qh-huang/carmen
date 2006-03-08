@@ -32,31 +32,32 @@
 extern "C" {
 #endif
 
-#ifndef BASE_HAS_ARM
-int carmen_arm_direct_initialize(char *model, char *dev);
-int carmen_arm_direct_shutdown(void);
-int carmen_arm_direct_reset(void);
+  enum carmen_arm_joint_t { CARMEN_MOTOR, CARMEN_SERVO };
 
-int carmen_arm_direct_update_status(void);
+  // passes in an orc pointer and tell arm how many joints
+  // does not take ownership 
+  int carmen_arm_direct_initialize(orc_t *orc, int num_joints, 
+				   carmen_arm_joint_t *joint_types );
+  int carmen_arm_direct_shutdown(void);
 
-  // velezj: RssII Arm
-  void carmen_arm_control( void );
-  void carmen_arm_reset( void );
+  // ----- sets ----- //
+
+  // sets limits to default and velocities to zero
+  int carmen_arm_direct_reset(void);
   
-void carmen_arm_direct_set_limits(double min_angle, double max_angle,
+  // sets safe joint use limits -- input array of limits for each element
+  void carmen_arm_direct_set_limits(double min_angle, double max_angle,
 				  int min_pwm, int max_pwm);
+  
+  // this is OPEN loop, should be part of a larger control loop
+  // sets desired joint angles and implements control for next time step
+  void carmen_arm_direct_update_joints(double *joint_angles );
 
-#endif  
-
-int carmen_arm_direct_num_velocities(int num_joints);
-int carmen_arm_direct_num_currents(int num_joints);
-
-void carmen_arm_direct_set(double *joint_angles, int num_joints);
-
-void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
+  // ----- gets ----- //
+  void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
 				 double *joint_angular_vels, 
-				 int *gripper_closed,
-				 int num_joint_angles);
+				 int *gripper_closed );
+
 #ifdef __cplusplus
 }
 #endif

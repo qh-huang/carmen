@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = orclib pioneerlib rflexlib scoutlib xr4000_base
+SUBDIRS = orc_robot_lib_v4/orclib pioneerlib rflexlib scoutlib xr4000_base orc_robot_lib
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
@@ -11,7 +11,8 @@ MODULE_COMMENT = Generic interface to all robot bases
 
 SOURCES = base_interface.c base_test.c base_main.c 
 PUBLIC_INCLUDES = base_messages.h arm_messages.h base_interface.h \
- 	arm_interface.h base_low_level.h
+	 	arm_interface.h drive_low_level.h 
+
 PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a
 
 TARGETS = libbase_interface.a libarm_interface.a base_test 
@@ -32,11 +33,11 @@ scout: base_main.o scoutlib/libscout.a
 
 pioneer: base_main.o pioneerlib/libpioneer.a 
 
-orc_main.o: base_main.c
+orc_main.o: orc_robot_lib_v4/base_main.c
 	$(ECHO) "    ---- Compiling $< to $@ (C)"
 	$(SILENT) $(CC) -DBASE_HAS_ARM $(CFLAGS) $(IFLAGS) -c $< -o $@
 
-orc: orc_main.o orclib/liborc.a
+orc: orc_main.o orc_robot_lib_v4/orclib/liborc.a
 
 rflex: base_main.o rflexlib/librflex.a
 
@@ -52,8 +53,8 @@ scoutlib/libscout.a:
 pioneerlib/libpioneer.a: 
 	$(MAKE) -C pioneerlib
 
-orclib/liborc.a: 
-	$(MAKE) -C orclib
+orc_robot_lib_v4/orclib/liborc.a: 
+	$(MAKE) -C orc_robot_lib_v4/orclib
 
 rflexlib/librflex.a: 
 	$(MAKE) -C rflexlib
