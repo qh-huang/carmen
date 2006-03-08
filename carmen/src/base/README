@@ -23,7 +23,7 @@ functions from drive_low_level and arm_low_level.
 files that define the functions that the message handlers in
 drive_main and arm_main may call
 
-=== in the orc_robot_lib directory === 
+=== in the orcbotlib directory === 
 
 orc_arm_lib.c and orc_drive_lib.c implement the functions in
 drive_low_level and arm_low_level for the orc in particular.  they
@@ -39,7 +39,7 @@ contribute to the developing orc c libraries from orcboard.org
 
 === orc4 support ===
 
-all orc4 related files are in orc_robot_lib_v4, including the old
+all orc4 related files are in orcbotlibv4, including the old
 base_low_level, arm_low_level, and base_main which implement functions
 needed for RSS course... since this contains course specific stuff,
 we've refrained from changing any of the structure (note: this
