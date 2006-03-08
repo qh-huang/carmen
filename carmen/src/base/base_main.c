@@ -26,7 +26,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include <carmen/orc_robot_lib_v4/base_low_level.h>
+#include <carmen/drive_low_level.h>
 
 #ifdef BASE_HAS_ARM
 #include <carmen/arm_messages.h> 
@@ -584,7 +584,7 @@ carmen_base_run(void)
   do {
     double packet_timestamp=0.;
     base_err = carmen_base_direct_update_status(&packet_timestamp);
-    if (packet_timestamp==0.)
+    if (packet_timestamp==0.0)
     	odometry.timestamp = carmen_get_time();
     else
     	odometry.timestamp = packet_timestamp;

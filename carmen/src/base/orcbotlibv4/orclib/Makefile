@@ -1,4 +1,4 @@
-include ../../Makefile.conf
+include ../../../Makefile.conf
 
 LFLAGS += -lglobal -lipc -lparam_interface -lserial
 
@@ -15,4 +15,4 @@ orc_arm:	arm_main.o orc_arm_lib.o
 
 liborc.a:  	orc_lib.o
 
-include ../../Makefile.rules
+include ../../../Makefile.rules

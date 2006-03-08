@@ -33,11 +33,11 @@ scout: base_main.o scoutlib/libscout.a
 
 pioneer: base_main.o pioneerlib/libpioneer.a 
 
-orc_main.o: orc_robot_lib_v4/base_main.c
+orc_main.o: orcbotlibv4/base_main.c
 	$(ECHO) "    ---- Compiling $< to $@ (C)"
 	$(SILENT) $(CC) -DBASE_HAS_ARM $(CFLAGS) $(IFLAGS) -c $< -o $@
 
-orc: orc_main.o orc_robot_lib_v4/orclib/liborc.a
+orc: orc_main.o orcbotlibv4/orclib/liborc.a
 
 rflex: base_main.o rflexlib/librflex.a
 
@@ -53,8 +53,8 @@ scoutlib/libscout.a:
 pioneerlib/libpioneer.a: 
 	$(MAKE) -C pioneerlib
 
-orc_robot_lib_v4/orclib/liborc.a: 
-	$(MAKE) -C orc_robot_lib_v4/orclib
+orcbotlibv4/orclib/liborc.a:
+	$(MAKE) -C orcbotlibv4/orclib
 
 rflexlib/librflex.a: 
 	$(MAKE) -C rflexlib

@@ -187,7 +187,7 @@ carmen_base_direct_set_velocity(double tv, double rv)
 }
 
 int 
-carmen_base_direct_update_status(void)
+carmen_base_direct_update_status(double* packet_timestamp __attribute__ ((unused)))
 {
   if (carmen_get_time() - time_since_last_command < .06)
     return 0;

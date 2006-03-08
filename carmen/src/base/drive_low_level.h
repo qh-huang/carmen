@@ -40,7 +40,7 @@ int carmen_base_direct_shutdown_robot(void);
 int carmen_base_direct_set_acceleration(double acceleration);
 int carmen_base_direct_set_deceleration(double deceleration);
 int carmen_base_direct_set_velocity(double tv, double rv);
-int carmen_base_direct_update_status(void);
+int carmen_base_direct_update_status(double* packet_timestamp);
 int carmen_base_direct_get_state(double *displacement, double *rotation,
 				 double *vl, double *vr);
 int carmen_base_direct_get_integrated_state(double *x, double *y, 
