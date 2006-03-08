@@ -26,7 +26,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
-#include <carmen/orc_robot_lib_v4/base_low_level.h>
+#include "base_low_level.h"
 
 #ifdef BASE_HAS_ARM
 #include <carmen/arm_messages.h> 
