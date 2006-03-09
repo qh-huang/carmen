@@ -556,6 +556,11 @@ void orc_pinmode_set( orc_t *orc, int port, int mode){
 }
 
 
+int  orc_sonar_read(orc_t *orc, int port){
+  return -1;
+}
+
+
 int  orc_digital_read(orc_t *orc, int port){
   
         orc_pinmode_set( orc, port, DIGIN );

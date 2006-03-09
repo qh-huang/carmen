@@ -78,17 +78,20 @@ orc_comms_impl_t *orc_tcpprovider_create(char *hostname, int port);
 #define PWM 3
 
 void orc_pinmode_set( orc_t *orc, int port, int mode);
-
 int  orc_quadphase_read(orc_t *orc, int port);
+int  orc_analog_read(orc_t *orc, int port);
+int  orc_digital_read(orc_t *orc, int port);
+void orc_digital_set(orc_t *orc, int port, int val);
+
+// not currently implemented!!!
+int  orc_sonar_read(orc_t *orc, int port);
 
 // pwm is a 7 bit value + sign bit = 8 bits total
 void orc_motor_set(orc_t *orc, int port, int spwm);
-int  orc_analog_read(orc_t *orc, int port);
 
-int  orc_digital_read(orc_t *orc, int port);
-void orc_digital_set(orc_t *orc, int port, int val);
 // should be between 0 and 1 (1 is full duty cycle on)
 void orc_pwm_set(orc_t *orc, int port, float v);
+
 // warning: see orc manual: sets clock for entire pwm bank
 void orc_clk_set(orc_t *orc, int port, int divider);
 
