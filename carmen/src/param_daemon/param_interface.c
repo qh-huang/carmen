@@ -246,7 +246,7 @@ carmen_param_get_robot(void)
 		  CARMEN_PARAM_QUERY_ROBOT_NAME);
   if (err == IPC_Error || err == IPC_Timeout) {
     sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	    "Remember, this program loads its parameters from the paramServer."
+	    "Remember, this program loads its parameters from the param_daemon."
 	    "\n");
     return NULL;
   }
@@ -343,7 +343,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -447,7 +447,7 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -456,7 +456,7 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -514,7 +514,7 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -523,7 +523,7 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -582,7 +582,7 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -591,7 +591,7 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -649,7 +649,7 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -658,7 +658,7 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -721,7 +721,7 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -730,7 +730,7 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -792,7 +792,7 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -801,7 +801,7 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
     {
       sprintf(error_buffer, "The parameter server contains no definition "
 	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the paramServer with\nan out-of-date carmen.ini file. Or, this "
+	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
 	      "may be a bug in this program\n(but probably not the parameter "
 	      "server). \n", (!module_name ? "" : module_name), variable);
       return -1;
@@ -882,7 +882,7 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
@@ -1016,7 +1016,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
       carmen_find_param("robin"))
     carmen_param_usage(argv[0], param_list, num_items, 
 		       "%s no longer takes a robot name as an argument.\n"
-		       "It loads parameter settings from the paramServer.", 
+		       "It loads parameter settings from the param_daemon.", 
 		       argv[0]);
 
   for (index = 0; index < num_items; index++)
@@ -1451,14 +1451,14 @@ carmen_param_check_version(char *prog_name)
     {
       sprintf(error_buffer, "Did you remember to start the parameter server?\n"
 	      "Remember, this program loads its parameters from the "
-	      "paramServer.\n");
+	      "param_daemon.\n");
       return -1;
     }
 
   if (response->major != CARMEN_MAJOR_VERSION || 
       response->minor != CARMEN_MINOR_VERSION)
     carmen_die("Version mismatch: %s is Carmen version %d.%d, but \n"
-	       "paramServer is Carmen version %d.%d\n", prog_name, 
+	       "param_daemon is Carmen version %d.%d\n", prog_name, 
 	       CARMEN_MAJOR_VERSION, CARMEN_MINOR_VERSION, response->major, 
 	       response->minor);
   

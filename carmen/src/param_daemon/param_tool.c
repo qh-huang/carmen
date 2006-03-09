@@ -79,7 +79,7 @@ int main(int argc, char** argv)
       free(return_string);
       exit(0);
     } else 
-      carmen_die("Could not retrieve %s from paramServer.\n", argv[1]);
+      carmen_die("Could not retrieve %s from param_daemon.\n", argv[1]);
   }
 
   if (argc == 3 && carmen_strcasecmp(argv[2], "all") == 0) {
