@@ -8,7 +8,7 @@ PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
 	   localize navigator vasco proccontrol \
 	   camera joystick pantilt hokuyo gps 
 
-ifdef MAKE_SO
+ifndef NO_PYTHON
 PACKAGES += python
 endif
 
@@ -83,20 +83,15 @@ phase2:
 	$(ECHO) "       ***************"
 	$(ECHO)
 	$(RECURSE)
+	$(ECHO) "Done making binaries..."
 
 
 phase3:
-	$(ECHO)
-	$(ECHO) "       ***************"
-	$(ECHO) "       .S O  F I L E S"
-	$(ECHO) "       ***************"
-	$(ECHO)
+	$(ECHO) "Making .so libraries... "
 	$(RECURSE)
 
 phase4:
-	$(ECHO) "       ***************"
-	$(ECHO) "         P Y T H O N  "
-	$(ECHO) "       ***************"
+	$(ECHO) "Making Python... "
 	$(RECURSE)
 
 install:

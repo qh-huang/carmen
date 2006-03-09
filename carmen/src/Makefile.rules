@@ -34,7 +34,7 @@ install_libraries = $(SILENT) \
 		fi; \
 	done 
 
-install_libraries_so = $(SILENT) \
+install_libraries_so = \
 	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
 		if test -f $$i && ! $(NEWER) $(LIB_DIR)/$$i $$i ; then \
 			echo "    ---- Copying $$i to $(LIB_DIR)" ; \
@@ -212,15 +212,10 @@ phase2:
 	$(ECHO) "  <-- Make done"
 
 phase3:
-	$(banner)
-	$(ECHO) ""
-	$(ECHO) "  --> Starting make"
-	$(SILENT) $(MAKE) binaries
 	$(install_libraries_so)
-	
 
 phase4:
-	$(banner)
+	
 	
 all:	
 	$(banner)

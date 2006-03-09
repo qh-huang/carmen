@@ -27,7 +27,7 @@ my ($xr4000Kernel) = "2.0.20";
 my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $nodoxygen, $notcpd, $nojpeg, $nozlib,
-    $nolibart, $nowand, $nojava, $install_path);
+    $nolibart, $nowand, $nojava, $install_path, $nopython);
 
 $nolibart = 1;
 
@@ -45,6 +45,7 @@ Options: [--nographics]  : compile without graphics
 	 [--nozlib]      : compile without ZLib support
 	 [--nowand]      : compile without ImageMagick support
 	 [--nojava]      : compile without java support
+         [--nopython]    : compile without python support 
 	 [--nodoxygen]   : no doxygen support for creating the documentation
 	 [-L<libpath>]   : compile with additional library paths
                            (can have multiple -L option switchs)
@@ -59,6 +60,9 @@ EOF
   }
   if (/nodoxygen/) {
     $nodoxygen = 1;
+  }
+  if (/nopython/) {
+    $nopython = 1;
   }
   if (/nojoystick/) {
     $nojoystick = 1;
@@ -112,6 +116,10 @@ my $libart = verify_libart(\@user_libs) unless ($nolibart);
 my $wand = verify_wand() unless ($nowand);
 my $java = verify_java() unless ($nojava);
 my $doxygen = verify_doxygen() unless ($nodoxygen);
+my $swig = verify_swig() unless ($nopython);
+$nopython = ! verify_python() unless ($nopython);
+my $python = ask_python() unless ($nopython);
+
 my $install_path = get_install_path() unless ($install_path);
 my @robots = get_robot_types($os_type, $kernel, $canlib);
 
@@ -145,6 +153,8 @@ print OUTPUT "NO_WAND = 1\n" unless ($wand);
 print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
 print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
 print OUTPUT "NO_DOXYGEN = 1\n" unless ($doxygen);
+print OUTPUT "NO_PYTHON = 1\n" unless ($python and $swig);
+#print OUTPUT "NO_SWIG = 1\n" unless ($swig);
 print OUTPUT "PROCESSOR = $processor\n";
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
@@ -299,6 +309,82 @@ EOF
   $install_path = "/usr/local" if (length($install_path) == 0);
   return $install_path;
 }
+
+
+#sub get_python_path {
+#  print "Do you want python interface via SWIG? [Y/n]:  ";
+
+#  if(verify_python()){
+#      
+#      my $python_path = undef;
+#                  
+#  }
+#
+#  return undef;
+#}
+
+sub verify_python {
+  my $error = undef;
+
+  print "Searching for Python... ";
+  $error = system ("python -h > /dev/null  2>&1");
+  if (!$error) {
+    print "found\n";
+    return 1;
+  }  
+
+  print "${red}not found${normal}\n";
+  return undef;
+}
+
+sub ask_python{
+
+  print "Should Python Bindings be installed: [Y/n]";
+
+  my $python_install = <STDIN>;
+  chomp $python_install;
+
+  if($python_install eq "Y" or $python_install eq "y" or $python_install eq ""){
+      return 1;
+  }
+  
+  return 0;
+}
+
+
+#sub get_python_path {
+#  my $python_version = `python -V 2>&1`;
+#  my $python_return = undef;
+#
+#  my ($tmp, $py_major, $py_minor) =  $python_version =~ /(\w+)\s(\d+)\.(\d+).*/; 
+#
+#  print "My python version: $python_version";
+#  print "My python return: $py_major, $py_minor";
+#
+#  my $joystick_path = "/usr/include/python$py_major.$py_minor/";
+#  my $joystick_path = "/usr/include/python$py_major.$py_minor/";
+#}
+
+
+sub verify_swig {
+  my $error = undef;
+
+
+  print "Searching for SWIG... ";
+  $error = system ("swig -version > /dev/null  2>&1");
+  if (!$error) {
+    print "found\n";
+    return 1;
+  }  
+
+  print "${red}not found${normal}\n";
+  return undef;
+}
+
+
+#sub get_swig_path {
+#}
+
 
 sub get_robot_types {
   my ($os_type, $kernel, $canlib) = @_;
