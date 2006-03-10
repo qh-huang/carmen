@@ -1,5 +1,7 @@
 #include ../Makefile.conf
 
+
+
 SWIG      = swig
 SWIGOPT   = -I../../include/carmen 
 CXXSRCS    = pyCarmen.cxx pyCarmenMessages.cxx
@@ -7,6 +9,8 @@ TARGET     = pyCarmen
 INTERFACE  = pyCarmen.i
 LIBS       = -lm
 SWIG      = swig
+
+
 
 
 export::
@@ -20,6 +24,11 @@ phase3::
 phase4:
 	$(ECHO) $(MAKE) -f Makefile.conf $(SWIGLIB) CXXSRCS='$(CXXSRCS)' SWIG='$(SWIG)' \
 	   SWIGOPT='$(SWIGOPT)' TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' python_cpp	
+
+all:
+	$(ECHO) $(MAKE) -f Makefile.conf $(SWIGLIB) CXXSRCS='$(CXXSRCS)' SWIG='$(SWIG)' \
+	   SWIGOPT='$(SWIGOPT)' TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' python_cpp	
+
 static::
 	$(MAKE) -f Makefile.conf $(SWIGLIB) CXXSRCS='$(CXXSRCS)' SWIG='$(SWIG)' \
 		SWIGOPT='$(SWIGOPT)' TARGET='mypython' INTERFACE='$(INTERFACE)' python_cpp_static

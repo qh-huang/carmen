@@ -5,16 +5,156 @@
 #include "pyCarmenMessages.h"
 %}
 
+//%typemap(memberin) float * {
+ // int i;
+ //int size = PyList_Size($input);
+//
+//  float $1[size];
+//  	
+//  for (i = 0; i < size; i++) {
+//      $1[i] = $input[i];
+//  }
+//}
+
+//// Map a Python sequence into any sized C double array
+%typemap(memberin, python) float* {
+  int i, my_len;
+  if (!PySequence_Check($input)) {
+      PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
+      return NULL;
+  }
+
+  my_len = PyObject_Length($input);
+  float temp[my_len];
+  for (i =0; i < my_len; i++) {
+      PyObject *o = PySequence_GetItem($input,i);
+      if (!PyFloat_Check(o)) {
+         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of floats");
+         return NULL;
+      }
+      temp[i] = PyFloat_AsDouble(o);
+  }
+  $1 = &temp[0];
+}
+
+//%typemap(out) float* {
+//  int i, size;
+//  size = sizeof($1);
+//  $result = PyList_New(size);
+//
+//  for  for (i=0; i < size; i++){
+//
+//    PyObject *o = PyFloat_FromDouble((double)$1[i]);
+//    PyList_SetItem($result, i, o);
+//  }
+//}
+
+//%typemap(out) float** {
+//  int i, size1;
+//  size1 = sizeof($1);///sizeof(float*);
+//
+//  printf("in typemap\n");
+//  $result = PyList_New(size1);
+//  for (i=0; i < size1; i++){
+//
+//    int j, size2;
+//    carmen_warn("in typemap3\n");
+//    size2 = sizeof($1[i]);
+//    carmen_warn("size2 %d\n", size2);
+//
+//    PyObject *tmp = PyList_New(size2);
+//    carmen_warn("in typemap4\n");
+//    for(j=0; j < size2; j++){
+//       carmen_warn("in typemap5\n");
+//       PyObject *o = PyFloat_FromDouble((double)$1[i][j]);
+//       carmen_warn("in typemap6\n");
+//       PyList_SetItem(tmp, j, o);
+//       carmen_warn("in typemap7\n");
+//    } 
+//    carmen_warn("in typemap8\n");
+//    PyList_SetItem($result, i, tmp);
+//  }
+//  printf("in typemapend\n");
+//}
+
+//%typemap(out) float** {
+//  int i, size1;
+//  size1 = sizeof($1);///sizeof(float*);
+//
+//  printf("in typemap\n");
+//  $result = PyList_New(size1);
+//  for (i=0; i < size1; i++){
+//
+//    int j, size2;
+//    carmen_warn("in typemap3\n");
+//    size2 = sizeof($1[i]);
+//    carmen_warn("size2 %d\n", size2);
+//
+//    PyObject *tmp = PyList_New(size2);
+//    carmen_warn("in typemap4\n");
+//    for(j=0; j < size2; j++){
+//       carmen_warn("in typemap5\n");
+//       PyObject *o = PyFloat_FromDouble((double)$1[i][j]);
+//       carmen_warn("in typemap6\n");
+//       PyList_SetItem(tmp, j, o);
+//       carmen_warn("in typemap7\n");
+//    } 
+//    carmen_warn("in typemap8\n");
+//    PyList_SetItem($result, i, tmp);
+//  }
+//  printf("in typemapend\n");
+//}
+
+
+// Map a Python sequence into any sized C double array
+%typemap(in, python) float* {
+  int i, my_len;
+  if (!PySequence_Check($input)) {
+      PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
+      return NULL;
+  }
+
+  my_len = PyObject_Length($input);
+  float temp[my_len];
+  for (i =0; i < my_len; i++) {
+      PyObject *o = PySequence_GetItem($input,i);
+      if (!PyFloat_Check(o)) {
+         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of floats");
+         return NULL;
+      }
+      temp[i] = PyFloat_AsDouble(o);
+  }
+  $1 = &temp[0];
+}
+
+
+
+//%typemap(memberout) float [ANY] {
+//  int i;
+//  $result = PyList_New($1_dim0);
+//  for (i = 0; i < $1_dim0; i++) {
+//    PyObject *o = PyFloat_FromDouble((double) $1[i]);
+//    PyList_SetItem($result,i,o);
+//  }
+//}
+
+
 %include "std_string.i"
+%include "typemaps.i"
+%include "carrays.i"
+%array_class(double, doubleArray);
+%array_class(float, floatArray);
 
 /* turn on director wrapping Callback */
 %feature("director") MessageHandler;
 #define __attribute__(x)
 %include "carmen.h"
 %include "global.h"
+%include "map.h"
 
 %include "pyCarmen.h"
 %include "pyCarmenMessages.h"
+
 
 
 
