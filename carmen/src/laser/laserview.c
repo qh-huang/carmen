@@ -153,7 +153,8 @@ Redraw(void)
     origin_y = drawing_area->allocation.height - 1;
     scale = drawing_area->allocation.height / (double)laser_range;
     for(i = 0; i < numreadings; i++) {
-      angle = i / (float)(numreadings - 1) * M_PI;
+      //      angle = i / (float)(numreadings - 1) * M_PI;
+      angle = 0.5*M_PI+laser.config.start_angle + i * laser.config.angular_resolution;
       x = laserrange[i] * cos(angle);
       y = laserrange[i] * sin(angle);
       poly[i].x = origin_x + x * scale;
@@ -174,22 +175,35 @@ Redraw(void)
   if(laser_count % 10 == 0 || laser_count < 10)
     framerate = laser_count / (carmen_get_time() - start_time);
 
-  sprintf(str, "Laser %d - %.1f fps", laser_num, framerate);
+  sprintf(str, "Laser %d : %.1f fps", laser_num, framerate);
+  gdk_gc_set_foreground(Drawing_GC, &carmen_black);
+  gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
+		  10, drawing_area->allocation.height - 40, str);
+
+  sprintf(str, "fov %.1f deg / %d pts", 
+	  carmen_radians_to_degrees(laser.config.fov), numreadings);
+  gdk_gc_set_foreground(Drawing_GC, &carmen_black);
+  gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
+		  10, drawing_area->allocation.height - 25, str);
+
+  sprintf(str, "1st beam %.1f deg", 
+	  carmen_radians_to_degrees(laser.config.start_angle));
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 10, str);
 
-  sprintf(str, "%d pts", numreadings);
+  sprintf(str, "Sensor maxrange  = %.1fm", laser.config.maximum_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
-		  drawing_area->allocation.width - 60.0, 
+		  drawing_area->allocation.width - 155.0, 
 		  drawing_area->allocation.height - 25, str);
 
-  sprintf(str, "Max range  = %.1fm", laser_range);
+  sprintf(str, "Viewer maxrange  = %.1fm", laser_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
-		  drawing_area->allocation.width - 125.0, 
+		  drawing_area->allocation.width - 155.0, 
 		  drawing_area->allocation.height - 10, str);
+
   
   /* udpate the whole window */
   gdk_draw_pixmap(drawing_area->window, 
