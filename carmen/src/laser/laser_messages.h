@@ -42,11 +42,17 @@
 extern "C" {
 #endif
 
-typedef enum {SICK_LMS, SICK_PLS, HOKUYO_URG, SIMULATED_LASER, UMKNOWN_PROXIMITY_SENSOR}   
+typedef enum {SICK_LMS = 0, 
+	      SICK_PLS = 1, 
+	      HOKUYO_URG = 2, 
+	      SIMULATED_LASER = 3, 
+	      UMKNOWN_PROXIMITY_SENSOR = 99}
 carmen_laser_laser_type_t;
 
   /** Possible remission values **/
-typedef enum {OFF, DIRECT, NORMALIZED}          
+  typedef enum {OFF = 0, 
+		DIRECT = 1, 
+		NORMALIZED = 2}          
 carmen_laser_remission_type_t;
 
   /** The laser message of the laser module (rawlaser) **/
@@ -93,11 +99,11 @@ typedef struct {
   int laser3_stalled;
   int laser4_stalled;
 } carmen_laser_alive_message;
-
+  
 #define      CARMEN_LASER_ALIVE_NAME            "carmen_laser_alive"
 #define      CARMEN_LASER_ALIVE_FMT             "{int,int,int,int}"
 
-
+  
 #ifdef __cplusplus
 }
 #endif
