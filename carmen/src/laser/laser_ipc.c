@@ -58,18 +58,17 @@ void publish_laser_message(sick_laser_p laser,
   }
 
   if(laser->settings.use_remission == 1) {
-
+    msg.num_remissions = msg.num_readings;
+    
     if(msg.num_remissions != allocremsize[laser->settings.laser_num]) {
       remission_buffer[laser->settings.laser_num] = 
 	realloc(remission_buffer[laser->settings.laser_num],
-		msg.num_readings * sizeof(float));
+		msg.num_remissions * sizeof(float));
       carmen_test_alloc(remission_buffer[laser->settings.laser_num]);
-      allocremsize[laser->settings.laser_num] = msg.num_readings;
+      allocremsize[laser->settings.laser_num] = msg.num_remissions;
     }
     msg.remission = remission_buffer[laser->settings.laser_num];
     
-    
-    msg.num_remissions = msg.num_readings;
     if( laser->settings.laser_flipped == 0)  {
       for(i = 0; i < msg.num_remissions; i++) 
 	msg.remission[i] = laser->remission[i];

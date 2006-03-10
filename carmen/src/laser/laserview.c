@@ -42,11 +42,6 @@ static double start_time = 0.0;
 
 
 static GdkColor gradient[256];
-//static int use_laser_remission_messages = 0;
-/* static carmen_laser_remission_message laser_rem; */
-/* static float REMISSION_MAX_VALUE = 0.0; */
-/* static float REMISSION_MIN_VALUE = 100000000.0; */
-/* static int remission_min_max_count = 10; */
 
 static void
 setup_colors(void) 
@@ -192,6 +187,14 @@ Redraw(void)
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 10, str);
 
+  if (laser.num_remissions > 0) {
+    sprintf(str, "remission: on");
+    gdk_gc_set_foreground(Drawing_GC, &carmen_black);
+    gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
+		    drawing_area->allocation.width - 155.0, 
+		    drawing_area->allocation.height - 40, str);
+  }
+
   sprintf(str, "Sensor maxrange  = %.1fm", laser.config.maximum_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
@@ -263,7 +266,7 @@ start_graphics(int argc, char *argv[])
 
 void
 usage(char* argv0) {
-  fprintf(stderr, "Usage: %s [-flaser, -rlaser, -laser3, -laser4] [-remission] [-range max_range]\n", argv0);
+  fprintf(stderr, "Usage: %s [-flaser, -rlaser, -laser3, -laser4] [-range max_range]\n", argv0);
   exit(1);
 }
 
