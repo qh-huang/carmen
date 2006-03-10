@@ -162,8 +162,12 @@ void interpret_params(sick_laser_p laser, char *dev, char *type, double res, cha
     laser->settings.use_remission = 1;
     laser->settings.range_dist = REMISSION_NORM;
   }
+  else if(strcmp(rem, "no") == 0) {
+    laser->settings.use_remission = 0;
+  }
   else if(strcmp(rem, "off") == 0) {
     laser->settings.use_remission = 0;
+    carmen_warn("Warning: please set the value of the parameter \nlaser_use_remission to \"no\" and do not use \"off\".\nAssuming \"no\" for now.\n\n");
   }
   else carmen_die("ERROR: Parameter laser_use_remission for laser %d has invalid value: %s\nPossible values are: direct, normalized and off.\n", laser->settings.laser_num, rem);
   /* remission values - stop */

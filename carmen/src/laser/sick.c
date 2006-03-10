@@ -482,10 +482,11 @@ int sick_parse_conf_data(sick_laser_p laser, unsigned char *buf, int length)
      (laser->settings.range_dist == RANGE320M && data[5] != 5) ||
      (laser->settings.range_dist == REMISSION_NORM && data[5] != 13) ||
      (laser->settings.range_dist == REMISSION_DIRECT && data[5] != 14)) {
+
     //    fprintf(stderr, "ok\n");
-    fprintf(stderr, "INFO: set LASER in config-mode ........ ");
+    fprintf(stderr, "config-mode ... ");
     do {} while (!sick_set_config_mode(laser));
-    fprintf(stderr, "ok\n");
+    fprintf(stderr, "ok ...");
   
     /* fix the laser sunlight problem */
     //    data[4] |= 1;
@@ -524,9 +525,9 @@ int sick_parse_conf_data(sick_laser_p laser, unsigned char *buf, int length)
       data[6] = 0;
       break;
     }
-    fprintf(stderr, "INFO: set LMS configuration ........... ");
+    fprintf(stderr, " set LMS config ... ");
     do {} while (!sick_set_lms_config(laser, data, 32));
-    fprintf(stderr, "ok\n");
+    fprintf(stderr, "ok ...");
   }
   return(TRUE);
 }
@@ -799,11 +800,22 @@ void sick_start_laser(sick_laser_p laser)
   /* set the laser to continuous mode */
 // *** REI - START *** //
   if(laser->settings.use_remission == 1) {
+
+    fprintf(stderr, "INFO: using remission mode ............ ");
+    if (laser->settings.range_dist == REMISSION_NORM) {
+      fprintf(stderr, "normalized\n");
+    }
+    else  if (laser->settings.range_dist == REMISSION_DIRECT) {
+      fprintf(stderr, "direct\n");
+    }
+    else fprintf(stderr, "unknwon\n");
+
     fprintf(stderr, "INFO: start LASER continuous remission mode ..... ");
 	sick_start_continuous_remission_part_mode(laser);
 //	sick_start_remission_part_mode(laser);
 // *** REI - END *** //
   } else {
+    fprintf(stderr, "INFO: using remission mode ............ none\n");
     fprintf(stderr, "INFO: start LASER continuous mode ..... ");
 	sick_start_continuous_mode(laser);
   }
