@@ -127,13 +127,23 @@ void check_parameter_settings(sick_laser_p laser)
   /* remission values - stop */
 }
 
-void interpret_params(sick_laser_p laser, char *dev, char *type, double res, char *rem)
+void interpret_params(sick_laser_p laser, char *dev, char *type, double res, char *rem, double fov)
 {
   strcpy(laser->settings.device_name, dev);
   if(strcmp(type, "LMS") == 0)
     laser->settings.type = LMS;
   else if(strcmp(type, "PLS") == 0)
     laser->settings.type = PLS;
+
+  if(fabs(fov-M_PI) < 0.1) {
+    laser->settings.angle_range = 180;
+  }
+  else   if(fabs(fov-100.0/180.0*M_PI) < 0.1) {
+    laser->settings.angle_range = 100;
+  }
+  else
+    carmen_die("The laser driver only provides 180 deg and 100 deg field of view!\n");
+
   if(res == 0.25) {
     laser->settings.angle_resolution = RES_0_25_DEGREE;
     laser->settings.angle_range = 100;
@@ -166,6 +176,7 @@ void read_parameters(int argc, char **argv)
   char *dev1, *dev2, *dev3, *dev4;
   char *str1, *str2, *str3, *str4;
   double res1, res2, res3, res4;
+  double fov1, fov2, fov3, fov4;
   char *rem1, *rem2, *rem3, *rem4;
 
   carmen_param_t laser_devs[] = {
@@ -179,24 +190,32 @@ void read_parameters(int argc, char **argv)
     {"laser", "front_laser_use_remission", CARMEN_PARAM_STRING, &rem1, 0, NULL},
     {"laser", "front_laser_baud", CARMEN_PARAM_INT, 
      &laser1.settings.set_baudrate, 0, NULL},
+    {"laser", "front_laser_fov", CARMEN_PARAM_DOUBLE, 
+     &fov1, 0, NULL},
     {"laser", "front_laser_flipped", CARMEN_PARAM_INT, 
      &laser1.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser2_params[] = {
     {"laser", "rear_laser_type", CARMEN_PARAM_STRING, &str2, 0, NULL},
     {"laser", "rear_laser_resolution", CARMEN_PARAM_DOUBLE, &res2, 0, NULL},
     {"laser", "rear_laser_use_remission", CARMEN_PARAM_STRING, &rem2, 0, NULL},
+    {"laser", "rear_laser_fov", CARMEN_PARAM_DOUBLE, 
+     &fov2, 0, NULL},
     {"laser", "rear_laser_baud", CARMEN_PARAM_INT, 
      &laser2.settings.set_baudrate, 0, NULL}};
   carmen_param_t laser3_params[] = {
     {"laser", "laser3_type", CARMEN_PARAM_STRING, &str3, 0, NULL},
     {"laser", "laser3_resolution", CARMEN_PARAM_DOUBLE, &res3, 0, NULL},
     {"laser", "laser3_use_remission", CARMEN_PARAM_STRING, &rem3, 0, NULL},
+    {"laser", "laser3_laser_fov", CARMEN_PARAM_DOUBLE, 
+     &fov3, 0, NULL},
     {"laser", "laser3_baud", CARMEN_PARAM_INT, 
      &laser3.settings.set_baudrate, 0, NULL}};
   carmen_param_t laser4_params[] = {
     {"laser", "laser4_type", CARMEN_PARAM_STRING, &str4, 0, NULL},
     {"laser", "laser4_resolution", CARMEN_PARAM_DOUBLE, &res4, 0, NULL},
     {"laser", "laser4_use_remission", CARMEN_PARAM_STRING, &rem4, 0, NULL},
+    {"laser", "laser4_laser_fov", CARMEN_PARAM_DOUBLE, 
+     &fov4, 0, NULL},
     {"laser", "laser4_baud", CARMEN_PARAM_INT, 
      &laser4.settings.set_baudrate, 0, NULL}};
 
@@ -208,28 +227,28 @@ void read_parameters(int argc, char **argv)
     carmen_param_install_params(argc, argv, laser1_params,
 				sizeof(laser1_params) / 
 				sizeof(laser1_params[0]));
-    interpret_params(&laser1, dev1, str1, res1, rem1);
+    interpret_params(&laser1, dev1, str1, res1, rem1, fov1);
   }
   if(strncmp(dev2, "none", 4) != 0) {
     use_laser2 = 1;
     carmen_param_install_params(argc, argv, laser2_params,
 				sizeof(laser2_params) / 
 				sizeof(laser2_params[0]));
-    interpret_params(&laser2, dev2, str2, res2, rem2);
+    interpret_params(&laser2, dev2, str2, res2, rem2, fov2);
   }
   if(strncmp(dev3, "none", 4) != 0) {
     use_laser3 = 1;
     carmen_param_install_params(argc, argv, laser3_params,
 				sizeof(laser3_params) / 
 				sizeof(laser3_params[0]));
-    interpret_params(&laser3, dev3, str3, res3, rem3);
+    interpret_params(&laser3, dev3, str3, res3, rem3, fov3);
   }
   if(strncmp(dev4, "none", 4) != 0) {
     use_laser4 = 1;
     carmen_param_install_params(argc, argv, laser4_params,
 				sizeof(laser4_params) / 
 				sizeof(laser4_params[0]));
-    interpret_params(&laser4, dev4, str4, res4, rem4);
+    interpret_params(&laser4, dev4, str4, res4, rem4, fov4);
   }
 }
 
