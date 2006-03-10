@@ -9,9 +9,9 @@ LFLAGS += -lparam_interface -lglobal -lserial -lgeometry -lipc
 MODULE_NAME = BASE
 MODULE_COMMENT = Generic interface to all robot bases
 
-SOURCES = base_interface.c base_test.c base_main.c 
+SOURCES = base_interface.c base_test.c drive_main.c arm_main.c
 PUBLIC_INCLUDES = base_messages.h arm_messages.h base_interface.h \
-	arm_interface.h base_low_level.h drive_low_level.h
+	arm_interface.h arm_low_level.h drive_low_level.h
 PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a 
 
 TARGETS =  libbase_interface.a libarm_interface.a  base_test 
@@ -41,11 +41,15 @@ scout: base_main.o scoutlib/libscout.a
 
 pioneer: base_main.o pioneerlib/libpioneer.a 
 
-orc_main.o: orcbotlibv4/base_main.c
+orc4_main.o: orcbotlibv4/base_main.c
 	$(ECHO) "    ---- Compiling $< to $@ (C)"
 	$(SILENT) $(CC) -DBASE_HAS_ARM $(CFLAGS) $(IFLAGS) -c $< -o $@
 
-orc: orc_main.o orcbotlibv4/orclib/liborc.a
+orc4: orc4_main.o orcbotlibv4/orclib/liborc.a
+
+orc_drive: drive_main.o orcbotlib/orclib_v5/liborc.a
+
+orc_arm: arm_main.o orcbotlib/orclib_v5/liborc.a
 
 rflex: base_main.o rflexlib/librflex.a
 
@@ -63,6 +67,9 @@ pioneerlib/libpioneer.a:
 
 orcbotlibv4/orclib/liborc.a:
 	$(MAKE) -C orcbotlibv4/orclib
+
+orcbotlib/orclib_v5/liborc.a:
+	$(MAKE) -C orcbotlib/orclib_v5
 
 rflexlib/librflex.a: 
 	$(MAKE) -C rflexlib

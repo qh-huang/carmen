@@ -36,14 +36,22 @@ extern "C" {
   enum carmen_arm_joint_t { CARMEN_MOTOR, CARMEN_SERVO };
 
   typedef struct {
+    char *model_name;
+    char *dev;
     int num_joints;
     carmen_arm_joint_t *joints;
   } carmen_arm_model_t, *carmen_arm_model_p;
 
 
-  // passes in an orc pointer and tell arm how many joints
-  // does not take ownership 
+#if 0  // for base & arm controlled on one board
+
+  // passes in an base model pointer (e.g. orc) and tell arm how many joints
   int carmen_arm_direct_initialize(carmen_base_model_t *base_model, carmen_arm_model_t *arm_model);
+
+#endif
+
+
+  int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model);
 
   int carmen_arm_direct_shutdown(void);
 
