@@ -6,7 +6,6 @@
 #include <limits.h>
 
 /*
-
 // velezj: For RssII Arm
 #define ORC_SHOULDER_MOTOR 1
 #define ORC_SHOULDER_MOTOR_ACTUAL_PWM 17
@@ -26,7 +25,6 @@
 #define ORC_ELBOW_MIN_PWM 35 // 22
 #define ORC_SHOULDER_MAX_PWM 50 // 37
 #define ORC_SHOULDER_MIN_PWM 42 // 30
-
 
 //#define ORC_ARM_FF_GAIN ((ORC_ARM_MAX_PWM / ORC_ARM_MAX_ANGULAR_VEL) * 0.9)
 
@@ -148,7 +146,7 @@ int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
   memcpy( s_min_pwm, MIN_PWM, sizeof( int ) );
   memcpy( s_max_pwm, MAX_PWM, sizeof( int ) );
 
-  // set all velocities and errors to zero
+  // reset
   carmen_arm_direct_reset();
   return 0;
 }
@@ -180,14 +178,14 @@ int carmen_arm_direct_reset(void){
 
   int i;
 
-  // stop all motors and reset the error, tick count to zero
+  // stop all motors, zero error and position
   for( i = 0; i < s_num_joints; ++i ){
     orc_motor_set( s_orc, MOTOR_PORTMAP[i], 0 );
-    s_arm_tick[i] = 0;
     s_arm_iTerm[i] = 0;
     s_arm_error_prev[i] = 0;
+    s_arm_theta[i] = 0;
+    s_arm_tick[i] = orc_quadphase_read( s_orc, ENCODER_PORTMAP[i] );
   }
-
   return 0;
 }
 
