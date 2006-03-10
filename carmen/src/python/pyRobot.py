@@ -1,6 +1,5 @@
 # file: runme.py
 # This file illustrates the cross language polymorphism using directors.
-
 import pyCarmen
 from threading import Thread
 from time import sleep
