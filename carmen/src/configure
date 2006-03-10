@@ -449,7 +449,7 @@ EOF
       $type_string eq "$max") {
     print "Very well, compiling support for all base types.\n";
 #    my (@robots) = ("rflex", "pioneer", "scout", "orc");
-    my (@robots) = ("rflex", "pioneer", "orc");
+    my (@robots) = ("rflex", "pioneer", "orc4");
     push @robots, "xr4000" if ($allow_xr4000);
     push @robots, "segway" if ($allow_segway);
     return @robots;
@@ -477,7 +477,7 @@ EOF
     }
     elsif ($_ eq "7") {
       if ((grep {/orc/} @types) == 0) {
-	push @types, "orc";
+	push @types, "orc4";
       }
     }
     elsif ($allow_xr4000 and $_ eq "$allow_xr4000") {
