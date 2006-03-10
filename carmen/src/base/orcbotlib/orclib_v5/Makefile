@@ -1,4 +1,4 @@
-CC=gcc -std=gnu99 -Wall -Wshadow -Wno-unused-parameter -g -fPIC -I ../../orc-firmware/common-mcu
+CC=gcc -std=gnu99 -Wall -Wshadow -Wno-unused-parameter -g -fPIC 
 AR=ar
 
 all:	liborc.a liborc.so orctest

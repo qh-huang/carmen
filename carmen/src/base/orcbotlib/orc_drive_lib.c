@@ -1,5 +1,6 @@
 #include <carmen/carmen.h>
 #include <carmen/drive_low_level.h>
+#include "orclib_v5/orc.h"
 #include <sys/ioctl.h>
 #include <limits.h>
 
@@ -92,7 +93,6 @@ static double acceleration;
 static double deceleration;
 
 static double x, y, theta;
-static double displacement, rotation;
 static double left_velocity, right_velocity;
 static double left_error_prev = 0.0, right_error_prev = 0.0;
 static double left_desired_velocity = 0, right_desired_velocity = 0;
@@ -110,29 +110,33 @@ static int ignore_left_d_term = 1;
 static int ignore_right_d_term = 1;
 
 static int left_pwm = 0, right_pwm = 0;
-static short last_master_ticks;
-static short last_slave_ticks;
-static int left_last_tick, right_last_tick;
 static double time_since_last_command;
 static double last_command_time;
 
-static double servo_state[4];
-static double servo_current[2];
-
-static unsigned char bumpers[4];
-static int serial_fd = -1;
+static int bumpers[4];
 
 static double left_displacement, right_displacement;
 static double delta_slave_time;
 
-static *orc_t s_orc;
+static orc_t *s_orc;
 
 int carmen_base_direct_initialize_robot(char *model, char *dev){
-  s_orc = orc_create( dev );
+
+  // used only to make the code compile!!!
+  model = model;
+
+  // create a new orc object
+  orc_comms_impl_t *impl = orc_rawprovider_create( dev );
+  s_orc = orc_create( impl );
+  return 0;
+
 }
 
 int carmen_base_direct_shutdown_robot(void){
+
+  // destroy the orc
   orc_destroy( s_orc );
+  return 0;
 }
 
 void carmen_base_command_velocity(double desired_velocity, 
@@ -149,7 +153,6 @@ void carmen_base_command_velocity(double desired_velocity,
 
   unsigned char command_pwm;
   unsigned char dir;
-  unsigned char buffer[4];
   int *ignore_d_term;
 
   if (WHICH_MOTOR == ORC_LEFT_MOTOR) {
@@ -222,6 +225,7 @@ void carmen_base_command_velocity(double desired_velocity,
   orc_motor_set( s_orc, WHICH_MOTOR, command_pwm );
 }
 
+/*
 static double delta_tick_to_metres(int delta_tick)
 {
   double revolutions = (double)delta_tick/
@@ -231,15 +235,7 @@ static double delta_tick_to_metres(int delta_tick)
 
   return metres;
 }
-
-static double voltage_to_current(unsigned short voltage)
-{
-  double current;
-  current = voltage*5.0/65536.0;
-  // V=IR, R=0.18 ohm
-  current = current/0.18;
-  return current;
-}
+*/
 
 int carmen_base_direct_sonar_on(void)
 {
@@ -300,18 +296,20 @@ int carmen_base_direct_set_velocity(double new_tv, double new_rv)
 
   printf("carmen_base_direct_set_velocity: tv=%.2f, rv=%.2f\n", 
 	 new_tv, new_rv);
-  carmen_base_direct_update_status();
+  double last_update_time;
+  carmen_base_direct_update_status( &last_update_time );
 
   return 0;
 }
 
-int carmen_base_direct_update_status(void)
+int carmen_base_direct_update_status(double* packet_timestamp)
 {
-  // rewrite to fill in values
+  // fill in the time stamp
+  *packet_timestamp = carmen_get_time();
   
   // sonar is not implemented in orc 5 so we don't deal with this
-  left_range = 0;
-  right_range = 0;
+  left_range = 0.0;
+  right_range = 0.0;
 
   // ir deleted since not being used
 
@@ -324,7 +322,9 @@ int carmen_base_direct_update_status(void)
   bumpers[3] = orc_digital_read( s_orc, ORC_BUMPER_PORT3 );
 
   // motor
+  
 
+  return 0;
 }
 
 int carmen_base_query_low_level(double *left_disp, double *right_disp,

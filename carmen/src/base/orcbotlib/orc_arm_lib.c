@@ -1,6 +1,7 @@
 #include <carmen/carmen.h>
 #include "../arm_low_level.h"
 #include "orc_arm_constants.h"
+#include "orclib_v5/orc.h"
 #include <sys/ioctl.h>
 #include <limits.h>
 
@@ -76,8 +77,9 @@ static int shoulder_last_tick = 0, elbow_last_tick = 0;
 
 // ---- STATIC VARIABLES ---- //
 // basic information
+
 static orc_t *s_orc;
-static int active;
+static int s_active;
 static int s_num_joints;
 static carmen_arm_joint_t *s_joint_types;
 static double s_time;   
@@ -96,51 +98,58 @@ static double *s_max_angle;
 static int *s_min_pwm;
 static int *s_max_pwm;
 
-// 
+// ---- LIST OF HELPER FUNCTIONS ---- //
+static void update_internal_data(void);
+static double compute_delta_theta( int curr, int prev, double ticks_per_radian );
+static int min( int a, int b );
+static double sign( double v );
+static void bound_value( double *vPtr, double min, double max );
+static void command_angular_velocity( double desired_angular_velocity, 
+				      double current_angular_velocity, int joint );
 
-// ---- INIT/QUIT/RESET ---- //
-int carmen_arm_direct_initialize(carmen_base_model_t *base, int num_joints, 
-				 carmen_arm_joint_t *joint_types ){
+// ---- INIT/QUIT/RESET ---- //  
+int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
  
-  // create an orc
-  s_orc = orc_create( base );
-
-  // initialize our static variable
-  *s_joint_types = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_joint_types );s
-  *s_arm_theta = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_theta );
-  *s_arm_tick = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_tick );
-  *s_arm_angular_velocity = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_angular_velocity );
-  *s_arm_iTerm = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_iTerm );
-  *s_arm_error_prev = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_error_prev );
-  *s_arm_current = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_arm_current );
-  *s_min_angle = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_min_angle );
-  *s_max_angle = calloc( num_joints, sizeof( double ) );
-  carmen_test_alloc( s_max_angle );
-  *s_min_pwm = calloc( num_joints, sizeof( int ) );
-  carmen_test_alloc( s_min_pwm );
-  *s_max_pwm = calloc( num_joints, sizeof( int ) );
-  carmen_test_alloc( s_max_pwm );
-  
-  // set them to initial values
+  // create orc and set scalars
+  orc_comms_impl_t *impl = orc_rawprovider_create( arm_model->dev );
+  s_orc = orc_create( impl );
   s_active = 1;
   s_time = carmen_get_time();
-  s_orc = (orc_t)base;
-  s_num_joints = num_joints;
-  memcpy( s_joint_types, joint_types, sizeof( int ) );
+  s_num_joints = arm_model->num_joints;
+
+  // initialize our static array variables
+  s_joint_types = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_joint_types );
+  s_arm_theta = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_theta );
+  s_arm_tick = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_tick );
+  s_arm_angular_velocity = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_angular_velocity );
+  s_arm_iTerm = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_iTerm );
+  s_arm_error_prev = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_error_prev );
+  s_arm_current = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_arm_current );
+  s_min_angle = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_min_angle );
+  s_max_angle = calloc( s_num_joints, sizeof( double ) );
+  carmen_test_alloc( s_max_angle );
+  s_min_pwm = calloc( s_num_joints, sizeof( int ) );
+  carmen_test_alloc( s_min_pwm );
+  s_max_pwm = calloc( s_num_joints, sizeof( int ) );
+  carmen_test_alloc( s_max_pwm );
+  
+  // set arrays to initial values
+  memcpy( s_joint_types, arm_model->joints, sizeof( int ) );
   memcpy( s_min_angle, MIN_THETA, sizeof( double ) );
   memcpy( s_max_angle, MAX_THETA, sizeof( double ) );
   memcpy( s_min_pwm, MIN_PWM, sizeof( int ) );
   memcpy( s_max_pwm, MAX_PWM, sizeof( int ) );
-  carmen_arm_direct_reset();
 
+  // set all velocities and errors to zero
+  carmen_arm_direct_reset();
   return 0;
 }
 
@@ -163,6 +172,8 @@ int carmen_arm_direct_shutdown(void){
   // destroy the orc
   orc_destroy( s_orc );
   s_active = 0;
+
+  return 0;
 }
 
 int carmen_arm_direct_reset(void){
@@ -174,6 +185,8 @@ int carmen_arm_direct_reset(void){
     s_arm_iTerm[i] = 0;
     s_arm_error_prev[i] = 0;
   }
+
+  return 0;
 }
 
 
@@ -194,14 +207,14 @@ void carmen_arm_direct_set_limits(double *min_angle, double *max_angle,
 // most of this code is adapted from the RSS II arm by velezj
 void carmen_arm_direct_update_joints( double *desired_angles ){
 
-  double desired_vel[num_joints];
+  double desired_vel[s_num_joints];
   double pTerm = 0.0, dTerm = 0.0; double *iTermPtr;
 
   // update to our current position
   update_internal_data();
 
   // determine the desired angular velocities 
-  for( int i = 0; i < num_joints; ++i ){
+  for( int i = 0; i < s_num_joints; ++i ){
 
     // get the desired angular change
     double theta_delta = desired_angles[i] - s_arm_theta[i];
@@ -212,13 +225,13 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
     if( fabs( theta_delta ) > 0.01 ) {
       pTerm = theta_delta * ORC_ARM_THETA_P_GAIN;
       *iTermPtr += ( theta_delta * ORC_ARM_THETA_I_GAIN );
-      dTerm = ( theta_delta - s_theta_error_prev[i] ) * ORC_ARM_THETA_D_GAIN;
+      dTerm = ( theta_delta - s_arm_error_prev[i] ) * ORC_ARM_THETA_D_GAIN;
       desired_angular_velocity = ( pTerm + *iTermPtr * dTerm );
       bound_value( &desired_angular_velocity, -ORC_ARM_MAX_ANGULAR_VEL, ORC_ARM_MAX_ANGULAR_VEL );
       if( fabs( desired_angular_velocity ) < ORC_ARM_MIN_ANGULAR_VEL ) {
 	desired_angular_velocity = sign( desired_angular_velocity ) * ORC_ARM_MIN_ANGULAR_VEL;
       }
-      printf( "contorl: shoulder: p: %f   i: %f   d: %f    av: %f\n", pTerm, *iTermPtr, dTerm, shoulder_desired_angular_velocity );
+      printf( "contorl: shoulder: p: %f   i: %f   d: %f    av: %f\n", pTerm, *iTermPtr, dTerm, desired_angular_velocity );
     } else {
       desired_angular_velocity = 0.0;
       *iTermPtr = 0.0;   
@@ -229,8 +242,8 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
   }
 
   // actually command the velocities
-  for( int i = 0; i < num_joints, ++i ){
-    command_angular_velocity( desired_vel[i], s_angular_velocity[i], PWM?????, MOTOR_PORTMAP[i] );
+  for( int i = 0; i < s_num_joints; ++i ){
+    command_angular_velocity( desired_vel[i], s_arm_angular_velocity[i], MOTOR_PORTMAP[i] );
   }
 }
 
@@ -243,7 +256,7 @@ void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
   // put values into the output from what we have in here
    for( int i = 0; i < s_num_joints; ++i ){
      joint_angles[i] = s_arm_theta[i]; 
-     joint_currents[i] = s_arm_currents[i];
+     joint_currents[i] = s_arm_current[i];
      joint_angular_vels[i] = s_arm_angular_velocity[i];
    }
  
@@ -253,12 +266,13 @@ void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
 
 
 // velezj: rssII Arm
-static void command_angular_velocity( double desired_angular_velocity, double current_angular_velocity, 
-				      int current_pwm, int joint ) {
+static void command_angular_velocity( double desired_angular_velocity, 
+				      double current_angular_velocity, int joint ) {
   
   double ffTerm = 0.0, pTerm = 0.0, dTerm = 0.0, velError = 0.0;
   double * iTermPtr;
   double * velErrorPrevPtr;;
+  int current_pwm;
   int command_pwm;
   int max_pwm, min_pwm;
 
@@ -295,8 +309,8 @@ static void command_angular_velocity( double desired_angular_velocity, double cu
 
   // debug
   if( command_pwm != 0 ) {
-    printf( "[ %c ] p: %f  i: %f  d: %f   ve: %f\n", which, pTerm, *iTermPtr, dTerm, velError );  
-    printf( "[ %c ] sending PWM: %d\n", which, command_pwm );
+    printf( "[ %d ] p: %f  i: %f  d: %f   ve: %f\n", joint, pTerm, *iTermPtr, dTerm, velError );  
+    printf( "[ %d ] sending PWM: %d\n", joint, command_pwm );
   }
 
   orc_motor_set(s_orc, MOTOR_PORTMAP[joint], command_pwm);
@@ -313,12 +327,12 @@ static void update_internal_data(void)
   static double s_arm_angular_velocity[3];
   static double s_arm_current[3];
 
- double curr_time = carment_get_time();
+ double curr_time = carmen_get_time();
 
   // updates arm angles, velocities, and currents
   for( int i = 0; i < s_num_joints; ++i ){
     int port = MOTOR_PORTMAP[i];
-    int curr_tick_count = orc_quadphase_read( s_orc, ENCODER_PORT[i] );
+    int curr_tick_count = orc_quadphase_read( s_orc, ENCODER_PORTMAP[i] );
     int prev_tick_count = s_arm_tick[i];
 
     // compute the change in angle since the last update
@@ -340,9 +354,9 @@ static double compute_delta_theta( int curr, int prev, double ticks_per_radian )
 
   // compute the number of ticks traversed short and long way around
   // and pick the path with the minimal distance
-  abs_reg = abs( curr - prev );
-  abs_opp = 65536 - abs_reg;
-  actual_delta = min( abs_reg, abs_opp );
+  int abs_reg = abs( curr - prev );
+  int abs_opp = 65536 - abs_reg;
+  int actual_delta = min( abs_reg, abs_opp );
   double theta = (double)actual_delta * ticks_per_radian;
 
   // give the angle the correct sign -- ccw is positive
