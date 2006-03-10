@@ -90,6 +90,8 @@ typedef struct {
   int rectangular;
 } carmen_robot_config_t;
 
+typedef enum { CARMEN_MOTOR, CARMEN_SERVO } carmen_arm_joint_t;
+
 typedef struct {
   int X1, Y1;
   int X2, Y2;
@@ -304,7 +306,6 @@ extern inline double carmen_distance(carmen_point_p p1, carmen_point_p p2)
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
 }
 
-
 void carmen_get_bresenham_parameters(int p1x, int p1y, int p2x, int p2y, 
 				   carmen_bresenham_param_t *params);
 void carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y);
@@ -340,6 +341,9 @@ void carmen_print_version(void);
 
 int carmen_parse_sonar_offsets(char *offset_string, carmen_point_p offsets,
 			       int num_sonars);
+
+int carmen_parse_arm_joint_types(char *joint_string, carmen_arm_joint_t *joint_types,
+				 int num_joints);
 
 int carmen_terminal_cbreak(int blocking);
 int carmen_terminal_restore(void);

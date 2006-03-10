@@ -1211,6 +1211,43 @@ carmen_parse_sonar_offsets(char *offset_string, carmen_point_p offsets,
   return 0;
 }
 
+int
+carmen_parse_arm_joint_types(char *joint_string, carmen_arm_joint_t *joint_types,
+			     int num_joints)
+{
+  char *s;
+  int n, i;
+
+  if (!joint_string || !joint_types)
+    {
+      carmen_warn("Bug in carmen_parse_arm_joint_types: a pointer arg was "
+		  "passed as NULL\n");
+      return -1;
+    }
+  
+  s = joint_string;
+
+  for (i = 0; i < num_joints; i++) {
+    s += strspn(s, " \t");
+    if (strlen(s) == 0) {
+      carmen_warn("Too few arguments in joint types string.\n");
+      return -1;
+    }
+    n = strcspn(s, " \t");
+    if (!carmen_strncasecmp(s, "motor", n))
+      joint_types[i] = CARMEN_MOTOR;
+    else if (!carmen_strncasecmp(s, "servo", n))
+      joint_types[i] = CARMEN_SERVO;
+    else {
+      carmen_warn("Bad argument (#%d) in joint types string.\n", i+1);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+
 int 
 carmen_terminal_cbreak(int blocking)
 {
