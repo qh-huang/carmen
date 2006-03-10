@@ -28,13 +28,14 @@
 #include <carmen/carmen.h>
 #include <carmen/arm_messages.h>
 
-#include "../arm_low_level.h"
+#include <carmen/arm_low_level.h>
 
 void x_ipcRegisterExitProc(void (*)(void));
 
-static char *model_name;
-static char *dev_name;
-static int num_joints;
+static carmen_arm_model_t arm_model;
+
+static double *goal_joint_angles = NULL;
+
 static double reset_time;
 static carmen_arm_state_message arm_state;
 
@@ -44,61 +45,78 @@ static carmen_arm_state_message arm_state;
 #define USING_CURRENTS_MASK    0
 #define USING_ANGULAR_VEL_MASK 1
 
-static int min( int a, int b ) {
-  return ( b < a ? b : a );
-}
 
 static int initialize_arm(void)
 {
   int result;
 
-  result = carmen_arm_direct_initialize(model_name, dev_name);
+  result = carmen_arm_direct_initialize(&arm_model);
   if (result < 0) 
     return -1;
 
   reset_time = carmen_get_time();
+
+  if (goal_joint_angles == NULL) {
+    goal_joint_angles = (double *) calloc(arm_model.num_joints, sizeof(double));
+    carmen_test_alloc(goal_joint_angles);
+  }
 
   return 0;
 }
 
 static void initialize_arm_message(carmen_arm_state_message * arm)
 {
-  arm->num_joints = num_joints;
-  if( num_joints > 0 ) {
-    arm->joint_angles = (double*)calloc( num_joints, sizeof( double ) );
+  arm->num_joints = arm_model.num_joints;
+  if( arm_model.num_joints > 0 ) {
+    arm->joint_angles = (double*)calloc( arm_model.num_joints, sizeof( double ) );
     carmen_test_alloc( arm->joint_angles );
     if( USE_ARM_CURRENT_STATES ) {
       arm->flags |= USING_CURRENTS_MASK;
-      arm->num_currents = min( num_joints, 2 ); // ORC board max limit
+      arm->num_currents = arm_model.num_joints;
       arm->joint_currents = (double*)calloc( arm->num_currents, sizeof( double ) );
       carmen_test_alloc( arm->joint_currents );
     }
+    else
+      arm->joint_currents = NULL;
     if( USE_ARM_ANGULAR_VEL_STATES ) {
       arm->flags |= USING_ANGULAR_VEL_MASK;
-      arm->num_vels = min( num_joints, 2 ); // rssII Arm limit
+      arm->num_vels = arm_model.num_joints;
       arm->joint_angular_vels = (double*)calloc( arm->num_vels, sizeof( double ) );
       carmen_test_alloc( arm->joint_angular_vels );
     }
+    else
+      arm->joint_angular_vels = NULL;
   }
+  arm->host = carmen_get_host();
 }
 
 static int read_parameters(int argc, char **argv)
 {
   int num_items;
+  char *joint_types_string;
 
   carmen_param_t param_list[] = {
-    { "arm", "dev", CARMEN_PARAM_STRING, &dev_name, 0, NULL},
-    { "arm", "num_joints", CARMEN_PARAM_INT, &num_joints, 0, NULL },
+    { "arm", "dev", CARMEN_PARAM_STRING, &(arm_model.dev), 0, NULL},
+    { "arm", "num_joints", CARMEN_PARAM_INT, &(arm_model.num_joints), 0, NULL },
+    { "arm", "joint_types", CARMEN_PARAM_STRING, &joint_types_string, 0, NULL }
   };
   
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
 
-  if (num_joints > 0) {
+  if (arm_model.num_joints > 0) {
+    arm_model.joints = (carmen_arm_joint_t *) calloc(arm_model.num_joints, sizeof(int));  // size_t ??
+    carmen_parse_arm_joint_types(joint_types_string, arm_model.joints, arm_model.num_joints);
     initialize_arm_message(&arm_state);
   }
 
   return 0;
+}
+
+static void get_arm_state()
+{
+  carmen_arm_direct_get_state(arm_state.joint_angles, arm_state.joint_currents, arm_state.joint_angular_vels, NULL);
+  arm_state.timestamp = carmen_get_time();
 }
 
 static void arm_query_handler(MSG_INSTANCE msgRef, 
@@ -106,52 +124,9 @@ static void arm_query_handler(MSG_INSTANCE msgRef,
 			      void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err;
-  carmen_arm_state_message response;
 
-  // set the number of joints and allocate memory
-  response.num_joints = num_joints;
-  response.num_currents = arm_state.num_currents;
-  response.flags = arm_state.flags;
-  if( response.num_joints > 0 ) {
-    response.joint_angles = (double*)calloc( response.num_joints, sizeof( double ) );
-    carmen_test_alloc( response.joint_angles );
-  }
-  if( response.num_currents > 0 ) {
-    response.joint_currents = (double*)calloc( response.num_currents, sizeof( double ) );
-    carmen_test_alloc( response.joint_currents );
-  }
-
-  // specific to rssII Arm 11/10/05
-  if( response.num_joints == 3 && 
-      ( response.flags & USING_ANGULAR_VEL_MASK ) &&  
-      response.num_vels == 2 ) {
-    
-    // set thetas and angular velocities  
-
-    carmen_arm_direct_get_state( response.joint_angles, NULL, response.joint_angular_vels, NULL, 4);
-  } else {
-  
-    // fill with zeros
-    if( response.num_joints > 0 )
-      memset( response.joint_angles, 0, response.num_joints * sizeof( double ) );
-    if( response.num_currents > 0 )
-      memset( response.joint_currents, 0, response.num_currents * sizeof( double ) );
-    if( response.num_vels > 0 )
-      memset( response.joint_angular_vels, 0, response.num_vels * sizeof( double ) );
-    
-  }
-
-  response.timestamp = carmen_get_time();
-  response.host = carmen_get_host();
-  err = IPC_respondData(msgRef, CARMEN_ARM_STATE_NAME, &response);
-
-  // free up the allocated memory
-  if( response.num_joints > 0 )
-    free( response.joint_angles );
-  if( response.num_currents > 0 )
-    free( response.joint_currents );
-  if( response.num_vels > 0 )
-    free( response.joint_angular_vels );
+  get_arm_state();
+  err = IPC_respondData(msgRef, CARMEN_ARM_STATE_NAME, &arm_state);
 }
 
 static void arm_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
@@ -166,14 +141,10 @@ static void arm_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			   sizeof(carmen_arm_command_message));
   IPC_freeByteArray(callData);
   
-  // rssII Arm 11/10/05 specific
-  if( msg.num_joints == 3 ) {
-    carmen_arm_direct_set( msg.joint_angles, msg.num_joints);
-  } else {
-    
-    // this is NOT a correct RssII Arm message, just ignore it but warn user
-    carmen_warn( "Received Incorrect Arm Message\n" );
-  }
+  if (msg.num_joints != arm_model.num_joints)
+    carmen_warn("Received arm command with incorrect msg.num_joints!\n");
+
+  memcpy(goal_joint_angles, msg.joint_angles, arm_model.num_joints*sizeof(double));
 
   // free data in msg
   if( msg.num_joints > 0 )
@@ -199,9 +170,10 @@ static void reset_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   do 
     {
       base_err = carmen_arm_direct_reset();
-      //Edsinger: Reset hack
-      if (base_err < 0)
+      if (base_err < 0) {
+	carmen_arm_direct_shutdown();
 	initialize_arm();
+      }
     }
   while (base_err < 0);
 }
@@ -257,12 +229,9 @@ int carmen_arm_start(int argc, char **argv)
   
   if(initialize_arm() < 0) {
     carmen_warn("\nError: Could not connect to robot on %s. "
-		"Did you remember to turn the base on?\n", dev_name);
+		"Did you remember to turn the base on?\n", arm_model.dev);
     return -1;
   }
-
-  // velezj: RssII Arm
-  carmen_arm_reset();
 
   return 0;
 }
@@ -270,73 +239,23 @@ int carmen_arm_start(int argc, char **argv)
 int carmen_arm_run(void) 
 {
   IPC_RETURN_TYPE err;
-  int arm_err;
+  //int arm_err;
   //static carmen_arm_reset_message reset;  
 
+  /*
   do {
-    arm_err = carmen_arm_direct_update_status();
+    arm_err = carmen_arm_direct_update_joints(goal_joint_angles);
     if (arm_err < 0)
-      initialize_arm();
+      arm_err = carmen_arm_direct_reset();
   } while (arm_err < 0);      
-  
+  */
+  carmen_arm_direct_update_joints(goal_joint_angles);
 
-  // velezj: added for rssII arm PID controller loop
-  carmen_arm_control();
-
-  // send out arm status message
-  carmen_arm_state_message response;
-
-  // set the number of joints and allocate memory
-  response.num_joints = num_joints;
-  response.num_currents = arm_state.num_currents;
-  response.num_vels = arm_state.num_vels;
-  response.flags = arm_state.flags;
-  if( response.num_joints > 0 ) {
-    response.joint_angles = (double*)calloc( response.num_joints, sizeof( double ) );
-    carmen_test_alloc( response.joint_angles );
-  }
-  if( response.num_currents > 0 ) {
-    response.joint_currents = (double*)calloc( response.num_currents, sizeof( double ) );
-    carmen_test_alloc( response.joint_currents );
-  }
-  if( response.num_vels > 0 ) {
-    response.joint_angular_vels = (double*)calloc( response.num_vels, sizeof( double ) );
-    carmen_test_alloc( response.joint_angular_vels );
-  }
-
-  // specific to rssII Arm 11/10/05
-  if( response.num_joints == 3 && 
-      ( response.flags & USING_ANGULAR_VEL_MASK ) &&  
-      response.num_vels == 2 ) {
-    
-    // set thetas and angular velocities  
-    carmen_arm_direct_get_state( response.joint_angles, NULL, response.joint_angular_vels, NULL, 4);
-  } else {
-  
-    // fill with zeros
-    if( response.num_joints > 0 )
-      memset( response.joint_angles, 0, response.num_joints * sizeof( double ) );
-    if( response.num_currents > 0 )
-      memset( response.joint_currents, 0, response.num_currents * sizeof( double ) );
-    if( response.num_vels > 0 )
-      memset( response.joint_angular_vels, 0, response.num_vels * sizeof( double ) );
-    
-  }
-
-  response.timestamp = carmen_get_time();
-  response.host = carmen_get_host();
-  err = IPC_publishData(CARMEN_ARM_STATE_NAME, &response);
+  get_arm_state();
+  err = IPC_publishData(CARMEN_ARM_STATE_NAME, &arm_state);
   carmen_test_ipc_exit( err, "Could not publish", CARMEN_ARM_STATE_NAME );
 
-  // free up the allocated memory
-  if( response.num_joints > 0 )
-    free( response.joint_angles );
-  if( response.num_currents > 0 )
-    free( response.joint_currents );
-  if( response.num_vels > 0 )
-    free( response.joint_angular_vels );
- 
-  carmen_publish_heartbeat("arm_daemon");
+  carmen_publish_heartbeat("arm_daemon");  //dbug
  
   return 1;
 }
@@ -353,7 +272,7 @@ static void shutdown_arm(int signo __attribute__ ((unused)))
   carmen_arm_shutdown();
 }
 
-int  main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);

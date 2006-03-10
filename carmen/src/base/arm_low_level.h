@@ -33,8 +33,6 @@ extern "C" {
 #endif
 
 
-  typedef enum { CARMEN_MOTOR, CARMEN_SERVO } carmen_arm_joint_t;
-
   typedef struct {
     char *model_name;
     char *dev;
@@ -66,7 +64,7 @@ extern "C" {
   
   // this is OPEN loop, should be part of a larger control loop
   // sets desired joint angles and implements control for next time step
-  void carmen_arm_direct_update_joints(double *joint_angles );
+  void carmen_arm_direct_update_joints(double *joint_angles);
 
   // ----- gets ----- //
   void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,

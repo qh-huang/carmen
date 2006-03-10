@@ -32,11 +32,31 @@
 extern "C" {
 #endif
 
-int carmen_base_direct_sonar_on(void);
-int carmen_base_direct_sonar_off(void);
+
+#if 0  // for base & arm controlled on one board
+
+typdef void carmen_base_model_t, *carmen_base_model_p;
+
+/************ Jared 3/9/06 *************
+  For bases controlling an arm (e.g. orc), these three functions handle
+  both drive and base setup/shutdown/reset, while the corresponding arm functions
+  use the base model returned from carmen_base_direct_initialize_robot().  In
+  particular, only the base part should handle opening/closing ports. Ideally, we'd
+  separate these functions into base_direct_* and drive_direct_*.
+****************************************/
+int carmen_base_direct_reset(void);
+carmen_base_model_p carmen_base_direct_initialize_robot(char *model, char *dev);
+int carmen_base_direct_shutdown_robot(void);
+
+#endif
+
+
 int carmen_base_direct_reset(void);
 int carmen_base_direct_initialize_robot(char *model, char *dev);
 int carmen_base_direct_shutdown_robot(void);
+
+int carmen_base_direct_sonar_on(void);
+int carmen_base_direct_sonar_off(void);
 int carmen_base_direct_set_acceleration(double acceleration);
 int carmen_base_direct_set_deceleration(double deceleration);
 int carmen_base_direct_set_velocity(double tv, double rv);

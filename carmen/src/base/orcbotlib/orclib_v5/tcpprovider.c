@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <wait.h>
+//#include <wait.h>
 #include <ctype.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>

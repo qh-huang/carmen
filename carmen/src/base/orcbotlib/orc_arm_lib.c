@@ -178,8 +178,10 @@ int carmen_arm_direct_shutdown(void){
 
 int carmen_arm_direct_reset(void){
 
+  int i;
+
   // stop all motors and reset the error, tick count to zero
-  for( int i = 0; i < s_num_joints; ++i ){
+  for( i = 0; i < s_num_joints; ++i ){
     orc_motor_set( s_orc, MOTOR_PORTMAP[i], 0 );
     s_arm_tick[i] = 0;
     s_arm_iTerm[i] = 0;
@@ -209,12 +211,13 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
 
   double desired_vel[s_num_joints];
   double pTerm = 0.0, dTerm = 0.0; double *iTermPtr;
+  int i;
 
   // update to our current position
   update_internal_data();
 
   // determine the desired angular velocities 
-  for( int i = 0; i < s_num_joints; ++i ){
+  for( i = 0; i < s_num_joints; ++i ){
 
     // get the desired angular change
     double theta_delta = desired_angles[i] - s_arm_theta[i];
@@ -242,7 +245,7 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
   }
 
   // actually command the velocities
-  for( int i = 0; i < s_num_joints; ++i ){
+  for( i = 0; i < s_num_joints; ++i ){
     command_angular_velocity( desired_vel[i], s_arm_angular_velocity[i], MOTOR_PORTMAP[i] );
   }
 }
@@ -250,11 +253,12 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
 // ---- GETS ---- //
 void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
 				 double *joint_angular_vels, int *gripper_closed ){
+  int i;
 
   update_internal_data();
 
   // put values into the output from what we have in here
-   for( int i = 0; i < s_num_joints; ++i ){
+   for( i = 0; i < s_num_joints; ++i ){
      joint_angles[i] = s_arm_theta[i]; 
      joint_currents[i] = s_arm_current[i];
      joint_angular_vels[i] = s_arm_angular_velocity[i];
@@ -327,10 +331,11 @@ static void update_internal_data(void)
   static double s_arm_angular_velocity[3];
   static double s_arm_current[3];
 
- double curr_time = carmen_get_time();
+  int i;
+  double curr_time = carmen_get_time();
 
   // updates arm angles, velocities, and currents
-  for( int i = 0; i < s_num_joints; ++i ){
+  for( i = 0; i < s_num_joints; ++i ){
     int port = MOTOR_PORTMAP[i];
     int curr_tick_count = orc_quadphase_read( s_orc, ENCODER_PORTMAP[i] );
     int prev_tick_count = s_arm_tick[i];
