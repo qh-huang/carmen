@@ -283,12 +283,12 @@ void  set_laser_config_structure(sick_laser_p laser,
   if (laser->settings.num_values == 181 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0); 
     config->fov  = M_PI;
-    config->start_angle = -0.5*M_PI;
+    config->start_angle = -0.5*config->fov;
   } 
   else if (laser->settings.num_values == 361 ) {
     config->angular_resolution = carmen_degrees_to_radians(0.5); 
     config->fov  = M_PI;
-    config->start_angle = -0.5*M_PI;
+    config->start_angle = -0.5*config->fov;
   } 
   else if (laser->settings.num_values == 180 ) {
     config->angular_resolution = carmen_degrees_to_radians(1.0);
