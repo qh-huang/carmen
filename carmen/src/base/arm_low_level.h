@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 
-  enum carmen_arm_joint_t { CARMEN_MOTOR, CARMEN_SERVO };
+  typedef enum { CARMEN_MOTOR, CARMEN_SERVO } carmen_arm_joint_t;
 
   typedef struct {
     char *model_name;
@@ -57,12 +57,12 @@ extern "C" {
 
   // ----- sets ----- //
 
-  // sets limits to default and velocities to zero
+  // sets error and velocities to zero
   int carmen_arm_direct_reset(void);
   
   // sets safe joint use limits -- input array of limits for each element
-  void carmen_arm_direct_set_limits(double min_angle, double max_angle,
-				  int min_pwm, int max_pwm);
+  void carmen_arm_direct_set_limits(double *min_angle, double *max_angle,
+				  int *min_pwm, int *max_pwm);
   
   // this is OPEN loop, should be part of a larger control loop
   // sets desired joint angles and implements control for next time step

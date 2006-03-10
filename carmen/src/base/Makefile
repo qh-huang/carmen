@@ -37,6 +37,7 @@ libarm_interface.so:	arm_interface.o
 
 base_test:		base_test.o libbase_interface.a
 
+# mains for each robot
 scout: base_main.o scoutlib/libscout.a 
 
 pioneer: base_main.o pioneerlib/libpioneer.a 
@@ -59,6 +60,7 @@ segway:
 xr4000: 
 	$(MAKE) -C xr4000_base
 
+# libraries for each robot
 scoutlib/libscout.a: 
 	$(MAKE) -C scoutlib 
 
