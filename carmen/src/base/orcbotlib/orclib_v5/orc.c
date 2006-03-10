@@ -177,8 +177,8 @@ disconnected:
 	orc->fd = -1;
 	goto reconnect;
 
-// silence compiler
-//	return NULL;
+	// silence compiler
+	return NULL;
 }
 
 orc_t *orc_create(orc_comms_impl_t *impl)
@@ -556,7 +556,7 @@ void orc_pinmode_set( orc_t *orc, int port, int mode){
 }
 
 
-int  orc_sonar_read(orc_t *orc, int port){
+int  orc_sonar_read(orc_t *orc __attribute__ ((unused)), int port __attribute__ ((unused))){
   return -1;
 }
 

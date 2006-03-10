@@ -15,7 +15,7 @@ pthread_mutex_t mutex;
 volatile int cnt = 0; // used to allocate thread #s
 volatile long tcnt = 0; // used to count transactions
 
-int main(int argc, char *argv[])
+int main() //int argc, char *argv[])
 {
 	orc_comms_impl_t *impl = orc_rawprovider_create("/dev/ttyUSB0");
   //	orc_comms_impl_t *impl = orc_tcpprovider_create("localhost", 7000);

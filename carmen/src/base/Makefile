@@ -46,7 +46,7 @@ orc4_main.o: orcbotlibv4/base_main.c
 	$(ECHO) "    ---- Compiling $< to $@ (C)"
 	$(SILENT) $(CC) -DBASE_HAS_ARM $(CFLAGS) $(IFLAGS) -c $< -o $@
 
-	orc4: orc4_main.o orcbotlibv4/orclib/liborc.a
+orc4: orc4_main.o orcbotlibv4/orclib/liborc.a
 
 orc_drive: drive_main.o orcbotlib/liborcbot.a orcbotlib/orclib_v5/liborc.a
 

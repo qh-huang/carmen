@@ -1,23 +1,24 @@
-CC=gcc -std=gnu99 -Wall -Wshadow -Wno-unused-parameter -g #-fPIC 
-AR=ar
+include ../../../Makefile.conf
 
-all:	liborc.a liborc.so orctest
+ifndef CYGWIN
+CFLAGS += -fPIC 
+endif
 
+CFLAGS += -std=gnu99
 
-ORC_OBJS=orc.o rawprovider.o tcpprovider.o packet.o timespec.o clog.o
-liborc.a:	$(ORC_OBJS)
-	$(AR) -cr $@ $(ORC_OBJS)
+MODULE_NAME = "orclib v5"
+MODULE_COMMENT = "LIbrary for communication with Orcboard version 5"
 
-liborc.so:	$(ORC_OBJS)
-	$(CC) -shared -Wl,-soname,liborc.so -o $@ $(ORC_OBJS) -lc
+SOURCES = orc.c rawprovider.c tcpprovider.c packet.c timespec.c clog.c
+TARGETS = liborc.a liborc.so orctest
 
-ORCTEST_OBJS=main.o
-orctest: $(ORCTEST_OBJS) orc.h orc.c
+ORC_OBJS = orc.o rawprovider.o tcpprovider.o packet.o timespec.o clog.o
+liborc.a: $(ORC_OBJS)
+
+liborc.so: $(ORC_OBJS)
+
+orctest: main.o liborc.a
 #	$(CC) $(ORCTEST_OBJS) -o $@ -lpthread -lorc -L.
-	$(CC) $(ORCTEST_OBJS) -o $@ -lpthread liborc.a
+#	$(CC) $(ORCTEST_OBJS) -o $@ -lpthread liborc.a
 
-%.o: %.c
-	$(CC) -c $<
-
-clean: 
-	rm -f *~ a.out *.o *.a *.so
+include ../../../Makefile.rules

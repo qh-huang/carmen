@@ -57,7 +57,7 @@ static int raw_connect(orc_comms_impl_t *impl)
 	return fd;
 }
 
-static void raw_disconnect(orc_comms_impl_t *impl, int fd)
+static void raw_disconnect(orc_comms_impl_t *impl __attribute__ ((unused)), int fd)
 {
 	close(fd);
 	return;
