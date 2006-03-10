@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <signal.h>
 
 #ifdef __cplusplus
 extern "C" {
