@@ -148,8 +148,14 @@ Redraw(void)
     origin_y = drawing_area->allocation.height - 1;
     scale = drawing_area->allocation.height / (double)laser_range;
     for(i = 0; i < numreadings; i++) {
-      //      angle = i / (float)(numreadings - 1) * M_PI;
-      angle = 0.5*M_PI+laser.config.start_angle + i * laser.config.angular_resolution;
+      if (laser.config.fov > M_PI+0.0001) {
+	//scale to 180 deg fov
+	angle = i / (float)(numreadings - 1) * M_PI;
+      }
+      else {
+	// use real fov
+	angle = 0.5*M_PI+laser.config.start_angle + i * laser.config.angular_resolution;
+      }
       x = laserrange[i] * cos(angle);
       y = laserrange[i] * sin(angle);
       poly[i].x = origin_x + x * scale;
@@ -166,6 +172,12 @@ Redraw(void)
 			       GDK_CAP_NOT_LAST, GDK_JOIN_MITER);
     free(poly); 
   } 
+
+  if (laser_count == 1) {
+    if (laser.config.fov > M_PI+0.0001) {
+      carmen_warn("WARNING: the field of view of your laser is bigger than 180 degrees!\nThe display, however, is currently limited to 180 degrees\n\n");
+    }
+  }
 
   if(laser_count % 10 == 0 || laser_count < 10)
     framerate = laser_count / (carmen_get_time() - start_time);
@@ -228,7 +240,7 @@ start_graphics(int argc, char *argv[])
 
   gtk_init(&argc, &argv);
   main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title (GTK_WINDOW (main_window), "Robot Graph");
+  gtk_window_set_title (GTK_WINDOW (main_window), "Laser View");
   drawing_area = gtk_drawing_area_new ();
   gtk_widget_set_usize (drawing_area, WINDOWSIZE, WINDOWSIZE / 2);
   gtk_container_add(GTK_CONTAINER(main_window), drawing_area);
