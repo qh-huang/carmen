@@ -9,7 +9,7 @@ CFLAGS 	+= 	-Wno-shadow
 IFLAGS 	+= 	`$(GTK_CONFIG) --cflags`
 LFLAGS 	+= 	-lmap_io -lparam_interface -llaser_interface \
 		-lglobal -lglobal_graphics -lipc -lrobot_interface \
-		`$(GTK_CONFIG) --libs gthread`
+		 -lglib `$(GTK_CONFIG) --libs` -lgthread -lpthread
 endif
 
 MODULE_NAME 	= 	VASCO

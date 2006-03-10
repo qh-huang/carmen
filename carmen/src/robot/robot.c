@@ -51,7 +51,9 @@ main(int argc, char **argv)
     carmen_ipc_sleep(0.1);
 
     carmen_robot_run();
+
   }
+
   return 0;
 }
 

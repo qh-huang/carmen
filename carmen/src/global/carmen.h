@@ -57,6 +57,9 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef CYGWIN
+#include <sys/socket.h>
+#endif
 #include <errno.h>
 #include <limits.h>
 #include <float.h>

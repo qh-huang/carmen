@@ -29,9 +29,6 @@
 #define KEYCTRL_H
 
 #include <carmen/carmen.h>
-#ifdef CYGWIN
-#include <sys/socket.h>
-#endif
 
 
 #ifdef CYGWIN
