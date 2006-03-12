@@ -339,12 +339,12 @@ sub verify_python {
 
 sub ask_python{
 
-  print "Should Python Bindings be installed: [Y/n]";
+  print "Should Python Bindings be installed: [y/N]";
 
   my $python_install = <STDIN>;
   chomp $python_install;
 
-  if($python_install eq "Y" or $python_install eq "y" or $python_install eq ""){
+  if($python_install eq "Y" or $python_install eq "y"){
       return 1;
   }
   
