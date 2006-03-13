@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base orcbotlibv4/orclib orcbotlib orcbotlib/orclib_v5
+SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base orcbotlibv4/orclib orcbotlib/orclib_v5 orcbotlib
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
@@ -48,9 +48,9 @@ orc4_main.o: orcbotlibv4/base_main.c
 
 orc4: orc4_main.o orcbotlibv4/orclib/liborc.a
 
-orc_drive: drive_main.o orcbotlib/liborcbot.a orcbotlib/orclib_v5/liborc.a
+orc_drive: drive_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
 
-orc_arm: arm_main.o orcbotlib/liborcbot.a orcbotlib/orclib_v5/liborc.a
+orc_arm: arm_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
 
 rflex: base_main.o rflexlib/librflex.a
 
