@@ -5,6 +5,9 @@
 #include <sys/ioctl.h>
 #include <limits.h>
 
+#define ORC_PWM_GAIN 1000
+#define MIN_ANGLE_TO_MOVE 0.005
+
 /*
 // velezj: For RssII Arm
 #define ORC_SHOULDER_MOTOR 1
@@ -84,7 +87,10 @@ static double s_time;
 
 // current joint data
 static double *s_arm_theta;
-static double *s_arm_tick;
+static int *s_arm_tick;
+// emma: just trying
+//static double *s_arm_tick;
+
 static double *s_arm_angular_velocity;
 static double *s_arm_iTerm;
 static double *s_arm_error_prev;
@@ -96,14 +102,21 @@ static double *s_max_angle;
 static int *s_min_pwm;
 static int *s_max_pwm;
 
+// for debugging
+static int s_debug = 1;
+
 // ---- LIST OF HELPER FUNCTIONS ---- //
 static void update_internal_data(void);
-static double compute_delta_theta( int curr, int prev, double ticks_per_radian );
+static double compute_delta_theta( int curr, int prev, double ticks_to_radian );
 static int min( int a, int b );
-static double sign( double v );
-static void bound_value( double *vPtr, double min, double max );
-static void command_angular_velocity( double desired_angular_velocity, 
-				      double current_angular_velocity, int joint );
+static double d_sign( double v );
+static void d_bound_value( double *vPtr, double min, double max );
+static int i_sign( int v );
+static void i_bound_value( int *vPtr, int min, int max );
+
+//static void command_angular_velocity( double desired_angular_velocity, 
+void command_angular_velocity( double desired_angular_velocity, 
+			       double current_angular_velocity, int joint );
 
 // ---- INIT/QUIT/RESET ---- //  
 int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
@@ -120,7 +133,7 @@ int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
   carmen_test_alloc( s_joint_types );
   s_arm_theta = calloc( s_num_joints, sizeof( double ) );
   carmen_test_alloc( s_arm_theta );
-  s_arm_tick = calloc( s_num_joints, sizeof( double ) );
+  s_arm_tick = calloc( s_num_joints, sizeof( int) ); // emma-- just trying double ) );
   carmen_test_alloc( s_arm_tick );
   s_arm_angular_velocity = calloc( s_num_joints, sizeof( double ) );
   carmen_test_alloc( s_arm_angular_velocity );
@@ -140,11 +153,11 @@ int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
   carmen_test_alloc( s_max_pwm );
   
   // set arrays to initial values
-  memcpy( s_joint_types, arm_model->joints, sizeof( int ) );
-  memcpy( s_min_angle, MIN_THETA, sizeof( double ) );
-  memcpy( s_max_angle, MAX_THETA, sizeof( double ) );
-  memcpy( s_min_pwm, MIN_PWM, sizeof( int ) );
-  memcpy( s_max_pwm, MAX_PWM, sizeof( int ) );
+  memcpy( s_joint_types, arm_model->joints, sizeof( arm_model->joints ) );
+  memcpy( s_min_angle, MIN_THETA, sizeof( MIN_THETA ) );
+  memcpy( s_max_angle, MAX_THETA, sizeof( MAX_THETA ) );
+  memcpy( s_min_pwm, MIN_PWM, sizeof( MIN_PWM ) );
+  memcpy( s_max_pwm, MAX_PWM, sizeof( MAX_PWM ) );
 
   // reset
   carmen_arm_direct_reset();
@@ -185,6 +198,9 @@ int carmen_arm_direct_reset(void){
     s_arm_error_prev[i] = 0;
     s_arm_theta[i] = 0;
     s_arm_tick[i] = orc_quadphase_read( s_orc, ENCODER_PORTMAP[i] );
+
+    printf("------------------ RESET port[%d]=%d tick=%dq\n",
+	   i,ENCODER_PORTMAP[i],s_arm_tick[i]);
   }
   return 0;
 }
@@ -207,45 +223,89 @@ void carmen_arm_direct_set_limits(double *min_angle, double *max_angle,
 // most of this code is adapted from the RSS II arm by velezj
 void carmen_arm_direct_update_joints( double *desired_angles ){
 
-  double desired_vel[s_num_joints];
+  double velocity_command_set[s_num_joints];
+  int pwm_command_set[s_num_joints];
+
   double pTerm = 0.0, dTerm = 0.0; double *iTermPtr;
-  int i;
 
   // update to our current position
   update_internal_data();
 
   // determine the desired angular velocities 
-  for( i = 0; i < s_num_joints; ++i ){
+  for( int i = 0; i < s_num_joints; ++i ){
+
+    printf("  ** JOINT %d desired=%f actual=%f diff=%f\n",i,desired_angles[i],s_arm_theta[i],
+	   desired_angles[i]-s_arm_theta[i]);
 
     // get the desired angular change
     double theta_delta = desired_angles[i] - s_arm_theta[i];
     double desired_angular_velocity = 0;
+    int command_pwm = 0;
 
     // compute and make sure velocites are within limits
     iTermPtr = &s_arm_iTerm[i];
-    if( fabs( theta_delta ) > 0.01 ) {
+    if( fabs( theta_delta ) > MIN_ANGLE_TO_MOVE ) {
+
+      // compute the PID terms
       pTerm = theta_delta * ORC_ARM_THETA_P_GAIN;
       *iTermPtr += ( theta_delta * ORC_ARM_THETA_I_GAIN );
       dTerm = ( theta_delta - s_arm_error_prev[i] ) * ORC_ARM_THETA_D_GAIN;
-      desired_angular_velocity = ( pTerm + *iTermPtr * dTerm );
-      bound_value( &desired_angular_velocity, -ORC_ARM_MAX_ANGULAR_VEL, ORC_ARM_MAX_ANGULAR_VEL );
+
+      // set velocity to be within limits
+      desired_angular_velocity = ( pTerm + *iTermPtr + dTerm );
+      d_bound_value( &desired_angular_velocity, -ORC_ARM_MAX_ANGULAR_VEL, ORC_ARM_MAX_ANGULAR_VEL );
       if( fabs( desired_angular_velocity ) < ORC_ARM_MIN_ANGULAR_VEL ) {
-	desired_angular_velocity = sign( desired_angular_velocity ) * ORC_ARM_MIN_ANGULAR_VEL;
+	desired_angular_velocity = d_sign( desired_angular_velocity ) * ORC_ARM_MIN_ANGULAR_VEL;
       }
-      printf( "contorl: shoulder: p: %f   i: %f   d: %f    av: %f\n", pTerm, *iTermPtr, dTerm, desired_angular_velocity );
+      
+      // set the PWM to be within limits
+      command_pwm = (int)( desired_angular_velocity * ORC_PWM_GAIN );
+      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
+
+
+      i_bound_value( &command_pwm, -MAX_PWM[i], MAX_PWM[i] );
+      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
+
+      if( fabs( command_pwm ) < MIN_PWM[i] ) {
+	command_pwm = i_sign( command_pwm ) * MIN_PWM[i];
+	printf( "command pwm %d min %d sign %d \n", command_pwm, MIN_PWM[i], i_sign( command_pwm)  );
+
+      }
+      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
+
+      // produce debug outputs
+      if( s_debug == 1 ){
+      printf( "** ** ** ** Set joint %d: desired delta theta: %f, command pwm: %d \n", i, theta_delta, command_pwm );
+      printf( "contorl: shoulder: p: %f   i: %f   d: %f  av: %f\n", pTerm, *iTermPtr, dTerm, desired_angular_velocity );
+      }
+
+      // update the delta error
+      s_arm_error_prev[i] = theta_delta;
+
     } else {
       desired_angular_velocity = 0.0;
+      command_pwm = 0.0;
       *iTermPtr = 0.0;   
     }
 
     // set the values into our array
-    desired_vel[i] = desired_angular_velocity;
+    velocity_command_set[i] = desired_angular_velocity;
+    pwm_command_set[i] = command_pwm;
+
   }
 
   // actually command the velocities
-  for( i = 0; i < s_num_joints; ++i ){
-    command_angular_velocity( desired_vel[i], s_arm_angular_velocity[i], MOTOR_PORTMAP[i] );
+  for( int i = 0; i < s_num_joints; ++i ){
+    // velocity_command_set( desired_vel[i], s_arm_angular_velocity[i], MOTOR_PORTMAP[i] );
+ 
+    // for now, don't include the command_angular_velocity function and do this directly
+    printf("---------------- actually commanded port[%d]= %d to do pwm=%d\n",
+	   i,MOTOR_PORTMAP[i],pwm_command_set[i]);
+    orc_motor_set(s_orc, MOTOR_PORTMAP[i], pwm_command_set[i]);
+
   }
+
+
 }
 
 // ---- GETS ---- //
@@ -268,7 +328,8 @@ void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
 
 
 // velezj: rssII Arm
-static void command_angular_velocity( double desired_angular_velocity, 
+//static void command_angular_velocity( double desired_angular_velocity, 
+void command_angular_velocity( double desired_angular_velocity, 
 				      double current_angular_velocity, int joint ) {
   
   double ffTerm = 0.0, pTerm = 0.0, dTerm = 0.0, velError = 0.0;
@@ -283,6 +344,11 @@ static void command_angular_velocity( double desired_angular_velocity,
   velErrorPrevPtr = &s_arm_error_prev[joint];
   max_pwm = s_max_pwm[joint];
   min_pwm = s_min_pwm[joint];
+
+
+  //printf("*********************************\n");
+  //printf("global max pwm for joint %d: %d\n", joint, max_pwm);
+  //printf("global min pwm for joint %d: %d\n", joint, min_pwm);
  
   // if there is non-zero desired velocity
   if (fabs(desired_angular_velocity) > .0005) {
@@ -297,24 +363,32 @@ static void command_angular_velocity( double desired_angular_velocity,
 
     // set the pwm between the desired bounds
     current_pwm = (int)(ffTerm + pTerm + *iTermPtr + dTerm);
-    if (abs(current_pwm) > max_pwm)
+    if (abs(current_pwm) > max_pwm){
+      printf("In max\n");
+      printf("Current_pwm was: %d\n", current_pwm);
       current_pwm = (current_pwm > 0 ? max_pwm : -max_pwm);
-    if( abs( current_pwm) < min_pwm )
-      current_pwm = ( current_pwm > 0 ? min_pwm : -min_pwm );
+      printf("Current_pwm is now: %d\n", current_pwm);
+    }
+    if( abs( current_pwm) < min_pwm ){
+      printf("In min\n");
+      current_pwm = ( current_pwm > 0 ? min_pwm : -min_pwm );}
 
     command_pwm = abs( current_pwm );
-
+    printf("command_pwm is now: %d\n", current_pwm);
   } else {
     command_pwm = 0;
     *iTermPtr = 0.0;
   } // end if motion desired
 
+  
   // debug
   if( command_pwm != 0 ) {
     printf( "[ %d ] p: %f  i: %f  d: %f   ve: %f\n", joint, pTerm, *iTermPtr, dTerm, velError );  
     printf( "[ %d ] sending PWM: %d\n", joint, command_pwm );
   }
-
+  //printf("Current Angular Velocity %f\n", current_angular_velocity);
+  //printf("Desired Angular Velocity %f\n", desired_angular_velocity);
+  //printf("command_pwm %d\n", command_pwm);
   orc_motor_set(s_orc, MOTOR_PORTMAP[joint], command_pwm);
 }
 
@@ -325,34 +399,52 @@ static void command_angular_velocity( double desired_angular_velocity,
 static void update_internal_data(void)
 {
 
-  static double s_arm_theta[3];
-  static double s_arm_angular_velocity[3];
-  static double s_arm_current[3];
-
-  int i;
   double curr_time = carmen_get_time();
+  
+  // we'll need this to update elbow state after the loop
+  double shoulder_delta_theta = 0.0;
 
   // updates arm angles, velocities, and currents
-  for( i = 0; i < s_num_joints; ++i ){
+  for( int i = 0; i < s_num_joints; ++i ){
     int port = MOTOR_PORTMAP[i];
     int curr_tick_count = orc_quadphase_read( s_orc, ENCODER_PORTMAP[i] );
     int prev_tick_count = s_arm_tick[i];
 
     // compute the change in angle since the last update
+    double ticks_to_radian = 1/(double)TICKS_PER_RADIAN[i];
     double delta_theta = compute_delta_theta( curr_tick_count, prev_tick_count,
-					      TICKS_PER_RADIAN[i] );
+					      ticks_to_radian );
 
+    printf("UPA: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
+	   i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
+  
     // set variables
     s_arm_theta[i] = carmen_normalize_theta( delta_theta + s_arm_theta[i] );
     s_arm_angular_velocity[i] = delta_theta / ( curr_time - s_time );
-    s_arm_current[i] = orc_analog_read( s_orc, 16 + port );  // motor ports are 16 + reg
+    s_arm_current[i] = (double)orc_analog_read( s_orc, 16 + port );  // motor ports are 16 + reg
+    s_arm_tick[i] = curr_tick_count;
+
+    // check if this is the shoulder
+    if( i == SHOULDER ){
+      shoulder_delta_theta = delta_theta;
+    }
+
+    // debug
+    printf("on joint %d: vel %f, theta %f, current %f\n", 
+	   i, s_arm_angular_velocity[i], s_arm_theta[i], s_arm_current[i]);
+
   }			   
-				   
+				
+  // correct for the fact that when the shoulder moves, the elbow angle also changes
+  s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
+  printf( "elbow updated to angle %f", s_arm_theta[ELBOW] );
+
+  // update time
   s_time = curr_time;  
 }
 
 // we assume the direction is the smallest route around the circle
-static double compute_delta_theta( int curr, int prev, double ticks_per_radian )
+static double compute_delta_theta( int curr, int prev, double ticks_to_radian )
 {
 
   // compute the number of ticks traversed short and long way around
@@ -360,7 +452,7 @@ static double compute_delta_theta( int curr, int prev, double ticks_per_radian )
   int abs_reg = abs( curr - prev );
   int abs_opp = 65536 - abs_reg;
   int actual_delta = min( abs_reg, abs_opp );
-  double theta = (double)actual_delta * ticks_per_radian;
+  double theta = (double)actual_delta * ticks_to_radian;
 
   // give the angle the correct sign -- ccw is positive
   if( ( curr > prev && actual_delta == abs_reg ) || 
@@ -376,18 +468,33 @@ static int min( int a, int b ){
   return ( a < b ) ? a : b ;
 }
 
-static double sign( double v ) {
+static double d_sign( double v ) {
   if( v < 0.0 )
     return -1.0;
   return 1.0;
 }
 
-static void bound_value( double *vPtr, double min, double max ) {
+static int i_sign( int v ) {
+  if( v < 0 )
+    return -1;
+  return 1;
+}
+
+static void d_bound_value( double *vPtr, double min, double max ) {
   if( *vPtr < min )
     *vPtr = min;
   if( *vPtr > max )
     *vPtr = max;
 }
+
+static void i_bound_value( int *vPtr, int min, int max ) {
+  if( *vPtr < min )
+    *vPtr = min;
+  if( *vPtr > max )
+    *vPtr = max;
+}
+
+
 
 /*
 

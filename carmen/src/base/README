@@ -1,4 +1,4 @@
-finale@mit.edu, 3/7/2006, useful information
+finale@mit.edu, 3/11/2006, useful information
 
 === in the base directory ===
 
@@ -9,15 +9,12 @@ same for outside consistency.
 
 * main program(s):
 
-base_main -- ifdefs together drive and arm 'main''s for the complete
-robot control executable
-
 drive_main -- handles driving related messages
 arm_main -- handles arm messages
 
 these two programs define the message handling for driving and arm
-respectively; aren't actually executable.  drive and arm main call
-functions from drive_low_level and arm_low_level.
+respectively; drive and arm main call functions from drive_low_level
+and arm_low_level.
 
 * low level calls: drive_low_level.h and arm_low_level.h are the h
 files that define the functions that the message handlers in

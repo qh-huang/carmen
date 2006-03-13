@@ -28,10 +28,12 @@
 #ifndef CARMEN_ARM_LOW_LEVEL_H
 #define CARMEN_ARM_LOW_LEVEL_H
 
+#include <carmen/carmen.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+  
+  // typedef enum { CARMEN_MOTOR, CARMEN_SERVO } carmen_arm_joint_t;
 
   typedef struct {
     char *model_name;
