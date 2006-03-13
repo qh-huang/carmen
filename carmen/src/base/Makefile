@@ -9,12 +9,12 @@ LFLAGS += -lparam_interface -lglobal -lserial -lgeometry -lipc
 MODULE_NAME = BASE
 MODULE_COMMENT = Generic interface to all robot bases
 
-SOURCES = base_interface.c base_test.c drive_main.c arm_main.c base_main.c
+SOURCES = base_interface.c base_test.c drive_main.c arm_main.c base_main.c arm_test.c
 PUBLIC_INCLUDES = base_messages.h arm_messages.h base_interface.h \
 	arm_interface.h arm_low_level.h drive_low_level.h
 PUBLIC_LIBRARIES = libbase_interface.a libarm_interface.a 
 
-TARGETS =  libbase_interface.a libarm_interface.a  base_test 
+TARGETS =  libbase_interface.a libarm_interface.a  base_test arm_test
 
 TARGETS += $(ROBOT_TYPES)
 PUBLIC_BINARIES += $(ROBOT_TYPES)
@@ -36,6 +36,8 @@ libarm_interface.a:	arm_interface.o
 libarm_interface.so:	arm_interface.o
 
 base_test:		base_test.o libbase_interface.a
+
+arm_test:		arm_test.o libarm_interface.a
 
 # mains for each robot
 scout: base_main.o scoutlib/libscout.a 
