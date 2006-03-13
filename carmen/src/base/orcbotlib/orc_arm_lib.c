@@ -415,8 +415,8 @@ static void update_internal_data(void)
     double delta_theta = compute_delta_theta( curr_tick_count, prev_tick_count,
 					      ticks_to_radian );
 
-    printf("UPA: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
-	   i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
+    //printf("Internal Update: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
+    //   i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
   
     // set variables
     s_arm_theta[i] = carmen_normalize_theta( delta_theta + s_arm_theta[i] );
@@ -428,17 +428,11 @@ static void update_internal_data(void)
     if( i == SHOULDER ){
       shoulder_delta_theta = delta_theta;
     }
-
-    // debug
-    printf("on joint %d: vel %f, theta %f, current %f\n", 
-	   i, s_arm_angular_velocity[i], s_arm_theta[i], s_arm_current[i]);
-
   }			   
 				
   // correct for the fact that when the shoulder moves, the elbow angle also changes
   s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
-  printf( "elbow updated to angle %f", s_arm_theta[ELBOW] );
-
+ 
   // update time
   s_time = curr_time;  
 }
