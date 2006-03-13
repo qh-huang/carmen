@@ -98,8 +98,8 @@ int carmen_base_direct_reset(void)
   s_right_tick = orc_quadphase_read( s_orc, ORC_RIGHT_ENCODER_PORT );
 
   // stop moving
-  orc_motor_set( s_orc, ORC_LEFT_MOTOR, 0 );
-  orc_motor_set( s_orc, ORC_RIGHT_MOTOR, 0 );
+  orc_motor_set_signed( s_orc, ORC_LEFT_MOTOR, 0 );
+  orc_motor_set_signed( s_orc, ORC_RIGHT_MOTOR, 0 );
   return 0;
 }
 
@@ -187,7 +187,7 @@ void carmen_base_command_velocity(double desired_velocity,
   carmen_warn("Tried to send %d %d %f %f %d\n", command_pwm, new_pwm,
 	      desired_velocity, current_velocity, WHICH_MOTOR);
 
-  orc_motor_set( s_orc, WHICH_MOTOR, command_pwm );
+  orc_motor_set_signed( s_orc, WHICH_MOTOR, command_pwm );
 }
 
 // input the velocity in terms of translational and rotational components
