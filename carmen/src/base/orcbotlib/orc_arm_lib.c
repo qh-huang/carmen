@@ -193,7 +193,7 @@ int carmen_arm_direct_reset(void){
 
   // stop all motors, zero error and position
   for( i = 0; i < s_num_joints; ++i ){
-    orc_motor_set( s_orc, MOTOR_PORTMAP[i], 0 );
+    orc_motor_set_signed( s_orc, MOTOR_PORTMAP[i], 0 );
     s_arm_iTerm[i] = 0;
     s_arm_error_prev[i] = 0;
     s_arm_theta[i] = 0;
@@ -234,9 +234,6 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
   // determine the desired angular velocities 
   for( int i = 0; i < s_num_joints; ++i ){
 
-    printf("  ** JOINT %d desired=%f actual=%f diff=%f\n",i,desired_angles[i],s_arm_theta[i],
-	   desired_angles[i]-s_arm_theta[i]);
-
     // get the desired angular change
     double theta_delta = desired_angles[i] - s_arm_theta[i];
     double desired_angular_velocity = 0;
@@ -260,23 +257,15 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
       
       // set the PWM to be within limits
       command_pwm = (int)( desired_angular_velocity * ORC_PWM_GAIN );
-      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
-
-
       i_bound_value( &command_pwm, -MAX_PWM[i], MAX_PWM[i] );
-      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
-
       if( fabs( command_pwm ) < MIN_PWM[i] ) {
 	command_pwm = i_sign( command_pwm ) * MIN_PWM[i];
-	printf( "command pwm %d min %d sign %d \n", command_pwm, MIN_PWM[i], i_sign( command_pwm)  );
-
       }
-      printf( "command pwm %d vel %f \n", command_pwm, desired_angular_velocity );
-
+     
       // produce debug outputs
       if( s_debug == 1 ){
-      printf( "** ** ** ** Set joint %d: desired delta theta: %f, command pwm: %d \n", i, theta_delta, command_pwm );
-      printf( "contorl: shoulder: p: %f   i: %f   d: %f  av: %f\n", pTerm, *iTermPtr, dTerm, desired_angular_velocity );
+	printf( "Joint %d: desired angle %f, actual angle %f, delta angle %f, desired_vel %f \n",
+	      i, desired_angles[i], s_arm_theta[i], theta_delta, desired_angular_velocity );
       }
 
       // update the delta error
@@ -301,9 +290,11 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
     // for now, don't include the command_angular_velocity function and do this directly
     printf("---------------- actually commanded port[%d]= %d to do pwm=%d\n",
 	   i,MOTOR_PORTMAP[i],pwm_command_set[i]);
-    orc_motor_set(s_orc, MOTOR_PORTMAP[i], pwm_command_set[i]);
+    orc_motor_set_signed(s_orc, MOTOR_PORTMAP[i], pwm_command_set[i]);
 
   }
+
+  printf( "\n" );
 
 
 }
@@ -386,10 +377,12 @@ void command_angular_velocity( double desired_angular_velocity,
     printf( "[ %d ] p: %f  i: %f  d: %f   ve: %f\n", joint, pTerm, *iTermPtr, dTerm, velError );  
     printf( "[ %d ] sending PWM: %d\n", joint, command_pwm );
   }
+
   //printf("Current Angular Velocity %f\n", current_angular_velocity);
   //printf("Desired Angular Velocity %f\n", desired_angular_velocity);
   //printf("command_pwm %d\n", command_pwm);
-  orc_motor_set(s_orc, MOTOR_PORTMAP[joint], command_pwm);
+
+  orc_motor_set_signed(s_orc, MOTOR_PORTMAP[joint], command_pwm);
 }
 
 
@@ -415,8 +408,8 @@ static void update_internal_data(void)
     double delta_theta = compute_delta_theta( curr_tick_count, prev_tick_count,
 					      ticks_to_radian );
 
-    //printf("Internal Update: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
-    //   i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
+    printf("* Internal Update: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
+       i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
   
     // set variables
     s_arm_theta[i] = carmen_normalize_theta( delta_theta + s_arm_theta[i] );
@@ -431,7 +424,7 @@ static void update_internal_data(void)
   }			   
 				
   // correct for the fact that when the shoulder moves, the elbow angle also changes
-  s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
+  // s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
  
   // update time
   s_time = curr_time;  
