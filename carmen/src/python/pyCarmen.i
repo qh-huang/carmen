@@ -37,6 +37,27 @@
   $1 = &temp[0];
 }
 
+//// Map a Python sequence into any sized C double array
+%typemap(memberin, python) double* {
+  int i, my_len;
+  if (!PySequence_Check($input)) {
+      PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
+      return NULL;
+  }
+
+  my_len = PyObject_Length($input);
+  double temp[my_len];
+  for (i =0; i < my_len; i++) {
+      PyObject *o = PySequence_GetItem($input,i);
+      if (!PyDouble_Check(o)) {
+         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of doubles");
+         return NULL;
+      }
+      temp[i] = PyDouble_AsDouble(o);
+  }
+  $1 = &temp[0];
+}
+
 //%typemap(out) float* {
 //  int i, size;
 //  size = sizeof($1);

@@ -17,6 +17,7 @@ class MessageHandler {
   carmen_navigator_status_message the_latest_navigator_status;
   carmen_navigator_plan_message the_latest_navigator_plan;
   carmen_navigator_autonomous_stopped_message the_latest_navigator_autonomous_stopped;
+  carmen_arm_state_message the_latest_arm_state;
  public:
         carmen_map_p current_map_p;
 
@@ -103,7 +104,11 @@ class MessageHandler {
 	}
 	carmen_navigator_autonomous_stopped_message* get_navigator_autonomous_stopped_message() {return &the_latest_navigator_autonomous_stopped;}
 
-
+	/*Arm State Message*/
+	void set_arm_state_message(carmen_arm_state_message *msg){
+	  memcpy(&the_latest_arm_state, msg, sizeof(carmen_arm_state_message));
+	}
+	carmen_arm_state_message* get_arm_state_message() {return &the_latest_arm_state;}
 };
 
 

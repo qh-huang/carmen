@@ -172,3 +172,23 @@ class navigator_stopped {
 
 
 
+/*Deal with the front laser handler here*/
+
+//void carmen_arm_subscribe_state_message(carmen_arm_state_message *arm_state,
+//					carmen_handler_t handler,
+//					carmen_subscribe_t subscribe_how);
+class arm{
+ public:
+  static void my_callback(carmen_arm_state_message *msg)
+  {
+    _callback->set_arm_state_message(msg);
+    if (_callback) _callback->run_cb("arm_state", "get_arm_state_message()");
+  }
+
+  arm(MessageHandler *cb)
+  {
+    _callback = cb;
+    carmen_arm_subscribe_state_message
+      (NULL, (carmen_handler_t)my_callback, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
