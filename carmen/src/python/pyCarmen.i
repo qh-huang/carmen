@@ -16,8 +16,10 @@
 //  }
 //}
 
+
+
 //// Map a Python sequence into any sized C double array
-%typemap(memberin, python) float* {
+%typemap(in) double* {
   int i, my_len;
   if (!PySequence_Check($input)) {
       PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
@@ -25,20 +27,21 @@
   }
 
   my_len = PyObject_Length($input);
-  float temp[my_len];
+  double *temp = (double*)calloc(my_len,sizeof(double));
+  //carmen_test_alloc(temp);
   for (i =0; i < my_len; i++) {
       PyObject *o = PySequence_GetItem($input,i);
-      if (!PyFloat_Check(o)) {
-         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of floats");
+      if (!PyFloat_Check(o) && !PyInt_Check(o)) {
+         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of doubles");
          return NULL;
       }
       temp[i] = PyFloat_AsDouble(o);
   }
-  $1 = &temp[0];
+  $1 = temp;
 }
 
 //// Map a Python sequence into any sized C double array
-%typemap(memberin, python) double* {
+%typemap(in) float* {
   int i, my_len;
   if (!PySequence_Check($input)) {
       PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
@@ -46,17 +49,19 @@
   }
 
   my_len = PyObject_Length($input);
-  double temp[my_len];
+  float *temp = (float*)calloc(my_len,sizeof(float));
+  //carmen_test_alloc(temp);
   for (i =0; i < my_len; i++) {
       PyObject *o = PySequence_GetItem($input,i);
-      if (!PyDouble_Check(o)) {
+      if (!PyFloat_Check(o) && !PyInt_Check(o)) {
          PyErr_SetString(PyExc_ValueError,"Expecting a sequence of doubles");
          return NULL;
       }
-      temp[i] = PyDouble_AsDouble(o);
+      temp[i] = (float)PyFloat_AsDouble(o);
   }
-  $1 = &temp[0];
+  $1 = temp;
 }
+
 
 //%typemap(out) float* {
 //  int i, size;
@@ -125,29 +130,6 @@
 //  }
 //  printf("in typemapend\n");
 //}
-
-
-// Map a Python sequence into any sized C double array
-%typemap(in, python) float* {
-  int i, my_len;
-  if (!PySequence_Check($input)) {
-      PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
-      return NULL;
-  }
-
-  my_len = PyObject_Length($input);
-  float temp[my_len];
-  for (i =0; i < my_len; i++) {
-      PyObject *o = PySequence_GetItem($input,i);
-      if (!PyFloat_Check(o)) {
-         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of floats");
-         return NULL;
-      }
-      temp[i] = PyFloat_AsDouble(o);
-  }
-  $1 = &temp[0];
-}
-
 
 
 //%typemap(memberout) float [ANY] {

@@ -24,6 +24,7 @@ def test2():
 	robot = Robot().__disown__()
 	#loc = pyCarmen.global_pose(robot)
 	odo = pyCarmen.odometry(robot)
+	myarm = pyCarmen.arm(robot)
 
 	#robot.set_pose(30, 5, 0)
 	robot.start()
@@ -55,8 +56,8 @@ def test2():
                     print "exiting..."
                     break
 
-	        except:
-		    print "Command not found..."
+	        #except:
+		#    print "Command not found..."
 
 	robot.stop()
 	print "done"
