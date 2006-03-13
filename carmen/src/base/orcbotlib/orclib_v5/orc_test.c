@@ -13,6 +13,15 @@ int main( int argn, char **argv ){
   orc_t *orc = orc_create( impl  );
   fprintf( stderr, " made orc \n" );
 
+  orc_motor_set( orc, 0, -113 );
+  orc_motor_set( orc, 1, 0 );
+
+  sleep(1);
+  
+  orc_motor_set( orc, 0, 0 );
+  orc_motor_set( orc, 1, 0 );
+
+  /*
   // motors and encoders
   //orc_motor_set( orc, 0, 35 );
   int count = orc_quadphase_read( orc, 1 );
@@ -27,7 +36,6 @@ int main( int argn, char **argv ){
   fprintf( stderr, "current count = %d \n", current );
   fprintf( stderr, "encoder count = %d \n", count );
 
-  /*
   // analog and digital and pwm io
   orc_pwm_set( orc, 3, 0.75 );
   orc_digital_set( orc, 2, 1 );

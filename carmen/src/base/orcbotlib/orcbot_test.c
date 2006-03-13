@@ -24,9 +24,9 @@ int main( int argn, char **argv ){
   carmen_arm_direct_initialize( &arm_model );
 
   // set desired angles : order is always end -> base (elbow, shoulder, hip )
-  double joint_angles[3] = { 0.0 , -0.4 ,0.0 };
+  double joint_angles[3] = { 0.0 , -0.3 , 0.0}; 
 
-  for( int i = 0; i < 50; ++i ){
+  for( int i = 0; i < 200; ++i ){
 
     fprintf( stderr,  " inside control loop \n" );
     carmen_arm_direct_update_joints( joint_angles );   
@@ -41,6 +41,7 @@ int main( int argn, char **argv ){
       carmen_arm_direct_get_state(curr_joint_angles, curr_joint_currents,
 				 curr_joint_angular_vels, 
 				 curr_gripper_closed );
+      printf("          on iter %d \n", i );
        printf("\nJoint Angles: %f %f %f\n", curr_joint_angles[0],curr_joint_angles[1],curr_joint_angles[2]);
        printf("Joint Currents: %f %f %f\n", curr_joint_currents[0],curr_joint_currents[1],curr_joint_currents[2]);
        printf("Joint Angular Vels: %f %f %f\n", curr_joint_angular_vels[0],curr_joint_angular_vels[1],curr_joint_angular_vels[2]);

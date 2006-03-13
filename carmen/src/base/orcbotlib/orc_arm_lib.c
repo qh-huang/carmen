@@ -84,6 +84,7 @@ static int s_active;
 static int s_num_joints;
 static carmen_arm_joint_t *s_joint_types;
 static double s_time;   
+static double s_delta_time;
 
 // current joint data
 static double *s_arm_theta;
@@ -243,10 +244,16 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
     iTermPtr = &s_arm_iTerm[i];
     if( fabs( theta_delta ) > MIN_ANGLE_TO_MOVE ) {
 
+      s_delta_time = 1.0;
+
       // compute the PID terms
-      pTerm = theta_delta * ORC_ARM_THETA_P_GAIN;
-      *iTermPtr += ( theta_delta * ORC_ARM_THETA_I_GAIN );
-      dTerm = ( theta_delta - s_arm_error_prev[i] ) * ORC_ARM_THETA_D_GAIN;
+      pTerm = theta_delta * (double)THETA_P_GAIN[i];
+      *iTermPtr += ( theta_delta * (double)THETA_I_GAIN[i] ) * s_delta_time ;
+      dTerm = ( theta_delta - s_arm_error_prev[i] ) / s_delta_time * (double)THETA_D_GAIN[i];
+
+      // debug on PID terms
+      printf( "Joint %d: delta theta %f, theta_p_gain %f \n", i, theta_delta, (double)THETA_P_GAIN[i]);
+      printf( "Joint %d: p: %f, i: %f, d: %f, dt %f \n", i, pTerm, *iTermPtr, dTerm, s_delta_time );
 
       // set velocity to be within limits
       desired_angular_velocity = ( pTerm + *iTermPtr + dTerm );
@@ -407,6 +414,7 @@ static void update_internal_data(void)
     double ticks_to_radian = 1/(double)TICKS_PER_RADIAN[i];
     double delta_theta = compute_delta_theta( curr_tick_count, prev_tick_count,
 					      ticks_to_radian );
+    delta_theta = REVERSE_THETA[i] * delta_theta;
 
     printf("* Internal Update: port[%d]=%d, old theta was %f, d theta is %f curr_tick=%d prev_tick=%d\n",
        i,ENCODER_PORTMAP[i],s_arm_theta[i],delta_theta,curr_tick_count,prev_tick_count);
@@ -424,9 +432,10 @@ static void update_internal_data(void)
   }			   
 				
   // correct for the fact that when the shoulder moves, the elbow angle also changes
-  // s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
+  s_arm_theta[ELBOW] = s_arm_theta[ELBOW] - shoulder_delta_theta;
  
   // update time
+  s_delta_time = curr_time - s_time;
   s_time = curr_time;  
 }
 
