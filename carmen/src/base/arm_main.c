@@ -39,7 +39,7 @@ static double *goal_joint_angles = NULL;
 static double reset_time;
 static carmen_arm_state_message arm_state;
 
-#define USE_ARM_CURRENT_STATES     0
+#define USE_ARM_CURRENT_STATES     1
 #define USE_ARM_ANGULAR_VEL_STATES 1
 
 #define USING_CURRENTS_MASK    0
