@@ -134,7 +134,7 @@ int carmen_arm_direct_initialize(carmen_arm_model_t *arm_model){
   carmen_test_alloc( s_joint_types );
   s_arm_theta = calloc( s_num_joints, sizeof( double ) );
   carmen_test_alloc( s_arm_theta );
-  s_arm_tick = calloc( s_num_joints, sizeof( int) ); // emma-- just trying double ) );
+  s_arm_tick = calloc( s_num_joints, sizeof( int ) ); 
   carmen_test_alloc( s_arm_tick );
   s_arm_angular_velocity = calloc( s_num_joints, sizeof( double ) );
   carmen_test_alloc( s_arm_angular_velocity );
@@ -321,7 +321,8 @@ void carmen_arm_direct_get_state(double *joint_angles, double *joint_currents,
    }
  
   // for now, since the gripper's not being used
-  *gripper_closed = 0;
+   if (gripper_closed)
+     *gripper_closed = 0;
 }
 
 
