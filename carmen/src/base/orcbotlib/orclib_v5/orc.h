@@ -88,7 +88,11 @@ void orc_digital_set(orc_t *orc, int port, int val);
 int  orc_sonar_read(orc_t *orc, int port);
 
 // pwm is a 7 bit value + sign bit = 8 bits total
-void orc_motor_set(orc_t *orc, int port, int spwm);
+// note: this is not the same as -128 to 127!
+void orc_motor_set( orc_t *orc, int port, int spwm );
+
+// this takes in an int btw -128 and 127
+void orc_motor_set_signed( orc_t *orc, int port, int pwm );
 
 // should be between 0 and 1 (1 is full duty cycle on)
 void orc_pwm_set(orc_t *orc, int port, float v);

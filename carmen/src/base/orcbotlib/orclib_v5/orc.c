@@ -556,6 +556,18 @@ void orc_pinmode_set( orc_t *orc, int port, int mode){
 }
 
 
+// this takes in an int btw -128 and 127
+void orc_motor_set_signed( orc_t *orc, int port, int pwm )
+{
+  // set the signed pwm value
+  int spwm  = pwm;
+  if( pwm < 0 ){
+    spwm = -1 * ( 128 + pwm );  // twos compliment conversion, note pwm is neg
+  }
+  orc_motor_set( orc, port, spwm );
+}
+
+
 int  orc_sonar_read(orc_t *orc __attribute__ ((unused)), int port __attribute__ ((unused))){
   return -1;
 }
