@@ -79,7 +79,14 @@ orc_comms_impl_t *orc_tcpprovider_create(char *hostname, int port);
 #define PWM 3
 
 void orc_pinmode_set( orc_t *orc, int port, int mode);
+
 int  orc_quadphase_read(orc_t *orc, int port);
+
+// reads ticks in 60 Hz windows -- be aware of overflow and underflow
+// the output is 7 bits plus a sign
+int  orc_quadphase_read_velocity(orc_t *orc, int port);
+int  orc_quadphase_read_velocity_signed(orc_t *orc, int port);
+
 int  orc_analog_read(orc_t *orc, int port);
 int  orc_digital_read(orc_t *orc, int port);
 void orc_digital_set(orc_t *orc, int port, int val);

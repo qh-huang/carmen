@@ -224,6 +224,9 @@ void carmen_arm_direct_set_limits(double *min_angle, double *max_angle,
 // most of this code is adapted from the RSS II arm by velezj
 void carmen_arm_direct_update_joints( double *desired_angles ){
 
+  printf( "orc_arm_lib: desired angles are %f, %f, %f \n " , 
+	  desired_angles[0], desired_angles[1], desired_angles[2] );
+
   double velocity_command_set[s_num_joints];
   int pwm_command_set[s_num_joints];
 
@@ -252,7 +255,7 @@ void carmen_arm_direct_update_joints( double *desired_angles ){
       dTerm = ( theta_delta - s_arm_error_prev[i] ) / s_delta_time * (double)THETA_D_GAIN[i];
 
       // debug on PID terms
-      printf( "Joint %d: delta theta %f, theta_p_gain %f \n", i, theta_delta, (double)THETA_P_GAIN[i]);
+       printf( "Joint %d: delta theta %f, theta_p_gain %f \n", i, theta_delta, (double)THETA_P_GAIN[i]);
       printf( "Joint %d: p: %f, i: %f, d: %f, dt %f \n", i, pTerm, *iTermPtr, dTerm, s_delta_time );
 
       // set velocity to be within limits

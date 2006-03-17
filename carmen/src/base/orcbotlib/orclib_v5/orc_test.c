@@ -14,12 +14,25 @@ int main( int argn, char **argv ){
   fprintf( stderr, " made orc \n" );
 
   orc_motor_set( orc, 0, -113 );
-  orc_motor_set( orc, 1, 0 );
+  orc_motor_set( orc, 2, 15 );
+
+  int count = orc_quadphase_read( orc, 1 );
+  fprintf( stderr, "encoder count = %d \n", count );
 
   sleep(1);
+  int count = orc_quadphase_read( orc, 1 );
+  fprintf( stderr, "encoder count = %d \n", count );
   
+  sleep(1);
+  int count = orc_quadphase_read( orc, 1 );
+  fprintf( stderr, "encoder count = %d \n", count );
+
+  sleep(1);
+  int count = orc_quadphase_read( orc, 1 );
+  fprintf( stderr, "encoder count = %d \n", count );
+
   orc_motor_set( orc, 0, 0 );
-  orc_motor_set( orc, 1, 0 );
+  orc_motor_set( orc, 2, 0 );
 
   /*
   // motors and encoders

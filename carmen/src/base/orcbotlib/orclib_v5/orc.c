@@ -631,3 +631,25 @@ void orc_clk_set(orc_t *orc, int port, int divider){
 	req[PACKET_DATA + 2] = divider&0xff;
 	orc_transaction_retry(orc, req, resp);
 }
+
+// reads ticks in 60 Hz windows
+int orc_quadphase_read_velocity(orc_t *orc, int port)
+{
+	CMDPROLOGUE;
+
+	req[PACKET_DATALEN] = 2;
+	req[PACKET_DATA + 0] = CMD_QUADPHASE_READ;
+	req[PACKET_DATA + 1] = port;
+	orc_transaction_retry(orc, req, resp);
+
+	return packet_16u(resp, 3);
+}
+
+
+int orc_quadphase_read_velocity_signed( orc_t *orc, int port )
+{
+  // set the signed pwm value
+  int v  = orc_quadphase_read_velocity( orc, port );
+  short real_velocity = v & 0x0000FFFF; 
+  return (int) real_velocity;
+}

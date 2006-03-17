@@ -2,9 +2,29 @@
 #define ORC_RIGHT_MOTOR 2
 
 #define ORC_LEFT_ENCODER_PORT 0
-#define ORC_RIGHT_ENCODER_PORT 1
+#define ORC_RIGHT_ENCODER_PORT 2
+
+#define ORC_LEFT_REVERSE_ENCODER 1
+#define ORC_RIGHT_REVERSE_ENCODER -1
 
 
+#define ORC_MAX_ANGULAR_VEL 8.0 // Radians / seconds
+
+#define ORC_MAX_PWM 127
+// #define ORC_FF_GAIN ((ORC_MAX_PWM / ORC_MAX_ANGULAR_VEL) * 0.9)
+#define ORC_P_GAIN 5 //20
+#define ORC_D_GAIN 3 //5
+#define ORC_I_GAIN .5 //0
+
+#define ORC_WHEEL_DIAMETER .2525
+#define ORC_WHEEL_BASE .37
+#define ORC_TICKS_PER_REVOLUTION 20000.0
+#define ORC_ENCODER_RESOLUTION 4550
+#define ORC_GEAR_RATIO 1 // 12.5 ??? 
+//#define ORC_TICKS_PER_REVOLUTION = ORC_ENCODER_RESOLUTION*ORC_GEAR_RATIO
+
+
+// --------- of questionable use -----------
 
 #define ORC_MASTER 0
 #define ORC_SLAVE 1
@@ -33,8 +53,6 @@
 #define ORC_IR_PING 3 // Digital Out; 
 #define ORC_IR_ECHO 1 // Digital In (Pull-Up)
 
-
-
 #define ORC_LEFT_MOTOR_ACTUAL_PWM 14
 #define ORC_RIGHT_MOTOR_ACTUAL_PWM 19
 
@@ -62,25 +80,11 @@
 #define ORC_BUMPER_PORT2 12
 #define ORC_BUMPER_PORT3 13
 
-#define ORC_MAX_ANGULAR_VEL 8.0 // Radians / seconds
-
-#define ORC_MAX_PWM 250
-#define ORC_FF_GAIN ((ORC_MAX_PWM / ORC_MAX_ANGULAR_VEL) * 0.9)
-#define ORC_P_GAIN 20
-#define ORC_D_GAIN 5
-
 #define ORC_VEL_ACCEL_TEMP 0.9
 #define ORC_VEL_DECEL_TEMP 0.4
 
-
-
 #define ORC_MASTER_TIME 4
 #define ORC_SLAVE_TIME 48
-
-#define ORC_WHEEL_DIAMETER .2525
-#define ORC_WHEEL_BASE .37
-#define ORC_ENCODER_RESOLUTION 4550
-#define ORC_GEAR_RATIO 1 // 12.5 ??? 
 
 #define ORC_DIGITAL_IN_PULL_UP 1
 #define ORC_DIGITAL_IN 6
