@@ -1,5 +1,6 @@
 from pyRobot import *
 from math import *
+from time import sleep
 
 def test1():
 	# Create an callback
@@ -63,6 +64,31 @@ def test2():
 	print "done"
 
 
+#test the ability to create two link messages to two different robots
+#note that only each message can be linked only one place
+#(this is a bug of c++ unfortunately)
+#so front_laser goes to one class/location only, we can fix this later
+#if its a huge problem
+def test3():
+	# Create an callback
+	robot1 = Robot().__disown__()
+	robot2 = Robot().__disown__()
+
+	robot1.name = "robot1"
+	robot2.name = "robot2"
+	
+	# Create callers
+        # the exact syntax of these might change a bit
+	pyCarmen.front_laser(robot1)
+	pyCarmen.odometry(robot2)
+		
+	# Dispatch and don't return
+	robot1.start()
+	robot2.start()
+	
+	sleep(1)
+
 	
 #test1()
-test2()
+#test2()
+test3()
