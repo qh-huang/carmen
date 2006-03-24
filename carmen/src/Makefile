@@ -87,12 +87,24 @@ phase2:
 
 
 phase3:
-	$(ECHO) "Making .so libraries... "
+ifndef NO_PYTHON
+	$(ECHO)
+	$(ECHO) "       *******************************"
+	$(ECHO) "       S H A R E D   L I B R A R I E S"
+	$(ECHO) "       *******************************"
+	$(ECHO)
 	$(RECURSE)
+endif
 
 phase4:
-	$(ECHO) "Making Python... "
+ifndef NO_PYTHON
+	$(ECHO)
+	$(ECHO) "       ***********"
+	$(ECHO) "       P Y T H O N"
+	$(ECHO) "       ***********"
+	$(ECHO)
 	$(RECURSE)
+endif
 
 install:
 	$(ECHO)
