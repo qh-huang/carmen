@@ -154,6 +154,13 @@ void laser_laser4_handler(carmen_laser_laser_message *laser)
 				    carmen_get_time() - logger_starttime);
 }
 
+void laser_laser5_handler(carmen_laser_laser_message *laser)
+{
+  fprintf(stderr, "5");
+  carmen_logwrite_write_laser_laser(laser, 5, outfile,
+				    carmen_get_time() - logger_starttime);
+}
+
 void localize_handler(carmen_localize_globalpos_message *msg)
 {
   fprintf(stderr, "L");
@@ -278,6 +285,9 @@ int main(int argc, char **argv)
 					  CARMEN_SUBSCRIBE_ALL);
     carmen_laser_subscribe_laser4_message(NULL, (carmen_handler_t)
 					  laser_laser4_handler, 
+					  CARMEN_SUBSCRIBE_ALL);
+    carmen_laser_subscribe_laser5_message(NULL, (carmen_handler_t)
+					  laser_laser5_handler, 
 					  CARMEN_SUBSCRIBE_ALL);
   }
 
