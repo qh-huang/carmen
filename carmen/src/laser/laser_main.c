@@ -212,28 +212,28 @@ void read_parameters(int argc, char **argv)
     {"laser", "laser3_type", CARMEN_PARAM_STRING, &str3, 0, NULL},
     {"laser", "laser3_resolution", CARMEN_PARAM_DOUBLE, &res3, 0, NULL},
     {"laser", "laser3_use_remission", CARMEN_PARAM_STRING, &rem3, 0, NULL},
-    {"laser", "laser3_laser_fov", CARMEN_PARAM_DOUBLE, &fov3, 0, NULL},
-    {"laser", "laser3_laser_baud", CARMEN_PARAM_INT, 
+    {"laser", "laser3_fov", CARMEN_PARAM_DOUBLE, &fov3, 0, NULL},
+    {"laser", "laser3_baud", CARMEN_PARAM_INT, 
      &laser3.settings.set_baudrate, 0, NULL},
-    {"laser", "laser3_laser_flipped", CARMEN_PARAM_INT, 
+    {"laser", "laser3_flipped", CARMEN_PARAM_INT, 
      &laser3.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser4_params[] = {
     {"laser", "laser4_type", CARMEN_PARAM_STRING, &str4, 0, NULL},
     {"laser", "laser4_resolution", CARMEN_PARAM_DOUBLE, &res4, 0, NULL},
     {"laser", "laser4_use_remission", CARMEN_PARAM_STRING, &rem4, 0, NULL},
-    {"laser", "laser4_laser_fov", CARMEN_PARAM_DOUBLE, &fov4, 0, NULL},
-    {"laser", "laser4_laser_baud", CARMEN_PARAM_INT, 
+    {"laser", "laser4_fov", CARMEN_PARAM_DOUBLE, &fov4, 0, NULL},
+    {"laser", "laser4_baud", CARMEN_PARAM_INT, 
      &laser4.settings.set_baudrate, 0, NULL},
-    {"laser", "laser4_laser_flipped", CARMEN_PARAM_INT, 
+    {"laser", "laser4_flipped", CARMEN_PARAM_INT, 
      &laser4.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser5_params[] = {
     {"laser", "laser5_type", CARMEN_PARAM_STRING, &str5, 0, NULL},
     {"laser", "laser5_resolution", CARMEN_PARAM_DOUBLE, &res5, 0, NULL},
     {"laser", "laser5_use_remission", CARMEN_PARAM_STRING, &rem5, 0, NULL},
-    {"laser", "laser5_laser_fov", CARMEN_PARAM_DOUBLE, &fov5, 0, NULL},
+    {"laser", "laser5_fov", CARMEN_PARAM_DOUBLE, &fov5, 0, NULL},
     {"laser", "laser5_baud", CARMEN_PARAM_INT, 
      &laser5.settings.set_baudrate, 0, NULL},
-    {"laser", "laser5_laser_flipped", CARMEN_PARAM_INT, 
+    {"laser", "laser5_flipped", CARMEN_PARAM_INT, 
      &laser5.settings.laser_flipped, 0, NULL}};
 
   carmen_param_install_params(argc, argv, laser_devs, 
