@@ -9,6 +9,7 @@ extern "C" {
 #define     CARMEN_REAR_LASER_NUM        1
 #define     CARMEN_LASER3_NUM            2
 #define     CARMEN_LASER4_NUM            3
+#define     CARMEN_LASER5_NUM            4
 
 #ifdef __cplusplus
 }

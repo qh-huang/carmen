@@ -78,10 +78,34 @@ carmen_laser_subscribe_laser4_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+
+void
+carmen_laser_subscribe_laser5_message(carmen_laser_laser_message *laser,
+				      carmen_handler_t handler,
+				      carmen_subscribe_t subscribe_how);
+
 void
 carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how);
+
+
+void
+carmen_laser_unsubscribe_frontlaser_message(carmen_handler_t handler);
+
+void
+carmen_laser_unsubscribe_rearlaser_message(carmen_handler_t handler);
+
+void
+carmen_laser_unsubscribe_laser3_message(carmen_handler_t handler);
+
+void
+carmen_laser_unsubscribe_laser4_message(carmen_handler_t handler);
+
+void
+carmen_laser_unsubscribe_laser5_message(carmen_handler_t handler);
+
+
 
 #ifdef __cplusplus
 }

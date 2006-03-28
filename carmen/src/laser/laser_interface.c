@@ -107,9 +107,26 @@ carmen_laser_subscribe_laser4_message(carmen_laser_laser_message *laser,
 }
 
 void
+carmen_laser_subscribe_laser5_message(carmen_laser_laser_message *laser,
+				      carmen_handler_t handler,
+				      carmen_subscribe_t subscribe_how)
+{
+  carmen_subscribe_message(CARMEN_LASER_LASER5_NAME, 
+			   CARMEN_LASER_LASER5_FMT,
+			   laser, sizeof(carmen_laser_laser_message), handler,
+			   subscribe_how);
+}
+
+void
 carmen_laser_unsubscribe_laser4_message(carmen_handler_t handler)
 {
   carmen_unsubscribe_message(CARMEN_LASER_LASER4_NAME, handler);
+}
+
+void
+carmen_laser_unsubscribe_laser5_message(carmen_handler_t handler)
+{
+  carmen_unsubscribe_message(CARMEN_LASER_LASER5_NAME, handler);
 }
 
 void

@@ -4,15 +4,16 @@
 #include "sick.h"
 
 
-int allocsize[4] = {0, 0, 0, 0};
-float *range_buffer[4] = {NULL, NULL, NULL, NULL};
+int allocsize[5] = {0, 0, 0, 0, 0};
+float *range_buffer[5] = {NULL, NULL, NULL, NULL, NULL};
 
-int allocremsize[4] = {0, 0, 0, 0};
-float *remission_buffer[4] = {NULL, NULL, NULL, NULL};
+int allocremsize[5] = {0, 0, 0, 0, 0};
+float *remission_buffer[5] = {NULL, NULL, NULL, NULL, NULL};
 
 
 void publish_laser_alive(int front_stalled, int rear_stalled,
-			 int laser3_stalled, int laser4_stalled)
+			 int laser3_stalled, int laser4_stalled,
+			 int laser5_stalled )
 {
   IPC_RETURN_TYPE err;
   carmen_laser_alive_message msg;
@@ -21,6 +22,7 @@ void publish_laser_alive(int front_stalled, int rear_stalled,
   msg.rearlaser_stalled  = rear_stalled;
   msg.laser3_stalled     = laser3_stalled;
   msg.laser4_stalled     = laser4_stalled;
+  msg.laser5_stalled     = laser5_stalled;
 
   err = IPC_publishData(CARMEN_LASER_ALIVE_NAME, &msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_LASER_ALIVE_NAME);
@@ -104,6 +106,11 @@ void publish_laser_message(sick_laser_p laser,
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_LASER4_NAME);
     break;
+  case CARMEN_LASER5_NUM:
+    err = IPC_publishData(CARMEN_LASER_LASER5_NAME, &msg);
+    carmen_test_ipc_exit(err, "Could not publish", 
+			 CARMEN_LASER_LASER5_NAME);
+    break;
   }
 }
 
@@ -121,11 +128,15 @@ void ipc_initialize_messages(void)
 
   err = IPC_defineMsg(CARMEN_LASER_LASER3_NAME, IPC_VARIABLE_LENGTH, 
 		      CARMEN_LASER_LASER3_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_FRONTLASER_NAME);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER3_NAME);
   
   err = IPC_defineMsg(CARMEN_LASER_LASER4_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_LASER_LASER4_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_REARLASER_NAME);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER4_NAME);
+  
+  err = IPC_defineMsg(CARMEN_LASER_LASER5_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_LASER5_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER5_NAME);
   
   err = IPC_defineMsg(CARMEN_LASER_ALIVE_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_LASER_ALIVE_FMT);

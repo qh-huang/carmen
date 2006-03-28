@@ -93,15 +93,19 @@ typedef struct {
 #define      CARMEN_LASER_LASER4_NAME           "carmen_laser_laser4"
 #define      CARMEN_LASER_LASER4_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
+#define      CARMEN_LASER_LASER5_NAME           "carmen_laser_laser5"
+#define      CARMEN_LASER_LASER5_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+
 typedef struct {
   int frontlaser_stalled;
   int rearlaser_stalled;
   int laser3_stalled;
   int laser4_stalled;
+  int laser5_stalled;
 } carmen_laser_alive_message;
   
 #define      CARMEN_LASER_ALIVE_NAME            "carmen_laser_alive"
-#define      CARMEN_LASER_ALIVE_FMT             "{int,int,int,int}"
+#define      CARMEN_LASER_ALIVE_FMT             "{int,int,int,int,int}"
 
   
 #ifdef __cplusplus

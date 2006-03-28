@@ -4,12 +4,13 @@
 #include "laser_ipc.h"
 #include "laser_messages.h"
 
-sick_laser_t laser1, laser2, laser3, laser4;
+sick_laser_t laser1, laser2, laser3, laser4, laser5;
 
-carmen_laser_laser_config_t laser1_config, laser2_config, laser3_config, laser4_config;
+carmen_laser_laser_config_t laser1_config, laser2_config, laser3_config, laser4_config, laser5_config;
 
 int use_laser1 = 0, use_laser2 = 0;
 int use_laser3 = 0, use_laser4 = 0;
+int use_laser5 = 0;
 int quit_signal = 0;
 
 void set_default_parameters(sick_laser_p laser, int laser_num)
@@ -177,51 +178,63 @@ void interpret_params(sick_laser_p laser, char *dev, char *type, double res, cha
 
 void read_parameters(int argc, char **argv)
 {
-  char *dev1, *dev2, *dev3, *dev4;
-  char *str1, *str2, *str3, *str4;
-  double res1, res2, res3, res4;
-  double fov1, fov2, fov3, fov4;
-  char *rem1, *rem2, *rem3, *rem4;
+  char *dev1, *dev2, *dev3, *dev4, *dev5;
+  char *str1, *str2, *str3, *str4, *str5;
+  double res1, res2, res3, res4, res5;
+  double fov1, fov2, fov3, fov4, fov5;
+  char *rem1, *rem2, *rem3, *rem4, *rem5;
 
   carmen_param_t laser_devs[] = {
     {"laser", "front_laser_dev", CARMEN_PARAM_STRING, &dev1, 0, NULL},
     {"laser", "rear_laser_dev", CARMEN_PARAM_STRING, &dev2, 0, NULL},
     {"laser", "laser3_dev", CARMEN_PARAM_STRING, &dev3, 0, NULL},
-    {"laser", "laser4_dev", CARMEN_PARAM_STRING, &dev4, 0, NULL}};
+    {"laser", "laser4_dev", CARMEN_PARAM_STRING, &dev4, 0, NULL},
+    {"laser", "laser5_dev", CARMEN_PARAM_STRING, &dev5, 0, NULL}};
   carmen_param_t laser1_params[] = {
     {"laser", "front_laser_type", CARMEN_PARAM_STRING, &str1, 0, NULL},
     {"laser", "front_laser_resolution", CARMEN_PARAM_DOUBLE, &res1, 0, NULL},
     {"laser", "front_laser_use_remission", CARMEN_PARAM_STRING, &rem1, 0, NULL},
-    {"laser", "front_laser_baud", CARMEN_PARAM_INT, 
+    {"laser", "front_laser_fov", CARMEN_PARAM_DOUBLE,  &fov1, 0, NULL},
+    {"laser", "front_laser_baud", CARMEN_PARAM_INT,  
      &laser1.settings.set_baudrate, 0, NULL},
-    {"laser", "front_laser_fov", CARMEN_PARAM_DOUBLE, 
-     &fov1, 0, NULL},
     {"laser", "front_laser_flipped", CARMEN_PARAM_INT, 
      &laser1.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser2_params[] = {
     {"laser", "rear_laser_type", CARMEN_PARAM_STRING, &str2, 0, NULL},
     {"laser", "rear_laser_resolution", CARMEN_PARAM_DOUBLE, &res2, 0, NULL},
     {"laser", "rear_laser_use_remission", CARMEN_PARAM_STRING, &rem2, 0, NULL},
-    {"laser", "rear_laser_fov", CARMEN_PARAM_DOUBLE, 
-     &fov2, 0, NULL},
+    {"laser", "rear_laser_fov", CARMEN_PARAM_DOUBLE, &fov2, 0, NULL},
     {"laser", "rear_laser_baud", CARMEN_PARAM_INT, 
-     &laser2.settings.set_baudrate, 0, NULL}};
+     &laser2.settings.set_baudrate, 0, NULL},
+    {"laser", "rear_laser_flipped", CARMEN_PARAM_INT, 
+     &laser2.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser3_params[] = {
     {"laser", "laser3_type", CARMEN_PARAM_STRING, &str3, 0, NULL},
     {"laser", "laser3_resolution", CARMEN_PARAM_DOUBLE, &res3, 0, NULL},
     {"laser", "laser3_use_remission", CARMEN_PARAM_STRING, &rem3, 0, NULL},
-    {"laser", "laser3_laser_fov", CARMEN_PARAM_DOUBLE, 
-     &fov3, 0, NULL},
-    {"laser", "laser3_baud", CARMEN_PARAM_INT, 
-     &laser3.settings.set_baudrate, 0, NULL}};
+    {"laser", "laser3_laser_fov", CARMEN_PARAM_DOUBLE, &fov3, 0, NULL},
+    {"laser", "laser3_laser_baud", CARMEN_PARAM_INT, 
+     &laser3.settings.set_baudrate, 0, NULL},
+    {"laser", "laser3_laser_flipped", CARMEN_PARAM_INT, 
+     &laser3.settings.laser_flipped, 0, NULL}};
   carmen_param_t laser4_params[] = {
     {"laser", "laser4_type", CARMEN_PARAM_STRING, &str4, 0, NULL},
     {"laser", "laser4_resolution", CARMEN_PARAM_DOUBLE, &res4, 0, NULL},
     {"laser", "laser4_use_remission", CARMEN_PARAM_STRING, &rem4, 0, NULL},
-    {"laser", "laser4_laser_fov", CARMEN_PARAM_DOUBLE, 
-     &fov4, 0, NULL},
-    {"laser", "laser4_baud", CARMEN_PARAM_INT, 
-     &laser4.settings.set_baudrate, 0, NULL}};
+    {"laser", "laser4_laser_fov", CARMEN_PARAM_DOUBLE, &fov4, 0, NULL},
+    {"laser", "laser4_laser_baud", CARMEN_PARAM_INT, 
+     &laser4.settings.set_baudrate, 0, NULL},
+    {"laser", "laser4_laser_flipped", CARMEN_PARAM_INT, 
+     &laser4.settings.laser_flipped, 0, NULL}};
+  carmen_param_t laser5_params[] = {
+    {"laser", "laser5_type", CARMEN_PARAM_STRING, &str5, 0, NULL},
+    {"laser", "laser5_resolution", CARMEN_PARAM_DOUBLE, &res5, 0, NULL},
+    {"laser", "laser5_use_remission", CARMEN_PARAM_STRING, &rem5, 0, NULL},
+    {"laser", "laser5_laser_fov", CARMEN_PARAM_DOUBLE, &fov5, 0, NULL},
+    {"laser", "laser5_baud", CARMEN_PARAM_INT, 
+     &laser5.settings.set_baudrate, 0, NULL},
+    {"laser", "laser5_laser_flipped", CARMEN_PARAM_INT, 
+     &laser5.settings.laser_flipped, 0, NULL}};
 
   carmen_param_install_params(argc, argv, laser_devs, 
 			      sizeof(laser_devs) / sizeof(laser_devs[0]));
@@ -253,6 +266,13 @@ void read_parameters(int argc, char **argv)
 				sizeof(laser4_params) / 
 				sizeof(laser4_params[0]));
     interpret_params(&laser4, dev4, str4, res4, rem4, fov4);
+  }
+  if(strncmp(dev5, "none", 4) != 0) {
+    use_laser5 = 1;
+    carmen_param_install_params(argc, argv, laser5_params,
+				sizeof(laser5_params) / 
+				sizeof(laser5_params[0]));
+    interpret_params(&laser5, dev5, str5, res5, rem5, fov5);
   }
 }
 
@@ -365,6 +385,7 @@ int carmen_laser_start(int argc, char **argv)
   set_default_parameters(&laser2, CARMEN_REAR_LASER_NUM);
   set_default_parameters(&laser3, CARMEN_LASER3_NUM);
   set_default_parameters(&laser4, CARMEN_LASER4_NUM);
+  set_default_parameters(&laser5, CARMEN_LASER5_NUM);
   read_parameters(argc, argv);
   
 
@@ -385,6 +406,10 @@ int carmen_laser_start(int argc, char **argv)
     set_laser_config_structure(&laser4, &laser4_config);
     sick_start_laser(&laser4);
   }
+  if(use_laser5) {
+    set_laser_config_structure(&laser5, &laser5_config);
+    sick_start_laser(&laser5);
+  }
   return 0;
 }
 
@@ -398,6 +423,8 @@ void carmen_laser_shutdown(int signo __attribute__ ((unused)))
     sick_stop_laser(&laser3);
   if(use_laser4)
     sick_stop_laser(&laser4);
+  if(use_laser5)
+    sick_stop_laser(&laser5);
 }
 
 int carmen_laser_run(void)
@@ -408,7 +435,7 @@ int carmen_laser_run(void)
   double current_time;
   int print_stats;
   static int laser1_stalled = 0, laser2_stalled = 0, laser3_stalled = 0,
-    laser4_stalled = 0;
+    laser4_stalled = 0,    laser5_stalled = 0;;
 
   if(first) {
     last_update = carmen_get_time();
@@ -461,13 +488,23 @@ int carmen_laser_run(void)
 	      "STALLED " : " ", laser4.buffer_position / 
 	      (float)LASER_BUFFER_SIZE * 100.0);
   }
+  if(use_laser5) {
+    sick_handle_laser(&laser5);
+    if(laser5.new_reading)
+      publish_laser_message(&laser5, &laser5_config);   
+    laser5_stalled = (current_time - laser5.timestamp > 1.0);
+    if(print_stats) 
+      fprintf(stderr, "L5: %s(%.1f%% full) ", laser5_stalled ?
+	      "STALLED " : " ", laser5.buffer_position / 
+	      (float)LASER_BUFFER_SIZE * 100.0);
+  }
   if(print_stats) {
     fprintf(stderr, "\n");
     last_update = current_time;
   }
   if(current_time - last_alive > 1.0) {
     publish_laser_alive(laser1_stalled, laser2_stalled, laser3_stalled,
-			laser4_stalled);
+			laser4_stalled, laser5_stalled);
     last_alive = current_time;
   }
 
