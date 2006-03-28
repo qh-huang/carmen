@@ -278,7 +278,7 @@ start_graphics(int argc, char *argv[])
 
 void
 usage(char* argv0) {
-  fprintf(stderr, "Usage: %s [-flaser, -rlaser, -laser3, -laser4] [-range max_range]\n", argv0);
+  fprintf(stderr, "Usage: %s [-flaser, -rlaser, -laser3, -laser4, -laser5] [-range max_range]\n", argv0);
   exit(1);
 }
 
@@ -307,6 +307,8 @@ main(int argc, char **argv)
     laser_num  = 2;
   else if (carmen_find_param("laser4")) 
     laser_num  = 3;
+  else if (carmen_find_param("laser5")) 
+    laser_num  = 4;
   else
     laser_num  = 0;
   
@@ -331,6 +333,12 @@ main(int argc, char **argv)
     carmen_laser_subscribe_laser4_message(&laser,
 					  (carmen_handler_t)
 					    laser_handler,
+					  CARMEN_SUBSCRIBE_LATEST);
+  
+  else if(laser_num == 4) 
+    carmen_laser_subscribe_laser5_message(&laser,
+					  (carmen_handler_t)
+					  laser_handler,
 					  CARMEN_SUBSCRIBE_LATEST);
   
   signal(SIGINT, shutdown_laserview);
