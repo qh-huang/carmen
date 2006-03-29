@@ -21,8 +21,8 @@ double playback_timestamp;
 
 carmen_base_odometry_message odometry;
 carmen_simulator_truepos_message truepos;
-carmen_robot_laser_message laser1, laser2, laser3, laser4;
-carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4;
+carmen_robot_laser_message laser1, laser2, laser3, laser4, laser5;
+carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4, rawlaser5;
 carmen_localize_globalpos_message globalpos;
 
 carmen_gps_gpgga_message gpsgga;
@@ -133,6 +133,10 @@ void register_ipc_messages(void)
                       CARMEN_LASER_LASER4_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER4_NAME);
 
+  err = IPC_defineMsg(CARMEN_LASER_LASER5_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_LASER_LASER5_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_LASER_LASER5_NAME);
+
   err = IPC_defineMsg(CARMEN_LOCALIZE_GLOBALPOS_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_LOCALIZE_GLOBALPOS_FMT);
   carmen_test_ipc_exit(err, "Could not define", 
@@ -197,6 +201,8 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser3, 0},
   {"LASER4", CARMEN_LASER_LASER4_NAME, 
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
+  {"LASER5", CARMEN_LASER_LASER5_NAME, 
+   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser5, 0},
 
   {"RAWLASER1", CARMEN_LASER_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_laser_laser_message, &rawlaser1, 0},
@@ -206,14 +212,18 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_laser_laser_message, &rawlaser3, 0},
   {"RAWLASER4", CARMEN_LASER_LASER4_NAME, 
    (converter_func)carmen_string_to_laser_laser_message, &rawlaser4, 0},
-  {"ROBOLASER1", CARMEN_ROBOT_FRONTLASER_NAME, 
+  {"RAWLASER5", CARMEN_LASER_LASER5_NAME, 
+   (converter_func)carmen_string_to_laser_laser_message, &rawlaser5, 0},
+  {"ROBOTLASER1", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser1, 0},
-  {"ROBOLASER2", CARMEN_ROBOT_REARLASER_NAME, 
+  {"ROBOTLASER2", CARMEN_ROBOT_REARLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser2, 0},
-  {"ROBOLASER3", CARMEN_ROBOT_FRONTLASER_NAME, 
+  {"ROBOTLASER3", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser3, 0},
-  {"ROBOLASER4", CARMEN_ROBOT_FRONTLASER_NAME, 
+  {"ROBOTLASER4", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser4, 0},
+  {"ROBOTLASER5", CARMEN_ROBOT_FRONTLASER_NAME, 
+   (converter_func)carmen_string_to_robot_laser_message, &laser5, 0},
   {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
    (converter_func)carmen_string_to_gps_gpgga_message, &gpsgga, 0},
   {"NMEARMC", CARMEN_GPS_GPRMC_MESSAGE_NAME, 
@@ -368,10 +378,12 @@ int main(int argc, char **argv)
   memset(&laser2, 0, sizeof(laser2));
   memset(&laser3, 0, sizeof(laser3));
   memset(&laser4, 0, sizeof(laser4));
+  memset(&laser5, 0, sizeof(laser5));
   memset(&rawlaser1, 0, sizeof(rawlaser1));
   memset(&rawlaser2, 0, sizeof(rawlaser2));
   memset(&rawlaser3, 0, sizeof(rawlaser3));
   memset(&rawlaser4, 0, sizeof(rawlaser4));
+  memset(&rawlaser5, 0, sizeof(rawlaser5));
   memset(&gpsgga, 0, sizeof(gpsgga));
   memset(&gpsrmc, 0, sizeof(gpsrmc));
 
