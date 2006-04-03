@@ -298,13 +298,23 @@ long carmen_serial_numChars(int dev_fd)
 
 int carmen_serial_ClearInputBuffer(int dev_fd)
 {
-  unsigned char buffer[4096];
+  int max_serial_buffer_size = 16384; 
+  unsigned char buffer[max_serial_buffer_size]; 
   int val = 0;
-
-  val = carmen_serial_numChars(dev_fd);
-  if(val > 0)
+  int val_total = 0;
+  
+  val_total = carmen_serial_numChars(dev_fd);
+  val = val_total;
+  
+  while (val > max_serial_buffer_size) {
+    read(dev_fd, &buffer, max_serial_buffer_size);
+    val -= max_serial_buffer_size;
+  }
+  
+  if(val > 0) 
     read(dev_fd, &buffer, val);
-  return(val);
+  
+  return(val_total);
 }
 
 int carmen_serial_writen(int dev_fd, unsigned char *buf, int nChars)
@@ -357,3 +367,7 @@ int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars)
   return bytes_read;
 }
 
+
+int carmen_serial_close(int dev_fd) {
+  return close(dev_fd);
+}

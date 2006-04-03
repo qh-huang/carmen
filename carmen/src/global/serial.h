@@ -32,7 +32,7 @@
 /** \file serial.h
  * \brief Serial library.
  *
- * Serial library.
+ * Library to read data from and write data to the serial line.
  **/
 
 
@@ -43,17 +43,62 @@
 extern "C" {
 #endif
 
+  /** Open a connection to the serial line 
+   *
+   * @param *dev_fd returns the file descriptor associated to the serial line
+   * @param dev_name the name of the serial device, e.g. /dev/ttyS0
+   * @return 0 if everything is fine, -1 in case of an error.
+   **/
 int carmen_serial_connect(int *dev_fd, char *dev_name);
 
+
+  /** Sets the parameters for (a connected) serial line.
+   *
+   * @param dev_fd The file descriptor associated to the serial line.
+   * @param baudrate The baud rate to use (e.g. 9600, 19200, etc.).
+   * @param partity The parity to use (e.g. "N" for none).
+   **/
 void carmen_serial_configure(int dev_fd, int baudrate, char *parity);
 
+  /** Returns the number of availabe bytes
+   *
+   * @param *dev_fd returns the file descriptor associated to the serial line
+   * @return number of available bytes or -1 in case of an error.
+   **/
 long carmen_serial_numChars(int dev_fd);
 
+  /** Clears the buffer of the serial line.
+   *
+   * @param *dev_fd returns the file descriptor associated to the serial line
+   * @return number of bytes removed from the serial line.
+   **/
 int carmen_serial_ClearInputBuffer(int dev_fd);
 
+  /** Reads data from the serial line
+   *
+   * @param dev_fd The file descriptor associated to the serial line.
+   * @param *buf Pointer to unsiged char buffer to the data to be send over the serial line
+   * @param nChars Number of bytes in buf
+   * @return The number of bytes sent to the serial line.
+   **/
 int carmen_serial_writen(int dev_fd, unsigned char *buf, int nChars);
 
+  /** Reads data from the serial line
+   *
+   * @param dev_fd The file descriptor associated to the serial line.
+   * @param *buf Pointer to unsiged char buffer for the data to be read
+   * @param nChars Number of bytes to be read (<= size of the buffer array).
+   * @return The number of bytes read.
+   **/
 int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars);
+
+  /** Closes the file descriptior.
+   *
+   * @param dev_fd The file descriptor associated to the serial line.
+   * @return The results reported by close.
+   **/
+int carmen_serial_close(int dev_fd);
+
 
 #ifdef __cplusplus
 }
