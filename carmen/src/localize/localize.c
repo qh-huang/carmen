@@ -119,7 +119,7 @@ void carmen_localize_initialize_handler(carmen_localize_initialize_message
 					*initialize_msg)
 {
   if(initialize_msg->distribution == CARMEN_INITIALIZE_GAUSSIAN)
-    carmen_localize_initialize_particles_gaussians(filter, &map, 
+    carmen_localize_initialize_particles_gaussians(filter,
 						   initialize_msg->num_modes,
 						   initialize_msg->mean,
 						   initialize_msg->std);
@@ -131,7 +131,7 @@ void carmen_localize_initialize_handler(carmen_localize_initialize_message
 
 void carmen_localize_initialize_placename_handler(carmen_localize_initialize_placename_message *init_place)
 {
-  carmen_localize_initialize_particles_placename(filter, &map, &placelist,
+  carmen_localize_initialize_particles_placename(filter, &placelist,
 						 init_place->placename);
   publish_particles(filter, &summary);
 }

@@ -327,9 +327,9 @@ void carmen_localize_initialize_particles_uniform(carmen_localize_particle_filte
 /* initialize particles from a gaussian distribution */
 
 void carmen_localize_initialize_particles_gaussians(carmen_localize_particle_filter_p filter,
-					     carmen_localize_map_p map, int num_modes,
-					     carmen_point_t *mean,
-					     carmen_point_t *std)
+						    int num_modes,
+						    carmen_point_t *mean,
+						    carmen_point_t *std)
 {
   int i, j, each, start, end;
   float x, y, theta;
@@ -343,12 +343,12 @@ void carmen_localize_initialize_particles_gaussians(carmen_localize_particle_fil
       end = (i + 1) * each;
 
     for(j = start; j < end; j++) {
-      x = carmen_gaussian_random(mean[i].x, std[i].x) / map->config.resolution;
-      y = carmen_gaussian_random(mean[i].y, std[i].y) / map->config.resolution;
+      x = carmen_gaussian_random(mean[i].x, std[i].x);
+      y = carmen_gaussian_random(mean[i].y, std[i].y);
       theta = carmen_normalize_theta(carmen_gaussian_random(mean[i].theta, 
 							    std[i].theta));
-      filter->particles[j].x = x * map->config.resolution;
-      filter->particles[j].y = y * map->config.resolution;
+      filter->particles[j].x = x;
+      filter->particles[j].y = y;
       filter->particles[j].theta = theta;
       filter->particles[j].weight = 0.0;
     }
@@ -363,9 +363,8 @@ void carmen_localize_initialize_particles_gaussians(carmen_localize_particle_fil
 }
 
 int carmen_localize_initialize_particles_placename(carmen_localize_particle_filter_p filter,
-						    carmen_localize_map_p map,
-						    carmen_map_placelist_p placelist,
-						    char *placename)
+						   carmen_map_placelist_p placelist,
+						   char *placename)
 {
   carmen_point_t mean, std;
 
@@ -382,18 +381,17 @@ int carmen_localize_initialize_particles_placename(carmen_localize_particle_filt
   std.x = placelist->places[i].x_std;
   std.y = placelist->places[i].y_std;
   std.theta = placelist->places[i].theta_std;
-  carmen_localize_initialize_particles_gaussian(filter, map, mean, std);
+  carmen_localize_initialize_particles_gaussian(filter, mean, std);
   return 0;
 }
 
 /* initialize particles from a gaussian distribution */
 
 void carmen_localize_initialize_particles_gaussian(carmen_localize_particle_filter_p filter,
-					    carmen_localize_map_p map, 
 					    carmen_point_t mean, 
 					    carmen_point_t std)
 {
-  carmen_localize_initialize_particles_gaussians(filter, map, 1, &mean, &std);
+  carmen_localize_initialize_particles_gaussians(filter, 1, &mean, &std);
 }
 
 /* initialize particle positions and weights from parameters */

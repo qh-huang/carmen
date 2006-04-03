@@ -127,7 +127,6 @@ carmen_localize_initialize_particles_uniform(carmen_localize_particle_filter_p f
 **/
 void 
 carmen_localize_initialize_particles_gaussians(carmen_localize_particle_filter_p filter,
-					       carmen_localize_map_p map, 
 					       int num_modes,
 					       carmen_point_t *mean,
 					       carmen_point_t *std);
@@ -140,7 +139,6 @@ carmen_localize_initialize_particles_gaussians(carmen_localize_particle_filter_p
 **/
 void 
 carmen_localize_initialize_particles_gaussian(carmen_localize_particle_filter_p filter,
-					      carmen_localize_map_p map, 
 					      carmen_point_t mean, 
 					      carmen_point_t std);
 
@@ -159,7 +157,6 @@ carmen_localize_initialize_particles_manual(carmen_localize_particle_filter_p fi
 
 int 
 carmen_localize_initialize_particles_placename(carmen_localize_particle_filter_p filter,
-					       carmen_localize_map_p map,
 					       carmen_map_placelist_p placelist,
 					       char *placename);
 
