@@ -597,7 +597,7 @@ static void strip(int argc, char *argv[])
   if(fp_in == NULL) 
     carmen_die_syserror("Could not open map file for reading");
 
-  fp_out = carmen_fopen("/tmp/stripped.map", "w");
+  fp_out = carmen_fopen("/tmp/stripped.cmf", "w");
   if(fp_out == NULL) 
     carmen_die_syserror("Could not open temporary file for writing");
   
@@ -629,18 +629,18 @@ static void strip(int argc, char *argv[])
       carmen_fclose(fp_in);
       carmen_fclose(fp_out);
       if ((++n)%2) {
-	fp_in = carmen_fopen("/tmp/stripped.map", "r");
+	fp_in = carmen_fopen("/tmp/stripped.cmf", "r");
 	if(fp_in == NULL) 
 	  carmen_die_syserror("Could not open map file for reading");
-	fp_out = carmen_fopen("/tmp/stripped2.map", "w");
+	fp_out = carmen_fopen("/tmp/stripped2.cmf", "w");
 	if(fp_out == NULL) 
 	  carmen_die_syserror("Could not open temporary file for writing");
       }
       else {
-	fp_in = carmen_fopen("/tmp/stripped2.map", "r");
+	fp_in = carmen_fopen("/tmp/stripped2.cmf", "r");
 	if(fp_in == NULL)
 	  carmen_die_syserror("Could not open map file for reading");
-	fp_out = carmen_fopen("/tmp/stripped.map", "w");
+	fp_out = carmen_fopen("/tmp/stripped.cmf", "w");
 	if(fp_out == NULL) 
 	  carmen_die_syserror("Could not open temporary file for writing");
       }
@@ -649,9 +649,9 @@ static void strip(int argc, char *argv[])
   carmen_fclose(fp_in);
   carmen_fclose(fp_out);
   if (n % 2)
-    sprintf(cmd, "mv -f /tmp/stripped.map %s", filename);
+    sprintf(cmd, "mv -f /tmp/stripped.cmf %s", filename);
   else
-    sprintf(cmd, "mv -f /tmp/stripped2.map %s", filename);
+    sprintf(cmd, "mv -f /tmp/stripped2.cmf %s", filename);
   system(cmd);
 }
 

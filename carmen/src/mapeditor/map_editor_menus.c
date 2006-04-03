@@ -423,9 +423,9 @@ gint map_save(char *filename)
   if(carmen_map_file(map_filename)) {
     fp_in = carmen_fopen(map_filename, "r");
 #ifdef NO_ZLIB
-    fp_out = carmen_fopen("/tmp/tmp.map", "w");
+    fp_out = carmen_fopen("/tmp/tmp.cmf", "w");
 #else
-    fp_out = carmen_fopen("/tmp/tmp.map.gz", "w");
+    fp_out = carmen_fopen("/tmp/tmp.cmf.gz", "w");
 #endif
     if(carmen_map_vstrip(fp_in, fp_out, 3, CARMEN_MAP_GRIDMAP_CHUNK,
 			 CARMEN_MAP_OFFLIMITS_CHUNK,
@@ -449,9 +449,9 @@ gint map_save(char *filename)
     carmen_fclose(fp_in);
     carmen_fclose(fp_out);
 #ifdef NO_ZLIB
-    sprintf(cmd, "mv /tmp/tmp.map %s", filename);
+    sprintf(cmd, "mv /tmp/tmp.cmf %s", filename);
 #else
-    sprintf(cmd, "mv /tmp/tmp.map.gz %s", filename);
+    sprintf(cmd, "mv /tmp/tmp.cmf.gz %s", filename);
 #endif
     system(cmd);
   }
