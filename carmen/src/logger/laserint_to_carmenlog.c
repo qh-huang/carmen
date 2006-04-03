@@ -28,7 +28,7 @@
 #include <carmen/carmen.h>
 #include "writelog.h"
 
-#define LINE_SIZE 3000
+#define LINE_SIZE 30000
 char line[LINE_SIZE], line2[LINE_SIZE];
 
 carmen_base_odometry_message odometry;
