@@ -801,6 +801,9 @@ void carmen_localize_laser_scan_gd(int num_readings, float *range,
   float grad_x, grad_y, grad_theta, range_x, range_y, theta;
   int x_l, y_l, count = 0, i;
   
+  double angular_res_in_degrees = carmen_radians_to_degrees(angular_resolution);
+
+
   do {
     grad_x = 0;
     grad_y = 0;
@@ -826,9 +829,13 @@ void carmen_localize_laser_scan_gd(int num_readings, float *range,
     }
 
     /** what is the meaning of this? should this be adapted according to the fov ?*/
-    grad_x *= K_T * 180.0 / num_readings;
-    grad_y *= K_T * 180.0 / num_readings;
-    grad_theta *= K_ROT * 180.0 / num_readings;
+    /*     grad_x *= K_T * 180.0 / num_readings; */
+    /*     grad_y *= K_T * 180.0 / num_readings; */
+    /*     grad_theta *= K_ROT * 180.0 / num_readings; */
+
+    grad_x *= K_T * angular_res_in_degrees;
+    grad_y *= K_T * angular_res_in_degrees;
+    grad_theta *= K_ROT * angular_res_in_degrees;
 
     laser_pos->x += grad_x;
     laser_pos->y += grad_y;
