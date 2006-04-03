@@ -147,3 +147,40 @@ carmen_laser_unsubscribe_alive_message(carmen_handler_t handler)
 }
 
 
+
+
+void
+carmen_laser_define_frontlaser_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_FRONTLASER_NAME,
+			      CARMEN_LASER_FRONTLASER_FMT);
+}
+
+void
+carmen_laser_define_rearlaser_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_REARLASER_NAME,
+			      CARMEN_LASER_REARLASER_FMT);
+}
+
+void
+carmen_laser_define_laser3_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_LASER3_NAME,
+			      CARMEN_LASER_LASER3_FMT);
+}
+
+void
+carmen_laser_define_laser4_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_LASER4_NAME,
+			      CARMEN_LASER_LASER4_FMT);
+}
+
+void
+carmen_laser_define_laser5_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_LASER5_NAME,
+			      CARMEN_LASER_LASER5_FMT);
+}
+
+void
+carmen_laser_define_alive_message() {
+  carmen_ipc_define_test_exit(CARMEN_LASER_ALIVE_NAME,
+			      CARMEN_LASER_ALIVE_FMT);
+}

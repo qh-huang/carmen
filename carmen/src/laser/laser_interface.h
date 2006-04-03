@@ -44,68 +44,121 @@
 extern "C" {
 #endif
 
-  /** Function to subscribe the raw front laser (rawlaser1) message **/
+/** Subscribes the raw front laser (rawlaser1) message **/
 void
 carmen_laser_subscribe_frontlaser_message(carmen_laser_laser_message *laser,
 					  carmen_handler_t handler,
 					  carmen_subscribe_t subscribe_how);
 
-  /** Function to subscribe the raw rear laser (rawlaser2) message **/
+/** Subscribes the raw rear laser (rawlaser2) message **/
 void
 carmen_laser_subscribe_rearlaser_message(carmen_laser_laser_message *laser,
 					 carmen_handler_t handler,
 					 carmen_subscribe_t subscribe_how);
 
-/* remember, laser1 and laser2 are equivalent to frontlaser and rearlaser */
-
+/** Subscribes the corresonding message. Note that laser1 is the same
+    than frontlaser.  **/
 void
 carmen_laser_subscribe_laser1_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+/** Subscribes the corresonding message. Note that laser2 is the same
+    than rearlaser.  **/
 void
 carmen_laser_subscribe_laser2_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+/** Subscribes the corresonding message.  **/
 void
 carmen_laser_subscribe_laser3_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+/** Subscribes the corresonding message.  **/
 void
 carmen_laser_subscribe_laser4_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
 
+/** Subscribes the corresonding message.  **/
 void
 carmen_laser_subscribe_laser5_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+/** Subscribes the corresonding message.  **/
 void
 carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how);
 
 
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
 void
 carmen_laser_unsubscribe_frontlaser_message(carmen_handler_t handler);
 
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
 void
 carmen_laser_unsubscribe_rearlaser_message(carmen_handler_t handler);
 
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
 void
 carmen_laser_unsubscribe_laser3_message(carmen_handler_t handler);
 
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
 void
 carmen_laser_unsubscribe_laser4_message(carmen_handler_t handler);
 
+
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
 void
 carmen_laser_unsubscribe_laser5_message(carmen_handler_t handler);
 
 
+/** Unsubscribes the corresonding message. This means that the calling
+    module does not want to receive this messages anymore. **/
+void
+carmen_laser_unsubscribe_alive_message(carmen_handler_t handler);
+
+
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_frontlaser_message();
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_rearlaser_message();
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_laser3_message();
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_laser4_message();
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_laser5_message();
+
+/** Defines the corresonding message. One module needs to define a
+    message before it can be send via IPC. **/
+void
+carmen_laser_define_alive_message();
 
 #ifdef __cplusplus
 }

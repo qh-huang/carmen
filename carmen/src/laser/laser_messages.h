@@ -81,20 +81,32 @@ typedef struct {
   char *host;
 } carmen_laser_laser_message;
 
-#define      CARMEN_LASER_FRONTLASER_NAME       "carmen_laser_frontlaser"
-#define      CARMEN_LASER_FRONTLASER_FMT        "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
-#define      CARMEN_LASER_REARLASER_NAME        "carmen_laser_rearlaser"
-#define      CARMEN_LASER_REARLASER_FMT         "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+/** all raw laser messages have the same format **/
+#define      CARMEN_LASER_LASER_FMT       "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
 
-#define      CARMEN_LASER_LASER3_NAME           "carmen_laser_laser3"
-#define      CARMEN_LASER_LASER3_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+#define      CARMEN_LASER_FRONTLASER_NAME "carmen_laser_frontlaser"
+#define      CARMEN_LASER_FRONTLASER_FMT  CARMEN_LASER_LASER_FMT
 
-#define      CARMEN_LASER_LASER4_NAME           "carmen_laser_laser4"
-#define      CARMEN_LASER_LASER4_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+/** Note that laser1 is the same as frontlaser **/
+#define      CARMEN_LASER_LASER1_NAME     CARMEN_LASER_FRONTLASER_NAME
+#define      CARMEN_LASER_LASER1_FMT      CARMEN_LASER_FRONTLASER_FMT
 
-#define      CARMEN_LASER_LASER5_NAME           "carmen_laser_laser5"
-#define      CARMEN_LASER_LASER5_FMT            "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+#define      CARMEN_LASER_REARLASER_NAME  "carmen_laser_rearlaser"
+#define      CARMEN_LASER_REARLASER_FMT   CARMEN_LASER_LASER_FMT
+
+/** Note that laser2 is the same as reartlaser **/
+#define      CARMEN_LASER_LASER2_NAME     CARMEN_LASER_REARLASER_NAME
+#define      CARMEN_LASER_LASER2_FMT      CARMEN_LASER_REARLASER_FMT
+
+#define      CARMEN_LASER_LASER3_NAME     "carmen_laser_laser3"
+#define      CARMEN_LASER_LASER3_FMT      CARMEN_LASER_LASER_FMT
+
+#define      CARMEN_LASER_LASER4_NAME     "carmen_laser_laser4"
+#define      CARMEN_LASER_LASER4_FMT      CARMEN_LASER_LASER_FMT
+
+#define      CARMEN_LASER_LASER5_NAME     "carmen_laser_laser5"
+#define      CARMEN_LASER_LASER5_FMT      CARMEN_LASER_LASER_FMT
 
 typedef struct {
   int frontlaser_stalled;
