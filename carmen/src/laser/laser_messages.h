@@ -42,44 +42,44 @@
 extern "C" {
 #endif
 
-typedef enum {SICK_LMS = 0, 
-	      SICK_PLS = 1, 
-	      HOKUYO_URG = 2, 
-	      SIMULATED_LASER = 3, 
-	      UMKNOWN_PROXIMITY_SENSOR = 99}
-carmen_laser_laser_type_t;
+  /** defined the type of laser that is used **/
+  typedef enum {SICK_LMS = 0, 
+		SICK_PLS = 1, 
+		HOKUYO_URG = 2, 
+		SIMULATED_LASER = 3, 
+		UMKNOWN_PROXIMITY_SENSOR = 99}
+  carmen_laser_laser_type_t;
 
   /** Possible remission values **/
   typedef enum {OFF = 0, 
 		DIRECT = 1, 
 		NORMALIZED = 2}          
-carmen_laser_remission_type_t;
+  carmen_laser_remission_type_t;
 
-  /** The laser message of the laser module (rawlaser) **/
-typedef struct {
-  carmen_laser_laser_type_t  laser_type;  /**< what kind of laser is this **/
-  double start_angle;                     /**< angle of the first beam relative **/
-                                          /**< to to the center of the laser **/
-  double fov;                             /**< field of view of the laser **/
-  double angular_resolution;              /**< angular resolution of the laser **/
-  double maximum_range;                   /**< the maximum valid range of a measurement  **/
-  double accuracy;                        /**< error in the range measurements **/
-
+  /** The configuration of the laser  **/
+  typedef struct {
+    carmen_laser_laser_type_t laser_type;   /**< what kind of laser is this **/
+    double start_angle;                     /**< angle of the first beam relative to the center of the laser **/
+    double fov;                             /**< field of view of the laser **/
+    double angular_resolution;              /**< angular resolution of the laser **/
+    double maximum_range;                   /**< the maximum valid range of a measurement  **/
+    double accuracy;                        /**< error in the range measurements **/
+    
   carmen_laser_remission_type_t remission_mode;  /* if and what kind of remission values are used */
 
 } carmen_laser_laser_config_t;
 
 
-
-typedef struct {
-  carmen_laser_laser_config_t config;
-  int num_readings;
-  float *range;
-  int num_remissions;
-  float *remission;
-  double timestamp;
-  char *host;
-} carmen_laser_laser_message;
+  /** The laser message of the laser module (rawlaser) **/
+  typedef struct {
+    carmen_laser_laser_config_t config;    /**< configuration of the laser **/
+    int num_readings;                      /**< the number of beams of this laser message **/
+    float *range;                          /**< the measured distances (in meters) **/
+    int num_remissions;                    /**< the number of remission values. Should be 0 if config.remission_mode is OFF **/
+    float *remission;                      /**< the remission values **/
+    double timestamp;                      /**< timestamp when the message was read from the laser (typically the serial line) **/
+    char *host;                            /**< the host to which the laser is connected  **/
+  } carmen_laser_laser_message;
 
 
 /** all raw laser messages have the same format **/
@@ -108,12 +108,14 @@ typedef struct {
 #define      CARMEN_LASER_LASER5_NAME     "carmen_laser_laser5"
 #define      CARMEN_LASER_LASER5_FMT      CARMEN_LASER_LASER_FMT
 
+
+/** configuration of the laser **/
 typedef struct {
-  int frontlaser_stalled;
-  int rearlaser_stalled;
-  int laser3_stalled;
-  int laser4_stalled;
-  int laser5_stalled;
+  int frontlaser_stalled;  /**< laser1 (frontlaser) is stalled(=1) or is ok(=0) **/
+  int rearlaser_stalled;   /**< laser1 (rearlaser) is stalled(=1) or is ok(=0) **/
+  int laser3_stalled;      /**< laser3 is stalled(=1) or is ok(=0) **/
+  int laser4_stalled;      /**< laser4 is stalled(=1) or is ok(=0) **/
+  int laser5_stalled;      /**< laser5 is stalled(=1) or is ok(=0) **/
 } carmen_laser_alive_message;
   
 #define      CARMEN_LASER_ALIVE_NAME            "carmen_laser_alive"
