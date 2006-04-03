@@ -6,11 +6,6 @@ get a data file for model learn and send to ron parr
 add documentation to localize_messages 
 add documentation to logger, logtools 
 
- * localizecore.c : What does the 180/num_redings represent in 
-   carmen_localize_laser_scan_gd
-
-
-
 maptools documentation
 add documentation to navigator
 
