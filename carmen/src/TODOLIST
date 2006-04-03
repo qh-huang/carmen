@@ -1,6 +1,5 @@
 camera needs documentation
 serial naming issues
-move hokuyo to carmen addons -- rename to hokuyo-pb9
 get a data file for model learn and send to ron parr
 add documentation to localize_messages 
 add documentation to logger, logtools 
