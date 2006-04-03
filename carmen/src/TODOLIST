@@ -1,18 +1,61 @@
-adapt configure so that it takes care of X11/xpm.h (used by camera)
 clean up ini files
+map file extensions: .cmf
+camera needs documentation
+serial naming issues, add close to libserial 
+move hokuyo to carmen addons -- rename to hokuyo-pb9
+add documentation to laser
+get a data file for model learn and send to ron parr
+add documentation to localize_messages 
+add documentation to localizecore
+add documentation to logger, logtools 
+
+maptools documentation
+add documentation to navigator
+
+add documentation to pantilt , add rudi's stuff
+add documentation for param_daemon is 
+turn install_params, param_set, reload_param module into single param_tool 
+
+proccontrol_view 
+
+python fix shared library problem 
+
+robot -- add documentation, add parameter to control skew estimation
+         add parameter to control interpolation
+robotgui 
+simulator -- add documentation
+vasco? 
+
+maybe delete mapeditor?
+
+carmen-addons 
+=======================================
+look at b21r in carmen-addons 
+remove hmap
+remove amtec
+remove pantilt
+remove startup_scripts
+remove xavier
+remove multigoal
+remove carmen-perl 
+merge cerebellum modules into single module
+ask mike re: kvh, compass, canon, people_tracker, multirobot_viewer, gplan
+ask jared re: r03, roadmap, robotwalker, roomnav, sound_server, stracker, actor, dog, dot
+ask mrosen: spotter, timer
+
+
+Wish list 
+
+-- QT guis
 IPC message size test
 command shell
-port map_editor/hmap_editor to gtk 2.0
-port map_tracker to gtk 2.0
 navigator_panel start menu
 
 merge read-rec, readlog, log reading  (see e.g. logtools/clf-read-example.c)
 
-map file extensions: .cmf
-
-merge ipc_wrappers and multicentral
-
 generic logging in java
+port map_editor/hmap_editor to gtk 2.0
+port map_tracker to gtk 2.0
   
 laser module/messages
    Add error messages when laser fails to connect.
