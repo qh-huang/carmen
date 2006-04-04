@@ -152,8 +152,8 @@ static void tomap(int argc, char *argv[])
   if(argc - next_arg != 4) {
     if (argc != 2) 
       carmen_warn("\nError: wrong number of parameters.\n");    
-    carmen_die("\nUsage: %s tomap <resolution> <map filename> "
-	       "<ppm filename>\n\n", argv[0]); 
+    carmen_die("\nUsage: %s tomap <resolution> <ppm filename> "
+	       "<map filename>\n\n", argv[0]); 
   }
 
   resolution = (double)atof(argv[next_arg+1]);
