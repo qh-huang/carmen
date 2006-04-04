@@ -4,7 +4,7 @@ ifndef CYGWIN
 CFLAGS += -fPIC
 endif
 IFLAGS +=
-LFLAGS += -lglobal -lserial -lipc -lparam_interface
+LFLAGS += -lglobal -lipc -lparam_interface
 
 MODULE_NAME = "RFLEX"
 MODULE_COMMENT = "Program for controlling a Rflex-based RWI robot \

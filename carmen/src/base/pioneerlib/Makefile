@@ -4,7 +4,7 @@ ifndef CYGWIN
 CFLAGS += -fPIC
 endif
 IFLAGS +=
-LFLAGS += -lglobal -lserial -lipc -lparam_interface
+LFLAGS += -lcarmenserial -lglobal -lipc -lparam_interface
 
 MODULE_NAME = "PIONEER"
 MODULE_COMMENT = "Program for controlling Pioneer robot"

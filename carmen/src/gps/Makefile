@@ -5,7 +5,7 @@ MODULE_COMMENT = "NMEA GPS Module"
 
 CFLAGS += #-DPARSE_DEBUG
 IFLAGS += 
-LFLAGS += -lparam_interface -lserial -lipc -lglobal
+LFLAGS += -lparam_interface -lcarmenserial -lipc -lglobal
 
 SOURCES = gps-io.c gps-ipc.c gps-nmea.c gps-main.c \
 	  gps_nmea_interface.c gps-test.c

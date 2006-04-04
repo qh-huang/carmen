@@ -1,6 +1,6 @@
 #include <carmen/carmen.h>
 #include "../base_low_level.h"
-#include <carmen/serial.h>
+#include <carmen/carmenserial.h>
 #include <sys/ioctl.h>
 #include <limits.h>
 

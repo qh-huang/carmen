@@ -94,7 +94,7 @@ typedef struct {
       and move towards an (x,y) position. **/
   
 typedef struct {
-  double x, y;           //*< It is assumed that (x, y) is in the reference frame of 
+  double x, y;           /**< It is assumed that (x, y) is in the reference frame of 
                               the current map. **/ 
   double timestamp;
   char *host;
@@ -107,7 +107,7 @@ typedef struct {
       and move towards an (x,y) position and (theta) orientation. **/
 
 typedef struct {
-  carmen_point_t goal;   //*< It is assumed that (x, y) is in the reference
+  carmen_point_t goal;   /**< It is assumed that (x, y) is in the reference
 			      frame of the current map. Using this function causes
                               the planner to also arrive at the goal with an orientation
                               that matches the theta field of the goal point.  **/ 

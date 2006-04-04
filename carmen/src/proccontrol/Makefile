@@ -2,7 +2,7 @@ include ../Makefile.conf
 
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lserial -lglobal -lipc
+LFLAGS +=  -lcarmenserial -lglobal -lipc
 
 ifdef QT3
 CXXFLAGS += -Wno-non-virtual-dtor

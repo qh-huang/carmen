@@ -5,7 +5,7 @@ MODULE_COMMENT = "SICK Laser Module"
 
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lparam_interface -lserial -lipc -lglobal
+LFLAGS += -lparam_interface -lcarmenserial -lipc -lglobal
 SOURCES = sick.c laser_ipc.c laser_main.c laser.c laser_test.c
 PUBLIC_INCLUDES = laser_messages.h laser_interface.h
 PUBLIC_LIBRARIES = liblaser_interface.a  liblaser.a

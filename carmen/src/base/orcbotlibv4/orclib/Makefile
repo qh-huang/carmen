@@ -1,6 +1,6 @@
 include ../../../Makefile.conf
 
-LFLAGS += -lglobal -lipc -lparam_interface -lserial
+LFLAGS += -lglobal -lipc -lparam_interface -lcarmenserial
 
 MODULE_NAME = "ORC"
 MODULE_COMMENT = "Program for controlling an Orc robot"
