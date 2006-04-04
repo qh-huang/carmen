@@ -12,8 +12,6 @@ get a data file for model learn and send to ron parr
 
 fix robot collision avoidance 
 
-turn install_params, param_set, reload_param module into single param_tool 
-
 graphical proccontrol_view 
 
 python fix shared library problem 
@@ -25,13 +23,6 @@ robotgui
 vasco? 
 
 maybe delete mapeditor?
-
-Questions:
-=======================================
-
-* carmen_robot_correct_laser_and_publish: if the
-  timestamp estimate is not ready, does is make
-  sense to send the data via ipc?
 
 
 carmen-addons 
@@ -49,6 +40,7 @@ ask mike re: kvh, compass, canon, people_tracker, multirobot_viewer, gplan
 ask jared re: r03, roadmap, robotwalker, roomnav, sound_server, stracker, actor, dog, dot
 ask mrosen: spotter, timer
 
+------------------------------------------------------------------------
 
 Wish list 
 
