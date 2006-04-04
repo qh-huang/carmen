@@ -55,11 +55,17 @@ typedef carmen_default_message carmen_navigator_stop_message;
 #define CARMEN_NAVIGATOR_GO_NAME               "carmen_navigator_go"
 typedef carmen_default_message carmen_navigator_go_message;
   
+  /** This message is published by the navigator, and describes its current
+      status. **/
+
 typedef struct {
-  int autonomous;
-  int goal_set;
-  carmen_point_t goal;
-  carmen_traj_point_t robot;
+  int autonomous;                /**< Is the navigator actively moving the robot to the goal?
+                                      This field should change to 0 whenever the navigator
+				      receives a stop message, and change to 1 whenever
+				      the navigator receives a go message. **/
+  int goal_set;                  /**< Is there a current goal? **/
+  carmen_point_t goal;           /**< Undefined if goal_set is 0 **/ 
+  carmen_traj_point_t robot;     /**< The current position of the robot. **/ 
   double timestamp;
   char *host;
 } carmen_navigator_status_message;
@@ -67,6 +73,13 @@ typedef struct {
 #define CARMEN_NAVIGATOR_STATUS_NAME       "carmen_navigator_status"
 #define CARMEN_NAVIGATOR_STATUS_FMT        "{int,int,{double, double, double},{double, double, double, double, double},double,string}"
   
+  /** This message is published by the navigator. The current path of the
+      navigator. Should never be emitted without a goal. If the goal is
+      inaccessible, then the navigator will try and move the robot as close to
+      the goal as possible. The path points will include the current robot and
+      goal. The path points are given in the reference frame of the current
+      map. **/
+
 typedef struct {
   carmen_traj_point_t *path;
   int path_length;
@@ -76,9 +89,13 @@ typedef struct {
   
 #define      CARMEN_NAVIGATOR_PLAN_NAME       "carmen_navigator_plan"
 #define      CARMEN_NAVIGATOR_PLAN_FMT        "{<{double, double, double, double, double}:2>,int,double,string}"
+
+  /** This message is sent to the navigator by other programs wishing to plan
+      and move towards an (x,y) position. **/
   
 typedef struct {
-  double x, y;
+  double x, y;           //*< It is assumed that (x, y) is in the reference frame of 
+                              the current map. **/ 
   double timestamp;
   char *host;
 } carmen_navigator_set_goal_message;
@@ -86,8 +103,14 @@ typedef struct {
 #define      CARMEN_NAVIGATOR_SET_GOAL_NAME         "carmen_navigator_set_goal"
 #define      CARMEN_NAVIGATOR_SET_GOAL_FMT          "{double,double,double,string}"
   
+  /** This message is sent to the navigator by other programs wishing to plan
+      and move towards an (x,y) position and (theta) orientation. **/
+
 typedef struct {
-  carmen_point_t goal;
+  carmen_point_t goal;   //*< It is assumed that (x, y) is in the reference
+			      frame of the current map. Using this function causes
+                              the planner to also arrive at the goal with an orientation
+                              that matches the theta field of the goal point.  **/ 
   double timestamp;
   char *host;
 } carmen_navigator_set_goal_triplet_message;
@@ -99,8 +122,14 @@ typedef enum{CARMEN_NAVIGATOR_GOAL_REACHED_v,
 	       CARMEN_NAVIGATOR_USER_STOPPED_v,
 	       CARMEN_NAVIGATOR_UNKNOWN_v} carmen_navigator_reason_t;
   
+  /** This message is published by the navigator whenever it stops trying to move
+      towards the current goal. **/
+
 typedef struct {
-  carmen_navigator_reason_t reason;
+  carmen_navigator_reason_t reason; /**< Reasons are: that the goal was
+				       reached, a user stopped autonomous mode
+				       (by publishing a stop message) or due
+				       to some unknown failure. **/ 
   double timestamp;
   char *host;
 } carmen_navigator_autonomous_stopped_message;
@@ -113,6 +142,10 @@ typedef enum {CARMEN_NAVIGATOR_MAP_v, CARMEN_NAVIGATOR_ENTROPY_v,
               CARMEN_LOCALIZE_LMAP_v, CARMEN_LOCALIZE_GMAP_v} 
   carmen_navigator_map_t;
   
+  /** This message is sent to the navigator to get one of its current maps,
+      including the current occupancy grid (including updates from recent
+      laser data), cost maps and utility functions. **/
+
 typedef struct {
   carmen_navigator_map_t map_type;
   double timestamp;
@@ -121,6 +154,8 @@ typedef struct {
   
 #define CARMEN_NAVIGATOR_MAP_REQUEST_NAME "carmen_navigator_map_request"
 #define CARMEN_NAVIGATOR_MAP_REQUEST_FMT "{int,double,string}"
+
+  /** This message is returned by the navigator after a map request is received. **/
   
   typedef struct {
     unsigned char *data;    
@@ -135,6 +170,10 @@ typedef struct {
 #define CARMEN_NAVIGATOR_MAP_NAME "carmen_navigator_map"
 #define CARMEN_NAVIGATOR_MAP_FMT "{<char:2>,int,int,{int,int,double,string},int,double,string}"
   
+  /** This message is sent to the navigator to set a goal point that
+      corresponds to some named place in the map. See
+      carmen_navigator_set_goal_place() for more information. **/
+
 typedef struct {
   char *placename;
   double timestamp;
@@ -154,7 +193,7 @@ typedef struct {
 #define CARMEN_NAVIGATOR_RETURN_CODE_NAME "carmen_navigator_return_code"
 #define CARMEN_NAVIGATOR_RETURN_CODE_FMT "{int,string,double,string}"
   
-  /*
+  /**
     Attribute can be one of:
     "robot colour"
     "goal colour" 
@@ -177,7 +216,7 @@ typedef struct {
     
     The status_message is currently ignored. There will eventually be
     a status window that will get the contents of this field.
-  */
+  **/
   
 typedef struct {
   char *attribute;

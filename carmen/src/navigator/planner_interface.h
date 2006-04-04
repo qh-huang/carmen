@@ -30,10 +30,12 @@
 // @{
 
 /** \file planner_interface.h
- * \brief Definition of the interface of the module navigator.
+ * \brief Definition of interface to the shortest-path motion planner library.
  *
- * This file specifies the interface to subscribe the messages of
- * that module and to receive its data via ipc.
+ * This file specifies the interface to the motion planner library. It does not
+ * handle any IPC communication or move the robot in any way. It accepts a
+ * map, current position of the robot and a goal, and provides a plan.  This
+ * library is not thread-safe or re-entrant. 
  **/
  
 #ifndef PLANNER_INTERFACE_H
@@ -47,6 +49,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+  /** The data structure returned by the motion planning library describing
+      the shortest path from the current robot position to the goal. **/
   
   typedef struct {
     carmen_traj_point_p points;
@@ -54,6 +59,9 @@ extern "C" {
     int capacity;
   } carmen_planner_path_t, *carmen_planner_path_p;
   
+  /** The data structure describing what the motion planning library believes
+      is the current robot position, goal and current plan. **/
+
   typedef struct {
     carmen_traj_point_t robot;
     carmen_point_t goal;	
