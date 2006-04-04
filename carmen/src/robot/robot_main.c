@@ -657,7 +657,8 @@ static int read_robot_parameters(int argc, char **argv)
   if (use_bumper)
     carmen_robot_add_bumper_parameters(argv[0]);
 
-  carmen_robot_config.acceleration = 0.5;
+  // that sucks!
+  // carmen_robot_config.acceleration = 0.5;
   return 0;
 }
 

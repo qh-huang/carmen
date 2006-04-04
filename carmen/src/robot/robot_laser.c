@@ -63,7 +63,8 @@ publish_rearlaser_message(carmen_robot_laser_message laser_msg)
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_REARLASER_NAME);
 }
 
-static void
+/** returns 0 if time estimate is not ready, otherwise 1 **/
+static int
 construct_laser_message(carmen_robot_laser_message *msg, double offset, 
 			int rear, double timestamp)
 {
@@ -78,8 +79,8 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 					CARMEN_ROBOT_FRONT_LASER_AVERAGE, 
 					msg->host);
     if (!laser_ready) {
-      carmen_warn("Waiting for front laser data to accumulate.\n");
-      return;
+      carmen_warn("Waiting for front laser data to accumulate in order to estimate the time skew.\n");
+      return 0;
     }
 
   } else {
@@ -87,8 +88,8 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 					CARMEN_ROBOT_REAR_LASER_AVERAGE, 
 					msg->host);
     if (!laser_ready) {
-      carmen_warn("Waiting for rear laser data to accumulate.\n");
-      return;
+      carmen_warn("Waiting for rear laser data to accumulate in order to estimate the time skew.\n");
+      return 0;
     }
   }
 
@@ -124,6 +125,7 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
     cos(msg->laser_pose.theta);
   msg->laser_pose.y = msg->robot_pose.y + offset * 
     sin(msg->laser_pose.theta);
+  return 1;
 }
 
 void 
@@ -133,21 +135,23 @@ carmen_robot_correct_laser_and_publish(void)
     return;
 
   if (front_laser_ready) {
-    construct_laser_message(&robot_front_laser, frontlaser_offset, 
-			    0, front_laser.timestamp);
-    fprintf(stderr, "f");
-    publish_frontlaser_message(robot_front_laser);
-    front_laser_ready = 0;    
+    if (construct_laser_message(&robot_front_laser, frontlaser_offset, 
+				0, front_laser.timestamp)) {
+      fprintf(stderr, "f");
+      publish_frontlaser_message(robot_front_laser);
+    }
+    front_laser_ready = 0;   
   }
 
   if (rear_laser_ready) {
-    construct_laser_message(&robot_rear_laser, rearlaser_offset, 
-			    1, rear_laser.timestamp);
-    fprintf(stderr, "r");
-    publish_rearlaser_message(robot_rear_laser);
+    if (construct_laser_message(&robot_rear_laser, rearlaser_offset, 
+				1, rear_laser.timestamp) ) {
+      fprintf(stderr, "r");
+      publish_rearlaser_message(robot_rear_laser);
+    }
     rear_laser_ready = 0;
   }
-
+  
 }
 
 static void 
