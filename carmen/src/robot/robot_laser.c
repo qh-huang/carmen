@@ -50,7 +50,6 @@ static void
 publish_frontlaser_message(carmen_robot_laser_message laser_msg)
 {
   IPC_RETURN_TYPE err;
-  
   err = IPC_publishData(CARMEN_ROBOT_FRONTLASER_NAME, &laser_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_FRONTLASER_NAME);
 }
@@ -144,6 +143,7 @@ carmen_robot_correct_laser_and_publish(void)
     publish_rearlaser_message(robot_rear_laser);
     rear_laser_ready = 0;
   }
+
 }
 
 static void 
@@ -174,10 +174,14 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
     carmen_test_alloc(robot_laser.tooclose);   
 
     robot_laser.num_remissions = laser.num_remissions;
-    robot_laser.remission = 
-      (float *)calloc(robot_laser.num_remissions, sizeof(float));
-    carmen_test_alloc(robot_laser.remission);
-
+    
+    if (robot_laser.num_remissions>0) {
+      robot_laser.remission = 
+	(float *)calloc(robot_laser.num_remissions, sizeof(float));
+      carmen_test_alloc(robot_laser.remission);
+    }
+    else 
+      robot_laser.remission = NULL;
     
     first = 0;
   } else if(robot_laser.num_readings != laser.num_readings) {
@@ -191,10 +195,15 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
     carmen_test_alloc(robot_laser.tooclose);
 
     robot_laser.num_remissions = laser.num_remissions;
-    robot_laser.remission = 
-      (float *)realloc(robot_laser.remission, 
-		       sizeof(float) * robot_laser.num_remissions);
-    carmen_test_alloc(robot_laser.remission);
+    if (robot_laser.num_remissions>0) {
+      robot_laser.remission = 
+	(float *)realloc(robot_laser.remission, 
+			 sizeof(float) * robot_laser.num_remissions);
+      carmen_test_alloc(robot_laser.remission);
+    }
+    else
+      robot_laser.remission = NULL;
+
   }
 
   if (laser_ptr == &front_laser) {
@@ -227,6 +236,10 @@ laser_frontlaser_handler(void)
   static double time_since_last_process = 0;
   double skip_sum = 0;
 
+
+
+
+
   /* We just got a new laser message. It may be that the new message contains
      a different number of laser readings than we were expecting, maybe
      because the laser server was restarted. Here, we check to make sure that
@@ -242,8 +255,9 @@ laser_frontlaser_handler(void)
   memcpy(robot_front_laser.range, front_laser.range, 
 	 robot_front_laser.num_readings * sizeof(float));
   memset(robot_front_laser.tooclose, 0, robot_front_laser.num_readings);
-  memcpy(robot_front_laser.remission, front_laser.remission, 
-	 robot_front_laser.num_remissions * sizeof(float));
+  if (robot_front_laser.num_remissions>0)
+    memcpy(robot_front_laser.remission, front_laser.remission, 
+	   robot_front_laser.num_remissions * sizeof(float));
 
   robot_front_laser.config = front_laser.config;
 
@@ -276,8 +290,11 @@ laser_frontlaser_handler(void)
 
   carmen_carp_set_verbose(0);
   
-  theta = -M_PI/2; 
-  delta_theta = M_PI/(robot_front_laser.num_readings-1);
+/*   theta = -M_PI/2;  */
+/*   delta_theta = M_PI/(robot_front_laser.num_readings-1); */
+
+  theta = front_laser.config.start_angle;
+  delta_theta = front_laser.config.angular_resolution;
 
   skip_sum = 0.0;
   for(i = 0; i < robot_front_laser.num_readings; i++, theta += delta_theta) {
@@ -423,8 +440,9 @@ laser_rearlaser_handler(void)
   memcpy(robot_rear_laser.range, rear_laser.range, 
 	 robot_rear_laser.num_readings * sizeof(float));
   memset(robot_rear_laser.tooclose, 0, robot_rear_laser.num_readings);
-  memcpy(robot_rear_laser.remission, rear_laser.remission, 
-	 robot_rear_laser.num_remissions * sizeof(float));
+  if (robot_rear_laser.num_remissions>0)
+    memcpy(robot_rear_laser.remission, rear_laser.remission, 
+	   robot_rear_laser.num_remissions * sizeof(float));
 
   robot_rear_laser.config = rear_laser.config;
 
@@ -455,8 +473,12 @@ laser_rearlaser_handler(void)
   robot_posn.y = 0;
   robot_posn.theta = 0;
 
-  theta = -M_PI/2; 
-  delta_theta = M_PI/(robot_rear_laser.num_readings-1);
+/*   theta = -M_PI/2;  */
+/*   delta_theta = M_PI/(robot_rear_laser.num_readings-1); */
+
+  theta = rear_laser.config.start_angle;
+  delta_theta = rear_laser.config.angular_resolution;
+
   skip_sum = 0.0;
   for(i = 0; i < robot_rear_laser.num_readings; i++, theta += delta_theta) {
     skip_sum += carmen_robot_laser_bearing_skip_rate;
