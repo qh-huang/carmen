@@ -89,11 +89,14 @@ typedef struct {
   char *host;                          /**< The host from which this message was sent **/
 } carmen_robot_laser_message;
 
+#define      CARMEN_ROBOT_LASER_FMT             "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,{double,double,double},{double,double,double},double,double,double,double,double,double,string}"
+
+
 #define      CARMEN_ROBOT_FRONTLASER_NAME       "carmen_robot_frontlaser"
-#define      CARMEN_ROBOT_FRONTLASER_FMT        "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,{double,double,double},{double,double,double},double,double,double,double,double,double,string}"
+#define      CARMEN_ROBOT_FRONTLASER_FMT        CARMEN_ROBOT_LASER_FMT
 
 #define      CARMEN_ROBOT_REARLASER_NAME        "carmen_robot_rearlaser"
-#define      CARMEN_ROBOT_REARLASER_FMT         "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,double,double,double,double,double,double,double,double,double,double,double,double,string}"
+#define      CARMEN_ROBOT_REARLASER_FMT         CARMEN_ROBOT_LASER_FMT
 #endif
 
 typedef struct {
