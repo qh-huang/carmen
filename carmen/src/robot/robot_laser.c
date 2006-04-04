@@ -102,6 +102,7 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
   msg->robot_pose.theta=carmen_robot_interpolate_heading
     (carmen_robot_odometry[high].theta, 
      carmen_robot_odometry[low].theta, fraction);
+  msg->robot_pose.theta=carmen_normalize_theta(msg->robot_pose.theta);
 
   msg->tv = carmen_robot_odometry[low].tv + 
     fraction*(carmen_robot_odometry[high].tv - 
