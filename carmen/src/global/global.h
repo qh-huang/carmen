@@ -88,7 +88,7 @@ typedef struct {
   double reaction_time;
   int allow_rear_motion;
   int rectangular;
-  int interpolate_odomery;
+  int interpolate_odometry;
 } carmen_robot_config_t;
 
 typedef enum { CARMEN_MOTOR, CARMEN_SERVO } carmen_arm_joint_t;
