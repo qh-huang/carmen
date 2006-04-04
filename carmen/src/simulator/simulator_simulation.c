@@ -334,6 +334,7 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
   laser->config.accuracy = 0; 
   laser->config.remission_mode = OFF;
 
+
   carmen_geometry_generate_laser_data(laser->range, &point, laser->config.start_angle, 
 				      laser->config.start_angle+laser->config.fov, 
 				      laser_config->num_lasers, 

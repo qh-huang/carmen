@@ -370,7 +370,11 @@ publish_readings(void)
       flaser.range = (float *)calloc
 	(simulator_config->front_laser_config.num_lasers, sizeof(float));
       carmen_test_alloc(flaser.range);
-      }
+
+      flaser.num_remissions = 0;
+      flaser.remission = 0;      
+
+    }
     
     if (simulator_config->use_rear_laser) {
       rlaser.host = carmen_get_host();
@@ -379,6 +383,10 @@ publish_readings(void)
       rlaser.range = (float *)calloc
 	(simulator_config->rear_laser_config.num_lasers, sizeof(float));
       carmen_test_alloc(rlaser.range);
+
+      rlaser.num_remissions = 0;
+      rlaser.remission = 0;      
+
     }
     
     if (simulator_config->use_sonar) {
