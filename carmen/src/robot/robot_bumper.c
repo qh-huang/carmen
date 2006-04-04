@@ -66,6 +66,8 @@ static void construct_bumper_message(carmen_robot_bumper_message *msg,
   msg->robot_pose.theta=carmen_robot_interpolate_heading
     (carmen_robot_odometry[high].theta, 
      carmen_robot_odometry[low].theta, fraction);
+  msg->robot_pose.theta=carmen_normalize_theta(msg->robot_pose.theta);
+
 
   msg->tv = carmen_robot_odometry[low].tv + 
     fraction*(carmen_robot_odometry[high].tv - 
@@ -75,7 +77,7 @@ static void construct_bumper_message(carmen_robot_bumper_message *msg,
 	      carmen_robot_odometry[low].rv);
 
   robot_bumper.timestamp = base_bumper.timestamp;
-  strncpy(robot_bumper.host, base_bumper.host, 10);
+  robot_bumper.host = base_bumper.host;
   robot_bumper.num_bumpers = base_bumper.num_bumpers;
 
   for(i=0; i< msg->num_bumpers; i++)
@@ -103,6 +105,9 @@ void carmen_robot_correct_bumper_and_publish(void)
 
   fraction = carmen_robot_get_fraction(base_bumper.timestamp, bumper_skew,
 				       &low, &high);
+
+  if (!carmen_robot_config.interpolate_odometry)
+    fraction=0;
 
   construct_bumper_message(&robot_bumper, low, high, fraction);
     

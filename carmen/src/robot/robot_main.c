@@ -641,7 +641,10 @@ static int read_robot_parameters(int argc, char **argv)
      &carmen_robot_collision_avoidance_frequency, 1, NULL},
     {"robot", "turn_before_driving_if_heading_bigger_than",
      CARMEN_PARAM_DOUBLE,
-     &turn_before_driving_if_heading_bigger_than, 1, NULL}
+     &turn_before_driving_if_heading_bigger_than, 1, NULL},
+    {"robot", "interpolate_odometry",
+     CARMEN_PARAM_ONOFF,
+     &carmen_robot_config.interpolate_odometry, 1, NULL}
   };
 
 
