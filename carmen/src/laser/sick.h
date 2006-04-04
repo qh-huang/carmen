@@ -96,6 +96,7 @@ typedef struct {
   long int buffer_position, processed_mark, packet_offset, packet_length;
   int new_reading;
   double timestamp;
+  double packet_timestamp;
 } sick_laser_t, *sick_laser_p;
 
 void sick_start_laser(sick_laser_p laser);

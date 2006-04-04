@@ -1,4 +1,7 @@
 #include <carmen/carmen.h>
+#include <carmen/carmenserial.h>
+#include <sys/types.h>
+#include <sys/select.h>
 
 /*****  DIRK WAS HERE - START ******/
 #include <sys/utsname.h>
@@ -223,6 +226,9 @@ int sick_serial_connect(sick_laser_p laser)
 {
   if((laser->dev.fd = open(laser->dev.ttyport, O_RDWR | O_NOCTTY, 0)) < 0)
     return(-1);
+  #ifdef CARMEN_LASER_LOW_LATENCY
+  carmen_serial_set_low_latency(laser->dev.fd);
+  #endif
   sick_set_serial_params(laser);
   return(laser->dev.fd);
 }
@@ -259,13 +265,27 @@ static int sick_compute_checksum(unsigned char *CommData, int uLen)
 int sick_read_data(sick_laser_p laser, unsigned char *data, double timeout)
 {
   static int val, i, j, l, pos, chk1, chk2;
-  double start_time = carmen_get_time();
+  double start_time;
+#ifdef CARMEN_LASER_USE_SELECT
+  fd_set read_set;
+  struct timeval timer;
+  timer.tv_sec=(long)(floor(timeout));
+  timer.tv_usec=(long)((timeout-floor(timeout))*1000000);
+  FD_ZERO(&read_set);
+  FD_SET(laser->dev.fd, &read_set);
+#endif
 
   l    = BUFFER_SIZE;
   pos  = 0;
   chk1 = FALSE;
   chk2 = FALSE;
+#ifdef CARMEN_LASER_USE_SELECT
+  while(select(laser->dev.fd+1, &read_set, NULL, NULL, &timer)) {
+  start_time = carmen_get_time();
+#else
+  start_time = carmen_get_time();
   while(carmen_get_time() - start_time < timeout) {
+#endif
     val = carmen_serial_numChars(laser->dev.fd);
     if(val > 0) {
       if(pos + val >= BUFFER_SIZE)
@@ -299,7 +319,9 @@ int sick_read_data(sick_laser_p laser, unsigned char *data, double timeout)
     }
     if(pos == l + 6)
       return(l + 6);
+#ifndef CARMEN_LASER_USE_SELECT
     usleep(1000);
+#endif
   }
   return(0);
 }
@@ -310,6 +332,14 @@ int sick_write_command(sick_laser_p laser, unsigned char command,
   unsigned char buffer[MAX_COMMAND_SIZE];
   int pos = 0, i, check, length, loop, answer = 0, counter = 0;
   int val = 0;
+#ifdef CARMEN_LASER_USE_SELECT
+  fd_set read_set;
+  struct timeval timer;
+  timer.tv_sec=1;
+  timer.tv_usec=0;//1000*MAX_TIME_FOR_RESPONDING;
+  FD_ZERO(&read_set);
+  FD_SET(laser->dev.fd, &read_set);
+#endif
 
   /* SYNC CHARS */
   buffer[pos++] = 0x02;
@@ -334,7 +364,12 @@ int sick_write_command(sick_laser_p laser, unsigned char command,
   /* wait for acknowledgement */
   loop = 1;
   answer = INI;
+#ifdef CARMEN_LASER_USE_SELECT
+  loop=select(laser->dev.fd+1, &read_set, NULL, NULL, &timer);
+  if(loop) {
+#else
   while(loop) {
+#endif
     counter++;
     val = carmen_serial_numChars(laser->dev.fd);
     if(val > 0) {
@@ -361,7 +396,9 @@ int sick_write_command(sick_laser_p laser, unsigned char command,
       answer = TIO;
       loop = 0;
     }
+#ifndef CARMEN_LASER_USE_SELECT
     usleep(1000); 
+#endif
   }
   return answer;
 }
@@ -753,6 +790,12 @@ void sick_start_laser(sick_laser_p laser)
   int brate = 0;
 
   fprintf(stderr, "###########################################\n");
+  fprintf(stderr, "INFO: select mode ..................... ");
+#ifdef CARMEN_LASER_USE_SELECT
+  fprintf(stderr, "on\n");
+#else
+  fprintf(stderr, "off\n");
+#endif
   fprintf(stderr, "INFO: LASER type ...................... ");
   fprintf(stderr, "%s\n", (laser->settings.type == PLS) ? "PLS" : "LMS");
   
@@ -819,6 +862,7 @@ void sick_start_laser(sick_laser_p laser)
     fprintf(stderr, "INFO: start LASER continuous mode ..... ");
 	sick_start_continuous_mode(laser);
   }
+  laser->packet_timestamp=-1;
   fprintf(stderr, "ok\n");
   fprintf(stderr, "###########################################\n");
 }
@@ -904,9 +948,6 @@ static void sick_process_packet_distance(sick_laser_p laser, unsigned char *pack
       laser->wfv[i] = (HiB & 0x40) / 64;  
       laser->sfv[i] = (HiB & 0x80) / 128;
     }
-
-
-    laser->timestamp = carmen_get_time();
   }
 }
 
@@ -954,8 +995,6 @@ static void sick_process_packet_remission(sick_laser_p laser, unsigned char *pac
       laser->range[i] = (HiB * 256 + LoB) * conversion;
 	  laser->remission[i] = packet[i * 4 + offs + 12] * 256 + packet[i * 4 + offs + 11];
     }
-
-    laser->timestamp = carmen_get_time();
   }
 }
 
@@ -976,32 +1015,55 @@ void sick_handle_laser(sick_laser_p laser)
   int leftover;
   
   laser->new_reading = 0;
-
+#ifdef CARMEN_LASER_USE_SELECT
+  double timeout=0.1;
+  fd_set read_set;
+  struct timeval timer;
+  timer.tv_sec=(long)(floor(timeout));
+  timer.tv_usec=(long)((timeout-floor(timeout))*1000000);
+  FD_ZERO(&read_set);
+  FD_SET(laser->dev.fd, &read_set);
+  select(laser->dev.fd+1, &read_set, NULL, NULL, &timer);
+#endif
   /* read what is available in the buffer */
   bytes_available = carmen_serial_numChars(laser->dev.fd);
-  if(bytes_available > LASER_BUFFER_SIZE - laser->buffer_position)
+  if(bytes_available > LASER_BUFFER_SIZE - laser->buffer_position){
     bytes_available = LASER_BUFFER_SIZE - laser->buffer_position;
+  }
   bytes_read = carmen_serial_readn(laser->dev.fd, laser->buffer +
 				   laser->buffer_position, bytes_available);
 
   /* process at most one laser reading */
   if(bytes_read > 0) {
-    laser->buffer_position += bytes_read;
-    if(sick_valid_packet(laser->buffer + laser->processed_mark,
-			 laser->buffer_position - laser->processed_mark,
-			 &(laser->packet_offset), &(laser->packet_length))) {
-      sick_process_packet(laser, laser->buffer + laser->processed_mark +
+      if (laser->packet_timestamp<0.){
+	  laser->packet_timestamp=carmen_get_time();
+      }
+      laser->buffer_position += bytes_read;
+      if(sick_valid_packet(laser->buffer + laser->processed_mark,
+			   laser->buffer_position - laser->processed_mark,
+			   &(laser->packet_offset), &(laser->packet_length))) {
+	  laser->timestamp=laser->packet_timestamp;
+	  sick_process_packet(laser, laser->buffer + laser->processed_mark +
 			  laser->packet_offset + 4);
-      leftover = laser->buffer_position - laser->processed_mark - 
-	laser->packet_length;
-      laser->processed_mark += laser->packet_offset + laser->packet_length;
-      if(leftover == 0) {
-	laser->buffer_position = 0;
-	laser->processed_mark = 0;
-      }  
+	  laser->packet_timestamp=-1.;
+
+	  leftover = laser->buffer_position - laser->processed_mark - 
+	      laser->packet_length;
+	  laser->processed_mark += laser->packet_offset + laser->packet_length;
+	  //PACKET_DROPPING
+	  while (leftover>laser->packet_length) {
+	      laser->processed_mark +=laser->packet_length;
+	      leftover-=laser->packet_length;
+	      fprintf(stderr,"D");
+	  }
+	  if(leftover == 0) {
+	      laser->buffer_position = 0;
+	      laser->processed_mark = 0;
+	  }
     }
   }
-
+  
+  
   /* shift everything forward in the buffer, if necessary */
   if(laser->buffer_position > LASER_BUFFER_SIZE / 2) {
     memmove(laser->buffer, laser->buffer + laser->processed_mark,
