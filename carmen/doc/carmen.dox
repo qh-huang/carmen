@@ -18,7 +18,7 @@ INPUT            	= main.html params.html style.html messages.html faq.html modu
 			../src/global/ipc_wrapper.h \
 			../src/global/movement.h \
 			../src/global/pswrap.h \
-			../src/global/serial.h \
+			../src/global/carmenserial.h \
 			../src/gps/gps_nmea_interface.h \
 			../src/gps/gps_nmea_messages.h \
 			../src/joystick/joyctrl.h \
