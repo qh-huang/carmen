@@ -115,6 +115,13 @@ Inter-Process-Communication to send message between modules.
 
   The CARMEN navigator module the provides path planning module to guide the robot 
   through the environment.
+
+  The navigator module consists of 4 main components: 
+  <ol> 
+  <li>A motion planning library, contained in libconventional.a. This library computes
+  the shortest path through the current map by computing a utility function, and . 
+  <li>A planner abstraction 
+  </ol>
 	
 @}
  **/
