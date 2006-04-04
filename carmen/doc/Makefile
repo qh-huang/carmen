@@ -12,7 +12,7 @@ ifndef NO_DOXYGEN
 TARGETS = carmen.doxygen  copy_files
 endif
 
-TO_HTML = tree.html carmen-logo-tiny.png doxygen.css 
+TO_HTML = tree.html tree-bin.html tree-src.html carmen-logo-tiny.png doxygen.css 
 
 copy_to_html =   $(SILENT) \
 	for i in $(TO_HTML) ; do \
