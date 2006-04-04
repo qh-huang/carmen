@@ -26,10 +26,10 @@
  ********************************************************/
 
 
-/** @addtogroup global libserial **/
+/** @addtogroup global libcarmenserial **/
 // @{
 
-/** \file serial.h
+/** \file carmenserial.h
  * \brief Serial library.
  *
  * Library to read data from and write data to the serial line.

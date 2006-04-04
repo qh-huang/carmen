@@ -12,16 +12,16 @@ endif
 MODULE_NAME = "GLOBAL"
 MODULE_COMMENT = "CARMEN global functions"
 
-SOURCES = global.c carmen_stdio.c geometry.c pswrap.c serial.c global_test.c \
+SOURCES = global.c carmen_stdio.c geometry.c pswrap.c carmenserial.c global_test.c \
 	  carmen-config.c keyctrl.c multicentral.c test_multicentral.c \
 	  ipc_wrapper.c movement.c test_movement.c
 PUBLIC_INCLUDES = global.h carmen_stdio.h ipc_wrapper.h geometry.h pswrap.h \
-	  	  carmen.h serial.h keyctrl.h multicentral.h movement.h
+	  	  carmen.h carmenserial.h keyctrl.h multicentral.h movement.h
 
-PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libserial.a \
+PUBLIC_LIBRARIES = libglobal.a libgeometry.a libpswrap.a libcarmenserial.a \
 		   libkeyctrl.a libmulticentral.a libmovement.a
 PUBLIC_BINARIES = carmen-config 
-TARGETS = libglobal.a libgeometry.a libpswrap.a libserial.a global_test \
+TARGETS = libglobal.a libgeometry.a libpswrap.a libcarmenserial.a global_test \
 	  carmen-config libkeyctrl.a libmulticentral.a \
 	  test_multicentral libmovement.a test_movement
 
@@ -77,7 +77,7 @@ libpswrap.a:		pswrap.o
 
 libartwrap.a:		artwrap.o
 
-libserial.a:		serial.o
+libcarmenserial.a:	carmenserial.o
 
 libkeyctrl.a:   	keyctrl.o
 

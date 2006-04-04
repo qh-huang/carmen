@@ -77,7 +77,7 @@ extern "C" {
 #endif
 
 #include <carmen/global.h>
-#include <carmen/serial.h>
+#include <carmen/carmenserial.h>
 
 #include <carmen/pswrap.h>
 
