@@ -863,26 +863,6 @@ static void draw_robot_shape(GtkMapViewer *the_map_view,
   carmen_map_graphics_draw_polygon(the_map_view, colour, wp, 5, filled);
 }
 
-static void draw_robot(GtkMapViewer *the_map_view, double pixel_size)
-{
-  carmen_world_point_t robot_radius;
-
-  if (!nav_panel_config->show_particles && !nav_panel_config->show_gaussians) 
-    draw_robot_shape(the_map_view, &robot, TRUE, &robot_colour, pixel_size);
-
-  if (!nav_panel_config->show_gaussians)
-    draw_robot_shape(the_map_view, &robot, FALSE, &carmen_black, pixel_size);
-  
-  robot_radius = robot;  
-  robot_radius.pose.x = robot_radius.pose.x + 
-    cos(robot_radius.pose.theta)*0.2;
-  robot_radius.pose.y = robot_radius.pose.y + 
-    sin(robot_radius.pose.theta)*0.2;
-  
-  carmen_map_graphics_draw_line(the_map_view, &carmen_black, &robot, 
-				&robot_radius);  
-}
-
 static void draw_simulated_robot(GtkMapViewer *the_map_view, double pixel_size)
 {
   double robot_size;
@@ -909,6 +889,32 @@ static void draw_simulated_robot(GtkMapViewer *the_map_view, double pixel_size)
   carmen_map_graphics_draw_line(the_map_view, &carmen_black, 
 				&simulator_trueposition, &radius);  
 }
+
+
+static void draw_robot(GtkMapViewer *the_map_view, double pixel_size)
+{
+  carmen_world_point_t robot_radius;
+
+
+  if (!nav_panel_config->show_particles && !nav_panel_config->show_gaussians) 
+    draw_robot_shape(the_map_view, &robot, TRUE, &robot_colour, pixel_size);
+
+  if (!nav_panel_config->show_gaussians)
+    draw_robot_shape(the_map_view, &robot, FALSE, &carmen_black, pixel_size);
+  
+  robot_radius = robot;  
+  robot_radius.pose.x = robot_radius.pose.x + 
+    cos(robot_radius.pose.theta)*0.2;
+  robot_radius.pose.y = robot_radius.pose.y + 
+    sin(robot_radius.pose.theta)*0.2;
+  
+  carmen_map_graphics_draw_line(the_map_view, &carmen_black, &robot, 
+				&robot_radius);  
+
+
+
+}
+
 
 void draw_robot_objects(GtkMapViewer *the_map_view) 
 {
@@ -1725,6 +1731,7 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
     (map_view->zoom/100.0);
   adjust_distance *= 10;
   
+  
   new_robot_w.pose.x = new_robot->x;
   new_robot_w.pose.y = new_robot->y;
   new_robot_w.pose.theta = new_robot->theta;
@@ -1832,6 +1839,8 @@ navigator_graphics_update_simulator_truepos(carmen_point_t truepose)
   simulator_trueposition.pose = truepose;
   simulator_trueposition.map = map_view->internal_map;
   last_simulator_update = carmen_get_time();
+  display_needs_updating = 1;
+  do_redraw();
 }
 
 void navigator_graphics_update_simulator_objects(int num_objects, 
