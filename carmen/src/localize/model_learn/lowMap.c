@@ -751,6 +751,10 @@ void LowAddTrace(double startx, double starty, double MeasuredDist, double theta
   endx = (int) (dx);
   endy = (int) (dy);
 
+  // Ensures that we don't enter the loop: ray-tracing is done here. 
+  if (endx == startx && endy == starty)
+    return; 
+
   // Decide which x and y directions the line is travelling.
   // inc tells us which way to increment x and y. edge indicates whether we are computing
   // distance from the near or far edge.
