@@ -1,25 +1,27 @@
 camera needs documentation
-get a data file for model learn and send to ron parr
 add documentation to localize_messages 
 add documentation to logger, logtools 
+add documentation to navigator
+add documentation to pantilt
+add documentation to param_daemon 
+add documentation to robot	
+add documentation to simulator
+maptools documentation
+
+get a data file for model learn and send to ron parr
 
 fix robot collision avoidance 
 
-maptools documentation
-add documentation to navigator
-
-add documentation to pantilt
-add documentation for param_daemon 
 turn install_params, param_set, reload_param module into single param_tool 
 
-proccontrol_view 
+graphical proccontrol_view 
 
 python fix shared library problem 
 
-robot -- add documentation, add parameter to control skew estimation
-         add parameter to control interpolation
+robot add parameter to control skew estimation
+
 robotgui 
-simulator -- add documentation
+
 vasco? 
 
 maybe delete mapeditor?
@@ -28,7 +30,7 @@ Questions:
 =======================================
 
 * carmen_robot_correct_laser_and_publish: if the
-  timestamp estimate is now ready, does is make
+  timestamp estimate is not ready, does is make
   sense to send the data via ipc?
 
 
