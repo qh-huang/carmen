@@ -22,6 +22,14 @@ vasco?
 
 maybe delete mapeditor?
 
+Questions:
+=======================================
+
+* carmen_robot_correct_laser_and_publish: if the
+  timestamp estimate is now ready, does is make
+  sense to send the data via ipc?
+
+
 carmen-addons 
 =======================================
 look at b21r in carmen-addons 
