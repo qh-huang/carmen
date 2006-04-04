@@ -1,0 +1,36 @@
+/** @page binary__param__daemon
+
+<h2>Param Daemon</h2>
+
+@section param_daemon Param Daemon
+
+Usage: param_daemon [-ahr] [map_filename] [ini filename]
+
+This program read the ini file and provides parameter definitions. If the ini
+file is not specified, param_daemon looks in the current directory, the parent
+directory (../carmen.ini), and in a sibling src directory (../src/carmen.ini). 
+
+The ini file has a format defined elsewhere, but if multiple robots are
+defined in the ini file, then the param_daemon requires an argument to specify
+the robot (-r or --robot). 
+
+If the argument '-a' is given, then parameters are alphabetized when the
+param_daemon is queried, otherwise, the parameters are preserved in the order
+given in the ini file. 
+
+If a map file is specified as a command-line argument, then the param_daemon
+will act as a map server. 
+
+@section param_edit Param Edit
+
+This program can be used to interact with the param_daemon. When parameters
+are modified, on/off parameters have their new values propagated to the
+param_daemon instantly. Numerical and string parameters are propagated when
+<return> is pressed. If a parameter name is underlined, its value has not been
+propagated to the param_daemon. Note that only some modules subscribe to
+changed parameter values. In some cases, modules may need to be restarted to
+acquire the new parameter value. 
+
+@section param_tool Param Tool
+
+**/

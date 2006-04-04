@@ -53,7 +53,26 @@ INPUT            	= main.html params.html style.html messages.html faq.html modu
 			../src/simulator/simulator_interface.h \
 			../src/simulator/simulator_messages.h \
 			../src/vasco/egrid.h \
-			../src/vasco/vascocore.h
+			../src/vasco/vascocore.h \
+                        binaries/binary_navigator \
+                        binaries/binary_base \
+                        binaries/binary_camera \
+                        binaries/binary_global \
+                        binaries/binary_gps \
+                        binaries/binary_ipc \
+                        binaries/binary_joystick \
+                        binaries/binary_laser \
+                        binaries/binary_localize \
+                        binaries/binary_loggerplayback \
+                        binaries/binary_logtools \
+                        binaries/binary_maptools \
+                        binaries/binary_navigator \
+                        binaries/binary_pantilt \
+                        binaries/binary_param_daemon \
+                        binaries/binary_proccontrol \
+                        binaries/binary_robot \
+                        binaries/binary_simulator \
+                        binaries/binary_vasco
 
 STRIP_FROM_PATH    	= ../src/
 WARNINGS         	= YES
