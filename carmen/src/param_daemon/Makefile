@@ -10,7 +10,8 @@ PUBLIC_INCLUDES = param_messages.h param_interface.h
 PUBLIC_LIBRARIES = libparam_interface.a 
 PUBLIC_BINARIES = param_daemon param_set install_params 
 
-TARGETS = param_daemon libparam_interface.a param_test param_set install_params
+TARGETS = param_daemon libparam_interface.a 
+#param_test param_set install_params
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
