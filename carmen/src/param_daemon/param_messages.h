@@ -53,7 +53,10 @@ typedef enum {CARMEN_PARAM_OK, CARMEN_PARAM_NOT_FOUND, CARMEN_PARAM_NOT_INT,
 #define CARMEN_PARAM_QUERY_ONOFF_NAME     "carmen_param_query_onoff"
 #define CARMEN_PARAM_QUERY_STRING_NAME    "carmen_param_query_string"
 #define CARMEN_PARAM_VERSION_QUERY_NAME   "carmen_param_query_version"
+#define CARMEN_PARAM_REREAD_COMMAND_NAME   "carmen_param_reread_command"
+
 typedef carmen_default_message carmen_param_query_version_message;
+typedef carmen_default_message carmen_param_reread_command_message;
 
 typedef struct {
   char *module_name;

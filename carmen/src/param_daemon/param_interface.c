@@ -65,23 +65,21 @@ param_check_commandline_int(char *lvalue, int *return_value)
   if(carmen_find_param(lvalue) == 0) 
     return 0;
     
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be an "
-	      "integer.", lvalue);
-      return -1;
-    }
-
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be an "
+	    "integer.", lvalue);
+    return -1;
+  }
+  
   arg = carmen_param_pair_and_remove(lvalue);
   *return_value = strtol(arg, &endptr, 0);
 
-  if (endptr == arg) 
-    {
-      sprintf(error_buffer, "Bad argument to %s: %s, should be an integer.", 
-	      lvalue, arg);
-      return -1;
-    }
-
+  if (endptr == arg) {
+    sprintf(error_buffer, "Bad argument to %s: %s, should be an integer.", 
+	    lvalue, arg);
+    return -1;
+  }
+  
   return 1;
 }
 
@@ -94,20 +92,18 @@ param_check_commandline_double(char *lvalue, double *return_value)
   if(carmen_find_param(lvalue) <= 0) 
     return 0;
 
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be an "
-	      "double.", lvalue);
-      return -1;
-    }
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be an "
+	    "double.", lvalue);
+    return -1;
+  }
   arg = carmen_param_pair_and_remove(lvalue);
   *return_value = strtod(arg, &endptr);
-  if (endptr == arg) 
-    {
-      sprintf(error_buffer, "Bad argument to %s: %s, should be a double.", 
-	      lvalue, arg);
-      return -1;
-    }
+  if (endptr == arg) {
+    sprintf(error_buffer, "Bad argument to %s: %s, should be a double.", 
+	    lvalue, arg);
+    return -1;
+  }
   
   return 1;
 }
@@ -120,24 +116,22 @@ param_check_commandline_onoff(char *lvalue, int *return_value)
   if(carmen_find_param(lvalue) <= 0) 
     return 0;
 
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be "
-	      "on/off.", lvalue);
-      return -1;
-    }
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be "
+	    "on/off.", lvalue);
+    return -1;
+  }
   arg = carmen_param_pair_and_remove(lvalue);
   if (strcmp(arg, "on") == 0)
     *return_value = 1;
   else if (strcmp(arg, "off") == 0)
     *return_value = 0;
-  else
-    {
-      sprintf(error_buffer, "Bad argument to %s: %s, should be on/off.", 
-	      lvalue, arg);
-      return -1;
-    }
-
+  else {
+    sprintf(error_buffer, "Bad argument to %s: %s, should be on/off.", 
+	    lvalue, arg);
+    return -1;
+  }
+  
   return 1;
 }
 
@@ -149,12 +143,11 @@ param_check_commandline_string(char *lvalue, char **string)
   if(carmen_find_param(lvalue) <= 0) 
     return 0;
 
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be a "
-	      "string.", lvalue);
-      return -1;
-    }
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be a "
+	    "string.", lvalue);
+    return -1;
+  }
   arg = carmen_param_pair_and_remove(lvalue);
   *string = arg;
 
@@ -170,12 +163,11 @@ param_check_commandline_filename(char *lvalue, char **filename)
   if(carmen_find_param(lvalue) <= 0) 
     return 0;
 
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be a "
-	      "filename.", lvalue);
-      return -1;
-    }
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be a "
+	    "filename.", lvalue);
+    return -1;
+  }
   arg = carmen_param_pair_and_remove(lvalue);
   if (stat(arg, &buf) < 0) {
     sprintf(error_buffer, "Option '%s', file %s not available: %s", lvalue, 
@@ -183,12 +175,11 @@ param_check_commandline_filename(char *lvalue, char **filename)
 	    strerror(errno));
     return -1;
   }
-  if (!S_ISREG(buf.st_mode)) 
-    {
-      sprintf(error_buffer, "Option '%s' requires regular file. %s is "
-	      "not a regular file.", lvalue, arg);
-      return -1;
-    }
+  if (!S_ISREG(buf.st_mode)) {
+    sprintf(error_buffer, "Option '%s' requires regular file. %s is "
+	    "not a regular file.", lvalue, arg);
+    return -1;
+  }
   *filename = arg;
 
   return 1;
@@ -203,12 +194,11 @@ param_check_commandline_directory(char *lvalue, char **dirname)
   if(carmen_find_param(lvalue) <= 0) 
     return 0;
 
-  if (carmen_find_param_pair(lvalue) == 0) 
-    {
-      sprintf(error_buffer, "Option '%s' requires argument: should be "
-	      "a directory name.", lvalue);
-      return -1;
-    }
+  if (carmen_find_param_pair(lvalue) == 0) {
+    sprintf(error_buffer, "Option '%s' requires argument: should be "
+	    "a directory name.", lvalue);
+    return -1;
+  }
   arg = carmen_param_pair_and_remove(lvalue);
   if (stat(arg, &buf) < 0) {
     sprintf(error_buffer, "Option '%s', directory %s not available: %s", 
@@ -216,12 +206,11 @@ param_check_commandline_directory(char *lvalue, char **dirname)
 	    strerror(errno));
     return -1;
   }
-  if (!S_ISDIR(buf.st_mode)) 
-    {
-      sprintf(error_buffer, "Option '%s' requires a directory name. %s is "
-	      "not a directory.", lvalue, arg);
-      return -1;
-    }
+  if (!S_ISDIR(buf.st_mode)) {
+    sprintf(error_buffer, "Option '%s' requires a directory name. %s is "
+	    "not a directory.", lvalue, arg);
+    return -1;
+  }
   *dirname = arg;
 
   return 1;
@@ -234,6 +223,16 @@ carmen_param_get_robot(void)
   carmen_param_query_message query;
   carmen_param_response_robot_message *response;
   char *robot_name = NULL;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_ROBOT_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_ROBOT_NAME);
+    initialized = 1;
+  }
 
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
@@ -270,6 +269,17 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   carmen_param_query_message query;
   carmen_param_response_modules_message *response;
   int m;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_MODULES_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_MODULES_NAME);
+    initialized = 1;
+  }
+
 
   if (modules == NULL || num_modules == NULL)
     return -1;
@@ -326,6 +336,17 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
   int status;
   int index;
   size_t length;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_ALL_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_ALL_NAME);
+    initialized = 1;
+  }
+
 
   if (module == NULL || module[0] == '\0' || list_length == NULL)
     return -1;
@@ -339,61 +360,52 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query all parameters", 
 		  CARMEN_PARAM_QUERY_ALL_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   *list_length = 0;
   status = response->status;
-  if (status == CARMEN_PARAM_OK)
-    {
-      *list_length = response->list_length;
-      if (variables) 
-	{
-	  *variables = (char **)calloc(*list_length, sizeof(char *));
-	  carmen_test_alloc(*variables);
-	}
-      if (values)
-	{
-	  *values = (char **)calloc(*list_length, sizeof(char *));
-	  carmen_test_alloc(*values);
-	}
+  if (status == CARMEN_PARAM_OK) {
+    *list_length = response->list_length;
+    if (variables) {
+      *variables = (char **)calloc(*list_length, sizeof(char *));
+      carmen_test_alloc(*variables);
+    }
+    if (values) {
+      *values = (char **)calloc(*list_length, sizeof(char *));
+      carmen_test_alloc(*values);
+    }
+    if (expert) {
+      *expert = (int *)calloc(*list_length, sizeof(int));
+      carmen_test_alloc(*expert);
+    }
+    for (index = 0; index < response->list_length; index++) {
+      if (variables) {
+	length = strlen(response->variables[index])+1;
+	(*variables)[index] = (char *)calloc(length, sizeof(char));
+	carmen_test_alloc((*variables)[index]);
+	strcpy((*variables)[index], response->variables[index]);
+      }
+      if (values) {
+	length = strlen(response->values[index])+1;
+	(*values)[index] = (char *)calloc(length, sizeof(char));
+	carmen_test_alloc((*values)[index]);
+	strcpy((*values)[index], response->values[index]);
+      }
       if (expert)
-	{
-	  *expert = (int *)calloc(*list_length, sizeof(int));
-	  carmen_test_alloc(*expert);
-	}
-      for (index = 0; index < response->list_length; index++)
-	{
-	  if (variables)
-	    {
-	      length = strlen(response->variables[index])+1;
-	      (*variables)[index] = (char *)calloc(length, sizeof(char));
-	      carmen_test_alloc((*variables)[index]);
-	      strcpy((*variables)[index], response->variables[index]);
-	    }
-	  if (values)
-	    {
-	      length = strlen(response->values[index])+1;
-	      (*values)[index] = (char *)calloc(length, sizeof(char));
-	      carmen_test_alloc((*values)[index]);
-	      strcpy((*values)[index], response->values[index]);
-	    }
-	  if (expert)
-	    (*expert)[index] = response->expert[index];
-
-	} /* End of for (index = 0; index < response->list_length ...*/
-    }
+	(*expert)[index] = response->expert[index];
+      
+    } /* End of for (index = 0; index < response->list_length ...*/
+  }
   
-  for (index = 0; index < response->list_length; index++)
-    {
-      free(response->variables[index]);
-      free(response->values[index]);
-    }
+  for (index = 0; index < response->list_length; index++) {
+    free(response->variables[index]);
+    free(response->values[index]);
+  }
   free(response->variables);
   free(response->values);
   free(response->expert);
@@ -415,12 +427,22 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
 
   carmen_param_query_message query;
   carmen_param_response_int_message *response;
+  static int initialized = 0;
 
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_INT_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_INT_NAME);
+    initialized = 1;
+  }
+
+
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
   
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -443,34 +465,31 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query int parameter", 
 		  CARMEN_PARAM_QUERY_INT_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
-      !allow_not_found_parameters)
-    {
-      sprintf(error_buffer, "The parameter server contains no definition "
-	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
-	      "may be a bug in this program\n(but probably not the parameter "
-	      "server). \n", (!module_name ? "" : module_name), variable);
-      return -1;
-    }
-
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = response->value;
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
-
+      !allow_not_found_parameters) {
+    sprintf(error_buffer, "The parameter server contains no definition "
+	    "for %s_%s,\nrequested by this program. You may have started "
+	    "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
+	    "may be a bug in this program\n(but probably not the parameter "
+	    "server). \n", (!module_name ? "" : module_name), variable);
+    return -1;
+  }
+  
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = response->value;
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
+  
   return 0;
 }
 
@@ -482,12 +501,21 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
   char buffer[1024];
   carmen_param_query_message query;
   carmen_param_response_double_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_DOUBLE_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_DOUBLE_NAME);
+    initialized = 1;
+  }
   
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
   
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -510,34 +538,31 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query double parameter", 
 		  CARMEN_PARAM_QUERY_DOUBLE_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
-      !allow_not_found_parameters)
-    {
-      sprintf(error_buffer, "The parameter server contains no definition "
-	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
-	      "may be a bug in this program\n(but probably not the parameter "
-	      "server). \n", (!module_name ? "" : module_name), variable);
-      return -1;
-    }
+      !allow_not_found_parameters) {
+    sprintf(error_buffer, "The parameter server contains no definition "
+	    "for %s_%s,\nrequested by this program. You may have started "
+	    "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
+	    "may be a bug in this program\n(but probably not the parameter "
+	    "server). \n", (!module_name ? "" : module_name), variable);
+    return -1;
+  }
 
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = response->value;
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
-
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = response->value;
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
+  
   free(response);
   return 0;
 }
@@ -550,12 +575,22 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
   char buffer[1024];
   carmen_param_query_message query;
   carmen_param_response_onoff_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_ONOFF_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_ONOFF_NAME);
+    initialized = 1;
+  }
   
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
   
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -587,25 +622,23 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
     }
 
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
-      !allow_not_found_parameters)
-    {
-      sprintf(error_buffer, "The parameter server contains no definition "
-	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
-	      "may be a bug in this program\n(but probably not the parameter "
-	      "server). \n", (!module_name ? "" : module_name), variable);
-      return -1;
-    }
-
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = response->value;  
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
-
+      !allow_not_found_parameters) {
+    sprintf(error_buffer, "The parameter server contains no definition "
+	    "for %s_%s,\nrequested by this program. You may have started "
+	    "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
+	    "may be a bug in this program\n(but probably not the parameter "
+	    "server). \n", (!module_name ? "" : module_name), variable);
+    return -1;
+  }
+  
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = response->value;  
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
+  
   free(response);
   return 0;
 }
@@ -618,12 +651,22 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
   char buffer[1024];
   carmen_param_query_message query;
   carmen_param_response_string_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_STRING_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_STRING_NAME);
+    initialized = 1;
+  }
   
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
 
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -645,36 +688,33 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query string parameter", 
 		  CARMEN_PARAM_QUERY_STRING_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
-      !allow_not_found_parameters)
-    {
-      sprintf(error_buffer, "The parameter server contains no definition "
-	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
-	      "may be a bug in this program\n(but probably not the parameter "
-	      "server). \n", (!module_name ? "" : module_name), variable);
-      return -1;
-    }
-
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
-      carmen_test_alloc(*return_value);
-      strcpy(*return_value, response->value);
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
-
+      !allow_not_found_parameters) {
+    sprintf(error_buffer, "The parameter server contains no definition "
+	    "for %s_%s,\nrequested by this program. You may have started "
+	    "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
+	    "may be a bug in this program\n(but probably not the parameter "
+	    "server). \n", (!module_name ? "" : module_name), variable);
+    return -1;
+  }
+  
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
+    carmen_test_alloc(*return_value);
+    strcpy(*return_value, response->value);
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
+  
   free(response);
 
   return 0;
@@ -688,12 +728,22 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
   carmen_param_query_message query;
   carmen_param_response_string_message *response;
   char buffer[1024];
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_STRING_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_STRING_NAME);
+    initialized = 1;
+  }
   
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
   
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -717,14 +767,13 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not query filename parameter", 
 		  CARMEN_PARAM_QUERY_STRING_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
       !allow_not_found_parameters)
     {
@@ -736,16 +785,15 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
       return -1;
     }
 
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
-      carmen_test_alloc(*return_value);
-      strcpy(*return_value, response->value);
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
+    carmen_test_alloc(*return_value);
+    strcpy(*return_value, response->value);
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
   
   free(response);
   return 0;
@@ -759,12 +807,22 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
   carmen_param_query_message query;
   carmen_param_response_string_message *response;
   char buffer[1024];
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_QUERY_STRING_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_QUERY_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_QUERY_STRING_NAME);
+    initialized = 1;
+  }
   
-  if (variable == NULL || variable[0] == '\0' || return_value == NULL) 
-    {
-      sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
-      return -1;
-    }
+  
+  if (variable == NULL || variable[0] == '\0' || return_value == NULL) {
+    sprintf(error_buffer, "Bad argument passed to %s", __FUNCTION__);
+    return -1;
+  }
   
   if (module_name) {
     sprintf(buffer, "%s_%s", module_name, variable);
@@ -797,26 +855,24 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
     }
 
   if (response->status == CARMEN_PARAM_NOT_FOUND && 
-      !allow_not_found_parameters)
-    {
-      sprintf(error_buffer, "The parameter server contains no definition "
-	      "for %s_%s,\nrequested by this program. You may have started "
-	      "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
-	      "may be a bug in this program\n(but probably not the parameter "
-	      "server). \n", (!module_name ? "" : module_name), variable);
-      return -1;
-    }
-
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
-      carmen_test_alloc(*return_value);
-      strcpy(*return_value, response->value);
-      if (expert)
-	*expert = response->expert;
-      free(response);
-      return 1;
-    }
+      !allow_not_found_parameters) {
+    sprintf(error_buffer, "The parameter server contains no definition "
+	    "for %s_%s,\nrequested by this program. You may have started "
+	    "the param_daemon with\nan out-of-date carmen.ini file. Or, this "
+	    "may be a bug in this program\n(but probably not the parameter "
+	    "server). \n", (!module_name ? "" : module_name), variable);
+    return -1;
+  }
+  
+  if (response->status == CARMEN_PARAM_OK) {
+    *return_value = (char *)calloc(strlen(response->value)+1, sizeof(char));
+    carmen_test_alloc(*return_value);
+    strcpy(*return_value, response->value);
+    if (expert)
+      *expert = response->expert;
+    free(response);
+    return 1;
+  }
   
   free(response);
   return 0;
@@ -825,12 +881,11 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
 void
 carmen_param_set_module(char *new_module_name)
 {
-  if (module_name)
-    {
-      free(module_name);
-      module_name = NULL;
-    }
-
+  if (module_name) {
+    free(module_name);
+    module_name = NULL;
+  }
+  
   if (new_module_name == NULL || new_module_name[0] == '\0')
     return;
 
@@ -864,6 +919,16 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
 
   carmen_param_set_message query;
   carmen_param_response_string_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_SET_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_PARAM_SET_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_SET_NAME);
+    initialized = 1;
+  }  
   
   if (variable == NULL || variable[0] == '\0' || new_value == NULL || 
       new_value[0] == '\0')
@@ -878,26 +943,23 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
   err = IPC_queryResponseData(CARMEN_PARAM_SET_NAME, &query, 
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not set variable", CARMEN_PARAM_SET_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
+  if (response->status == CARMEN_PARAM_OK) {
+    if (return_value) {
+      *return_value = (char *)calloc(strlen(response->value)+1, 
+				     sizeof(char));
+      carmen_test_alloc(*return_value);
+      strcpy(*return_value, response->value);
     }
-
-  if (response->status == CARMEN_PARAM_OK) 
-    {
-      if (return_value) 
-	{
-	  *return_value = (char *)calloc(strlen(response->value)+1, 
-					 sizeof(char));
-	  carmen_test_alloc(*return_value);
-	  strcpy(*return_value, response->value);
-	}
-      free(response);
-      return 0;
-    }
+    free(response);
+    return 0;
+  }
   else
     carmen_warn("Error: %d\n", response->status);
   
@@ -935,64 +997,57 @@ carmen_param_usage(char *progname, carmen_param_p param_list, int num_items,
   va_list args;
   int index;
 
-  if (fmt != NULL)
-    {
-      fprintf(stderr, "\n%s", carmen_red_code);
-      va_start(args, fmt);
-      vfprintf(stderr, fmt, args);
-      va_end(args);
-      fprintf(stderr, "%s\n\n", carmen_normal_code);
+  if (fmt != NULL) {
+    fprintf(stderr, "\n%s", carmen_red_code);
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "%s\n\n", carmen_normal_code);
+  } else {
+    if (strrchr(progname, '/') != NULL) {
+      progname = strrchr(progname, '/');
+      progname++;
     }
-  else
-    {
-      if (strrchr(progname, '/') != NULL)
-	{
-	  progname = strrchr(progname, '/');
-	  progname++;
-	}
       
-      if (param_list == NULL)
-	{
-	  param_list = installed_parameters;
-	  num_items = installed_list_length;
-	}
-      
+    if (param_list == NULL) {
+      param_list = installed_parameters;
+      num_items = installed_list_length;
+    }
+    
       if (usage_line == NULL)
 	fprintf(stderr, "Usage: %s\n", progname);
       else
 	fprintf(stderr, "%s\n", usage_line);
       
-      for (index = 0; index < num_items; index++)
-	{
-	  if (!param_list[index].variable)
-	    continue;
-	  fprintf(stderr, "\t-%s ", param_list[index].variable);
-	  switch (param_list[index].type)
-	    {
-	    case CARMEN_PARAM_INT:
-	      fprintf(stderr, "%%d");
-	      break;
-	    case CARMEN_PARAM_DOUBLE:
-	      fprintf(stderr, "%%f");
-	      break;
-	    case CARMEN_PARAM_ONOFF:
-	      fprintf(stderr, "{on|off}");
-	      break;
-	    case CARMEN_PARAM_STRING:
-	      fprintf(stderr, "%%s");
-	      break;
-	    case CARMEN_PARAM_FILE:
-	      fprintf(stderr, "<filename>");
-	      break;
-	    case CARMEN_PARAM_DIR:
-	      fprintf(stderr, "<directory>");
-	      break;
-	    }
-
-	  fprintf(stderr, "[50G Autoupdate : %s\n", 
-		  (param_list[index].subscribe ? "on" : "off"));
+      for (index = 0; index < num_items; index++) {
+	if (!param_list[index].variable)
+	  continue;
+	fprintf(stderr, "\t-%s ", param_list[index].variable);
+	switch (param_list[index].type) {
+	case CARMEN_PARAM_INT:
+	  fprintf(stderr, "%%d");
+	  break;
+	case CARMEN_PARAM_DOUBLE:
+	  fprintf(stderr, "%%f");
+	  break;
+	case CARMEN_PARAM_ONOFF:
+	  fprintf(stderr, "{on|off}");
+	  break;
+	case CARMEN_PARAM_STRING:
+	  fprintf(stderr, "%%s");
+	  break;
+	case CARMEN_PARAM_FILE:
+	  fprintf(stderr, "<filename>");
+	  break;
+	case CARMEN_PARAM_DIR:
+	  fprintf(stderr, "<directory>");
+	  break;
 	}
-    }
+	
+	fprintf(stderr, "[50G Autoupdate : %s\n", 
+		(param_list[index].subscribe ? "on" : "off"));
+      }
+  }
   exit(-1);
 }
 
@@ -1019,66 +1074,64 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
 		       "It loads parameter settings from the param_daemon.", 
 		       argv[0]);
 
-  for (index = 0; index < num_items; index++)
-    {
-      carmen_param_set_module(param_list[index].module);
-
-      prog_name = carmen_extract_filename(argv[0]);
-
-      switch (param_list[index].type)
-	{
-	case CARMEN_PARAM_INT:
-	  err = carmen_param_get_int(param_list[index].variable, 
-				     param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %d\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "",
-			 *((int *)(param_list[index].user_variable)));
-	  break;
-	case CARMEN_PARAM_DOUBLE:
-	  err = carmen_param_get_double(param_list[index].variable, 
-					param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %f\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "", 
-			 *((double *)(param_list[index].user_variable)));
-	  break;
-	case CARMEN_PARAM_ONOFF:
-	  err = carmen_param_get_onoff(param_list[index].variable,
+  for (index = 0; index < num_items; index++) {
+    carmen_param_set_module(param_list[index].module);
+    
+    prog_name = carmen_extract_filename(argv[0]);
+    
+    switch (param_list[index].type) {
+    case CARMEN_PARAM_INT:
+      err = carmen_param_get_int(param_list[index].variable, 
+				 param_list[index].user_variable, &expert);
+      carmen_verbose("%s_%s %s: %d\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "",
+		     *((int *)(param_list[index].user_variable)));
+      break;
+    case CARMEN_PARAM_DOUBLE:
+      err = carmen_param_get_double(param_list[index].variable, 
+				    param_list[index].user_variable, &expert);
+      carmen_verbose("%s_%s %s: %f\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "", 
+		     *((double *)(param_list[index].user_variable)));
+      break;
+    case CARMEN_PARAM_ONOFF:
+      err = carmen_param_get_onoff(param_list[index].variable,
+				   param_list[index].user_variable, &expert);
+      carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "",
+		     (*((int *)(param_list[index].user_variable)) == 0 ? 
+		      "off" : "on"));
+      break;
+    case CARMEN_PARAM_STRING:
+      err = carmen_param_get_string(param_list[index].variable, 
+				    param_list[index].user_variable, &expert);
+      carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "",
+		     (*(char **)(param_list[index].user_variable)));
+      break;
+    case CARMEN_PARAM_FILE:
+      err = carmen_param_get_filename(param_list[index].variable, 
+				      param_list[index].user_variable, &expert);
+      carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "",
+		     (*(char **)(param_list[index].user_variable)));
+      break;
+    case CARMEN_PARAM_DIR:
+      err = carmen_param_get_directory(param_list[index].variable, 
 				       param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "",
-			 (*((int *)(param_list[index].user_variable)) == 0 ? 
-			  "off" : "on"));
-	  break;
-	case CARMEN_PARAM_STRING:
-	  err = carmen_param_get_string(param_list[index].variable, 
-					param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "",
-			 (*(char **)(param_list[index].user_variable)));
-	  break;
-	case CARMEN_PARAM_FILE:
-	  err = carmen_param_get_filename(param_list[index].variable, 
-					  param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "",
-			 (*(char **)(param_list[index].user_variable)));
-	  break;
-	case CARMEN_PARAM_DIR:
-	  err = carmen_param_get_directory(param_list[index].variable, 
-					   param_list[index].user_variable, &expert);
-	  carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
-			 param_list[index].variable, expert ? "[expert]" : "",
-			 (*(char **)(param_list[index].user_variable)));
-	  break;
-	} /* switch (param_list[index].type) */
-      if (err < 0)
-	carmen_param_usage(argv[0], param_list, num_items, 
-			   carmen_param_get_error());
-      install_parameter(param_list[index].module, param_list[index].variable, 
-			param_list[index].user_variable, 
-			param_list[index].type, param_list[index].subscribe, 
-			param_list[index].handler);
-    }
+      carmen_verbose("%s_%s %s: %s\n", param_list[index].module,
+		     param_list[index].variable, expert ? "[expert]" : "",
+		     (*(char **)(param_list[index].user_variable)));
+      break;
+    } /* switch (param_list[index].type) */
+    if (err < 0)
+      carmen_param_usage(argv[0], param_list, num_items, 
+			 carmen_param_get_error());
+    install_parameter(param_list[index].module, param_list[index].variable, 
+		      param_list[index].user_variable, 
+		      param_list[index].type, param_list[index].subscribe, 
+		      param_list[index].handler);
+  }
   
   return last_command_line_arg;
 }
@@ -1109,17 +1162,15 @@ get_table_entry(char *module, char *variable)
   if (!module && !variable)
     return NULL;
 
-  for (index = 0; index < installed_list_length; index++)
-    {
-      param = installed_parameters+index;
-      if (strcmp(param->variable, variable) == 0)
-	{
-	  if ((!module && !(param->module)) ||
-	      (strcmp(module, param->module) == 0))
-	    return param;
-	}
+  for (index = 0; index < installed_list_length; index++) {
+    param = installed_parameters+index;
+    if (strcmp(param->variable, variable) == 0) {
+      if ((!module && !(param->module)) ||
+	  (strcmp(module, param->module) == 0))
+	return param;
     }
-
+  }
+  
   return NULL;
 }
 
@@ -1128,23 +1179,21 @@ check_table_capacity(void)
 {
   carmen_param_t *new_table;
 
-  if (installed_parameters == NULL) 
-    {
-      installed_list_capacity = 100;
-      installed_list_length = 0;
-      installed_parameters = (carmen_param_t *)
-	calloc(installed_list_capacity, sizeof(carmen_param_t));
-      carmen_test_alloc(installed_parameters);
-    }
-  else if (installed_list_capacity == installed_list_length)
-    {
-      new_table = (carmen_param_t *)
-	realloc(installed_parameters, 
-		installed_list_capacity*2*sizeof(carmen_param_t));
-      carmen_test_alloc(new_table);
-      installed_parameters = new_table;
-      installed_list_capacity *= 2;
-    }
+  if (installed_parameters == NULL) {
+    installed_list_capacity = 100;
+    installed_list_length = 0;
+    installed_parameters = (carmen_param_t *)
+      calloc(installed_list_capacity, sizeof(carmen_param_t));
+    carmen_test_alloc(installed_parameters);
+  }
+  else if (installed_list_capacity == installed_list_length) {
+    new_table = (carmen_param_t *)
+      realloc(installed_parameters, 
+	      installed_list_capacity*2*sizeof(carmen_param_t));
+    carmen_test_alloc(new_table);
+    installed_parameters = new_table;
+    installed_list_capacity *= 2;
+  }
 }
 
 static void
@@ -1235,92 +1284,84 @@ change_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 		 msg.module_name, msg.variable_name, msg.value);
 
   table_entry = get_table_entry(msg.module_name, msg.variable_name);
-  if (table_entry != NULL && table_entry->subscribe == 1)
-    {
-      table_type = table_entry->type;
-      switch(table_type) {
-      case CARMEN_PARAM_INT:
-	if (strlen(msg.value) > 254)
-	  {
-	    carmen_warn("Received variable change notice : bad variable\n"
-			"value %s for variable %s_%s\n", msg.value,
-			msg.module_name, msg.variable_name);
-	    return;
-	  }
-	new_int = strtol(msg.value, &endptr, 0);
-	if (endptr == msg.value) 
-	  {
-	    carmen_warn("Received variable change notice : could not\n"
-			"convert %s to type int for variable %s_%s\n", 
-			msg.value, msg.module_name, msg.variable_name);
-	    return;
-	  }
-	int_address = table_entry->user_variable;
-	if (int_address)
-	  *int_address = new_int;
-	break;
-      case CARMEN_PARAM_DOUBLE:
-	if (strlen(msg.value) > 254)
-	  {
-	    carmen_warn("Received variable change notice : bad variable\n"
-			"value %s for variable %s_%s\n", msg.value,
-			msg.module_name, msg.variable_name);
-	    return;
-	  }
-	new_double = strtod(msg.value, &endptr);
-	if (endptr == msg.value) 
-	  {
-	    carmen_warn("Received variable change notice : could not\n"
-			"convert %s to type double for variable %s_%s\n", 
-			msg.value, msg.module_name, msg.variable_name);
-	    return;
-	  }
-	double_address = table_entry->user_variable;
-	if (double_address) 
-	  *double_address = new_double;
-	break;
-      case CARMEN_PARAM_ONOFF:
-	if (strlen(msg.value) > 254)
-	  {
-	    carmen_warn("Received variable change notice : bad variable\n"
-			"value %s for variable %s_%s\n", msg.value,
-			msg.module_name, msg.variable_name);
-	    return;
-	  }
-	if (carmen_strncasecmp(msg.value, "ON", 2) == 0)
-	  new_int = 1;
-	else if (carmen_strncasecmp(msg.value, "OFF", 3) == 0)
-	  new_int = 0;
-	else 
-	  {
-	    carmen_warn("Received variable change notice : could not\n"
-			"convert %s to type on/off for variable %s_%s\n", 
-			msg.value, msg.module_name, msg.variable_name);
-	    return;
-	  }
-	onoff_address = table_entry->user_variable;
-	if (onoff_address) 
-	  *onoff_address = new_int;
-	break;
-      case CARMEN_PARAM_STRING:
-      case CARMEN_PARAM_FILE:
-      case CARMEN_PARAM_DIR:
-	string_address = table_entry->user_variable;
-	if (string_address) 
-	  {
-	    if (*string_address)
-	      free(*string_address);
-	    *string_address = 
-	      (char *)calloc(strlen(msg.value)+1, sizeof(char));
-	    carmen_test_alloc(*string_address);
-	    strcpy(*string_address, msg.value);
-	  }
-	break;
-      } /* switch (table_type) { */
-      handler = table_entry->handler;
-      if (handler)
-	(*handler)(msg.module_name, msg.variable_name, msg.value);
-    }
+  if (table_entry != NULL && table_entry->subscribe == 1) {
+    table_type = table_entry->type;
+    switch(table_type) {
+    case CARMEN_PARAM_INT:
+      if (strlen(msg.value) > 254) {
+	carmen_warn("Received variable change notice : bad variable\n"
+		    "value %s for variable %s_%s\n", msg.value,
+		    msg.module_name, msg.variable_name);
+	return;
+      }
+      new_int = strtol(msg.value, &endptr, 0);
+      if (endptr == msg.value) {
+	carmen_warn("Received variable change notice : could not\n"
+		    "convert %s to type int for variable %s_%s\n", 
+		    msg.value, msg.module_name, msg.variable_name);
+	return;
+      }
+      int_address = table_entry->user_variable;
+      if (int_address)
+	*int_address = new_int;
+      break;
+    case CARMEN_PARAM_DOUBLE:
+      if (strlen(msg.value) > 254) {
+	carmen_warn("Received variable change notice : bad variable\n"
+		    "value %s for variable %s_%s\n", msg.value,
+		    msg.module_name, msg.variable_name);
+	return;
+      }
+      new_double = strtod(msg.value, &endptr);
+      if (endptr == msg.value) {
+	carmen_warn("Received variable change notice : could not\n"
+		    "convert %s to type double for variable %s_%s\n", 
+		    msg.value, msg.module_name, msg.variable_name);
+	return;
+      }
+      double_address = table_entry->user_variable;
+      if (double_address) 
+	*double_address = new_double;
+      break;
+    case CARMEN_PARAM_ONOFF:
+      if (strlen(msg.value) > 254) {
+	carmen_warn("Received variable change notice : bad variable\n"
+		    "value %s for variable %s_%s\n", msg.value,
+		    msg.module_name, msg.variable_name);
+	return;
+      }
+      if (carmen_strncasecmp(msg.value, "ON", 2) == 0)
+	new_int = 1;
+      else if (carmen_strncasecmp(msg.value, "OFF", 3) == 0)
+	new_int = 0;
+      else {
+	carmen_warn("Received variable change notice : could not\n"
+		    "convert %s to type on/off for variable %s_%s\n", 
+		    msg.value, msg.module_name, msg.variable_name);
+	return;
+      }
+      onoff_address = table_entry->user_variable;
+      if (onoff_address) 
+	*onoff_address = new_int;
+      break;
+    case CARMEN_PARAM_STRING:
+    case CARMEN_PARAM_FILE:
+    case CARMEN_PARAM_DIR:
+      string_address = table_entry->user_variable;
+      if (string_address) {
+	if (*string_address)
+	  free(*string_address);
+	*string_address = 
+	  (char *)calloc(strlen(msg.value)+1, sizeof(char));
+	carmen_test_alloc(*string_address);
+	strcpy(*string_address, msg.value);
+      }
+      break;
+    } /* switch (table_type) { */
+    handler = table_entry->handler;
+    if (handler)
+      (*handler)(msg.module_name, msg.variable_name, msg.value);
+  }
 
   free(msg.module_name);
   free(msg.variable_name);
@@ -1356,11 +1397,10 @@ carmen_param_subscribe_double(char *module, char *variable,
   if (table_entry == NULL)
     install_parameter(module, variable, (int *)variable_address, 
 		      CARMEN_PARAM_DOUBLE, 1, handler);
-  else 
-    {
-      table_entry->subscribe = 1;
-      start_change_subscription();
-    }
+  else {
+    table_entry->subscribe = 1;
+    start_change_subscription();
+  }
 }
 
 void
@@ -1374,11 +1414,10 @@ carmen_param_subscribe_onoff(char *module, char *variable,
   if (table_entry == NULL)
     install_parameter(module, variable, (int *)variable_address, 
 		      CARMEN_PARAM_ONOFF, 1, handler);
-  else 
-    {
-      table_entry->subscribe = 1;
-      start_change_subscription();
-    }
+  else {
+    table_entry->subscribe = 1;
+    start_change_subscription();
+  }
 }
 
 void
@@ -1392,11 +1431,10 @@ carmen_param_subscribe_string(char *module, char *variable,
   if (table_entry == NULL)
     install_parameter(module, variable, (int *)variable_address, 
 		      CARMEN_PARAM_STRING, 1, handler);
-  else 
-    {
-      table_entry->subscribe = 1;
-      start_change_subscription();
-    }
+  else {
+    table_entry->subscribe = 1;
+    start_change_subscription();
+  }
 }
 
 void
@@ -1410,11 +1448,10 @@ carmen_param_subscribe_file(char *module, char *variable,
   if (table_entry == NULL)
     install_parameter(module, variable, (int *)variable_address, 
 		      CARMEN_PARAM_FILE, 1, handler);
-  else 
-    {
-      table_entry->subscribe = 1;
-      start_change_subscription();
-    }
+  else {
+    table_entry->subscribe = 1;
+    start_change_subscription();
+  }
 }
 
 void
@@ -1427,11 +1464,10 @@ carmen_param_subscribe_dir(char *module, char *variable,
   if (table_entry == NULL)
     install_parameter(module, variable, (int *)variable_address, 
 		      CARMEN_PARAM_DIR, 1, handler);
-  else 
-    {
-      table_entry->subscribe = 1;
-      start_change_subscription();
-    }
+  else {
+    table_entry->subscribe = 1;
+    start_change_subscription();
+  }
 }
 
 int
@@ -1441,20 +1477,29 @@ carmen_param_check_version(char *prog_name)
 
   carmen_param_query_version_message *query;
   carmen_param_version_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_VERSION_QUERY_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_VERSION_QUERY_NAME);
+    initialized = 1;
+  }  
 
   query = carmen_default_message_create();
   err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, query, 
 			      (void **)&response, timeout);
   carmen_test_ipc(err, "Could not check Carmen version", 
 		  CARMEN_PARAM_VERSION_QUERY_NAME);
-  if (err == IPC_Error || err == IPC_Timeout)
-    {
-      sprintf(error_buffer, "Did you remember to start the parameter server?\n"
-	      "Remember, this program loads its parameters from the "
-	      "param_daemon.\n");
-      return -1;
-    }
-
+  if (err == IPC_Error || err == IPC_Timeout) {
+    sprintf(error_buffer, "Did you remember to start the parameter server?\n"
+	    "Remember, this program loads its parameters from the "
+	    "param_daemon.\n");
+    return -1;
+  }
+  
   if (response->major != CARMEN_MAJOR_VERSION || 
       response->minor != CARMEN_MINOR_VERSION)
     carmen_die("Version mismatch: %s is Carmen version %d.%d, but \n"
@@ -1542,6 +1587,16 @@ carmen_param_get_paramserver_host(char **hostname)
 
   carmen_param_query_version_message *query;
   carmen_param_version_message *response;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_VERSION_QUERY_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_VERSION_QUERY_NAME);
+    initialized = 1;
+  }
 
   query = carmen_default_message_create();
   err = IPC_queryResponseData(CARMEN_PARAM_VERSION_QUERY_NAME, query, 
@@ -1626,71 +1681,88 @@ carmen_param_load_paramfile(char *filename, char *param_set)
     mark = strpbrk(mark, " \t");
     // If we found a whitespace character, then turn it into a NULL
     // and move mark to the next non-whitespace.
-    if (mark) 
-      {
-	mark[0] = '\0';
-	mark++;
-	mark += strspn(mark, " \t");
-      }
+    if (mark) {
+      mark[0] = '\0';
+      mark++;
+      mark += strspn(mark, " \t");
+    }
     
-    if (strlen(token) > 254) 
-      {
-	carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
-		    "The parameter name %s is too long (%d characters).\n"
-		    "A parameter name can be no longer than 254 "
-		    "characters.\nSkipping this line.\n", filename, 
-		    count, token, (int) strlen(token));
-	continue;
-      }
+    if (strlen(token) > 254) {
+      carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
+		  "The parameter name %s is too long (%d characters).\n"
+		  "A parameter name can be no longer than 254 "
+		  "characters.\nSkipping this line.\n", filename, 
+		  count, token, (int) strlen(token));
+      continue;
+    }
     
     strcpy(param, token);
     token_num++;
     
     // If mark points to a non-whitespace character, then we have a
     // two-token line
-    if (mark)
-      {
-	if (strlen(mark) > 1999) 
-	  {
-	    carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
-			"The parameter value %s is too long (%d "
-			"characters).\nA parameter value can be no longer "
-			"than %d characters.\nSkipping this line.\n", 
-			filename, count, mark, (int) strlen(mark),
-			1999);
-	    continue;
-	  }
-	strcpy(value, mark);
-	token_num++;
-      }
-    
-    if (param[0] == '[') 
-      {
-	if (param[1] == '*')
-	  skipping = 0;
-	else if (strcspn(param+1,"]") == 6 && !carmen_strncasecmp(param+1, "expert", 6))
-	  skipping = 0;
-	else if (param_set != NULL && 
-	    carmen_strncasecmp(param+1, param_set, strlen(param_set)) == 0)
-	  skipping = 0;	    
-	else
-	  skipping = 1;
+    if (mark) {
+      if (strlen(mark) > 1999) {
+	carmen_warn("Error loading parameters: bad file format of %s on line %d.\n"
+		    "The parameter value %s is too long (%d "
+		    "characters).\nA parameter value can be no longer "
+		    "than %d characters.\nSkipping this line.\n", 
+		    filename, count, mark, (int) strlen(mark),
+		    1999);
 	continue;
       }
-    else if(token_num == 2 && !skipping) 
-      {
-	param_err = carmen_param_get_string(param, &dummy, NULL);
-	if (param_err >= 0)
-	  carmen_warn("Overwriting parameter %s from %s: new value = %s.\n",
-		      param, carmen_extract_filename(filename), value);	  
-	param_err = carmen_param_set_variable(param, value, NULL);
-	if (param_err < 0)
-	  carmen_warn("Couldn't set parameter %s\n", param);
-	else {
-	  count++;
-	}
+      strcpy(value, mark);
+      token_num++;
+    }
+    
+    if (param[0] == '[') {
+      if (param[1] == '*')
+	skipping = 0;
+      else if (strcspn(param+1,"]") == 6 && !carmen_strncasecmp(param+1, "expert", 6))
+	skipping = 0;
+      else if (param_set != NULL && 
+	       carmen_strncasecmp(param+1, param_set, strlen(param_set)) == 0)
+	skipping = 0;	    
+      else
+	skipping = 1;
+      continue;
+    }
+    else if(token_num == 2 && !skipping) {
+      param_err = carmen_param_get_string(param, &dummy, NULL);
+      if (param_err >= 0)
+	carmen_warn("Overwriting parameter %s from %s: new value = %s.\n",
+		    param, carmen_extract_filename(filename), value);	  
+      param_err = carmen_param_set_variable(param, value, NULL);
+      if (param_err < 0)
+	carmen_warn("Couldn't set parameter %s\n", param);
+      else {
+	count++;
       }
+    }
   } 
   
   carmen_warn("Set %d parameters\n", count);
+}
+
+void carmen_param_send_reread(void)
+{
+  IPC_RETURN_TYPE err = IPC_OK;
+  carmen_param_reread_command_message msg;
+  static int initialized = 0;
+
+  if (!initialized) {
+    err = IPC_defineMsg(CARMEN_PARAM_REREAD_COMMAND_NAME,
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_PARAM_REREAD_COMMAND_NAME);
+    initialized = 1;
+  }
+
+  msg.timestamp = carmen_get_time();
+  msg.host = carmen_get_host();
+  
+  err = IPC_publishData(CARMEN_PARAM_REREAD_COMMAND_NAME, &msg);
+  carmen_test_ipc(err, "Could not publish", CARMEN_PARAM_REREAD_COMMAND_NAME);
+
 }

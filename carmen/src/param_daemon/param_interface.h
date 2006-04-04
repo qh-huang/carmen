@@ -130,6 +130,8 @@ void carmen_param_subscribe_dir(char *module, char *variable,
 
 int carmen_param_check_version(char *prog_name);
 
+void carmen_param_send_reread(void);
+
 #ifdef __cplusplus
 }
 #endif

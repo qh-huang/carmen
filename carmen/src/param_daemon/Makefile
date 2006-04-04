@@ -5,13 +5,12 @@ LFLAGS 	+=  -lglobal -lipc -lmap_io -lmap_interface
 MODULE_NAME = PARAMDAEMON
 MODULE_COMMENT = Module providing central repository for module parameters
 
-SOURCES = param_daemon.c param_test.c param_set.c install_params.c 
+SOURCES = param_daemon.c param_test.c param_tool.c 
 PUBLIC_INCLUDES = param_messages.h param_interface.h
 PUBLIC_LIBRARIES = libparam_interface.a 
-PUBLIC_BINARIES = param_daemon param_set install_params 
+PUBLIC_BINARIES = param_daemon param_tool
 
-TARGETS = param_daemon libparam_interface.a 
-#param_test param_set install_params
+TARGETS = param_daemon libparam_interface.a param_test param_tool
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
@@ -38,11 +37,9 @@ libparam_interface.so:	param_interface.o
 
 param_test: param_test.o libparam_interface.a
 
-param_set: param_set.o libparam_interface.a
+param_tool: param_tool.o libparam_interface.a
 
 param_edit: param_edit.o libparam_interface.a
-
-install_params: install_params.o libparam_interface.a
 
 include ../Makefile.rules
 

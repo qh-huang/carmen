@@ -491,10 +491,10 @@ static void usage(char *progname, char *fmt, ...)
     }
 
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
-  fprintf(stderr, "usage: %s [-achnpr] [map_filename] [ini filename] \n\n", 
+  fprintf(stderr, "usage: %s [-ahr] [map_filename] [ini filename] \n\n", 
 	  progname);
 #else
-  fprintf(stderr, "usage: %s [-achnpr] [ini filename] \n\n", 
+  fprintf(stderr, "usage: %s [-ahr] [ini filename] \n\n", 
 	  progname);
 #endif
 
@@ -510,7 +510,7 @@ static void help(char *progname)
     }
 
   fprintf(stderr, "usage: %s "
-	  //"[-achnpr] "
+	  //"[-ahr] "
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
 	  "[map_filename] [ini filename] \n\n", 
 #else
@@ -575,7 +575,7 @@ read_commandline(int argc, char **argv)
 
   opterr = 0;
   while (1) {
-    c = getopt_long (argc, argv, "achnp:r:",
+    c = getopt_long (argc, argv, "ahr:",
 		     long_options, &option_index);
     if (c == -1)
       break;
@@ -1147,6 +1147,14 @@ get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VERSION_NAME);
 }
 
+static void
+reread_command(MSG_INSTANCE msgRef  __attribute__ ((unused)), 
+	       BYTE_ARRAY callData __attribute__ ((unused)) __attribute__ ((unused)),
+	       void *clientData __attribute__ ((unused)))
+{
+  read_parameters_from_file();
+}
+
 static int 
 initialize_param_ipc(void) 
 {
@@ -1239,6 +1247,11 @@ initialize_param_ipc(void)
   carmen_test_ipc_exit(err, "Could not define message", 
 		       CARMEN_PARAM_VERSION_NAME);
 
+  err = IPC_defineMsg(CARMEN_PARAM_REREAD_COMMAND_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_DEFAULT_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define message", 
+		       CARMEN_PARAM_REREAD_COMMAND_NAME);
+
   err = IPC_subscribe(CARMEN_PARAM_QUERY_ROBOT_NAME, get_robot, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe to",
 		       CARMEN_PARAM_QUERY_ROBOT_NAME);
@@ -1277,6 +1290,11 @@ initialize_param_ipc(void)
   carmen_test_ipc_exit(err, "Could not subscribe to", 
 		       CARMEN_PARAM_VERSION_QUERY_NAME);
   IPC_setMsgQueueLength(CARMEN_PARAM_VERSION_QUERY_NAME, 100);
+
+  err = IPC_subscribe(CARMEN_PARAM_REREAD_COMMAND_NAME, reread_command, NULL);
+  carmen_test_ipc_exit(err, "Could not subscribe to", 
+		       CARMEN_PARAM_REREAD_COMMAND_NAME);
+  IPC_setMsgQueueLength(CARMEN_PARAM_REREAD_COMMAND_NAME, 1);
 
   err = IPC_subscribe(CARMEN_PARAM_SET_NAME, set_param_ipc, NULL);
   carmen_test_ipc_exit(err, "Could not subscribe to", CARMEN_PARAM_SET_NAME);
