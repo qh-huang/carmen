@@ -1,0 +1,18 @@
+/** @page binary__base
+
+<h2>Base - Hardware Drivers for Different Robots</h2>
+
+
+@section pioneer_main pioneer
+
+@section rflex_main rflex
+
+@section b21r_main br21
+
+@section xr4000_main xr4000
+
+@section orc_main orc
+
+
+
+**/

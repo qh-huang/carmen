@@ -1,0 +1,17 @@
+/** @page binary__logtools
+
+<h2>Logtools</h2>
+
+
+@section logtools_main Logtools
+
+This module provides a set of tools for working with logfiles
+
+
+<h3>Usage: ./log2pic ....</h3>
+
+
+
+
+
+**/
