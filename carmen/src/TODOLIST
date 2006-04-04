@@ -6,8 +6,8 @@ add documentation to logger, logtools
 maptools documentation
 add documentation to navigator
 
-add documentation to pantilt , add rudi's stuff
-add documentation for param_daemon is 
+add documentation to pantilt
+add documentation for param_daemon 
 turn install_params, param_set, reload_param module into single param_tool 
 
 proccontrol_view 
