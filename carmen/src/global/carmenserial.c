@@ -37,8 +37,11 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+
 #ifdef CYGWIN
 #include <sys/socket.h>
+#else
+#include <linux/serial.h>
 #endif
 
 #define READ_TIMEOUT          250000      /* less than 1e6 */
@@ -371,3 +374,30 @@ int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars)
 int carmen_serial_close(int dev_fd) {
   return close(dev_fd);
 }
+
+
+int carmen_serial_set_low_latency(int fd){
+#ifdef CYGWIN
+  return -1;
+#else
+
+  struct serial_struct serial; 
+  int result;
+  result=ioctl(fd, TIOCGSERIAL, &serial);
+  
+  if (result) {
+/*     carmen_warn("libcarmenserial: Cannot get the serial attributes for low latency serial mode.\n Switching to normal mode\n"); */
+    return result;
+  } else {
+    serial.flags |= ASYNC_LOW_LATENCY;
+    serial.xmit_fifo_size = 1;
+    ioctl(fd, TIOCSSERIAL, &serial); 
+    if (result){
+/*       carmen_warn("libcarmenserial: Cannot activeate low latency mode\nSwitching to normal mode\n"); */
+      return result;
+    }
+  }
+  return result;
+#endif
+}
+

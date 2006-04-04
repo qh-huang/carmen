@@ -99,6 +99,15 @@ int carmen_serial_readn(int dev_fd, unsigned char *buf, int nChars);
    **/
 int carmen_serial_close(int dev_fd);
 
+  /** Avtivates the low_latency mode for the serial line. This works
+   * with real serial devices, USB-to-RS232 often does not work. In
+   * this case, the system continues in the standard operational
+   * mode. Note: Low latency does not run with cygwin.
+   *
+   * @param dev_fd The file descriptor associated to the serial line.
+   * @return 0=successful switched to low latency mode. 0=continue in normal mode.
+   **/
+int carmen_serial_set_low_latency(int fd);
 
 #ifdef __cplusplus
 }
