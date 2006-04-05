@@ -3,7 +3,7 @@ include ../Makefile.conf
 IFLAGS +=
 LFLAGS += $(INTERFACE_LIBS) -lglobal -lipc -lbase_interface \
 	-llocalize_interface -lgeometry -lmap_interface \
-	-lparam_interface -lsimulator_interface -lrobot_interface
+	-lparam_interface -lsimulator_interface -lrobot_interface 
 
 MODULE_NAME = NAVIGATOR
 MODULE_COMMENT = The motion planner!

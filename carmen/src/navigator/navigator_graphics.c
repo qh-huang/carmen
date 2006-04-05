@@ -1545,7 +1545,7 @@ navigator_graphics_change_map(carmen_map_p new_map)
 void 
 navigator_graphics_display_map(float *data, carmen_navigator_map_t type) 
 {
-  char name[10];
+  char name[100];
   int flags = 0;
 
   display = type;
