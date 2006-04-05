@@ -26,7 +26,7 @@ will act as a map server.
 This program can be used to interact with the param_daemon. When parameters
 are modified, on/off parameters have their new values propagated to the
 param_daemon instantly. Numerical and string parameters are propagated when
-<return> is pressed. If a parameter name is underlined, its value has not been
+\<return\> is pressed. If a parameter name is underlined, its value has not been
 propagated to the param_daemon. Note that only some modules subscribe to
 changed parameter values. In some cases, modules may need to be restarted to
 acquire the new parameter value. 
@@ -35,24 +35,24 @@ acquire the new parameter value.
 
 The param_tool allows the param_daemon to be controlled from the command line.
 
-Usage: ./param_tool <action> <...>
+Usage: ./param_tool \<action\> \<...\>
 
 <action> is one of: set, get, install, reread.
 Run ./param_tool help <action> to get help on using each action.
 
-<h3>Usage: ./param_tool set <parameter name> <parameter value></h3>
+<h3>Usage: ./param_tool set \<parameter name\> \<parameter value\></h3>
 
 Sets a parameter value. The parameter name should be specified as a full
 <tt>module_variable</tt> pair. 
 
-<h3>Usage: ./param_tool get <module name | parameter name></h3>
+<h3>Usage: ./param_tool get \<module name | parameter name\></h3>
 
 If a full parameter name is specified as a <tt>module_variable</tt> name, then
 prints out the current value of the parameter.
 
 If a module name is specified, prints out all variables of that module.
 
-<h3>Usage: ./param_tool install [parameter set] <parameter file></h3>
+<h3>Usage: ./param_tool install [parameter set] \<parameter file\></h3>
 
 Loads all the parameters from <parameter file>. If the parameter file contains
 multiple parameter sets, delimited using [set name], then the optional

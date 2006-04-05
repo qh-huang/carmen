@@ -6,33 +6,33 @@
 
 The maptool program allows maps to be modified on the command line. 
 
-<h3>Usage: ./maptool <action> <...></h3>
+<h3>Usage: ./maptool \<action\> \<...\></h3>
 
-<action> is one of: toppm, tomap, rotate, minimize,  info
-Run ./maptool <action> to get help on using each action.
+\<action\> is one of: toppm, tomap, rotate, minimize,  info
+Run ./maptool \<action\> to get help on using each action.
 
-<h3>Usage: ./maptool info <filename></h3>
+<h3>Usage: ./maptool info \<filename\></h3>
 
 Provides information on the map, including dimensions, resolution,
 any placenames stored in the map. 
 
-<h3>Usage: ./maptool toppm <map filename> <ppm filename></h3>
+<h3>Usage: ./maptool toppm \<map filename\> \<ppm filename\></h3>
 
 Converts a map file to a ppm file.
 
-<h3>Usage: ./maptool tomap <resolution> <ppm filename> <map filename></h3>
+<h3>Usage: ./maptool tomap \<resolution\> \<ppm filename\> \<map filename\></h3>
 
 Converts an arbitrary image file (jpeg, png, gif, etc.) to a map file. 
 
-<h3>Usage: ./maptool rotate <rotation in degrees> <in map filename> <out map filename></h3>
+<h3>Usage: ./maptool rotate \<rotation in degrees\> \<in map filename\> \<out map filename\></h3>
 
 Rotates an image file by increments of 90 degrees.
 
-<h3>Usage: ./maptool minimize <in map filename> <out map filename></h3>
+<h3>Usage: ./maptool minimize \<in map filename\> \<out map filename\></h3>
 
 Removes extraneous unknown space around the edge of a map. 
 
-<h3>Usage: ./maptool <mapfilename> <placename> <place params></h3>
+<h3>Usage: ./maptool \<mapfilename\> \<placename\> \<place params\></h3>
 
 Adds a placename to a mapfile. Note that unlike rotate, minimize, etc.,
 addplace performs an in-place edit to the map, and creates a backup copy.

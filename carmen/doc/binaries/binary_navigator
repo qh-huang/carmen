@@ -19,10 +19,16 @@ local changes to the map, allowing the navigator to replan around unmapped
 obstacles. The navigator does not require localize to be running, but
 navigation without accurate position estimates is likely to fail. 
 
+<h3>Usage: ./navigator</h3>
+
+
 @section navigator_gui The Navigator GUI
 
 The navigatorgui provides a view of the internal state of the navigator, as
 well as a way to set goals, start the robot moving, and initialize the robot
 position (assuming localize is running).
+
+<h3>Usage: ./navigatorgui</h3>
+
 
 **/
