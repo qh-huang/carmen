@@ -11,7 +11,7 @@ LIBS       = -lm
 SWIG      = swig
 
 
-
+relink::
 
 export::
 
