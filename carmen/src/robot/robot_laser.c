@@ -274,14 +274,16 @@ laser_frontlaser_handler(void)
       1.0/carmen_robot_collision_avoidance_frequency)
     return;
 
+
+  robot_posn.x = 0;
+  robot_posn.y = 0;
+  robot_posn.theta = 0;
+  robot_posn.t_vel = carmen_robot_latest_odometry.tv;
+  robot_posn.r_vel = carmen_robot_latest_odometry.rv;
+
   time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
-  /* use only a quater of the maximum deceleration   2.0 / 4.0 = 0.5  */
-  safety_distance = 
-    0.5 * carmen_robot_config.length + 
-    carmen_robot_config.approach_dist + 
-    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time + 
-    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / (0.25 * carmen_robot_config.deceleration);
+  safety_distance = carmen_geometry_compute_safety_distance(&carmen_robot_config, &robot_posn);
 
   robot_front_laser.forward_safety_dist = safety_distance;
   robot_front_laser.side_safety_dist = 
@@ -292,10 +294,6 @@ laser_frontlaser_handler(void)
 
   max_velocity = carmen_robot_config.max_t_vel;
 
-  robot_posn.x = 0;
-  robot_posn.y = 0;
-  robot_posn.theta = 0;
-
   carmen_carp_set_verbose(0);
   
   theta = front_laser.config.start_angle;
@@ -304,13 +302,12 @@ laser_frontlaser_handler(void)
   skip_sum = 0.0;
   for(i = 0; i < robot_front_laser.num_readings; i++, theta += delta_theta) {
     skip_sum += carmen_robot_laser_bearing_skip_rate;
-    if (skip_sum > 0.95)
-      {
-	skip_sum = 0.0;
-	robot_front_laser.tooclose[i] = -1;
-	continue;
-      }
-
+    if (skip_sum > 0.95) {
+      skip_sum = 0.0;
+      robot_front_laser.tooclose[i] = -1;
+      continue;
+    }
+    
     obstacle_pt.x = frontlaser_offset + 
       robot_front_laser.range[i] * cos(theta);
     obstacle_pt.y = robot_front_laser.range[i] * sin(theta);
@@ -320,15 +317,13 @@ laser_frontlaser_handler(void)
     velocity = carmen_geometry_compute_velocity
       (robot_posn, obstacle_pt, &carmen_robot_config);
 
-    if (velocity < carmen_robot_config.max_t_vel) 
-      {
-	if (velocity < max_velocity)
-	  {
-	    tooclose = i;
-	    tooclose_theta = theta;
-	    max_velocity = velocity;
-	  }
-	robot_front_laser.tooclose[i] = 1;
+    if (velocity < carmen_robot_config.max_t_vel) {
+      if (velocity < max_velocity) {
+	tooclose = i;
+	tooclose_theta = theta;
+	max_velocity = velocity;
+      }
+      robot_front_laser.tooclose[i] = 1;
     }
   } /* End of for(i = 0; i < robot_front_laser.num_readings; i++) */
 
@@ -410,13 +405,7 @@ laser_rearlaser_handler(void)
 
   time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
-  /* use only a quater of the maximum deceleration  */
-  safety_distance = 
-    0.5 * carmen_robot_config.length + 
-    carmen_robot_config.approach_dist + 
-    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time + 
-    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / (0.25 * carmen_robot_config.deceleration);
-
+  safety_distance = carmen_geometry_compute_safety_distance(&carmen_robot_config, &robot_posn);
 
   robot_rear_laser.forward_safety_dist = safety_distance;
   robot_rear_laser.side_safety_dist = 
@@ -430,6 +419,8 @@ laser_rearlaser_handler(void)
   robot_posn.x = 0;
   robot_posn.y = 0;
   robot_posn.theta = 0;
+  robot_posn.t_vel = carmen_robot_latest_odometry.tv;
+  robot_posn.r_vel = carmen_robot_latest_odometry.rv;
 
 /*   theta = -M_PI/2;  */
 /*   delta_theta = M_PI/(robot_rear_laser.num_readings-1); */
@@ -440,13 +431,12 @@ laser_rearlaser_handler(void)
   skip_sum = 0.0;
   for(i = 0; i < robot_rear_laser.num_readings; i++, theta += delta_theta) {
     skip_sum += carmen_robot_laser_bearing_skip_rate;
-    if (skip_sum > 0.95)
-      {
-	skip_sum = 0.0;
-	robot_rear_laser.tooclose[i] = -1;
-	continue;
-      }
-
+    if (skip_sum > 0.95) {
+      skip_sum = 0.0;
+      robot_rear_laser.tooclose[i] = -1;
+      continue;
+    }
+    
     obstacle_pt.x = rearlaser_offset + robot_rear_laser.range[i] * cos(theta);
     obstacle_pt.y = robot_rear_laser.range[i] * sin(theta);
     carmen_geometry_move_pt_to_rotating_ref_frame
@@ -457,12 +447,11 @@ laser_rearlaser_handler(void)
     velocity = -velocity;
 
     if (velocity > -carmen_robot_config.max_t_vel) {
-      if (velocity > min_velocity)
-	{
-	  tooclose = i;
-	  tooclose_theta = theta;
-	  min_velocity = velocity;
-	}
+      if (velocity > min_velocity) {
+	tooclose = i;
+	tooclose_theta = theta;
+	min_velocity = velocity;
+      }
       robot_rear_laser.tooclose[i] = 1;
     }
   } /* End of for(i = 0; i < robot_rear_laser.num_readings; i++) */

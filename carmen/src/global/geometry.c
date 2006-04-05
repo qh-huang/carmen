@@ -33,119 +33,107 @@ int carmen_geometry_x_offset[CARMEN_NUM_OFFSETS] = {0, 1, 1, 1, 0, -1, -1, -1};
 int carmen_geometry_y_offset[CARMEN_NUM_OFFSETS] = {-1, -1, 0, 1, 1, 1, 0, -1};
 #endif
 
-#if 0
+double carmen_geometry_compute_safety_distance(carmen_robot_config_t *robot_config,
+					       carmen_traj_point_t *robot)
+{
+  return robot_config->length / 2.0 + robot_config->approach_dist + 
+    robot->t_vel * robot_config->reaction_time;
+}
 
-// This was the old compute_velocity_at_side. Yes, I wrote it, but I don't
-// understand it, and it looks wrong to me. 
-
-static double 
-compute_velocity_at_side(carmen_traj_point_t robot, 
-			 carmen_traj_point_t dest_pt,
-			 carmen_traj_point_t centre, double radius, 
-			 carmen_robot_config_t *robot_config) 
+static double compute_velocity_at_side(carmen_traj_point_t robot, 
+				       carmen_traj_point_t dest_pt,
+				       carmen_traj_point_t centre, 
+				       double radius,
+				       carmen_robot_config_t *robot_config) 
 {
   double rotation_angle;
+  double forward_safety_distance;
   double forward_distance;
   double velocity;
   double max_velocity = robot_config->max_t_vel;
-
-  double forward_safety_distance =  robot_config->length / 2.0 + 
-    robot_config->approach_dist;
+  double motion_time;
   
-  double neg_b = -2*robot_config->acceleration*robot_config->reaction_time;  
+  forward_safety_distance = carmen_geometry_compute_safety_distance(robot_config, &robot);
+
+  robot.x -= centre.x;
+  robot.y -= centre.y;
+  dest_pt.x -= centre.x;
+  dest_pt.y -= centre.y;
   
-  if (fabs(radius) < 0.01) 
-    {
-      forward_distance = dest_pt.x;
-      
-      if (forward_distance < -robot_config->length/2.0) 
-	velocity = max_velocity;
-      else if (forward_distance < forward_safety_distance)
-	velocity = 0;
-      else 
-	{
-	  velocity = neg_b + robot_config->acceleration*
-	    sqrt(robot_config->reaction_time*robot_config->reaction_time - 
-		 2*(forward_safety_distance-forward_distance)/
-		 robot_config->acceleration);
-	  
-	}      
-    } 
-  else if (radius > 500) {
-    velocity = max_velocity;
-  } else {
-      robot.x -= centre.x;
-      robot.y -= centre.y;
-      dest_pt.x -= centre.x;
-      dest_pt.y -= centre.y;
-      
-      rotation_angle = atan2(dest_pt.y, dest_pt.x) - atan2(robot.y, robot.x);
-      rotation_angle = carmen_normalize_theta(rotation_angle);
-      
-      forward_distance = fabs(rotation_angle * radius);
+  rotation_angle = atan2(dest_pt.y, dest_pt.x) - atan2(robot.y, robot.x);
+  rotation_angle = carmen_normalize_theta(rotation_angle);
+  
+  forward_distance = fabs(rotation_angle * radius);
 
-      velocity = neg_b + robot_config->acceleration*
-	sqrt(robot_config->reaction_time*robot_config->reaction_time - 
-	     2*(forward_safety_distance-forward_distance)/
-	     robot_config->acceleration);      
-    }
+  if (forward_distance < -robot_config->length/2.0) 
+    return max_velocity;
 
-  if (velocity > max_velocity)
-    velocity = max_velocity;
+  // How far to the obstacle? Remove the safety distance and the distance we travel 
+  // while reacting 
+
+  forward_distance -= forward_safety_distance;
+
+  if (forward_distance < 0)
+    return max_velocity;
+
+  // 0 = v_0^2 - 2ad 
+  // velocity = sqrt (2 * acceleration * forward_distance) 
+
+  velocity = sqrt(2 * robot_config->acceleration * forward_distance);
+
+  // Velocity is now how fast we can go and still decelerate in time not to hit things.
+  // However, the point may be off to one side. if it is, 
+
+  motion_time = velocity / robot_config->acceleration;
+
+  if (fabs(rotation_angle) > robot.r_vel * motion_time)
+    return max_velocity;
+
+  // If the robot is going slower than the maximum allowable speed, assume we
+  // accelerate over half the distance to the obstacle, and *then* start slowing down. 
+
+  if (velocity > robot.t_vel) {
+    velocity =  sqrt(2 * robot_config->acceleration * forward_distance/2);
+  }
 
   assert (!isnan(velocity));
   
   return velocity;
 }
 
-#endif
-
-static double compute_velocity_at_side(carmen_traj_point_t robot, 
+static double compute_forward_velocity(carmen_traj_point_t robot, 
 				       carmen_traj_point_t dest_pt,
-				       carmen_traj_point_t centre, 
-				       double radius, 
 				       carmen_robot_config_t *robot_config) 
 {
-  double rotation_angle;
+  double forward_safety_distance;
   double forward_distance;
   double velocity;
-  double max_velocity = robot_config->max_t_vel;
 
-  double forward_safety_distance =  robot_config->length / 2.0 + 
-    robot_config->approach_dist;
-  
-  double neg_b;  
-  double four_a_c;
+  forward_distance = dest_pt.x;    
 
-  if (radius > 500) 
-    velocity = max_velocity;
-  else {
-    if (fabs(radius) < 0.01) 
-      forward_distance = dest_pt.x;    
-    else {
-      robot.x -= centre.x;
-      robot.y -= centre.y;
-      dest_pt.x -= centre.x;
-      dest_pt.y -= centre.y;
-      
-      rotation_angle = atan2(dest_pt.y, dest_pt.x) - atan2(robot.y, robot.x);
-      rotation_angle = carmen_normalize_theta(rotation_angle);
-      
-      forward_distance = fabs(rotation_angle * radius);
-    }
+  if (forward_distance < -robot_config->length/2.0) 
+    return robot_config->max_t_vel;
 
-    if (forward_distance < -robot_config->length/2.0) 
-      velocity = max_velocity;
-    else if (forward_distance < forward_safety_distance)
-      velocity = 0;
-    else {
-      forward_distance -= forward_safety_distance;
+  forward_safety_distance = carmen_geometry_compute_safety_distance(robot_config, &robot);
 
-      neg_b = -2*robot_config->acceleration*robot_config->reaction_time;
-      four_a_c = 4*2*robot_config->acceleration*forward_distance;
-      velocity = neg_b + sqrt(neg_b*neg_b + four_a_c);
-    }
-  }
+  // How far to the obstacle? Remove the safety distance and the distance we travel 
+  // while reacting 
+
+  forward_distance -= forward_safety_distance;
+
+  if (forward_distance < 0)
+    return 0;
+
+  // 0 = v_0^2 - 2ad 
+  // velocity = sqrt (2 * acceleration * forward_distance) 
+
+  velocity = sqrt(2 * robot_config->acceleration * forward_distance);
+
+  // If the robot is going slower than the maximum allowable speed, assume we
+  // accelerate over half the distance to the obstacle, and *then* start slowing down. 
+
+  if (velocity > robot.t_vel) 
+    velocity =  sqrt(2 * robot_config->acceleration * forward_distance/2);  
 
   assert (!isnan(velocity));
   
@@ -182,11 +170,10 @@ carmen_geometry_compute_centre_and_curvature(carmen_traj_point_t start_point,
   /* If the point is basically right in front of the robot heading, then
      there's no curvature. */
 
-  if (fabs(tan_theta_parallel - tan(theta)) < .01) 
-    {
-      *radius = 0;
-      return;
-    }
+  if (fabs(tan_theta_parallel - tan(theta)) < .01) {
+    *radius = 0;
+    return;
+  }
 
   theta += M_PI/2;    
 
@@ -238,14 +225,13 @@ carmen_geometry_compute_velocity(carmen_traj_point_t robot,
 
   /* Rotate everything into reference frame of robot */
 
-  if (fabs(robot.theta) > 0.01) 
-    {
-      temp_x = dest_pt.x*cos(robot.theta)+dest_pt.y*sin(robot.theta);
-      dest_pt.y = dest_pt.y*cos(robot.theta)-dest_pt.x*sin(robot.theta);
-      dest_pt.x = temp_x;
-      
-      robot.theta = 0.0;
-    }
+  if (fabs(robot.theta) > 0.01) {
+    temp_x = dest_pt.x*cos(robot.theta)+dest_pt.y*sin(robot.theta);
+    dest_pt.y = dest_pt.y*cos(robot.theta)-dest_pt.x*sin(robot.theta);
+    dest_pt.x = temp_x;
+    
+    robot.theta = 0.0;
+  }
   
   side_theta = M_PI/2;
   side_safety_distance = robot_config->width / 2.0 + robot_config->side_dist;
@@ -257,38 +243,40 @@ carmen_geometry_compute_velocity(carmen_traj_point_t robot,
   right_point = robot;
   right_point.x = robot.x;
   right_point.y = robot.y - side_safety_distance;
-  
-  if (dest_pt.x < 0) 
-    {
-      if (fabs(dest_pt.y) < side_safety_distance) 
-	max_velocity = compute_velocity_at_side
-	  (robot, dest_pt, robot, 0, robot_config);
-      else 
-	max_velocity = robot_config->max_t_vel;
-    }  
-  else 
-    {
-      if (fabs(dest_pt.y) < side_safety_distance) 
-	{    
-	  max_velocity = compute_velocity_at_side
-	    (robot, dest_pt, robot, 0, robot_config);
-	} 
-      else if (dest_pt.y > 0) 
-	{
-	  carmen_geometry_compute_centre_and_curvature
-	    (left_point, robot.theta, dest_pt, &centre, &radius);
-	  max_velocity = compute_velocity_at_side
-	    (left_point, dest_pt, centre, radius, robot_config);
-	} 
-      else 
-	{
-	  carmen_geometry_compute_centre_and_curvature
-	    (right_point, robot.theta, dest_pt, &centre, &radius);
-	  max_velocity = compute_velocity_at_side
-	    (right_point, dest_pt, centre, radius, robot_config);
-	}
-    }
 
+  /* Obstacle point is behind front of robot */ 
+  
+  if (dest_pt.x < 0) {
+    if (fabs(dest_pt.y) < side_safety_distance) 
+      max_velocity = compute_velocity_at_side
+	(robot, dest_pt, robot, 0, robot_config);
+    else 
+      max_velocity = robot_config->max_t_vel;
+  } else {
+
+    /* Obstacle point is in front of robot, but within the side
+       safety margins */ 
+    if (fabs(dest_pt.y) < side_safety_distance)  {    
+      max_velocity = compute_forward_velocity
+	(robot, dest_pt, robot_config);
+    } 
+
+    /* Obstacle point is in front of robot, and outside the side safety margins. 
+       Will we hit it if we start rotating? */ 
+
+    else if (dest_pt.y > 0) {
+      carmen_geometry_compute_centre_and_curvature
+	(left_point, robot.theta, dest_pt, &centre, &radius);
+      max_velocity = compute_velocity_at_side
+	(left_point, dest_pt, centre, radius, robot_config);
+    } else {
+      carmen_geometry_compute_centre_and_curvature
+	(right_point, robot.theta, dest_pt, &centre, &radius);
+      max_velocity = compute_velocity_at_side
+	(right_point, dest_pt, centre, radius, robot_config);
+    }
+  }
+  
   assert(!isnan(max_velocity));
 
   return max_velocity;
