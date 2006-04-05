@@ -23,11 +23,14 @@ ask mrosen: spotter, timer
 Wish list 
 
 -- QT guis
+
 IPC message size test
+
 command shell
-navigator_panel start menu
 
 merge read-rec, readlog, log reading  (see e.g. logtools/clf-read-example.c)
+
+all modules should use ipc-wrapper-functions, no IPC directly...
 
 generic logging in java
 port map_editor/hmap_editor to gtk 2.0
