@@ -21,11 +21,8 @@ MAN_PAGES =
 TARGETS = localize liblocalize_interface.a localize_initialize \
 	  liblocalize_core.a liblocalize_motion.a model_learn/model_learner
 
-
-ifdef MAKE_SO
-PUBLIC_LIBRARIES_SO =liblocalize_interface.so
-TARGETS += liblocalize_interface.so
-endif
+PUBLIC_LIBRARIES_SO = liblocalize_interface.so
+TARGETS += liblocalize_interface.so.1
 
 # rules
 
@@ -33,7 +30,7 @@ localize_initialize:	localize_initialize.o liblocalize_interface.a
 
 liblocalize_interface.a:	localize_interface.o
 
-liblocalize_interface.so:	localize_interface.o
+liblocalize_interface.so.1:	localize_interface.o
 
 liblocalize_core.a: localizecore.o likelihood_map.o
 

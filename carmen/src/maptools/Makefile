@@ -21,10 +21,8 @@ TARGETS = map libmap_interface.a   libmap_util.a \
 	libmap_io.a maptool
 
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libmap_interface.so
-TARGETS += libmap_interface.so
-endif
+TARGETS += libmap_interface.so.1
 
 # liblinemapping.a clf2linemap
 ifndef NO_GRAPHICS
@@ -48,7 +46,7 @@ map_test:       map_test.o libmap_interface.a libmap_graphics.a
 
 libmap_interface.a: map_interface.o
 
-libmap_interface.so: map_interface.o
+libmap_interface.so.1: map_interface.o
 
 libmap_graphics.a:	map_graphics.o libmap_interface.a
 

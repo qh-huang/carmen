@@ -19,21 +19,18 @@ TARGETS =  libbase_interface.a libarm_interface.a  base_test arm_test
 TARGETS += $(ROBOT_TYPES)
 PUBLIC_BINARIES += $(ROBOT_TYPES)
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libbase_interface.so libarm_interface.so
-TARGETS += libbase_interface.so libarm_interface.so
-endif
-
+TARGETS += libbase_interface.so.1 libarm_interface.so.1
 
 # rules
 
 libbase_interface.a:	base_interface.o
 
-libbase_interface.so:	base_interface.o
+libbase_interface.so.1:	base_interface.o
 
 libarm_interface.a:	arm_interface.o
 
-libarm_interface.so:	arm_interface.o
+libarm_interface.so.1:	arm_interface.o
 
 base_test:		base_test.o libbase_interface.a
 

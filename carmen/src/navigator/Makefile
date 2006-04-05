@@ -20,10 +20,8 @@ PUBLIC_BINARIES = navigator
 
 TARGETS =  libnavigator_interface.a navigator navigator_test random_nav libconventional.a
 
-ifdef MAKE_SO
+TARGETS += libnavigator_interface.so.1
 PUBLIC_LIBRARIES_SO = libnavigator_interface.so
-TARGETS += libnavigator_interface.so
-endif
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
@@ -48,7 +46,7 @@ navigator: navigator.o navigator_ipc.o conventional.o planner.o \
 
 libnavigator_interface.a: navigator_interface.o
 
-libnavigator_interface.so: navigator_interface.o
+libnavigator_interface.so.1: navigator_interface.o
 
 navigatorgui: navigator_panel.o navigator_graphics.o \
 	libnavigator_interface.a 

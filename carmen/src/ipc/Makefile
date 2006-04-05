@@ -27,10 +27,8 @@ PUBLIC_LIBRARIES = libipc.a
 PUBLIC_BINARIES = central
 TARGETS = central  libipc.a test_generate test_receive ipc-endian-test ipc-die-test
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO =  libipc.so
-TARGETS += libipc.so
-endif
+TARGETS += libipc.so.1
 
 
 # rules
@@ -41,7 +39,7 @@ libipc.a: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
 	globalM.o globalMUtil.o strList.o modLogging.o modVar.o resMod.o \
 	parseFmttrs.o lex.o printData.o 
 
-libipc.so: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
+libipc.so.1: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
 	tcModError.o datamsg.o formatters.o hash.o idtable.o key.o \
 	primFmttrs.o reg.o sendMsg.o tcaMem.o tcaRef.o comModule.o com.o \
 	globalM.o globalMUtil.o strList.o modLogging.o modVar.o resMod.o \

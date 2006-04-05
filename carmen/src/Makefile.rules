@@ -36,11 +36,11 @@ install_libraries = $(SILENT) \
 
 install_libraries_so = \
 	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
-		if test -f $$i && ! $(NEWER) $(LIB_DIR)/$$i $$i ; then \
-			echo "    ---- Copying $$i to $(LIB_DIR)" ; \
+		if test -f $$i.1 && ! $(NEWER) $(SHARED_DIR)/$$i $$i.1 ; then \
+			echo "    ---- Copying $$i to $(SHARED_DIR)" ; \
 			export dir=`pwd` ; \
-			$(RM) -f $(LIB_DIR)/$$i ; \
-			$(LN) -s $$dir/$$i $(LIB_DIR)/$$i ; \
+			$(RM) -f $(SHARED_DIR)/$$i ; \
+			$(LN) -s $$dir/$$i.1 $(SHARED_DIR)/$$i ; \
 		fi; \
 	done 
 
@@ -88,6 +88,16 @@ global_install_libraries = $(SILENT) \
 		fi; \
 	done 
 
+global_install_libraries_so = $(SILENT) \
+	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
+		if test -f $$i && ! $(NEWER) $(GLOBAL_SHARED_DIR)/$$i $$i ; then \
+			echo "    ---- Copying $$i to $(GLOBAL_SHARED_DIR)" ; \
+			export dir=`pwd` ; \
+			$(RM) -f $(GLOBAL_SHARED_DIR)/$$i ; \
+			$(CP) $$dir/$$i $(GLOBAL_SHARED_DIR)/$$i ; \
+		fi; \
+	done 
+
 global_install_binaries = $(SILENT) \
 	for i in $(PUBLIC_BINARIES) xxxx ; do \
 		if test -f $$i && ! $(NEWER) $(GLOBAL_BIN_DIR)/$$i $$i ; then \
@@ -121,6 +131,14 @@ remove_libraries = $(SILENT) \
 		if test ! "$$i" = "xxxx" ; then \
 			echo "    ---- Removing $$i from $(LIB_DIR)" ; \
 			$(RM) -f $(LIB_DIR)/$$i ; \
+		fi ; \
+	done 
+
+remove_libraries_so = $(SILENT) \
+	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
+		if test ! "$$i" = "xxxx" ; then \
+			echo "    ---- Removing $$i from $(SHARED_DIR)" ; \
+			$(RM) -f $(SHARED_DIR)/$$i ; \
 		fi ; \
 	done 
 
@@ -257,6 +275,7 @@ distclean:
 	$(SILENT) $(RM) Makefile.depend Makefile.depend.bak $(TARGETS) $(patsubst %.class,'%.class',$(CLASS_FILES))
 	$(remove_includes)
 	$(remove_manpages)
+	$(remove_libraries_so)
 	$(remove_libraries)
 	$(remove_binaries)
 	$(RM) core gmon.out *~ .\#* \#*
@@ -306,6 +325,10 @@ loud:
 %.o:	%.cc
 	$(ECHO) "    ---- Compiling $< to $@ (C++)"
 	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< 
+
+%.so.1:	
+	$(ECHO) "    ---- Archiving $^ into $@ (C)"
+	$(SILENT) $(CXX) -shared -o $@ $^
 
 %.so:	
 	$(ECHO) "    ---- Archiving $^ into $@ (C)"

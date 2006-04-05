@@ -33,10 +33,8 @@ LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
 TARGETS += playback_control
 endif
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libplayback_interface.so
-TARGETS += libplayback_interface.so
-endif
+TARGETS += libplayback_interface.so.1
 
 logger:			logger.o libwritelog.a
 
@@ -46,7 +44,7 @@ libreadlog.a : 		readlog.o
 
 libplayback_interface.a:playback_interface.o
 
-libplayback_interface.so:playback_interface.o
+libplayback_interface.so.1:playback_interface.o
 
 playback:		playback.o libreadlog.a
 

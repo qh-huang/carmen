@@ -3,3 +3,4 @@ include
 man
 lib
 logs
+sharedlib

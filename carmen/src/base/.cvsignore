@@ -1,7 +1,11 @@
 Makefile.depend
 base_test
+arm_test
 pioneer
 scout
 orc
+orc4
 rflex
 xr4000
+*.so.1
+*.a

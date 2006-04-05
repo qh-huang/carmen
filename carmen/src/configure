@@ -339,7 +339,7 @@ sub verify_python {
 
 sub ask_python{
 
-  print "Should Python Bindings be installed: [y/N]";
+  print "Should Python Bindings be installed: [y/N] ";
 
   my $python_install = <STDIN>;
   chomp $python_install;

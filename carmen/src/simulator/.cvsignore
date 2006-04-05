@@ -2,3 +2,5 @@ simulator
 Makefile.depend
 simulator_test
 simulator_connect_multiple
+*.so.1
+*.a

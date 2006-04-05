@@ -18,10 +18,8 @@ PUBLIC_BINARIES = gps-nmea
 
 TARGETS = gps-nmea libgps_nmea_interface.a  gps-test 
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libgps_nmea_interface.so
-TARGETS += libgps_nmea_interface.so
-endif
+TARGETS += libgps_nmea_interface.so.1
 
 gps-nmea:			gps-io.o gps-ipc.o gps-nmea.o gps-main.o
 
@@ -29,7 +27,7 @@ gps-test:			gps-test.o gps_nmea_interface.o
 
 libgps_nmea_interface.a:	gps_nmea_interface.o
 
-libgps_nmea_interface.so:	gps_nmea_interface.o
+libgps_nmea_interface.so.1:	gps_nmea_interface.o
 
 # rules
 

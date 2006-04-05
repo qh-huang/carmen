@@ -6,3 +6,5 @@ carmen-config
 carmen-config.c
 test_multicentral
 test_movement
+*.so.1
+*.a

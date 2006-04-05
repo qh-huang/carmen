@@ -16,10 +16,8 @@ ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl
 endif
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libparam_interface.so
-TARGETS += libparam_interface.so
-endif
+TARGETS += libparam_interface.so.1
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`
@@ -33,7 +31,7 @@ param_daemon: param_daemon.o
 
 libparam_interface.a:	param_interface.o
 
-libparam_interface.so:	param_interface.o
+libparam_interface.so.1:	param_interface.o
 
 param_test: param_test.o libparam_interface.a
 

@@ -26,10 +26,8 @@ TARGETS += laserview
 endif
 endif
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = liblaser_interface.so
-TARGETS += liblaser_interface.so
-endif
+TARGETS += liblaser_interface.so.1
 
 laser:			sick.o laser_ipc.o laser_main.o laser.o
 
@@ -39,7 +37,7 @@ liblaser.a:		sick.o laser_ipc.o laser_main.o
 
 liblaser_interface.a:	laser_interface.o
 
-liblaser_interface.so:	laser_interface.o
+liblaser_interface.so.1: laser_interface.o
 
 laserview:		laserview.o liblaser_interface.a
 

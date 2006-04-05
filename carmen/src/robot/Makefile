@@ -15,17 +15,15 @@ PUBLIC_BINARIES = robot
 
 TARGETS =  librobot.a robot librobot_interface.a robot_test
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = librobot_interface.so
-TARGETS += librobot_interface.so
-endif
+TARGETS += librobot_interface.so.1
 
 robot:	robot.o librobot.a
 
 librobot.a: robot_sonar.o robot_bumper.o robot_main.o robot_laser.o 
 
 librobot_interface.a:	robot_interface.o
-librobot_interface.so:	robot_interface.o
+librobot_interface.so.1: robot_interface.o
 
 robot_test:	robot_test.o librobot_interface.a
 

@@ -2,3 +2,5 @@ localize_initialize
 localize
 localizegraph
 Makefile.depend
+*.so.1
+*.a

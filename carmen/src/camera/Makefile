@@ -25,12 +25,8 @@ endif
 endif
 endif
 
-
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libcamera_interface.so
-TARGETS += libcamera_interface.so
-endif
-
+TARGETS += libcamera_interface.so.1
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 
@@ -55,7 +51,7 @@ endif
 
 libcamera_interface.a:	camera_interface.o
 
-libcamera_interface.so:	camera_interface.o
+libcamera_interface.so.1:	camera_interface.o
 
 camera_view:		camera_view.o libcamera_interface.a
 

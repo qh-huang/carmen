@@ -33,12 +33,8 @@ error:
 (or re-run) configure?"
 endif
 
-
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libglobal.so
-TARGETS += libglobal.so
-endif
-
+TARGETS += libglobal.so.1
 
 ifndef NO_GRAPHICS
 SOURCES += global_graphics.c
@@ -62,7 +58,7 @@ endif
 
 libglobal.a:		global.o ipc_wrapper.o carmen_stdio.o
 
-libglobal.so:		global.o ipc_wrapper.o carmen_stdio.o
+libglobal.so.1:		global.o ipc_wrapper.o carmen_stdio.o
 
 
 ifndef NO_LIBJPEG

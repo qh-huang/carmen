@@ -18,10 +18,8 @@ MAN_PAGES =
 
 TARGETS = simulator simulator_test  libsimulator_interface.a simulator_connect_multiple
 
-ifdef MAKE_SO
 PUBLIC_LIBRARIES_SO = libsimulator_interface.so
-TARGETS += libsimulator_interface.so
-endif
+TARGETS += libsimulator_interface.so.1
 
 # rules
 
@@ -29,9 +27,8 @@ simulator:	simulator.o simulator_simulation.o objects.o
 
 libsimulator_interface.a: simulator_interface.o
 
-ifdef MAKE_SO
-libsimulator_interface.so: simulator_interface.o
-endif
+libsimulator_interface.so.1: simulator_interface.o
+
 simulator_test:	simulator_test.o
 
 simulator_connect_multiple: simulator_connect_multiple.o simulator_interface.o

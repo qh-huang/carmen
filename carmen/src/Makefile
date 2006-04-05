@@ -43,6 +43,7 @@ loud:
 
 home: 
 	$(SILENT) $(MKDIR) $(LIB_DIR)
+	$(SILENT) $(MKDIR) $(SHARED_DIR)
 	$(SILENT) $(MKDIR) $(BIN_DIR)
 	$(SILENT) $(MKDIR) $(INC_DIR)/carmen
 	$(SILENT) $(MKDIR) $(INC_DIR)
@@ -187,6 +188,7 @@ distclean:
 	$(ECHO)
 	$(RECURSE)
 	$(SILENT) $(RM) $(LIB_DIR)
+	$(SILENT) $(RM) $(SHARED_DIR)
 	$(SILENT) $(RM) $(INC_DIR)/carmen
 	$(SILENT) $(RM) $(INC_DIR)
 	$(SILENT) $(RM) $(BIN_DIR)

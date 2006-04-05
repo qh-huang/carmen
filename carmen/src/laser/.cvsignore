@@ -4,3 +4,5 @@ laser
 laser_test
 laser_reset
 laser.log
+*.so.1
+*.a
