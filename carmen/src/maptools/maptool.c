@@ -41,10 +41,9 @@ static void main_usage(char *prog_name)
 #ifndef NO_GRAPHICS
 	     "tomap, "
 #endif
-	     "rotate, minimize, "
-	     //add_place, strip,"
+	     "rotate, minimize, addplace, strip,"
 	     " info\n"
-	     "Run %s <action> to get help on using each action.\n\n",
+	     "Run %s help <action> to get help on using each action.\n\n",
 	     prog_name, prog_name);  
 }
 
@@ -52,6 +51,7 @@ static int handle_options(int argc,  char *argv[], int *force)
 {
   static struct option long_options[] = {
     {"force", 0, NULL, 'f'},
+    {"help", 0, NULL, 'h'},
     {0, 0, 0, 0}
   };
 
@@ -61,14 +61,16 @@ static int handle_options(int argc,  char *argv[], int *force)
   *force = 0;
   opterr = 0;
   while (1) {
-    c = getopt_long (argc, argv, "f", long_options, &option_index);
+    c = getopt_long (argc, argv, "fh?", long_options, &option_index);
     if (c == -1)
       break;
     switch (c) {
     case 'f':
       *force = 1;
       break;
+    case 'h':
     case '?':
+      main_usage(argv[0]);
     default:
       carmen_warn("Unknown option character %c", optopt);
       main_usage(argv[0]);
@@ -78,6 +80,69 @@ static int handle_options(int argc,  char *argv[], int *force)
 
   return optind;
 }
+
+static void help(int argc, char **argv)
+{
+  char *action;
+
+  if (argc < 3 || argc > 3) 
+    main_usage(argv[0]);
+
+  action = argv[2];
+  if (carmen_strcasecmp(action, "info") == 0)
+    carmen_die("\nUsage: %s info <map filename>\n\n", 
+	       argv[0]); 
+  else if (carmen_strcasecmp(action, "toppm") == 0)
+    carmen_die("\nUsage: %s toppm <map filename> <ppm filename>\n\n", 
+	       argv[0]); 
+  else if (carmen_strcasecmp(action, "tomap") == 0)
+    carmen_die("\nUsage: %s tomap <resolution> <image file> "
+	       "<map filename>\n\nThe image file can be in most standard "
+	       "formats such as gif, png, jpeg, etc.\n\n", argv[0]); 
+  else if (carmen_strcasecmp(action, "rotate") == 0)
+    carmen_die("\nUsage: %s rotate <rotation in degrees> <in map filename> "
+	       "<out map filename>\n\nThe rotation angle must be in multiples "
+	       "of 90degrees -- arbitrary rotations are not\nyet supported."
+	       "\n\n", argv[0]);
+  else if (carmen_strcasecmp(action, "minimize") == 0)
+    carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
+	       argv[0]);
+  else if (carmen_strcasecmp(action, "addplace") == 0) {
+    fprintf(stderr, "\nUsage: %s <mapfilename> <placename> <place params>\n",
+	    argv[0]);
+    fprintf(stderr, "       2, 3, or 6 place parameters can be given.\n");
+    fprintf(stderr, "       2 parameters - named position (x, y)\n");
+    fprintf(stderr, "       3 parameters - named pose (x, y, theta)\n");
+    fprintf(stderr, "       6 parameters - initialization position\n");
+    fprintf(stderr, "                      (x, y, theta, std_x, std_y, "
+	    "std_theta)\n");
+    fprintf(stderr, "\nRemember: The x/y/std_x/std_y co-ordinates are in "
+	    "%sMETRES%s, not in\n", carmen_red_code, carmen_normal_code);
+    fprintf(stderr, "grid cells. \n");
+    fprintf(stderr, "\nAlso: theta is in %sDEGREES%s. I will print out the "
+	    "conversion to radians\n", carmen_red_code, carmen_normal_code);
+    fprintf(stderr, "automatically for you.\n\n");
+    fprintf(stderr, "Note that unlike rotate, minimize, etc., addplace "
+	    "performs an in-place edit\nto the map, and creates a backup "
+	    "copy.\n\n");
+    exit(0);
+  } else if (carmen_strcasecmp(action, "strip") == 0) {
+    fprintf(stderr, "\nUsage: %s strip <in map filename> <in map filename> "
+	    "<chunk type>\n\n", argv[0]);
+    fprintf(stderr, "If the map file contains a data chunk of this type, "
+	    "it will\nbe removed on output. All other chunks will be "
+	    "passed through untouched.\n");
+    fprintf(stderr, "<chunk type> can be one of \"laserscans\", "
+	    "\"places\", \"gridmap\", \"offlimits\", ");
+    fprintf(stderr, "                                \"expected\".\n\n");
+
+    exit(0);
+  }
+
+  carmen_warn("\nUnrecognized command %s\n", action);
+  main_usage(argv[0]);
+}
+
 
 static char *check_mapfile(char *filename)
 {
@@ -115,8 +180,7 @@ static void toppm(int argc, char *argv[])
   next_arg = handle_options(argc, argv, &force);
 
   if(argc - next_arg != 3) {
-    if (argc != 2) 
-      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_warn("\nError: wrong number of parameters.\n");    
     carmen_die("\nUsage: %s toppm <map filename> <ppm filename>\n\n", 
 	       argv[0]); 
   }
@@ -150,8 +214,7 @@ static void tomap(int argc, char *argv[])
   next_arg = handle_options(argc, argv, &force);
 
   if(argc - next_arg != 4) {
-    if (argc != 2) 
-      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_warn("\nError: wrong number of parameters.\n");    
     carmen_die("\nUsage: %s tomap <resolution> <ppm filename> "
 	       "<map filename>\n\n", argv[0]); 
   }
@@ -204,23 +267,23 @@ static void rotate(int argc, char *argv[])
   carmen_map_placelist_t places_list;
 
   next_arg = handle_options(argc, argv, &force);
+  next_arg++;
 
   if(argc - next_arg != 4) {
-    if (argc != 2) 
-      carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_warn("\nError: wrong number of parameters.\n");    
     carmen_die("\nUsage: %s rotate <rotation in degrees> <in map filename> "
 	       "<out map filename>\n\n", argv[0]);
   }
 
-  degrees_angle = (int)(atof(argv[next_arg+1]) / 90);
-  remain = fabs(degrees_angle*90 - atof(argv[next_arg+1]));
+  degrees_angle = (int)(atof(argv[next_arg]) / 90);
+  remain = fabs(degrees_angle*90 - atof(argv[next_arg]));
   if (carmen_radians_to_degrees(remain) > 2)
     carmen_die("Rotations only supported in increments of 90 degrees.\n");
   else
-    rotation = (int)atof(argv[next_arg+1]) / 90;
+    rotation = (int)atof(argv[next_arg]) / 90;
 
-  input_filename = check_mapfile(argv[next_arg+2]);
-  output_filename = check_output(argv[next_arg+3], force);
+  input_filename = check_mapfile(argv[next_arg+1]);
+  output_filename = check_output(argv[next_arg+2], force);
 
   carmen_warn("Rotating by %d degrees\n", rotation*90);
 
@@ -319,16 +382,16 @@ static void minimize(int argc, char *argv[])
   int previous_num_places;
 
   next_arg = handle_options(argc, argv, &force);
+  next_arg++;
 
-  if(argc - next_arg != 3) {
-    if (argc != 2) 
-      carmen_warn("\nError: wrong number of parameters.\n");    
+  if(argc - next_arg != 2) {
+    carmen_warn("\nError: wrong number of parameters.\n");    
     carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
 	       argv[0]);
   }
 
-  input_filename = check_mapfile(argv[next_arg+1]);
-  output_filename = check_output(argv[next_arg+2], force);
+  input_filename = check_mapfile(argv[next_arg]);
+  output_filename = check_output(argv[next_arg+1], force);
 
   /*
    * Read the gridmap, places and offlimits chunks and minimize them
@@ -420,137 +483,100 @@ static void minimize(int argc, char *argv[])
   carmen_fclose(out_fp);
 }
 
-
-
-static void usage(char* fmt, ...)
-{
-  va_list args;
-
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-
-  carmen_die("Usage: map <rotation in degs> <input file> "
-	     "<output file>\n");
-
-  fprintf(stderr, "Error: wrong number of arguments.\n");
-  fprintf(stderr, "Usage: maptool mapfilename placename [place params]\n");
-  fprintf(stderr, "       2, 3, or 6 place parameters can be given.\n");
-  fprintf(stderr, "       2 parameters - named position (x, y)\n");
-  fprintf(stderr, "       3 parameters - named pose (x, y, theta)\n");
-  fprintf(stderr, "       6 parameters - initialization position\n");
-  fprintf(stderr, "                      (x, y, theta, std_x, std_y, "
-	  "std_theta)\n");
-  fprintf(stderr, "\nRemember: The x/y/std_x/std_y co-ordinates are in "
-	  "%sMETRES%s, not in\n", carmen_red_code, carmen_normal_code);
-  fprintf(stderr, "grid cells. \n");
-  fprintf(stderr, "\nAlso: theta is in %sDEGREES%s. I will print out the "
-	  "conversion to radians\n", carmen_red_code, carmen_normal_code);
-  fprintf(stderr, "automatically for you.\n");
-  
-  fprintf(stderr, "Error: wrong number of arguments.\n");
-
-  fprintf(stderr, "Usage: maptool mapfilename chunkname chunkname2 ... \n");
-  fprintf(stderr, "chunk name can be one of \"laserscans\", "
-	  "\"places\", \n");
-  fprintf(stderr, "      \"gridmap\", \"offlimits\", \"expected\"\n");
-}
-
 static void add_place(int argc, char *argv[])
 {
-  char *input_filename, *output_filename;
+  char *input_filename;
   int next_arg;
   int force;
-  char *filename, cmd[100];
-  char tmp_filename[100];
+  char cmd[1024];
+  char tmp_filename[1024];
   carmen_FILE *fp_in, *fp_out;
   carmen_map_placelist_t place_list;
   carmen_place_p places;
   int system_err;
+  int num_args;
 
   next_arg = handle_options(argc, argv, &force);
+  next_arg++;
 
-  if(argc - next_arg != 3) {
-    if (argc != 2) 
-      carmen_warn("\nError: wrong number of parameters.\n");    
-    carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
-	       argv[0]);
+  num_args = argc - next_arg;
+
+  if(num_args != 4 && num_args != 5 && num_args != 8) {
+    carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_warn("\nUsage: %s <mapfilename> <placename> <place params>\n",
+		argv[0]);
+    carmen_warn("       2, 3, or 6 place parameters can be given.\n");
   }
+     
+  input_filename = check_mapfile(argv[next_arg]);
+  next_arg++;
 
-  input_filename = check_mapfile(argv[next_arg+1]);
-  output_filename = check_output(argv[next_arg+2], force);
-
-  if(argc != 6 && argc != 7 && argc != 10) 
-    usage("Error: wrong number of parameters.\n");    
-
-  filename = argv[2];
-
-  if(!carmen_map_file(filename))
+  if(!carmen_map_file(input_filename))
     carmen_die("Error: %s does not appear to be a valid carmen map file;\n" 
 	       "if it is gzipped, make sure it has a \".gz\" extension.\n",
-	       filename);
+	       input_filename);
 
-  if(!carmen_map_chunk_exists(filename, CARMEN_MAP_PLACES_CHUNK)) {
+  if(!carmen_map_chunk_exists(input_filename, CARMEN_MAP_PLACES_CHUNK)) {
     place_list.num_places = 1;
     place_list.places = (carmen_place_p)calloc(1, sizeof(carmen_place_t)); 
     carmen_test_alloc(place_list.places);
-  }
-  else {
-    carmen_map_read_places_chunk(filename, &place_list);
+  } else {
+    carmen_map_read_places_chunk(input_filename, &place_list);
     place_list.num_places++;
     place_list.places = (carmen_place_p)realloc
-      (place_list.places, sizeof(carmen_place_t) * place_list.num_places); /* check_alloc checked */
+      (place_list.places, sizeof(carmen_place_t) * place_list.num_places); 
+    /* check_alloc checked */
   }
   carmen_test_alloc(place_list.places);
 
   places = place_list.places;
 
-  if(argc == 6) {
-    strcpy(places[place_list.num_places - 1].name, argv[3]);
+  if(num_args == 4) {
+    strcpy(places[place_list.num_places - 1].name, argv[next_arg+1]);
     places[place_list.num_places - 1].type = CARMEN_NAMED_POSITION_TYPE;
-    places[place_list.num_places - 1].x = atof(argv[4]);
-    places[place_list.num_places - 1].y = atof(argv[5]);
+    places[place_list.num_places - 1].x = atof(argv[next_arg+2]);
+    places[place_list.num_places - 1].y = atof(argv[next_arg+3]);
   }
-  else if(argc == 6) {
-    strcpy(places[place_list.num_places - 1].name, argv[3]);
+  else if(num_args == 5) {
+    strcpy(places[place_list.num_places - 1].name, argv[next_arg]);
     places[place_list.num_places - 1].type = CARMEN_NAMED_POSE_TYPE;
-    places[place_list.num_places - 1].x = atof(argv[4]);
-    places[place_list.num_places - 1].y = atof(argv[5]);
+    places[place_list.num_places - 1].x = atof(argv[next_arg+1]);
+    places[place_list.num_places - 1].y = atof(argv[next_arg+2]);
     places[place_list.num_places - 1].theta = 
-      carmen_degrees_to_radians(atof(argv[6]));
+      carmen_degrees_to_radians(atof(argv[next_arg+3]));
     fprintf(stderr, "Set (%s %s %s) to (%f.2m, %f.2m, %f.2 rad)\n", argv[4],
 	    argv[5], argv[6], places[place_list.num_places - 1].x, 
 	    places[place_list.num_places - 1].y,
 	    places[place_list.num_places - 1].theta);
   }
   else {
-    strcpy(places[place_list.num_places - 1].name, argv[3]);
+    strcpy(places[place_list.num_places - 1].name, argv[next_arg]);
     places[place_list.num_places - 1].type = CARMEN_LOCALIZATION_INIT_TYPE;
-    places[place_list.num_places - 1].x = atof(argv[4]);
-    places[place_list.num_places - 1].y = atof(argv[5]);
+    places[place_list.num_places - 1].x = atof(argv[next_arg+1]);
+    places[place_list.num_places - 1].y = atof(argv[next_arg+2]);
     places[place_list.num_places - 1].theta = 
-      carmen_degrees_to_radians(atof(argv[6]));
-    places[place_list.num_places - 1].x_std = atof(argv[7]);
-    places[place_list.num_places - 1].y_std = atof(argv[8]);
+      carmen_degrees_to_radians(atof(argv[next_arg+3]));
+    places[place_list.num_places - 1].x_std = atof(argv[next_arg+4]);
+    places[place_list.num_places - 1].y_std = atof(argv[next_arg+5]);
     places[place_list.num_places - 1].theta_std = 
-      carmen_degrees_to_radians(atof(argv[9]));
+      carmen_degrees_to_radians(atof(argv[next_arg+6]));
 
     fprintf(stderr, "Set (%s %s %s %s %s %s) to:\n(%f.2m +/- %f.2m, %f.2m "
 	    "+/- %f.2m, %f.2 +/- %f.2 rad)\n", 
-	    argv[4], argv[5], argv[6], argv[7], argv[8], argv[9], 
+	    argv[next_arg+1], argv[next_arg+2], argv[next_arg+3], 
+	    argv[next_arg+4], argv[next_arg+5], argv[next_arg+6], 
 	    places[place_list.num_places - 1].x, 
 	    places[place_list.num_places - 1].x_std, 
 	    places[place_list.num_places - 1].y, 
 	    places[place_list.num_places - 1].y_std,
 	    places[place_list.num_places - 1].theta, 
-	    places[place_list.num_places - 1].theta_std);
-    
+	    places[place_list.num_places - 1].theta_std);    
   }
   
-  fp_in = carmen_fopen(filename, "r");
+  fp_in = carmen_fopen(input_filename, "r");
   if(fp_in == NULL)
     carmen_die_syserror("Error: file %s could not be opened for reading", 
-			filename);
+			input_filename);
   
   strcpy(tmp_filename, "/tmp/newmapXXXXXX");
   system_err = mkstemp(tmp_filename);
@@ -571,7 +597,7 @@ static void add_place(int argc, char *argv[])
   carmen_fclose(fp_in);
   carmen_fclose(fp_out);
 
-  sprintf(cmd, "mv -f %s %s", tmp_filename, filename);
+  sprintf(cmd, "mv -f %s %s", tmp_filename, input_filename);
   system_err = system(cmd);
   if (system_err != 0) 
     carmen_die("I created a temporary file contained the map with the new "
@@ -584,75 +610,55 @@ static void add_place(int argc, char *argv[])
 
 static void strip(int argc, char *argv[])
 {
-  char *filename, cmd[100];
+  char *input_filename, *output_filename, *chunk_type;
   carmen_FILE *fp_in, *fp_out;
-  int index, n;
+  int next_arg;
+  int force;
 
-  if (argc < 4) 
-    usage("Error: wrong number of parameters.\n");    
+  next_arg = handle_options(argc, argv, &force);
+  next_arg++;
 
-  filename = argv[2];
+  if(argc - next_arg != 4) {
+    carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_die("\nUsage: %s strip <in map filename> "
+	       "<out map filename> <chunk type>\n\n", argv[0]);
+  }
 
-  fp_in = carmen_fopen(filename, "r");
+  input_filename = check_mapfile(argv[next_arg]);
+  output_filename = check_output(argv[next_arg+1], force);
+  chunk_type = argv[next_arg+2];
+
+  fp_in = carmen_fopen(input_filename, "r");
   if(fp_in == NULL) 
-    carmen_die_syserror("Could not open map file for reading");
+    carmen_die_syserror("Could not open %s for reading", input_filename);
 
-  fp_out = carmen_fopen("/tmp/stripped.cmf", "w");
+  fp_out = carmen_fopen(output_filename, "w");
   if(fp_out == NULL) 
-    carmen_die_syserror("Could not open temporary file for writing");
+    carmen_die_syserror("Could not open %s for writing", output_filename);
   
-  n = 0;
-  for (index = 3; index < argc; index++)
-    {
-      if (carmen_strcasecmp(argv[index], "laserscans") == 0) {
-	if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_LASERSCANS_CHUNK) < 0) 
-	  carmen_die_syserror("Error: could not strip file");
-      }
-      else if (carmen_strcasecmp(argv[index], "gridmap") == 0) {
-	if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_GRIDMAP_CHUNK) < 0) 
-	  carmen_die_syserror("Error: could not strip file");
-      }
-      else if (carmen_strcasecmp(argv[index], "offlimits") == 0) {
-	if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_OFFLIMITS_CHUNK) < 0) 
-	  carmen_die_syserror("Error: could not strip file");
-      }
-      else if (carmen_strcasecmp(argv[index], "expected") == 0) {
-	if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_EXPECTED_CHUNK) < 0) 
-	  carmen_die_syserror("Error: could not strip file");
-      }
-      else if (carmen_strcasecmp(argv[index], "places") == 0) {
-	if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_PLACES_CHUNK) < 0) 
-	  carmen_die_syserror("Error: could not strip file");
-      }
-      else
-	continue;
-      carmen_fclose(fp_in);
-      carmen_fclose(fp_out);
-      if ((++n)%2) {
-	fp_in = carmen_fopen("/tmp/stripped.cmf", "r");
-	if(fp_in == NULL) 
-	  carmen_die_syserror("Could not open map file for reading");
-	fp_out = carmen_fopen("/tmp/stripped2.cmf", "w");
-	if(fp_out == NULL) 
-	  carmen_die_syserror("Could not open temporary file for writing");
-      }
-      else {
-	fp_in = carmen_fopen("/tmp/stripped2.cmf", "r");
-	if(fp_in == NULL)
-	  carmen_die_syserror("Could not open map file for reading");
-	fp_out = carmen_fopen("/tmp/stripped.cmf", "w");
-	if(fp_out == NULL) 
-	  carmen_die_syserror("Could not open temporary file for writing");
-      }
-    }
- 
+  if (carmen_strcasecmp(chunk_type, "laserscans") == 0) {
+    if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_LASERSCANS_CHUNK) < 0) 
+      carmen_die_syserror("Error: could not strip file");
+  }
+  else if (carmen_strcasecmp(chunk_type, "gridmap") == 0) {
+    if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_GRIDMAP_CHUNK) < 0) 
+      carmen_die_syserror("Error: could not strip file");
+  }
+  else if (carmen_strcasecmp(chunk_type, "offlimits") == 0) {
+    if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_OFFLIMITS_CHUNK) < 0) 
+      carmen_die_syserror("Error: could not strip file");
+  }
+  else if (carmen_strcasecmp(chunk_type, "expected") == 0) {
+    if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_EXPECTED_CHUNK) < 0) 
+      carmen_die_syserror("Error: could not strip file");
+  }
+  else if (carmen_strcasecmp(chunk_type, "places") == 0) {
+    if (carmen_map_strip(fp_in, fp_out, CARMEN_MAP_PLACES_CHUNK) < 0) 
+      carmen_die_syserror("Error: could not strip file");
+  }
+
   carmen_fclose(fp_in);
-  carmen_fclose(fp_out);
-  if (n % 2)
-    sprintf(cmd, "mv -f /tmp/stripped.cmf %s", filename);
-  else
-    sprintf(cmd, "mv -f /tmp/stripped2.cmf %s", filename);
-  system(cmd);
+  carmen_fclose(fp_out); 
 }
 
 static void info(int argc, char *argv[])
@@ -667,9 +673,6 @@ static void info(int argc, char *argv[])
   int list_length;
 
   /* Check for the appropriate command line argument */
-  if (argc == 2) 
-    carmen_die("\nUsage: %s info <filename>\n\n", argv[0]);  
-
   if(argc != 3) 
     carmen_die("Error in info: wrong number of parameters.\n");
 
@@ -776,21 +779,30 @@ int main(int argc, char **argv)
     main_usage(argv[0]);
   
   action = argv[1];
-  if (strcmp(action, "toppm") == 0)
+  
+  if (carmen_strcasecmp(action, "-h") == 0 || 
+      carmen_strcasecmp(action, "--help") == 0) 
+    main_usage(argv[0]);
+  if (carmen_strcasecmp(action, "help") == 0) {
+    help(argc, argv);
+    return 0;
+  }
+
+  if (carmen_strcasecmp(action, "toppm") == 0)
     toppm(argc, argv);
 #ifndef NO_GRAPHICS
-  else if (strcmp(action, "tomap") == 0)
+  else if (carmen_strcasecmp(action, "tomap") == 0)
     tomap(argc, argv);
 #endif
-  else if (strcmp(action, "rotate") == 0)
+  else if (carmen_strcasecmp(action, "rotate") == 0)
     rotate(argc, argv);
-  else if (strcmp(action, "minimize") == 0)
+  else if (carmen_strcasecmp(action, "minimize") == 0)
     minimize(argc, argv);
-  else if (strcmp(action, "add_place") == 0)
+  else if (carmen_strcasecmp(action, "add_place") == 0)
     add_place(argc, argv);
-  else if (strcmp(action, "strip") == 0)
+  else if (carmen_strcasecmp(action, "strip") == 0)
     strip(argc, argv);
-  else if (strcmp(action, "info") == 0)
+  else if (carmen_strcasecmp(action, "info") == 0)
     info(argc, argv);
   else {
     carmen_warn("\nUnrecognized action %s\n", argv[1]);
