@@ -74,7 +74,7 @@ double carmen_localize_sample_noisy_downrange(double delta_t,
   double sample;
 
   downrange_mean = delta_t*model->mean_d_d+delta_theta*model->mean_d_t;
-  downrange_std_dev =delta_t*model->std_dev_d_d+delta_theta*model->std_dev_d_t;
+  downrange_std_dev =fabs(delta_t)*model->std_dev_d_d+fabs(delta_theta)*model->std_dev_d_t;
 
   do {
     sample = carmen_gaussian_random(downrange_mean, downrange_std_dev);
@@ -92,8 +92,8 @@ double carmen_localize_sample_noisy_crossrange(double delta_t,
   double sample;
 
   crossrange_mean = delta_t*model->mean_c_d+delta_theta*model->mean_c_t;
-  crossrange_std_dev = delta_t*model->std_dev_c_d+
-    delta_theta*model->std_dev_c_t;
+  crossrange_std_dev = fabs(delta_t)*model->std_dev_c_d+
+    fabs(delta_theta)*model->std_dev_c_t;
 
   do {
     sample = carmen_gaussian_random(crossrange_mean, crossrange_std_dev);
@@ -109,7 +109,7 @@ double carmen_localize_sample_noisy_turn(double delta_t, double delta_theta,
   double sample;
 
   turn_mean = delta_t*model->mean_t_d+delta_theta*model->mean_t_t;
-  turn_std_dev = delta_t*model->std_dev_t_d+delta_theta*model->std_dev_t_t;
+  turn_std_dev = fabs(delta_t)*model->std_dev_t_d+fabs(delta_theta)*model->std_dev_t_t;
 
   do {
     sample = carmen_gaussian_random(turn_mean, turn_std_dev);
