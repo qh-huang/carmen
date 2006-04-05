@@ -1,9 +1,8 @@
 add documentation to localize_messages 
-add documentation to logger, logtools 
+add documentation to logger
+add documentation to logtools 
 add documentation to pantilt
-add documentation to robot	
 
-add documentation to simulator
 add documentation to global/geometry would be nice...
 
 get a data file for model learn and send to ron parr
@@ -16,23 +15,12 @@ graphical proccontrol_view
 
 python fix shared library problem 
 
-robotgui 
-
-vasco? 
-
 maybe delete mapeditor?
 
 
 carmen-addons 
 =======================================
 look at b21r in carmen-addons 
-remove hmap
-remove amtec
-remove pantilt
-remove startup_scripts
-remove xavier
-remove multigoal
-remove carmen-perl 
 merge cerebellum modules into single module
 ask mike re: kvh, compass, canon, people_tracker, multirobot_viewer, gplan
 ask jared re: r03, roadmap, robotwalker, roomnav, sound_server, stracker, actor, dog, dot
