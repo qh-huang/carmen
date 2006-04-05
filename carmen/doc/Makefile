@@ -20,6 +20,7 @@ copy_to_html =   $(SILENT) \
 		$(CP) -f $$i html/; \
 	done 
 
+all: $(TARGETS)
 
 carmen.doxygen:  carmen.dox  
 

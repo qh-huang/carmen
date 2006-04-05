@@ -111,20 +111,26 @@ Inter-Process-Communication to send message between modules.
 
 /** @defgroup navigator The Navigator Module (navigator) 
 \brief The CARMEN navigator module.
-@{
 
-  The CARMEN navigator module the provides path planning module to guide the robot 
-  through the environment.
+@{ The CARMEN navigator module the provides path planning module to guide the
+  robot through the environment.
 
   The navigator module consists of 4 main components: 
   <ol> 
-  <li>A motion planning library, contained in libconventional.a. This library computes
-  the shortest path through the current map by computing a utility function, and . 
-  <li>A planner abstraction 
-  </ol>
-	
-@}
- **/
+
+  <li>A motion planning library, contained in libconventional.a. This library
+  computes the shortest path through the current map by computing a utility
+  function, and extracting from the utility function a sequence of grid cells
+  that arrives at the goal with the shortest path.  
+  <li>A planner abstraction that allows laser data to update the internal
+  map representation, recomputes any additional structures (e.g., the cost
+  map and utility functions as a result of the updated map), and returns
+  a path as a sequence of way points by greedy split-and-merge on the 
+  grid cell path sequence.
+  <li>A navigator abstraction that manages IPC, and uses a P-D loop to
+  servo the robot towards the next waypoint in the path.
+  <li>A navigator GUI that reports on the state of the robot, path, etc. 
+  </ol> @} **/
 
 
 /** @defgroup pantilt The Pantilt Module (pantilt) 
