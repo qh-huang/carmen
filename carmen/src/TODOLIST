@@ -1,11 +1,9 @@
 add documentation to localize_messages 
 add documentation to logger, logtools 
-add documentation to navigator
 add documentation to pantilt
-add documentation to param_daemon 
 add documentation to robot	
+
 add documentation to simulator
-add documentation to maptools
 add documentation to global/geometry would be nice...
 
 get a data file for model learn and send to ron parr
