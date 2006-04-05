@@ -648,6 +648,8 @@ static int read_robot_parameters(int argc, char **argv)
      &carmen_robot_config.width, 0, NULL},
     {"robot", "acceleration", CARMEN_PARAM_DOUBLE, 
      &carmen_robot_config.acceleration, 1, NULL},
+    {"robot", "deceleration", CARMEN_PARAM_DOUBLE, 
+     &carmen_robot_config.deceleration, 1, NULL},
     {"robot", "reaction_time", CARMEN_PARAM_DOUBLE, 
      &carmen_robot_config.reaction_time, 0, NULL},
     {"robot", "theta_gain", CARMEN_PARAM_DOUBLE, &theta_gain, 1, NULL},

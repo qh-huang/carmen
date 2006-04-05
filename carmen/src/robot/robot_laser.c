@@ -276,22 +276,16 @@ laser_frontlaser_handler(void)
 
   time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
-  /* use only half of the maximum acceleration */
+  /* use only a quater of the maximum deceleration   2.0 / 4.0 = 0.5  */
   safety_distance = 
-    carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist + 
-    carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / 
-    carmen_robot_config.acceleration +
-    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time;
-
-/*   safety_distance =  */
-/*     carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist +  */
-/*     0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv /  */
-/*     carmen_robot_config.acceleration + */
-/*     carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time; */
+    0.5 * carmen_robot_config.length + 
+    carmen_robot_config.approach_dist + 
+    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time + 
+    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / (0.25 * carmen_robot_config.deceleration);
 
   robot_front_laser.forward_safety_dist = safety_distance;
   robot_front_laser.side_safety_dist = 
-    carmen_robot_config.width / 2.0 + carmen_robot_config.side_dist;
+    0.5 * carmen_robot_config.width + carmen_robot_config.side_dist;
   robot_front_laser.turn_axis = 1e6;
   robot_front_laser.timestamp = front_laser.timestamp;
   robot_front_laser.host = front_laser.host;
@@ -416,11 +410,13 @@ laser_rearlaser_handler(void)
 
   time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
+  /* use only a quater of the maximum deceleration  */
   safety_distance = 
-    carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist + 
-    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / 
-    carmen_robot_config.acceleration +
-    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time;
+    0.5 * carmen_robot_config.length + 
+    carmen_robot_config.approach_dist + 
+    carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time + 
+    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / (0.25 * carmen_robot_config.deceleration);
+
 
   robot_rear_laser.forward_safety_dist = safety_distance;
   robot_rear_laser.side_safety_dist = 
