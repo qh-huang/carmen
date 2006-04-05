@@ -42,6 +42,18 @@
 extern "C" {
 #endif
 
+  /** 
+   *  Computes the minimum forward distance an obstacle must be from the robot
+   *  to avoid a collision, given its current configuration and velocity. 
+   *  
+   *  @param robot_config Contains the robot dimensions and safety parameters.
+   *  @param robot Contains the robot pose (not used) and the current robot
+   *  velocity (required). 
+   */ 
+
+double carmen_geometry_compute_safety_distance(carmen_robot_config_t *robot_config,
+					       carmen_traj_point_t *robot);
+
 void carmen_geometry_compute_centre_and_curvature(carmen_traj_point_t start_point, double theta, 
 						carmen_traj_point_t end_point,
 						carmen_traj_point_t *centre, double *radius);
