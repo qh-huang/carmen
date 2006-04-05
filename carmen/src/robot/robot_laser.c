@@ -236,10 +236,9 @@ laser_frontlaser_handler(void)
   double tooclose_theta = 0;
 
   int min_index;
-  double min_theta = 0;
+  //  double min_theta = 0;
   double min_dist;
   
-  int debug = carmen_carp_get_verbose();
 
   static double time_since_last_process = 0;
   double skip_sum = 0;
@@ -277,11 +276,18 @@ laser_frontlaser_handler(void)
 
   time_since_last_process = carmen_robot_sensor_time_of_last_update;
 
+  /* use only half of the maximum acceleration */
   safety_distance = 
     carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist + 
-    0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / 
+    carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv / 
     carmen_robot_config.acceleration +
     carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time;
+
+/*   safety_distance =  */
+/*     carmen_robot_config.length / 2.0 + carmen_robot_config.approach_dist +  */
+/*     0.5 * carmen_robot_latest_odometry.tv * carmen_robot_latest_odometry.tv /  */
+/*     carmen_robot_config.acceleration + */
+/*     carmen_robot_latest_odometry.tv * carmen_robot_config.reaction_time; */
 
   robot_front_laser.forward_safety_dist = safety_distance;
   robot_front_laser.side_safety_dist = 
@@ -298,9 +304,6 @@ laser_frontlaser_handler(void)
 
   carmen_carp_set_verbose(0);
   
-/*   theta = -M_PI/2;  */
-/*   delta_theta = M_PI/(robot_front_laser.num_readings-1); */
-
   theta = front_laser.config.start_angle;
   delta_theta = front_laser.config.angular_resolution;
 
@@ -344,66 +347,17 @@ laser_frontlaser_handler(void)
     }
   }
 
-  carmen_carp_set_verbose(debug);
-  if (max_velocity < carmen_robot_config.max_t_vel) {
-    if (max_velocity > 0)
-      carmen_verbose
-	("velocity [46m%.1f[0m : distance %.4f delta_x %.4f (%.3f %d)\n", 
-	 max_velocity,  robot_front_laser.range[min_index], 
-	 frontlaser_offset + 
-	 robot_front_laser.range[min_index]*cos(min_theta), 
-	 cos(min_theta), min_index);
-    else
-	carmen_verbose
-	  ("velocity [43m%.1f[0m : distance %.4f delta_x %.4f (%.3f %d)\n",
-	   max_velocity, robot_front_laser.range[min_index], 
-	   frontlaser_offset + 
-	   robot_front_laser.range[min_index]*cos(min_theta), 
-	   cos(min_theta), min_index);
-  } else
-    carmen_verbose("Ok\n");
-  carmen_carp_set_verbose(0);
-
   front_laser_ready = 1;
-
-  carmen_carp_set_verbose(debug);
-  if (tooclose >= 0 && tooclose < robot_front_laser.num_readings) {
-    if (max_velocity < carmen_robot_config.max_t_vel) {
-      if (max_velocity > 0)
-	carmen_verbose
-	  ("velocity [42m%.1f[0m : distance %.4f delta_x %.4f (%.3f %d)\n",
-	   max_velocity,  robot_front_laser.range[tooclose], 
-	   frontlaser_offset + 
-	   robot_front_laser.range[tooclose]*cos(tooclose_theta), 
-	   cos(tooclose_theta), tooclose);
-      else
-	carmen_verbose
-	  ("velocity [41m%.1f[0m : distance %.4f delta_x %.4f (%.3f %d)\n",
-	   max_velocity, 
-	   robot_front_laser.range[tooclose], 
-	   frontlaser_offset + 
-	   robot_front_laser.range[tooclose]*cos(tooclose_theta), 
-	   cos(tooclose_theta), tooclose);
-    } else
-      carmen_verbose("Ok\n");
-  } else {
-    carmen_verbose("[44mNone too close[0m %.1f %.1f min_dist %.1f\n", 
-		 carmen_robot_latest_odometry.tv, 
-		 carmen_robot_latest_odometry.rv, min_dist );
-  }
-  carmen_carp_set_verbose(0);
-
+  
   if (max_velocity >= 0 && max_velocity < CARMEN_ROBOT_MIN_ALLOWED_VELOCITY)
     max_velocity = 0.0;
-
-  if(max_velocity <= 0.0 && carmen_robot_latest_odometry.tv > 0.0)
-    {
-      fprintf(stderr, "S");
-      carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
-    }
+  
+  if(max_velocity <= 0.0 && carmen_robot_latest_odometry.tv > 0.0)    {
+    fprintf(stderr, "S");
+    carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
+  }
   
   max_front_velocity = max_velocity;
-  carmen_carp_set_verbose(debug);
 }
 
 double 

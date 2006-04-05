@@ -187,10 +187,18 @@ void carmen_robot_send_base_velocity_command(void)
   v.host = carmen_get_host();
 
   if (collision_avoidance) {
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
+  if (use_laser) {
+      command_tv = carmen_clamp(carmen_robot_laser_min_rear_velocity(), 
+				command_tv,
+				carmen_robot_laser_max_front_velocity());
+  }
+#endif    
     if (use_sonar)
       command_tv = carmen_clamp(carmen_robot_sonar_min_rear_velocity(), 
 				command_tv,
 				carmen_robot_sonar_max_front_velocity());
+    
     if (use_bumper && carmen_robot_bumper_on()) {
       command_tv = 0;
       command_rv = 0;
@@ -200,13 +208,16 @@ void carmen_robot_send_base_velocity_command(void)
   if (!carmen_robot_config.allow_rear_motion && command_tv < 0)
     command_tv = 0.0;
 
-  v.tv = carmen_clamp(-carmen_robot_config.max_t_vel, command_tv, 
-		    carmen_robot_config.max_t_vel);
-  v.rv = carmen_clamp(-carmen_robot_config.max_r_vel, command_rv,
-		    carmen_robot_config.max_r_vel);
+  v.tv = carmen_clamp(-carmen_robot_config.max_t_vel, 
+		      command_tv, 
+		      carmen_robot_config.max_t_vel);
+
+  v.rv = carmen_clamp(-carmen_robot_config.max_r_vel, 
+		      command_rv,
+		      carmen_robot_config.max_r_vel);
 
   v.timestamp = carmen_get_time();
-
+  
   err = IPC_publishData(CARMEN_BASE_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_BASE_VELOCITY_NAME);  
 }
@@ -248,16 +259,44 @@ static void base_odometry_handler(void)
 			     odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS - 1]- 
 			     carmen_robot_latest_odometry.timestamp);
 
-  if (collision_avoidance) {
-    if (carmen_robot_latest_odometry.tv > 0) {
-   } else if (carmen_robot_latest_odometry.tv < 0) {
-    } else if (carmen_robot_bumper_on()) {
+  if (collision_avoidance)    {
+
+    if (carmen_robot_bumper_on()) {
       fprintf(stderr, "S");
       carmen_robot_stop_robot(CARMEN_ROBOT_ALL_STOP);
       command_tv = 0;
       command_rv = 0;
     }
     
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
+    if (carmen_robot_latest_odometry.tv > 0 &&
+	carmen_robot_laser_max_front_velocity() < carmen_robot_latest_odometry.tv &&
+	command_tv > carmen_robot_laser_max_front_velocity())  {
+
+      if (carmen_robot_laser_max_front_velocity() <= 0.0)   {
+	command_tv = 0;
+	fprintf(stderr, "S");
+	carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
+      }
+      else {
+	command_tv = carmen_robot_laser_max_front_velocity();
+	carmen_robot_send_base_velocity_command();
+      }
+    }
+    else if (carmen_robot_latest_odometry.tv < 0 &&
+	     carmen_robot_laser_min_rear_velocity() > carmen_robot_latest_odometry.tv &&
+	     command_tv < carmen_robot_laser_min_rear_velocity())  {
+      if (carmen_robot_laser_min_rear_velocity() >= 0.0) {
+	fprintf(stderr, "S");
+	command_tv = 0;
+	carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
+      }
+      else  {
+	command_tv = carmen_robot_laser_min_rear_velocity();
+	carmen_robot_send_base_velocity_command();
+      }
+    }
+#endif
   } // End of if (collision_avoidance)
 
   if (use_sonar) 
@@ -364,10 +403,6 @@ static void follow_vector(void)
      there. Hopefully, the control loop will correct things by about 1/2
      of the way there, arriving at the destination with the right
      orientation.
-
-     2003-11-10 : I (Cyrill) added this paramter to the ini-file. I don't 
-     know if the variable name  is the best choice. Change it if you have 
-     a better idea.   (turn_before_driving_if_heading_bigger_than)
   */
 
 			
