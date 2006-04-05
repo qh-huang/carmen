@@ -58,6 +58,7 @@ INPUT            	= main.html params.html style.html messages.html faq.html modu
                         binaries/binary_base \
                         binaries/binary_camera \
                         binaries/binary_global \
+                        binaries/binary_hmap \
                         binaries/binary_gps \
                         binaries/binary_ipc \
                         binaries/binary_joystick \
