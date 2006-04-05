@@ -1,3 +1,6 @@
+#define CARMEN_LASER_USE_SELECT 1
+#define CARMEN_LASER_LOW_LATENCY 1
+
 #include <carmen/carmen.h>
 #include <carmen/carmenserial.h>
 #include <sys/types.h>
