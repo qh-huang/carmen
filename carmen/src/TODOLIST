@@ -1,7 +1,10 @@
-add documentation to localize_messages 
-add documentation to logger
+add documentation to localize 
 add documentation to logtools 
 add documentation to pantilt
+add documentation to base
+add documentation to joystick
+add documentation to proccontrol
+
 
 add documentation to global/geometry would be nice...
 
