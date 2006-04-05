@@ -1,18 +1,7 @@
-add documentation to localize 
-add documentation to logtools 
-add documentation to pantilt
-add documentation to base
-add documentation to joystick
-add documentation to proccontrol
-
-
-add documentation to global/geometry would be nice...
+add documentation to proccontrol needs to be extended
+add documentation to global/geometry would be nice
 
 get a data file for model learn and send to ron parr
-
-optimize  robot collision avoidance behavior. 
- 1) Side dist when heading away from the wall
- 2) Break earlier when heading directly to a wall
 
 graphical proccontrol_view 
 
