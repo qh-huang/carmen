@@ -1,4 +1,3 @@
-camera needs documentation
 add documentation to localize_messages 
 add documentation to logger, logtools 
 add documentation to navigator
@@ -6,17 +5,18 @@ add documentation to pantilt
 add documentation to param_daemon 
 add documentation to robot	
 add documentation to simulator
-maptools documentation
+add documentation to maptools
+add documentation to global/geometry would be nice...
 
 get a data file for model learn and send to ron parr
 
-fix robot collision avoidance 
+optimize  robot collision avoidance behavior. 
+ 1) Side dist when heading away from the wall
+ 2) Break earlier when heading directly to a wall
 
 graphical proccontrol_view 
 
 python fix shared library problem 
-
-robot add parameter to control skew estimation
 
 robotgui 
 
