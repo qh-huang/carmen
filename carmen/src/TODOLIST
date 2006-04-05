@@ -1,28 +1,35 @@
-add documentation to proccontrol needs to be extended
-add documentation to global/geometry would be nice
+documentation to proccontrol needs to be extended
+
+documentation for global/geometry would be nice
 
 get a data file for model learn and send to ron parr
 
-graphical proccontrol_view 
+check b21r in carmen-addons and move to carmen main
 
 python fix shared library problem 
 
-maybe delete mapeditor?
+graphical proccontrol_view 
 
 
 carmen-addons 
-=======================================
-look at b21r in carmen-addons 
+=============
+
 merge cerebellum modules into single module
+
 ask mike re: kvh, compass, canon, people_tracker, multirobot_viewer, gplan
 ask jared re: r03, roadmap, robotwalker, roomnav, sound_server, stracker, actor, dog, dot
 ask mrosen: spotter, timer
 
-------------------------------------------------------------------------
+Should we do this?
+===================
+
+maybe delete mapeditor?
+
 
 Wish list 
+=========
 
--- QT guis
+QT guis
 
 IPC message size test
 
@@ -39,7 +46,7 @@ port map_tracker to gtk 2.0
 laser module/messages
    Add error messages when laser fails to connect.
 
-Test programs 
+Test programs for
    Localize, navigator
 
 - robotgraph -- when turning to face a point, and the network goes out, robot
