@@ -30,7 +30,7 @@
 
 /** 
  * \file conventional.h 
- * \brief Library for conventional planning.
+ * \brief Library for shortest-path motion planning.
  *
  * ...
  **/
@@ -43,14 +43,31 @@
 extern "C" {
 #endif
 
+  /** Computes the utility function using dynamic programming. 
+      carmen_conventional_build_costs must have been
+      called first. **/ 
   void carmen_conventional_dynamic_program(int goal_x, int goal_y);
+  /** Takes in the current position (as a map grid cell) and replaces
+      the argument with the best neighbour grid cell to visit
+      next. carmen_conventional_dynamic_program must have been
+      called first. **/ 
   void carmen_conventional_find_best_action(carmen_map_point_p curpoint);
+  /** Frees memory structures. **/ 
   void carmen_conventional_end_planner(void);
+  /** Returns the utility function as an array of doubles with the
+   same dimensions as the map in row-major order. **/ 
   double *carmen_conventional_get_utility_ptr(void);
+  /** Returns the cost map as an array of doubles with the
+   same dimensions as the map in row-major order. **/ 
   double *carmen_conventional_get_costs_ptr(void);
+  /** Returns the value of the utility function at a specific point,
+   that is, the cost-to-goal. **/ 
   double carmen_conventional_get_utility(int x, int y);
-  double carmen_conventional_set_utility(int x, int y, double new_utility);
+  /** Returns the value of the cost map at a specific point. **/ 
   double carmen_conventional_get_cost(int x, int y);
+  /** Converts the occupancy grid map into a cost map by incorporating
+      the width of the robot, and adding additional penalties for getting
+      close to obstacles. **/ 
   void carmen_conventional_build_costs(carmen_robot_config_t *robot_conf,
 				       carmen_map_point_t *robot_posn,
 				       carmen_navigator_config_t *navigator_conf);

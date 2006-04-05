@@ -43,12 +43,14 @@
 extern "C" {
 #endif
 
+  /** This message is published by all the camera_xxxxxcam modules. */
+
 typedef struct {
-  int width;
-  int height;
-  int bytes_per_pixel;
-  int image_size;
-  char *image;
+  int width;                    /**<The x dimension of the image in pixels. */
+  int height;                   /**<The y dimension of the image in pixels. */
+  int bytes_per_pixel;          /**<Usually 3 (RGB). */ 
+  int image_size;               /**<width*height*bytes_per_pixel. */ 
+  char *image;                
   double timestamp;
   char *host;
 } carmen_camera_image_message;

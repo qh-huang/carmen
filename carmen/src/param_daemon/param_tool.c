@@ -30,7 +30,7 @@
 
 static void main_usage(char *prog_name)
 {
-  carmen_die("Usage: %s <action> <...>\n\n"
+  carmen_die("\nUsage: %s <action> <...>\n\n"
 	     "<action> is one of: set, get, install, reread.\n"
 	     "Run %s help <action> to get help on using each action.\n\n",
 	     prog_name, prog_name);  
@@ -39,6 +39,7 @@ static void main_usage(char *prog_name)
 static int handle_options(int argc,  char *argv[])
 {
   static struct option long_options[] = {
+    {"help", 0, NULL, 'h'},
     {0, 0, 0, 0}
   };
 
@@ -381,19 +382,23 @@ static void help(int argc, char **argv)
     main_usage(argv[0]);
 
   action = argv[2];
-  if (strcmp(action, "set") == 0)
-    carmen_die("Usage: %s set <parameter name> <parameter value>\n\n", 
+  if (carmen_strcasecmp(action, "set") == 0)
+    carmen_die("\nUsage: %s set <parameter name> <parameter value>\n\n", 
 	       argv[0]);
-  else if (strcmp(action, "get") == 0)
-    carmen_die("Usage: %s get <module name | parameter name>\n\n"
-	       "If a module name is specified, prints out all variables of that module.\n", 
+  else if (carmen_strcasecmp(action, "get") == 0)
+    carmen_die("\nUsage: %s get <module name | parameter name>\n\n"
+	       "If a module name is specified, prints out all variables "
+	       "of that module.\n\n", argv[0]);
+  else if (carmen_strcasecmp(action, "install") == 0)
+    carmen_die("\nUsage: %s install [parameter set] <parameter file>\n\n", 
 	       argv[0]);
-  else if (strcmp(action, "install") == 0)
-    carmen_die("Usage: %s install [parameter set] <parameter file>\n\n", 
-	       argv[0]);
-  else if (strcmp(action, "reread") == 0)
-    carmen_die("Usage: %s reread\n\nCauses the param_daemon to reread the ini file, "
-	       "erasing all local changes.\n", argv[0]);
+  else if (carmen_strcasecmp(action, "reread") == 0)
+    carmen_die("\nUsage: %s reread\n\nCauses the param_daemon to reread "
+	       "the ini file, erasing all local changes.\n\n", argv[0]);
+
+  carmen_warn("\nUnrecognized command %s\n", action);
+  main_usage(argv[0]);
+
 }
 
 int main(int argc, char **argv)
@@ -403,20 +408,26 @@ int main(int argc, char **argv)
   if (argc < 2) 
     main_usage(argv[0]);
   
+  action = argv[1];
+  
+  if (strcmp(action, "-h") == 0 || carmen_strcasecmp(action, "--help") == 0) 
+    main_usage(argv[0]);
+  if (carmen_strcasecmp(action, "help") == 0) {
+    help(argc, argv);
+    return 0;
+  }
+
   carmen_ipc_initialize(argc, argv);
 
   carmen_param_check_version(argv[0]);
 
-  action = argv[1];
-  if (strcmp(action, "help") == 0)
-    help(argc, argv);
-  if (strcmp(action, "set") == 0)
+  if (carmen_strcasecmp(action, "set") == 0)
     set(argc, argv);
-  else if (strcmp(action, "get") == 0)
+  else if (carmen_strcasecmp(action, "get") == 0)
     get(argc, argv);
-  else if (strcmp(action, "install") == 0)
+  else if (carmen_strcasecmp(action, "install") == 0)
     install_params(argc, argv);
-  else if (strcmp(action, "reread") == 0)
+  else if (carmen_strcasecmp(action, "reread") == 0)
     reread(argc, argv);
   else {
     carmen_warn("\nUnrecognized action %s\n", argv[1]);

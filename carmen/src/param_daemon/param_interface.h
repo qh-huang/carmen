@@ -60,77 +60,172 @@ typedef char carmen_param_type_t;
 
 typedef void (*carmen_param_change_handler_t)(char *module, char *variable, char *value);
 
+  /** This data structure is used by carmen_param_install_params and
+      carmen_param_usage to load and report the usage of a large number of
+      parameters. 
+  */ 
+
 typedef struct {
-  char *module;
-  char *variable;
-  carmen_param_type_t type;
-  void *user_variable;
-  int subscribe;
-  carmen_param_change_handler_t handler;
+  char *module;                      /**<The module name of this parameter. */
+  char *variable;                    /**<The variable name to be loaded. */
+  carmen_param_type_t type;          /**<Type should match user_variable:
+					 e.g., CARMEN_PARAM_INT if the local
+					 variable storage is an integer. */
+  void *user_variable;               /**<A pointer to the local variable
+					storage. */
+  int subscribe;                     /**<If the param_daemon publishes a
+					change to this variable value (because
+					someone has changed the variable
+					value, should the local value be
+					updated? 1 for yes, 0 for no. */
+  carmen_param_change_handler_t handler; /**<Declare a handler if the
+					    param_daemon publishes a change to
+					    this variable's value. */
 } carmen_param_t, *carmen_param_p;
 
-char *carmen_param_get_robot(void);
-int carmen_param_get_modules(char ***modules, int *num_modules);
-char *carmen_param_get_module(void);
-int carmen_param_get_paramserver_host(char **hostname);
-int carmen_param_get_all(char *module, char ***variables, char ***values, int **expert,
-			 int *list_length);
-int carmen_param_get_int(char *variable, int *return_value, int *expert);
-int carmen_param_get_double(char *variable, double *return_value, int *expert);
-int carmen_param_get_onoff(char *variable, int *return_value, int *expert);
-int carmen_param_get_string(char *variable, char **return_value, int *expert);
-int carmen_param_get_filename(char *variable, char  **return_value, int *expert);
+  /** Returns what robot (i.e., what parameter set) has been loaded into the
+      param_daemon. 
+  */
 
-void carmen_param_set_module(char *new_module_name);
-int carmen_param_set_variable(char *variable, char *new_value, 
+  char *carmen_param_get_robot(void);
+
+  /** Returns a complete list of module names (as determined from
+      the ini file by the set of variables with a prepended module name. 
+  */
+
+  int carmen_param_get_modules(char ***modules, int *num_modules);
+
+  /** libparam_interface.a will keep a persistent module name, for
+      getting/setting multiple variables of the same module. Probably should
+      be deprecated. This function will change what module the library is
+      currently dealing with.  
+  */
+
+  void carmen_param_set_module(char *new_module_name);
+
+  /** libparam_interface.a will keep a persistent module name, for
+      getting/setting multiple variables of the same module. Probably should
+      be deprecated. This function will return what module the library is
+      currently dealing with. 
+  
+  */      
+      
+  char *carmen_param_get_module(void);
+  
+  /** Returns the hostname where param_daemon is running. Should be changed to
+      carmen_param_get_paramdaemon_host. 
+  */ 
+  
+  int carmen_param_get_paramserver_host(char **hostname);
+
+  /** Returns a list of all variables and their values for a specific
+      module. 
+  */ 
+
+  int carmen_param_get_all(char *module, char ***variables, char ***values, 
+			   int **expert, int *list_length);
+
+  int carmen_param_get_int(char *variable, int *return_value, int *expert);
+  int carmen_param_get_double(char *variable, double *return_value, 
+			      int *expert);
+  int carmen_param_get_onoff(char *variable, int *return_value, int *expert);
+  int carmen_param_get_string(char *variable, char **return_value, 
+			      int *expert);
+
+  /** Does much the same thing s carmen_param_set_string, but checks to see if
+      the returned string matches a local file. Probably should be
+      deprecated. 
+  */
+
+  int carmen_param_get_filename(char *variable, char  **return_value, 
+				int *expert);
+  
+  int carmen_param_set_variable(char *variable, char *new_value, 
 			      char **return_value);
-int carmen_param_set_int(char *variable, int new_value, int *return_value);
-int carmen_param_set_double(char *variable, double  new_value, 
-			    double *return_value);
-int carmen_param_set_onoff(char *variable, int new_value, int *return_value);
-int carmen_param_set_string(char *variable, char *new_value, 
-			    char **return_value);
-int carmen_param_set_filename(char *variable, char *new_value,
+  int carmen_param_set_int(char *variable, int new_value, int *return_value);
+  int carmen_param_set_double(char *variable, double  new_value, 
+			      double *return_value);
+  int carmen_param_set_onoff(char *variable, int new_value, int *return_value);
+  int carmen_param_set_string(char *variable, char *new_value, 
 			      char **return_value);
 
-char *carmen_param_get_error(void);
-void carmen_param_allow_unfound_variables(int new_value);
-int carmen_param_are_unfound_variables_allowed(void);
+  /** Basically a wrapper around carmen_param_set_variable. 
+   */
 
-void carmen_param_set_usage_line(char *fmt, ...);
-void carmen_param_usage(char *progname, carmen_param_p param_list, 
-			int num_items, char *fmt, ...);
+  int carmen_param_set_filename(char *variable, char *new_value,
+				char **return_value);
+  
+  /** If an interface function recently returned an error, returns a
+      human-readable string describing the error. 
+  */
 
-int carmen_param_install_params(int argc, char *argv[], 
-				 carmen_param_p param_list, 
-				 int num_items);
+  char *carmen_param_get_error(void);
 
-void carmen_param_load_paramfile(char *filename, char *param_set);
+  /** If unfound variables are allowed, causes carmen_param_get_XXX to return
+      0 even if the param_daemon does not have a definition. Otherwise,
+      carmen_param_get_XXX returns -1 in such cases. 
+  */
 
-void carmen_param_check_unhandled_commandline_args(int argc, char *argv[]);
+  void carmen_param_allow_unfound_variables(int new_value);
+  int carmen_param_are_unfound_variables_allowed(void);
+  
+  void carmen_param_set_usage_line(char *fmt, ...);
 
-void carmen_param_subscribe_int(char *module, char *variable, 
-				int *variable_address, 
-				carmen_param_change_handler_t handler);
-void carmen_param_subscribe_double(char *module, char *variable, 
-				   double *variable_address, 
-				   carmen_param_change_handler_t handler);
-void carmen_param_subscribe_onoff(char *module, char *variable, 
+  /** Allows a set of parameters to be loaded at once from a carmen_param_t
+      structure. 
+  */
+
+  int carmen_param_install_params(int argc, char *argv[], 
+				  carmen_param_p param_list, 
+				  int num_items);
+  
+  /** Can be used to print a list of parameters this program loads. For
+   *  example, to be called if --help is a command-line argument.
+   *
+   *  @param progname The name of this program (usually argv[0]). 
+   *  @param param_list A set of parameters that this program will load. 
+   *  @param num_items The number of parameters in the param_list. 
+   *  @param Any other text that should be printed out as part of the usage
+   *  string, parsed just like printf. 
+   */
+
+  void carmen_param_usage(char *progname, carmen_param_p param_list, 
+			  int num_items, char *fmt, ...);
+  
+  void carmen_param_load_paramfile(char *filename, char *param_set);
+  
+  void carmen_param_check_unhandled_commandline_args(int argc, char *argv[]);
+  
+  void carmen_param_subscribe_int(char *module, char *variable, 
 				  int *variable_address, 
 				  carmen_param_change_handler_t handler);
-void carmen_param_subscribe_string(char *module, char *variable, 
+  void carmen_param_subscribe_double(char *module, char *variable, 
+				     double *variable_address, 
+				     carmen_param_change_handler_t handler);
+  void carmen_param_subscribe_onoff(char *module, char *variable, 
+				    int *variable_address, 
+				    carmen_param_change_handler_t handler);
+  void carmen_param_subscribe_string(char *module, char *variable, 
+				     char **variable_address, 
+				     carmen_param_change_handler_t handler);
+  void carmen_param_subscribe_file(char *module, char *variable, 
 				   char **variable_address, 
 				   carmen_param_change_handler_t handler);
-void carmen_param_subscribe_file(char *module, char *variable, 
-				 char **variable_address, 
-				 carmen_param_change_handler_t handler);
-void carmen_param_subscribe_dir(char *module, char *variable, 
-				char **variable_address, 
-				carmen_param_change_handler_t handler);
+  void carmen_param_subscribe_dir(char *module, char *variable, 
+				  char **variable_address, 
+				  carmen_param_change_handler_t handler);
+  
+  /** Checks to make sure the param_daemon is running the same version of
+      carmen as this module. Calls exit (-1) if they don't match. 
+  */
+  
+  int carmen_param_check_version(char *prog_name);
 
-int carmen_param_check_version(char *prog_name);
-
-void carmen_param_send_reread(void);
+  /** Tells the param_daemon to re-read the ini file, and forget all local
+      changes. 
+  */
+  
+  void carmen_param_send_reread(void);
 
 #ifdef __cplusplus
 }

@@ -46,6 +46,7 @@
 extern "C" {
 #endif
 
+  /** Subscribe to images from camera_xxxxcam (e.g., camera_quickcam). */
 
 void
 carmen_camera_subscribe_images(carmen_camera_image_message *image,

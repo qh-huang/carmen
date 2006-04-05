@@ -70,43 +70,84 @@ extern "C" {
   } carmen_planner_status_t, *carmen_planner_status_p;
   
   
-  /* returns 1 if a new path was generated, otherwise returns 0 */
+  /** Updates the internal position of the robot inside the planner
+      and regenerates the trajectory. 
+      Returns 1 if a new path was generated, otherwise returns 0 **/
   
   int carmen_planner_update_robot(carmen_traj_point_p new_position, 
 				  carmen_navigator_config_t *nav_conf);
   
-  /* returns 1 if a new path was generated, otherwise returns 0 */
+  /** Updates the current goal, replans and regenerates the trajectory.
+      Returns 1 if a new path was generated, otherwise returns 0 */
   
   int carmen_planner_update_goal(carmen_point_p new_goal, int any_orientation,
 				 carmen_navigator_config_t *nav_conf);
   
-  /* returns 1 if robot reached goal, returns -1 if no path
-     exists, otherwise returns 0 */
+  /** Assumes value of waypoint passed in is current robot position.
+     Regenerates trajectory, searches along path for next waypoint
+     that is more than nav_conf->goal_dist away from the current
+     robot position. If this is the goal point, also checks to 
+     see if robot needs to turn to face goal orientation (only matters
+     if the goal was specified with an orientation. 
+     Returns 1 if robot reached goal, returns -1 if no path
+     exists, otherwise returns 0 and fills in next destination
+     waypoint. **/
   
   int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, 
 				   int *is_goal,
 				   carmen_navigator_config_t *nav_conf);
+
+  /** Updates the planner to have a new map. **/
   
   void carmen_planner_set_map(carmen_map_p map, 
 			      carmen_robot_config_t *robot_conf);
   
+  /** Clears any local modifications the planner may have made to
+      its internal map. **/
+
   void carmen_planner_reset_map(carmen_robot_config_t *robot_conf);
   
+  /** Adds a laser scan to the planner's internal map using ray-tracing. 
+      Scans are forgotten over time, or can be removed using 
+      carmen_planner_reset_map. **/
+
   void carmen_planner_update_map(carmen_robot_laser_message *laser_msg, 
 				 carmen_navigator_config_t *nav_config,
 				 carmen_robot_config_t *robot_conf);
   
+  /** A helper function for replacing the map and initializing the robot
+      function. 
+   **/
+
   void carmen_planner_update_grid(carmen_map_p new_map, 
 				  carmen_traj_point_p new_position, 
 				  carmen_robot_config_t *robot_conf,
 				  carmen_navigator_config_t *nav_conf);
 
+  /** A helper function for extracting the internal representation
+      of the map, cost map or utility function. 
+   **/
+
   carmen_navigator_map_message* carmen_planner_get_map_message
   (carmen_navigator_map_t map_type);
   
+  /** Returns the current state of the plan.
+   **/
+
   void carmen_planner_get_status(carmen_planner_status_p status);
 
+  /** A helper function for getting the current utility function. 
+      Probably subsumed by carmen_planner_get_map_message, but 
+      returns the utility function as an array of doubles of same
+      size as the map, in row-major order.
+   **/
+
   double *carmen_planner_get_utility(void);  
+
+  /** A utility function for determining whether or not the goal is accessible
+      from the current robot position. Returns 1 if the goal has been set and
+      a feasible path exists from the robot to the goal, returns 0 otherwise.
+   **/
 
   int carmen_planner_goal_reachable(void);
 

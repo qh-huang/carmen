@@ -46,7 +46,8 @@ extern "C" {
 #endif
 
   /** Status messages are emitted whenever an odometry, front laser or
-      global position message is received. **/ 
+      global position message is received. 
+  */ 
 
 void carmen_navigator_subscribe_status_message(carmen_navigator_status_message 
 					       *status,
@@ -54,7 +55,8 @@ void carmen_navigator_subscribe_status_message(carmen_navigator_status_message
 					       carmen_subscribe_t 
 					       subscribe_how);
 
-  /** A plan message is emitted whenever the plan changes. **/ 
+  /** A plan message is emitted whenever the plan changes. 
+   */ 
 
 void carmen_navigator_subscribe_plan_message(carmen_navigator_plan_message 
 					     *plan,
@@ -63,7 +65,8 @@ void carmen_navigator_subscribe_plan_message(carmen_navigator_plan_message
   
   /** An autonomous stopped message is emitted whenever the robot stops trying to reach 
       a goal. This can happen because the robot reached its goal, 
-      the navigator was told to stop navigating, or some unmodelled failure. **/ 
+      the navigator was told to stop navigating, or some unmodelled failure. 
+  */ 
 
 void carmen_navigator_subscribe_autonomous_stopped_message
   (carmen_navigator_autonomous_stopped_message *autonomous_stopped,
@@ -75,13 +78,15 @@ int carmen_navigator_query_plan(carmen_navigator_plan_message **plan);
 
   /** Using this function causes the robot to reach the goal, without regard to
       its final orientation. This function does not start the robot moving:
-      carmen_navigator_go() must be called. **/ 
+      carmen_navigator_go() must be called. 
+  */ 
 
 int carmen_navigator_set_goal(double x, double y);
 
   /** Using this function causes the robot to reach a final pose, including
       orientation. This function does not start the robot moving:
-      carmen_navigator_go() must be called. **/ 
+      carmen_navigator_go() must be called. 
+  */ 
 int carmen_navigator_set_goal_triplet(carmen_point_p goal);
 
   /** Using this function causes the robot to try and reach specific place, as
@@ -92,20 +97,24 @@ int carmen_navigator_set_goal_triplet(carmen_point_p goal);
       orientation will not be controlled. If the place is specified as an
       (x,y,theta) triplet or an (x, y, theta) (sigma x, sigma y, sigma theta)
       6 dimensional location, the planner will try for a final orientation
-      matching the specified theta as well. **/ 
+      matching the specified theta as well. 
+  */ 
 int carmen_navigator_set_goal_place(char *name);
 
   /** Causes the navigator to stop trying to reach the goal. This also causes
       an autonomous_stopped message to be emitted. The goal position is
       unaffected. The trajectory can be resumed by calling
-      carmen_navigator_go() again. **/ 
+      carmen_navigator_go() again. 
+  */ 
 int carmen_navigator_stop(void);
-  /** Starts the robot moving toward the goal. **/ 
+  /** Starts the robot moving toward the goal. 
+   */ 
 int carmen_navigator_go(void);
 
   /** Asks for one of the navigator maps. The navigator maintains its own
       internal occupancy grid, updated with recent laser measurements. The
-      cost map and utility function can also be queried. **/ 
+      cost map and utility function can also be queried. 
+  */ 
 int carmen_navigator_get_map(carmen_navigator_map_t map_type, 
 			     carmen_map_t *map);
 

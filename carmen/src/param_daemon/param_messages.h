@@ -68,6 +68,10 @@ typedef struct {
 #define CARMEN_PARAM_QUERY_ROBOT_NAME  "carmen_param_query_robot"
 #define CARMEN_PARAM_QUERY_FMT     "{string,string,double,string}"
 
+  /** This message reports what robot (i.e., what parameter set) has been
+      loaded into the param_daemon. 
+  */
+
 typedef struct {
   char *robot;
   carmen_param_status_t status;
@@ -80,6 +84,11 @@ typedef struct {
 
 #define CARMEN_PARAM_QUERY_MODULES_NAME   "carmen_param_query_modules"
 
+  /** This message reports a complete list of module names (as determined from
+      the ini file by the set of variables with a prepended module name. The
+      message fields are undefined if status is not CARMEN_PARAM_OK. 
+  */
+
 typedef struct {
   char **modules;
   int num_modules;
@@ -91,13 +100,34 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_MODULES_NAME  "carmen_param_respond_modules"
 #define CARMEN_PARAM_RESPONSE_MODULES_FMT  "{<string:2>, int, int,double,string}"
 
+  /** This message reports all the variable names and values currently
+      associated with a particular module. This message is generally only
+      emitted in response to a request for all variables. 
+  */
+
 typedef struct {
   char *module_name;
-  int list_length;
+  int list_length;                        /**< variables, values and expert
+					     are of this length, corresponding
+					     to the number of variables of
+					     this module type. */
   char **variables;
-  char **values;
-  int *expert;
-  carmen_param_status_t status;
+  char **values;                          /**< Note that for consistency, all
+					     values are returned as strings,
+					     even if they can be parsed as
+					     on/off, doubles, etc. */
+  int *expert;                            /**< Can be used to determine which
+					     parameters are expert and which
+					     are not. For each variable,
+					     expert is 1 if the variable was
+					     labelled as an "expert" variable
+					     in the ini file, 0 otherwise. */
+  carmen_param_status_t status;           /**< Has value CARMEN_PARAM_OK if
+                                               the fields in this message are
+                                               well-defined. All preceding
+                                               fields are undefined if this
+                                               field is not
+                                               CARMEN_PARAM_OK. */ 
   double timestamp;
   char *host;
 } carmen_param_response_all_message;
@@ -105,12 +135,22 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_ALL_NAME     "carmen_param_respond_all"
 #define CARMEN_PARAM_RESPONSE_ALL_FMT "{string, int, <string:2>, <string:2>, <int:2>, int, double, string}"
 
+  /** This message reports the current value for a specific variable, assumed
+      to be an integer. Generally emitted in response to a query. All fields
+      are undefined if status is not CARMEN_PARAM_OK, for example, if the
+      query did not match a variable name, or if the variable did not appear
+      to be a well-formed integer. 
+  */
+
 typedef struct {
-  char *module_name;
-  char *variable_name;
-  int value;
-  int expert;
-  carmen_param_status_t status;
+  char *module_name;                /**< The queried variable's module */
+  char *variable_name;              /**< The queried variable's name */
+  int value;                        /**< The queried variable's value, if it
+				       can be parsed as an integer. */
+  int expert;                       /**< 1 if this variable was labelled as an
+				       "expert" variable, 0 otherwise. */
+  carmen_param_status_t status;     /**< If status is not CARMEN_PARAM_OK, all
+				       previous fields are not defined. */
   double timestamp;
   char *host;
 } carmen_param_response_int_message;
@@ -118,12 +158,22 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_INT_NAME    "carmen_param_respond_int"
 #define CARMEN_PARAM_RESPONSE_INT_FMT     "{string, string, int, int, int, double, string}"
 
+  /** This message reports the current value for a specific variable, assumed
+      to be a double. Generally emitted in response to a query. All fields
+      are undefined if status is not CARMEN_PARAM_OK, for example, if the
+      query did not match a variable name, or if the variable did not appear
+      to be a well-formed double. 
+  */
+
 typedef struct {
-  char *module_name;
-  char *variable_name;
-  double value;
-  int expert;
-  carmen_param_status_t status;
+  char *module_name;                /**< The queried variable's module */
+  char *variable_name;              /**< The queried variable's name */
+  double value;                     /**< The queried variable's value, if it
+				       can be parsed as a double. */
+  int expert;                       /**< 1 if this variable was labelled as an
+				       "expert" variable, 0 otherwise. */
+  carmen_param_status_t status;     /**< If status is not CARMEN_PARAM_OK, all
+				       previous fields are not defined. */
   double timestamp;
   char *host;
 } carmen_param_response_double_message;
@@ -131,12 +181,23 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_DOUBLE_NAME    "carmen_param_respond_double"
 #define CARMEN_PARAM_RESPONSE_DOUBLE_FMT     "{string, string, double, int, int, double, string}"
 
+  /** This message reports the current value for a specific variable, assumed
+      to be on/off. Generally emitted in response to a query. All fields
+      are undefined if status is not CARMEN_PARAM_OK, for example, if the
+      query did not match a variable name, or if the variable did not appear
+      to be a well-formed on/off value. 
+  */
+
 typedef struct {
-  char *module_name;
-  char *variable_name;
-  int value;
-  int expert;
-  carmen_param_status_t status;
+  char *module_name;                /**< The queried variable's module */
+  char *variable_name;              /**< The queried variable's name */
+  int value;                        /**< The queried variable's value, if it
+				          can be parsed as on/off. 0 if the
+				          variable is off, 1 if it is on. */
+  int expert;                       /**< 1 if this variable was labelled as an
+				       "expert" variable, 0 otherwise. */
+  carmen_param_status_t status;     /**< If status is not CARMEN_PARAM_OK, all
+				       previous fields are not defined. */
   double timestamp;
   char *host;
 } carmen_param_response_onoff_message;
@@ -144,12 +205,20 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_ONOFF_NAME    "carmen_param_respond_onoff"
 #define CARMEN_PARAM_RESPONSE_ONOFF_FMT     "{string, string, int, int, int, double, string}"
 
+  /** This message reports the current value for a specific
+      variable. Generally emitted in response to a query. All fields are
+      undefined if status is not CARMEN_PARAM_OK, for example, if the query
+      did not match a variable name. 
+  */
+
 typedef struct {
-  char *module_name;
-  char *variable_name;
-  char *value;
-  int expert;
-  carmen_param_status_t status;
+  char *module_name;                /**< The queried variable's module */
+  char *variable_name;              /**< The queried variable's name */
+  char *value;                      /**< The queried variable's value. */ 
+  int expert;                       /**< 1 if this variable was labelled as an
+				       "expert" variable, 0 otherwise. */
+  carmen_param_status_t status;     /**< If status is not CARMEN_PARAM_OK, all
+				       previous fields are not defined. */
   double timestamp;
   char *host;
 } carmen_param_response_string_message;
@@ -157,11 +226,17 @@ typedef struct {
 #define CARMEN_PARAM_RESPONSE_STRING_NAME    "carmen_param_respond_string"
 #define CARMEN_PARAM_RESPONSE_STRING_FMT     "{string, string, string, int, int, double, string}"
 
+  /** This message sets the variable to a new value, and is generally sent to
+      param_daemon using libparam_interface.a 
+  */
 
 typedef struct {
-  char *module_name;
-  char *variable_name;
-  char *value;
+  char *module_name;                /**< The module name of the variable to
+					set. */ 
+  char *variable_name;              /**< The name of the variable to
+					set. */ 
+  char *value;                      /**< The new value to assign to the
+					variable. */ 
   double timestamp;
   char *host;
 } carmen_param_set_message;
@@ -173,6 +248,11 @@ typedef carmen_param_response_string_message carmen_param_variable_change_messag
 
 #define CARMEN_PARAM_VARIABLE_CHANGE_NAME    "carmen_param_variable_change"
 #define CARMEN_PARAM_VARIABLE_CHANGE_FMT     "{string, string, string, int, int, double, string}"
+
+  /** This message reports the current version of carmen. Used to
+      ensure that modules from incompatible versions of carmen are not being
+      used together.   
+  */
 
 typedef struct {
   int major;
