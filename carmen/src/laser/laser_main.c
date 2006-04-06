@@ -163,14 +163,14 @@ void interpret_params(sick_laser_p laser, char *dev, char *type, double res, cha
     laser->settings.type = LMS;
   else if(strcmp(type, "PLS") == 0)
     laser->settings.type = PLS;
-
-  if(fabs(fov-M_PI) < 0.1) {
-    laser->settings.angle_range = 180;
-  }
-  else   if(fabs(fov-100.0/180.0*M_PI) < 0.1) {
-    laser->settings.angle_range = 100;
-  }
-  else
+  
+  if (fabs(fov-M_PI) < 0.1 || fabs(fov-100.0/180.0*M_PI) < 0.1)
+    carmen_die("The parameter laser_laserX_fov in the ini file must\nbe specified in degrees not in radians!\n");
+  
+  laser->settings.angle_range = carmen_round(fov);
+  
+  if ( laser->settings.angle_range != 180 && 
+       laser->settings.angle_range != 100 )
     carmen_die("The laser driver only provides 180 deg and 100 deg field of view!\n");
 
   if(res == 0.25) {
@@ -263,6 +263,7 @@ void read_parameters(int argc, char **argv)
      &laser5.settings.set_baudrate, 0, NULL},
     {"laser", "laser5_flipped", CARMEN_PARAM_INT, 
      &laser5.settings.laser_flipped, 0, NULL}};
+
 
   carmen_param_install_params(argc, argv, laser_devs, 
 			      sizeof(laser_devs) / sizeof(laser_devs[0]));
