@@ -46,8 +46,8 @@ extern "C" {
 #include <carmen/ipc_wrapper.h>
 
 #define CARMEN_MAJOR_VERSION 0
-#define CARMEN_MINOR_VERSION 4
-#define CARMEN_REVISION 6
+#define CARMEN_MINOR_VERSION 6
+#define CARMEN_REVISION 0
 
 #ifndef TRUE
 #define TRUE 1
