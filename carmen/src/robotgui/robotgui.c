@@ -208,8 +208,8 @@ save_postscript_screenshot(void)
   carmen_test_alloc(laser_y);
 
   for(i = 0; i < front_laser.num_readings; i++) {
-    theta = front_laser.laser_pose.theta +
-      carmen_degrees_to_radians(i) - M_PI_2;
+    theta = front_laser.laser_pose.theta + front_laser.config.start_angle + 
+      ((double)i) *  front_laser.config.angular_resolution ;
     range = front_laser.range[i];
     laser_x[i] = front_laser.laser_pose.x - front_laser.robot_pose.x + 
       cos(theta) * range;
@@ -507,8 +507,15 @@ range_to_xy(carmen_robot_laser_message *laser, GdkPoint *laser_poly,
   double theta;
 
   for(i = 0; i < laser->num_readings; i++) {
-    theta = laser->laser_pose.theta + 
-      M_PI * i / (double)(laser->num_readings - 1) - M_PI / 2.0;
+
+
+/*     theta = laser->laser_pose.theta +  */
+/*       M_PI * i / (double)(laser->num_readings - 1) - M_PI / 2.0; */
+
+    theta = laser->laser_pose.theta + laser->config.start_angle +
+          (double)i * laser->config.angular_resolution ;
+
+
     laser_poly[i].x = width_2 + ((laser->laser_pose.x - 
 				  laser->robot_pose.x) + 
 				 cos(theta) * laser->range[i]) * scale;
@@ -825,10 +832,8 @@ draw_robot(GdkPixmap *pixmap, carmen_robot_laser_message *laser_msg)
       radius = 1.0/carmen_normalize_theta(laser_msg->rv);
 
       if (radius > 0) {
-	top_left.x = width_2+cos(laser_msg->robot_pose.theta+M_PI/2)*
-	  (radius+width/2.0)*scale-radius*scale;
-	top_left.y = height_2-sin(laser_msg->robot_pose.theta+M_PI/2)*
-	  (radius+width/2.0)*scale-radius*scale;
+	top_left.x = width_2 +cos(laser_msg->robot_pose.theta+M_PI/2)*  (radius+width/2.0)*scale-radius*scale;
+	top_left.y = height_2-sin(laser_msg->robot_pose.theta+M_PI/2)* (radius+width/2.0)*scale-radius*scale;
 	angle = carmen_normalize_theta(laser_msg->robot_pose.theta-M_PI/2);
       } else {
 	radius = fabs(radius);
