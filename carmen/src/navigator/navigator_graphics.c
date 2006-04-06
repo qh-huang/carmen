@@ -47,7 +47,7 @@
 Display *gdk_x11_cursor_get_xdisplay (GdkCursor *cursor);
 Cursor gdk_x11_cursor_get_xcursor (GdkCursor *cursor);
 
-#define BUTTON_WIDTH 250
+#define BUTTON_WIDTH 275
 #define BUTTON_HEIGHT 30
 #define GRADIENT_COLORS 40
 
@@ -1420,17 +1420,17 @@ navigator_graphics_init(int argc, char *argv[],
   status_box = construct_status_frame(label_box);
 
   robot_status_label = new_label("Robot position: 0 0", status_box);
-  robot_speed_label = new_label("Velocity: 0 cm/s 0 deg/s", status_box);
+  robot_speed_label = new_label("Velocity: 0 m/s 0 rad/s", status_box);
   goal_status_label = new_label("Goal position: 0 0", status_box);
   cursor_status_label = new_label("Grid Cell:", status_box);
   value_label = new_label("Value: 0.0", status_box);
 
-  button_box = gtk_vbutton_box_new();
+  button_box = gtk_hbutton_box_new();
   gtk_container_border_width (GTK_CONTAINER (button_box), 5); 
-  gtk_box_pack_start (GTK_BOX (label_box), button_box, FALSE, FALSE, 0);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), GTK_BUTTONBOX_START);
+  gtk_box_pack_start (GTK_BOX (label_box), button_box, FALSE, FALSE, 0);  
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), GTK_BUTTONBOX_SPREAD);
   gtk_button_box_set_spacing (GTK_BUTTON_BOX (button_box), 10);
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (button_box), BUTTON_WIDTH, 
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (button_box), BUTTON_WIDTH*.4, 
 				 BUTTON_HEIGHT);
 
   place_robot_button = gtk_button_new_with_label ("Place Robot");
@@ -1440,7 +1440,16 @@ navigator_graphics_init(int argc, char *argv[],
   place_goal_button = gtk_button_new_with_label ("Place Goal");
   g_signal_connect (GTK_OBJECT (place_goal_button), "clicked",
 		    G_CALLBACK(place_goal), NULL);
-  gtk_box_pack_start(GTK_BOX(button_box), place_goal_button, FALSE, FALSE, 0);
+  gtk_box_pack_end(GTK_BOX(button_box), place_goal_button, FALSE, FALSE, 0);
+
+  button_box = gtk_vbutton_box_new();
+  gtk_container_border_width (GTK_CONTAINER (button_box), 5); 
+  gtk_box_pack_start (GTK_BOX (label_box), button_box, FALSE, FALSE, 0);  
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (button_box), GTK_BUTTONBOX_START);
+  gtk_button_box_set_spacing (GTK_BUTTON_BOX (button_box), 10);
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (button_box), BUTTON_WIDTH, 
+				 BUTTON_HEIGHT);
+
   autonomous_button = gtk_toggle_button_new_with_label ("Go");
   g_signal_connect (GTK_OBJECT (autonomous_button), "clicked",
 		    G_CALLBACK(go_autonomous), (gpointer)"Autonomous");
@@ -1767,7 +1776,7 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   sprintf(buffer, "Robot: %5.1f m, %5.1f m, %6.2f", robot.pose.x, 
 	  robot.pose.y, carmen_radians_to_degrees(robot.pose.theta));
   gtk_label_set_text(GTK_LABEL(robot_status_label), buffer);
-  sprintf(buffer, "Velocity: %5.1f cm/s, %5.1f deg/s", robot_traj.t_vel,
+  sprintf(buffer, "Velocity: %5.1f m/s, %5.1f rad/s", robot_traj.t_vel,
 	  carmen_radians_to_degrees(robot_traj.r_vel));
   gtk_label_set_text(GTK_LABEL(robot_speed_label), buffer);
   sprintf(buffer, "Goal: %.1f m, %.1f m", goal.pose.x, goal.pose.y);
