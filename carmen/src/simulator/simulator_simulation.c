@@ -327,13 +327,15 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
   point.r_vel = simulator_config->rv;
 
   laser->num_readings = laser_config->num_lasers;
-  laser->config.maximum_range = laser_config->max_range;
-  laser->config.fov           = laser_config->fov;
-  laser->config.start_angle   = -0.5*M_PI;
-  laser->config.angular_resolution = laser_config->angular_resolution;
-  laser->config.laser_type = SIMULATED_LASER;
-  laser->config.accuracy = 0; 
-  laser->config.remission_mode = OFF;
+
+
+  laser->config.maximum_range       = laser_config->max_range;
+  laser->config.fov                 = laser_config->fov;
+  laser->config.start_angle         = laser_config->start_angle;
+  laser->config.angular_resolution  = laser_config->angular_resolution;
+  laser->config.laser_type          = SIMULATED_LASER;
+  laser->config.accuracy            = laser_config->variance; 
+  laser->config.remission_mode      = OFF;
 
 
   carmen_geometry_generate_laser_data(laser->range, &point, laser->config.start_angle, 

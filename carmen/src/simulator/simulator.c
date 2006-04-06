@@ -475,8 +475,7 @@ publish_readings(void)
 
 void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg) 
 {
-
-  lasercfg->num_lasers = carmen_round(1 + lasercfg->fov / lasercfg->angular_resolution);
+  lasercfg->num_lasers = 1 + carmen_round(lasercfg->fov / lasercfg->angular_resolution);
   lasercfg->start_angle = -0.5*lasercfg->fov;
 
   /* give a warning if it is not a standard configuration */
