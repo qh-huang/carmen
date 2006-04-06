@@ -4,7 +4,8 @@
  * Navigation Toolkit (CARMEN)
  *
  * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
- * Roy, and Sebastian Thrun
+ * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
+ * and Jared Glover
  *
  * CARMEN is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public 
