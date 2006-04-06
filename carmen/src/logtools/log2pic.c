@@ -790,14 +790,14 @@ print_usage( void )
 {
   fprintf(stderr,
 	  "\nusage: log2pic [options] <LOG-FILE> <PIC-FILE>\n"
-	  "  -anim-step <STEP-SIZE>:    min distance between scans (in cm)\n"
+	  "  -anim-step <STEP-SIZE>:    min distance between scans (in m)\n"
 	  "  -anim-skip <NUM>:          skip NUM animation dumps (0: no skip\n"
 	  "  -animation:                write sep. pics for animation\n"
 	  "  -background <FILE>:        use background file\n"
 	  "  -bg-offset <X><Y>:         shift by <X>/<Y> pixels\n"
 	  "  -bg-color <COLOR>:         background color\n"
 	  "  -bg-map <FILE>:            read carmen-map as background image\n"
-	  "  -border <BORDER>:          add a border (in cm)\n"
+	  "  -border <BORDER>:          add a border (in m)\n"
 	  "  -carmen-map:               save in carmen-map format\n"
 	  "  -convolve:                 convolve map with gaussian kerne;\n"
 	  "  -crop <X><Y><X><Y>:        crop part of the map (min,max):\n"
@@ -809,25 +809,25 @@ print_usage( void )
 	  "  -gps-path:                 draw gps points\n"
 	  "  -id <ID>:                  set laser number\n"
 	  "  -kernel-size <NUM>:        size of the gaussian kernel (>0 and odd)\n"
-	  "  -maxrange <MAX-RANGE>:     max range for building maps\n"
+	  "  -maxrange <MAX-RANGE>:     max range for building maps (in m)\n"
 	  "  -no-scans:                 don't integrate the scans\n"
 	  "  -odds-model:               use odds-model to compute probs\n"
 	  "  -pathcolor <COLORNAME>:    color of the robot path\n"
-	  "  -pathwidth <WIDTH>:        width of the robot path\n"
-	  "  -start-pose <X><Y><O>:     start pose of the robot\n"
+	  "  -pathwidth <WIDTH>:        width of the robot path (in m)\n"
+	  "  -start-pose <X><Y><O>:     start pose of the robot (in m, m, deg)\n"
 	  "  -plot2d:                   save as 2d data file\n"
 	  "  -plot3d:                   save map as 3d data file\n"
-	  "  -pos-start <X><Y>:         pos of lower left bg-corner\n"
+	  "  -pos-start <X><Y>:         pos of lower left bg-corner (in m)\n"
 	  "  -rear-laser:               use rear laser instead of front laser\n"
-	  "  -res   <RES> <RES>:        resolution of the map\n"
-	  "  -res-x <RES>:              resolution in x direction\n"
-	  "  -res-y <RES>:              resolution in y direction\n"
+	  "  -res   <RES> <RES>:        resolution of the map (in m)\n"
+	  "  -res-x <RES>:              resolution in x direction (in m)\n"
+	  "  -res-y <RES>:              resolution in y direction (in m)\n"
 	  "  -rotate <ANGLE>:           rotate the map by ANGLE degree\n"
 	  "  -showpath:                 show robot path\n"
 	  "  -size:                     set the size of the output image\n"
 	  "  -static-prob:              probability for static observation\n"
 	  "  -to <NUM>:                 end animation with scan NUM\n"
-	  "  -usablerange <MAX-RANGE>:  max range for detecting corrupted beams\n"
+	  "  -usablerange <MAX-RANGE>:  max range for detecting corrupted beams (in m)\n"
 	  "  -utm-correct:              corrects gps positions for UTM tiles\n"
 	  "  -zoom <ZOOM>:              scale factor for the map (must be >=1.0)\n" );
 }
@@ -862,20 +862,20 @@ main( int argc, char** argv)
     } else if (!strcmp(argv[i],"-carmen-map")) {
       settings.format = CARMEN_MAP; 
     } else if (!strcmp(argv[i],"-res") && (argc>i+2)) {
-      settings.resolution_x = atof(argv[++i]);
+      settings.resolution_x = 100.0 * atof(argv[++i]);
       settings.resolution_y = settings.resolution_x;
     } else if (!strcmp(argv[i],"-res-x") && (argc>i+2)) {
-      settings.resolution_x = atof(argv[++i]);
+      settings.resolution_x = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-res-y") && (argc>i+2)) {
-      settings.resolution_y = atof(argv[++i]);
+      settings.resolution_y = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-zoom") && (argc>i+2)) {
       settings.zoom = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-pathcolor") && (argc>i+2)) {
       strncpy( settings.pathcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-pathwidth") && (argc>i+2)) {
-      settings.pathwidth = atof(argv[++i]);
+      settings.pathwidth = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-border") && (argc>i+1)) {
-      settings.border = atof(argv[++i]);
+      settings.border = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-bg-color") && (argc>i+1)) {
       strncpy( settings.bgcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-bg-map") && (argc>i+1)) {
@@ -903,10 +903,10 @@ main( int argc, char** argv)
       settings.bgoffset.x = atof( argv[++i] );
       settings.bgoffset.y = atof( argv[++i] );
     } else if (!strcmp(argv[i],"-pos-start") && (argc>i+2)) {
-      settings.posstart.x = atof( argv[++i] );
-      settings.posstart.y = atof( argv[++i] );
+      settings.posstart.x = 100.0 * atof( argv[++i] );
+      settings.posstart.y = 100.0 * atof( argv[++i] );
     } else if (!strcmp(argv[i],"-maxrange") && (argc>i+1)) {
-      settings.max_range = atof(argv[++i]);
+      settings.max_range = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-rotate") && (argc>i+1)) {
       settings.rotation_angle = deg2rad(atof(argv[++i]));
     } else if (!strcmp(argv[i],"-display-arrow")) {
@@ -914,11 +914,11 @@ main( int argc, char** argv)
     } else if (!strcmp(argv[i],"-animation")) {
       settings.animation = TRUE;
     } else if (!strcmp(argv[i],"-anim-step") && (argc>i+1)) {
-      settings.anim_step = atof(argv[++i]);
+      settings.anim_step = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-anim-skip") && (argc>i+1)) {
       settings.anim_skip = atoi(argv[++i]);
     } else if (!strcmp(argv[i],"-usablerange") && (argc>i+1)) {
-      settings.usable_range = atof(argv[++i]);
+      settings.usable_range = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-darken") && (argc>i+1)) {
       settings.darken = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-endpoints")) {
@@ -954,8 +954,8 @@ main( int argc, char** argv)
       isize.y = atoi(argv[++i]);
       settings.set_size = TRUE;
     } else if (!strcmp(argv[i],"-pos") && (argc>i+3)) {
-      settings.pos_x = atof(argv[++i]);
-      settings.pos_y = atof(argv[++i]);
+      settings.pos_x = 100.0 * atof(argv[++i]);
+      settings.pos_y = 100.0 * atof(argv[++i]);
       settings.pos_o = deg2rad(atof(argv[++i]));
     } else {
       print_usage();
