@@ -1085,7 +1085,7 @@ motion_handler (GtkMapViewer *the_map_view, carmen_world_point_p world_point,
   the_map = the_map_view->internal_map;
 
   carmen_world_to_map(world_point, &point);
-  sprintf(buffer, "Grid Cell: %d, %d (%.1f m, %.1f m)", point.x, point.y,
+  sprintf(buffer, "Grid Cell: %d, %d\n(%.1f m, %.1f m)", point.x, point.y,
 	  point.x * the_map->config.resolution, point.y * 
 	  the_map->config.resolution);
   gtk_label_set_text(GTK_LABEL(cursor_status_label), buffer);  
