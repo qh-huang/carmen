@@ -57,7 +57,7 @@ be removed on output. All other chunks will be passed through untouched.
 
 @section clf2linemap clf2linemap
 
-Converts a carmen logfile into a line map.
+Converts a CARMEN logfile into a line map.
 
 @section map Map
 

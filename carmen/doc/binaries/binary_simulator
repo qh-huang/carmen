@@ -29,16 +29,16 @@ moving.
 
 @subsection multirobot_support Multirobot Support
 
-The simulator can be connected to other running instances of carmen, so that a
+The simulator can be connected to other running instances of CARMEN, so that a
 simulator can "see" the robot in another running simulator. The simulator
-subscribes to the localize_globalpos message of the other carmen, and
+subscribes to the localize_globalpos message of the other CARMEN, and
 simulates perception of the other robot. Note, however, if collision avoidance
 is turned off, the simulator allows robots to pass through each
 other. However, this allows multi-robot experiments to run easily. 
 
 The connection happens programmatically -- a running controller must publish a
 simulator_connect_robot message containing the CENTRALHOST variable on which
-the other version of carmen is running. (Either a hostname, or this hostname
+the other version of CARMEN is running. (Either a hostname, or this hostname
 and port.) Obviously, for consistency, both simulators should be told about
 the other. The nice thing is that you can also connect a simulator to a real
 running robot, although you would not expect the simulated robot to show up in

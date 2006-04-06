@@ -1,3 +1,6 @@
+xr4000 is in SUBDIRS even if nit in TRAGETS ->
+problems with relink!
+
 documentation to proccontrol needs to be extended
 
 documentation for global/geometry would be nice

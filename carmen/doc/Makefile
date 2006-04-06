@@ -20,6 +20,15 @@ copy_to_html =   $(SILENT) \
 		$(CP) -f $$i html/; \
 	done 
 
+
+rm_html =   $(SILENT) \
+	if [ -d html ] ; then \
+		echo "    ---- Removing html/" ; \
+		$(RM) -rf html/; \
+        fi
+
+
+
 all: $(TARGETS)
 
 carmen.doxygen:  carmen.dox  
@@ -28,7 +37,10 @@ copy_files:
 	$(copy_to_html)
 
 
+clean:
+	$(rm_html)
 
+%.doxygen:	
+	$(ECHO) "    ---- Compiling $< (Doxygen)"
+	$(SILENT) $(DOXYGEN) $<
 
-
-include ../src/Makefile.rules

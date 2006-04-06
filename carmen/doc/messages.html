@@ -1,6 +1,6 @@
 $/** @page messages
 
-<h2>Carmen Messages</h2>
+<h2>CARMEN Messages</h2>
 
 
 @section messages_introduction Introduction
@@ -10,10 +10,10 @@ radians, in the range \f$-\pi\f$ to \f$\pi\f$. Velocity units are m/sec. The tim
 is given as the number of seconds since the unix epoch, and is a double, where
 the fractional part is computed from the \c tv_usec field of the
 \c timeval struct returned by \c gettimeofday. More information on
-units and co-ordinate frames can be found in the Carmen Programming Style
+units and co-ordinate frames can be found in the CARMEN Programming Style
 Guide. 
 
-@section messages_gettingdata Getting Data from Carmen
+@section messages_gettingdata Getting Data from CARMEN
 
 Sensor data currently comes from one of two sources: the base module (such as
 scout, pioneer, etc.) provides raw odometry data and may provide sonar data,
@@ -59,7 +59,7 @@ should be pointed out that subscribing to all messages
 upper limit for the queue size is 1000 messages. If an IPC process actually
 subscribes to \emph{all} messages and falls seriously behind (or wedges),
 central can run out of memory, or even worse, the TCP stack can
-overflow. Consequently, the Carmen subscription functions limit the maximum
+overflow. Consequently, the CARMEN subscription functions limit the maximum
 message queue size to 1000. A resourceful programmer can increase this queue
 (or even remove the queue size), but it is not clear this would ever be
 necessary. 
@@ -98,7 +98,7 @@ velocities that base actual uses.
 
 @subsubsection messages_sonar Sonar
 
-Sonar sensing is not properly supported by Carmen right now, and so
+Sonar sensing is not properly supported by CARMEN right now, and so
 subscribing to \c carmen_base_sonar_message messages may sometimes not
 work properly. But, if you care, it looks like:
 
@@ -224,7 +224,7 @@ void carmen_localize_subscribe_globalpos_message(carmen_localize_globalpos_messa
 This message reports on the current robot pose estimate, given by localize.
 
 The \c globalpos field is mean robot position (computed from the particle
-filter), and is given in the global frame of reference. (See the Carmen Style
+filter), and is given in the global frame of reference. (See the CARMEN Style
 Guide.) The \c odometrypos is the odometry of the robot at the time the
 current estimate was computed. It is therefore possible to estimate the true
 position of the robot for a short duration after the last
@@ -235,7 +235,7 @@ adding this displacement to the \c globalpos field. There is a helper
 function in \c liblocalize_interface called
 \c carmen_localize_correct_odometry that does exactly this. 
 
-Notice that Carmen localize no longer explicitly provides correction
+Notice that CARMEN localize no longer explicitly provides correction
 parameters, but instead provides a functional way to correct odometry. 
 
 The \c globalpos_std gives the variances of the position estimates,
@@ -293,7 +293,7 @@ The \c goal field reports on what the navigator's current goal. The
 navigator does not (and should not ever) support multiple goal destinations. 
 
 The \c robot field is the navigator's estimate of the current robot
-position in the global reference frame (see the Carmen Style Guide). This is
+position in the global reference frame (see the CARMEN Style Guide). This is
 based on the latest estimate from localize, combined with any subsequent
 odometric updates the navigator has received. The \c robot position field
 reported by the navigator should never lag behind (in time) localize's
@@ -444,7 +444,7 @@ int carmen_navigator_set_goal_place(char *name);
 @endverbatim
 
 The \f$(x, y)\f$ fields should be self-explanatory as the goal position, in the
-global reference frame (see the Carmen Style Guide), as always in metres.
+global reference frame (see the CARMEN Style Guide), as always in metres.
 
 If the map contains place names, then it is also possible to set the goal
 position using a \c carmen_navigator_placename_message, and the

@@ -11,9 +11,9 @@ This module provides a set of tools for working with logfiles
 
 <h3>[options] are:</h3>
 
-  -anim-step \<STEP-SIZE\>:    min distance between scans (in cm)
+  -anim-step \<STEP-SIZE\>:    min distance between scans 
 
-  -anim-skip \<NUM\>:          skip NUM animation dumps (0: no skip
+  -anim-skip \<NUM\>:          skip NUM animation dumps (0: no skip)
 
   -animation:                write sep. pics for animation
 
@@ -25,7 +25,7 @@ This module provides a set of tools for working with logfiles
 
   -bg-map \<FILE\>:            read carmen-map as background image
 
-  -border \<BORDER\>:          add a border (in cm)
+  -border \<BORDER\>:          add a border 
 
   -carmen-map:               save in carmen-map format
 
