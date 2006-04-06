@@ -475,75 +475,23 @@ publish_readings(void)
 
 void fill_laser_config_data(carmen_simulator_laser_config_t *lasercfg) 
 {
-  double resolution_in_degrees;
 
-  /* 1/21/06: Nick Roy was here. This function contained a number of equality
-     comparisons between floats, and a number of comparisons that involved
-     multiplying * 1.02 and * .98. I unified all of the comparisons to take
-     absolute value of the difference, and check to see that it was within
-     1/1000.
-  */ 
-  
-  resolution_in_degrees = lasercfg->angular_resolution;
-
-  if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 180) < 1 )
-    lasercfg->fov = M_PI;
-  else if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 90) < 1)
-    lasercfg->fov = 0.5*M_PI;
-  else if (fabs(carmen_radians_to_degrees(lasercfg->fov) - 100) < 1)
-    lasercfg->fov = carmen_degrees_to_radians(100);
-  else
-    lasercfg->fov = M_PI;    
-  
-  if (fabs(resolution_in_degrees - 1) < 1e-3)
-    lasercfg->angular_resolution = carmen_degrees_to_radians(1);
-  else if (fabs(resolution_in_degrees - .5) < 1e-3)
-    lasercfg->angular_resolution = carmen_degrees_to_radians(0.5);
-  else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
-    lasercfg->angular_resolution = carmen_degrees_to_radians(0.25);
-  else
-    lasercfg->angular_resolution = carmen_degrees_to_radians(1);  
-
-  if (fabs(lasercfg->fov - M_PI) < 1e-3) {
-    if (fabs(resolution_in_degrees - 1) < 1e-3)
-      lasercfg->num_lasers = 181;
-    else if (fabs(resolution_in_degrees - 0.5) < 1e-6 )
-      lasercfg->num_lasers = 361;
-    else if (fabs(resolution_in_degrees - 0.25) < 1e-6) {
-      carmen_die("Invalid laser configuration! fov=PI and resolution=0.25 "
-		 "deg is impossible with SICKs\n");
-    }
-    else carmen_die("Invalid laser configuration!\n");
-  }
-  else if (fabs(lasercfg->fov - carmen_degrees_to_radians(100)) < 1e-3) {
-    if (fabs(resolution_in_degrees - 1) < 1e-3 )    
-      lasercfg->num_lasers = 101;
-    else if (fabs(resolution_in_degrees - 0.5) < 1e-3)
-      lasercfg->num_lasers = 201;
-    else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
-      lasercfg->num_lasers = 401;
-    else carmen_die("Invalid laser configuration!\n");
-  }
-  else if (fabs(lasercfg->fov - 0.5*M_PI) < 1e-3) {
-    if (fabs(resolution_in_degrees - 1) < 1e-3 )    
-      lasercfg->num_lasers = 91;
-    else if (fabs(resolution_in_degrees - 0.5) < 1e-3)
-      lasercfg->num_lasers = 181;
-    else if (fabs(resolution_in_degrees - 0.25) < 1e-3) 
-      lasercfg->num_lasers = 361;
-    else 
-      carmen_die("Invalid laser configuration!\n");
-  }
-  else
-    carmen_die("Invalid laser configuration!\n");
-
+  lasercfg->num_lasers = carmen_round(1 + lasercfg->fov / lasercfg->angular_resolution);
   lasercfg->start_angle = -0.5*lasercfg->fov;
 
-  
-/*   carmen_warn("laser_res  =%lf\n",carmen_radians_to_degrees(lasercfg->angular_resolution)); */
-/*   carmen_warn("laser_start=%lf\n",carmen_radians_to_degrees(lasercfg->start_angle)); */
-/*   carmen_warn("laser_fov  =%lf\n",carmen_radians_to_degrees(lasercfg->fov)); */
-/*   carmen_warn("laser_num  =%d\n", lasercfg->num_lasers); */
+  /* give a warning if it is not a standard configuration */
+
+  if ( fabs(lasercfg->fov - M_PI) > 1e-6 && 
+       fabs(lasercfg->fov - 100.0/180.0 * M_PI) > 1e-6 && 
+       fabs(lasercfg->fov -  90.0/180.0 * M_PI) > 1e-6)
+    carmen_warn("Warnung: You are not using a standard SICK configuration (fov=%.4f deg)\n",
+		carmen_radians_to_degrees(lasercfg->fov) );
+
+  if ( fabs(lasercfg->angular_resolution - carmen_degrees_to_radians(1.0)) > 1e-6 && 
+       fabs(lasercfg->angular_resolution - carmen_degrees_to_radians(0.5)) > 1e-6 && 
+       fabs(lasercfg->angular_resolution - carmen_degrees_to_radians(0.25)) > 1e-6)
+    carmen_warn("Warnung: You are not using a standard SICK configuration (res=%.4f deg)\n",
+		carmen_radians_to_degrees(lasercfg->angular_resolution) );
 
 }
 
@@ -640,6 +588,11 @@ static void read_parameters(int argc, char *argv[],
       sizeof(param_list_front_laser[0]);
     carmen_param_install_params(argc, argv, param_list_front_laser, 
 				num_items);
+    config->front_laser_config.angular_resolution =
+      carmen_degrees_to_radians(config->front_laser_config.angular_resolution);
+
+    config->front_laser_config.fov =
+      carmen_degrees_to_radians(config->front_laser_config.fov);
   }
 
   if(config->use_rear_laser) {
@@ -647,7 +600,14 @@ static void read_parameters(int argc, char *argv[],
       sizeof(param_list_rear_laser[0]);
     carmen_param_install_params(argc, argv, param_list_rear_laser, 
 				num_items);
+    config->rear_laser_config.angular_resolution =
+      carmen_degrees_to_radians(config->rear_laser_config.angular_resolution);
+
+    config->rear_laser_config.fov =
+      carmen_degrees_to_radians(config->rear_laser_config.fov);
   }
+
+  /* from now on all angles in the config struct are in radians */
   
   if(config->use_sonar) {
     num_items = sizeof(param_list_sonar)/sizeof(param_list_sonar[0]);
