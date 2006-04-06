@@ -1,6 +1,3 @@
-xr4000 is in SUBDIRS even if nit in TRAGETS ->
-problems with relink!
-
 documentation to proccontrol needs to be extended
 
 documentation for global/geometry would be nice
@@ -11,15 +8,12 @@ check b21r in carmen-addons and move to carmen main
 
 graphical proccontrol_view 
 
-
 carmen-addons 
 =============
 
 merge cerebellum modules into single module
 
-ask mike re: kvh, compass, canon, people_tracker, multirobot_viewer, gplan
 ask jared re: r03, roadmap, robotwalker, roomnav, sound_server, stracker, actor, dog, dot
-ask mrosen: spotter, timer
 
 Should we do this?
 ===================
