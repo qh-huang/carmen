@@ -1604,7 +1604,7 @@ carmen_param_get_paramserver_host(char **hostname)
 			      (void **)&response, timeout);
   carmen_test_ipc_return_int(err, "Could not check Carmen version", 
 			     CARMEN_PARAM_VERSION_QUERY_NAME);
-  *hostname = (char *)calloc(strlen(response->host), sizeof(char));
+  *hostname = (char *)calloc(strlen(response->host)+1, sizeof(char));
   carmen_test_alloc(*hostname);
   strcpy(*hostname, response->host);
 
