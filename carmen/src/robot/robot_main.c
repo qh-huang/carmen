@@ -71,6 +71,7 @@ static double time_of_last_command;
 
 static carmen_traj_point_t start_position;
 static carmen_traj_point_t goal;
+static int goal_is_final = 1;
 static double vector_distance;
 static double vector_angle;
 static int following_vector = 0;
@@ -410,9 +411,13 @@ static void follow_vector(void)
     radius = fabs(displacement/4 / sin(angle_difference));
     command_tv = fabs(radius * command_rv);
   } else {
-    command_tv = displacement * disp_gain;
-    if (fabs(displacement) > 0 && fabs(displacement) < 0.15)
-      command_tv -= carmen_robot_latest_odometry.tv/2;
+    if (goal_is_final) {
+      command_tv = displacement * disp_gain;
+      if (fabs(displacement) > 0 && fabs(displacement) < 0.15)
+	command_tv -= carmen_robot_latest_odometry.tv/2;
+    } else {
+      command_tv = carmen_robot_config.max_t_vel;
+    }
   }
 
   publish_vector_status(displacement, true_angle_difference);
@@ -536,9 +541,14 @@ follow_trajectory_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     goal = msg.trajectory[0];
     goal.x -= msg.robot_position.x;
     goal.y -= msg.robot_position.y;
+
+    if (msg.trajectory_length == 1)
+      goal_is_final = 1;
+    else
+      goal_is_final = 0;
     
     vector_distance = hypot(goal.x, goal.y);
-    
+
     if (vector_distance < carmen_robot_config.approach_dist) 
       vector_angle = carmen_normalize_theta(goal.theta);
     else {
