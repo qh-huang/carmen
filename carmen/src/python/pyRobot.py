@@ -13,7 +13,6 @@ class pyMessageHandler(pyCarmen.MessageHandler, Thread):
 		pyCarmen.carmen_ipc_initialize(1, ["python"])
 		pyCarmen.MessageHandler.__init__(self)
 		Thread.__init__(self)
-		self.initialize()
 		self.laser = None
 
 	def run(self):
@@ -79,25 +78,6 @@ class Robot(pyMessageHandler):
 	def command_arm(self, joint_angles):
 		pyCarmen.carmen_arm_command(len(joint_angles), joint_angles)
 		
-	def get_gridmap(self):
-		theMap = zeros([self.get_map_x_size(), self.get_map_y_size()])
-		
-		print "starting"
-		print "size", [self.get_map_x_size(), self.get_map_y_size()]
-		for i in range(self.get_map_x_size()):
-			print i
-			for j in range(self.get_map_y_size()):
-				print self.get_map_x_y(i,j)
-				theMap[i][j] = self.get_map_x_y(i,j)
-
-		print "done"
-		return theMap
-		#pyCarmen.carmen_map_get_gridmap_t(pyCarmen.carmen_map_tPtr(my_current_map))
-		#print dir(my_current_map)
-		#print my_current_map.complete_map
-		#print my_current_map.map
-		#carmen_map_get_gridmap(pyCarmen.carmen_map_tPtr(my_current_map))
-
 
 
 

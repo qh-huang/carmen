@@ -29,10 +29,6 @@
 #include <carmen/carmen.h>
 #include <cstdio>
 #include <iostream>
-#include <carmen/map.h>
-#include <carmen/map_interface.h>
-
-static carmen_map_t current_map;
 
 class MessageHandler {
  private:
@@ -47,34 +43,11 @@ class MessageHandler {
   carmen_navigator_autonomous_stopped_message the_latest_navigator_autonomous_stopped;
   carmen_arm_state_message the_latest_arm_state;
  public:
-        carmen_map_p current_map_p;
 
 	virtual ~MessageHandler() 
 	  { std::cout << "Callback::~Callback()" << std:: endl; }
 	virtual void run_cb(char* type, char* msg) //carmen_robot_laser_message *msg) 
 	  { std::cout << "Callback::run()" << std::endl; }
-
-	void initialize(void){
-	  current_map_p = (carmen_map_p)calloc(1, sizeof(carmen_map_t));
-	  get_map();
-	}
-
-	void get_map(void){
-	  carmen_map_get_gridmap(current_map_p);
-	}
-
-	int get_map_x_size(void){
-	  return current_map_p->config.x_size;
-	}
-
-	int get_map_y_size(void){
-	  return current_map_p->config.y_size;
-	}
-
-	float get_map_x_y(int x, int y){
-	  return current_map_p->map[x][y];
-	}
-
 
 	/*Front Laser Messages*/
 	void set_front_laser_message(carmen_robot_laser_message *msg)
