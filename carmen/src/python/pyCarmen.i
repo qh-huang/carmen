@@ -1,3 +1,4 @@
+
 /* File : pyCarmen.i */
 
 %module(directors="1") pyCarmen
@@ -192,6 +193,8 @@
 %include param_interface.h
 %include robot_interface.h
 %include simulator_interface.h
+%include ipc.h
+%include map_io.h
 
 //%include planner_interface.h
 //%include hokuyo_interface.h

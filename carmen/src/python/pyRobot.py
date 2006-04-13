@@ -44,7 +44,7 @@ class Robot(pyMessageHandler):
 		pyMessageHandler.__init__(self)
 		
 	def callback(self, the_type, msg):
-		print the_type
+		#print the_type
 		
 		#if(the_type == "global_pose"):
 		#     print "global_pose", msg.globalpos.x, msg.globalpos.y

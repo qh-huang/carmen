@@ -64,6 +64,15 @@ def test2():
 	print "done"
 
 
+def test3():
+	# Create an callback
+	robot = pyMessageHandler().__disown__()
+	# Create callers
+        # the exact syntax of these might change a bit
+	odo = pyCarmen.odometry(robot)
+
+	robot.connect()
+
 #test the ability to create two link messages to two different robots
 #note that only each message can be linked only one place
 #(this is a bug of c++ unfortunately)
@@ -90,5 +99,5 @@ def test3():
 
 	
 #test1()
-#test2()
-test3()
+test2()
+#test3()

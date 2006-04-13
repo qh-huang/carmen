@@ -1,7 +1,5 @@
 #include ../Makefile.conf
 
-
-
 SWIG      = swig
 SWIGOPT   = -I../../include/carmen 
 CXXSRCS    = pyCarmen.cxx pyCarmenMessages.cxx
@@ -9,7 +7,6 @@ TARGET     = pyCarmen
 INTERFACE  = pyCarmen.i
 LIBS       = -lm
 SWIG      = swig
-
 
 relink::
 
