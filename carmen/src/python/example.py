@@ -51,7 +51,10 @@ def test2():
                     #not quite functioning yet is getting a gridmap
                     #of the world
 		    #robot.get_gridmap()
-                    
+
+		except(EOFError):
+		    print "exiting"
+		    break
 
 		except(KeyboardInterrupt):
                     print "exiting..."
