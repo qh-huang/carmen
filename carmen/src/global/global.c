@@ -1433,8 +1433,8 @@ void carmen_list_delete(carmen_list_t *list, int entry_num)
   list->length--;
   
   memcpy(list->list+entry_num*list->entry_size, 
-	 list->list+list->length*list->entry_size, 
-	 list->entry_size);
+	 list->list+(entry_num+1)*list->entry_size, 
+	 (list->length-entry_num+1)*list->entry_size);
 }
 
 void *carmen_list_get(carmen_list_t *list, int entry_num)
@@ -1452,7 +1452,7 @@ void carmen_list_destroy(carmen_list_t **list)
 
 void carmen_list_set(carmen_list_t *list, int entry_num, void *entry)
 {
-  if (list->capacity >= entry_num) {
+  if (list->capacity < entry_num) {
     list->capacity = entry_num+1;
     list->list = realloc(list->list, list->capacity*list->entry_size);
     carmen_test_alloc(list->list);
