@@ -330,9 +330,9 @@ char *carmen_file_extension(char *filename);
 char *carmen_file_find(char *filename);
 char **carmen_get_search_path(int *num_paths);
 
-void carmen_global_start_progess_bar(char *label);
-void carmen_global_end_progess_bar(void);  
-void carmen_global_update_progess_bar(int count, int size);
+void carmen_global_start_progress_bar(char *label);
+void carmen_global_end_progress_bar(void);  
+void carmen_global_update_progress_bar(int count, int size);
 
 int carmen_strcasecmp (const char *s1, const char *s2);
 int carmen_strncasecmp (const char *s1, const char *s2, size_t n);

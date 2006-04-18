@@ -1010,14 +1010,14 @@ char
 static int current_percent;
 
 void 
-carmen_global_start_progess_bar(char *label)
+carmen_global_start_progress_bar(char *label)
 {
   fprintf(stderr, "%s : ", label);
   current_percent = 0;
 }
 
 void
-carmen_global_end_progess_bar(void)
+carmen_global_end_progress_bar(void)
 {
   if (current_percent > 0)
     fprintf(stderr, "[0Kdone\n");
@@ -1026,7 +1026,7 @@ carmen_global_end_progess_bar(void)
 }
 
 void 
-carmen_global_update_progess_bar(int count, int size)
+carmen_global_update_progress_bar(int count, int size)
 {
   char buffer[20];
   int percent = carmen_round(count*10.0/size);
@@ -1432,9 +1432,10 @@ void carmen_list_delete(carmen_list_t *list, int entry_num)
 {
   list->length--;
   
-  memcpy(list->list+entry_num*list->entry_size, 
-	 list->list+(entry_num+1)*list->entry_size, 
-	 (list->length-entry_num+1)*list->entry_size);
+  if (entry_num < list->length)
+    memcpy(list->list+entry_num*list->entry_size, 
+	   list->list+(entry_num+1)*list->entry_size, 
+	   list->entry_size*(list->length-entry_num));
 }
 
 void *carmen_list_get(carmen_list_t *list, int entry_num)
