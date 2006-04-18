@@ -412,6 +412,8 @@ carmen_conventional_get_cost(int x, int y)
 double 
 carmen_conventional_get_utility(int x, int y)  
 {
+  if (!utility)
+    return -1;
   if (is_out_of_map(x, y))
     return -1;
   return *(utility+x*y_size + y);
@@ -508,29 +510,27 @@ carmen_conventional_dynamic_program(int goal_x, int goal_y)
   if (costs == NULL)
     return;
 
-  if (is_out_of_map(goal_x, goal_y))
-    return;
-
   gettimeofday(&start_time, NULL);
 
   cur_time = carmen_get_time();
-  if ((int)(cur_time - last_print) > 10)
-    {
-      carmen_verbose("Time since last DP: %d secs, %d usecs\n", (int)(cur_time - last_time),
-		     ((int)((cur_time-last_time)*1e6)) % 1000000);
-      last_print = cur_time;
-    }
+  if ((int)(cur_time - last_print) > 10) {
+    carmen_verbose("Time since last DP: %d secs, %d usecs\n", (int)(cur_time - last_time),
+		   ((int)((cur_time-last_time)*1e6)) % 1000000);
+    last_print = cur_time;
+  }
   last_time = cur_time;
 
-  if (utility == NULL)
-    {
-      utility = (double *)calloc(x_size*y_size, sizeof(double));
-      carmen_test_alloc(utility);
-    }
-
+  if (utility == NULL) {
+    utility = (double *)calloc(x_size*y_size, sizeof(double));
+    carmen_test_alloc(utility);
+  }
+  
   utility_ptr = utility;
   for (index = 0; index < x_size * y_size; index++) 
     *(utility_ptr++) = -1;
+
+  if (is_out_of_map(goal_x, goal_y))
+    return;
 
   max_val = -MAXDOUBLE;
   min_val = MAXDOUBLE; 
