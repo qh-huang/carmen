@@ -79,9 +79,11 @@ void carmen_map_graphics_adjust_scrollbars(GtkMapViewer *map_view,
   GtkAdjustment *x_scroll_adj, *y_scroll_adj;
   
   world_to_screen(new_centre, &screen, map_view);
-
   x_scroll_adj = map_view->x_scroll_adj;
   y_scroll_adj = map_view->y_scroll_adj;
+
+  screen.x += map_view->x_scroll_adj->value;
+  screen.y += map_view->y_scroll_adj->value;
 
   x_value = screen.x - (x_scroll_adj->page_size/2);
   y_value = screen.y - (y_scroll_adj->page_size/2);
