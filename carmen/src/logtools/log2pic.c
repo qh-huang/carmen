@@ -814,6 +814,7 @@ print_usage( void )
 	  "  -odds-model:               use odds-model to compute probs\n"
 	  "  -pathcolor <COLORNAME>:    color of the robot path\n"
 	  "  -pathwidth <WIDTH>:        width of the robot path (in m)\n"
+	  "  -raw:                      use RAWLASER scans\n"
 	  "  -start-pose <X><Y><O>:     start pose of the robot (in m, m, deg)\n"
 	  "  -plot2d:                   save as 2d data file\n"
 	  "  -plot3d:                   save map as 3d data file\n"
@@ -883,6 +884,8 @@ main( int argc, char** argv)
       readmap = TRUE;
     } else if (!strcmp(argv[i],"-id") && (argc>i+1)) {
       settings.laser_id = atoi(argv[++i]);
+    } else if (!strcmp(argv[i],"-raw")) {
+      settings.laser_id = 10;
     } else if (!strcmp(argv[i],"-rear-laser")) {
       settings.flip = TRUE;
     } else if (!strcmp(argv[i],"-plot2d")) {
