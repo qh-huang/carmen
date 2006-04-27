@@ -42,12 +42,12 @@ class MessageHandler {
   carmen_navigator_plan_message the_latest_navigator_plan;
   carmen_navigator_autonomous_stopped_message the_latest_navigator_autonomous_stopped;
   carmen_arm_state_message the_latest_arm_state;
+  carmen_map_p the_latest_map;
  public:
-
 	virtual ~MessageHandler() 
-	  { std::cout << "Callback::~Callback()" << std:: endl; }
+	  {}
 	virtual void run_cb(char* type, char* msg) //carmen_robot_laser_message *msg) 
-	  { std::cout << "Callback::run()" << std::endl; }
+	  {}
 
 	/*Front Laser Messages*/
 	void set_front_laser_message(carmen_robot_laser_message *msg)
@@ -110,6 +110,30 @@ class MessageHandler {
 	  memcpy(&the_latest_arm_state, msg, sizeof(carmen_arm_state_message));
 	}
 	carmen_arm_state_message* get_arm_state_message() {return &the_latest_arm_state;}
+
+	/*Map Update Message*/
+	void init_map_message(){
+	  the_latest_map = 0;
+	}
+
+	void set_map_message(carmen_map_t *msg){
+	  if(!the_latest_map == 0)
+	    carmen_map_destroy(&the_latest_map);
+	  the_latest_map = carmen_map_copy(msg);
+	}
+	carmen_map_t* get_map_message() {return the_latest_map;}
+
+
+	/*void get_current_map(void){
+
+	  the_latest_map = (carmen_map_t *)calloc(1, sizeof(carmen_map_t));
+	  carmen_test_alloc(the_latest_map);
+	  carmen_map_get_gridmap(the_latest_map);
+	  }*/
+
+	//_map_callback->set_map_message(msg);
+	//if (_map_callback) _map_callback->run_cb("map_state", "get_map_message()");
+
 };
 
 

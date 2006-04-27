@@ -64,83 +64,24 @@
 }
 
 
-//%typemap(out) float* {
-//  int i, size;
-//  size = sizeof($1);
-//  $result = PyList_New(size);
-//
-//  for  for (i=0; i < size; i++){
-//
-//    PyObject *o = PyFloat_FromDouble((double)$1[i]);
-//    PyList_SetItem($result, i, o);
-//  }
-//}
 
-//%typemap(out) float** {
-//  int i, size1;
-//  size1 = sizeof($1);///sizeof(float*);
-//
-//  printf("in typemap\n");
-//  $result = PyList_New(size1);
-//  for (i=0; i < size1; i++){
-//
-//    int j, size2;
-//    carmen_warn("in typemap3\n");
-//    size2 = sizeof($1[i]);
-//    carmen_warn("size2 %d\n", size2);
-//
-//    PyObject *tmp = PyList_New(size2);
-//    carmen_warn("in typemap4\n");
-//    for(j=0; j < size2; j++){
-//       carmen_warn("in typemap5\n");
-//       PyObject *o = PyFloat_FromDouble((double)$1[i][j]);
-//       carmen_warn("in typemap6\n");
-//       PyList_SetItem(tmp, j, o);
-//       carmen_warn("in typemap7\n");
-//    } 
-//    carmen_warn("in typemap8\n");
-//    PyList_SetItem($result, i, tmp);
-//  }
-//  printf("in typemapend\n");
-//}
+%typemap(out) carmen_map_t*{
+	PyObject* map= PyList_New(0);
+        int i,j;
+	for(i=0; i<$1->config.x_size; i++){
+	  PyObject* row = PyList_New(0);			
 
-//%typemap(out) float** {
-//  int i, size1;
-//  size1 = sizeof($1);///sizeof(float*);
-//
-//  printf("in typemap\n");
-//  $result = PyList_New(size1);
-//  for (i=0; i < size1; i++){
-//
-//    int j, size2;
-//    carmen_warn("in typemap3\n");
-//    size2 = sizeof($1[i]);
-//    carmen_warn("size2 %d\n", size2);
-//
-//    PyObject *tmp = PyList_New(size2);
-//    carmen_warn("in typemap4\n");
-//    for(j=0; j < size2; j++){
-//       carmen_warn("in typemap5\n");
-//       PyObject *o = PyFloat_FromDouble((double)$1[i][j]);
-//       carmen_warn("in typemap6\n");
-//       PyList_SetItem(tmp, j, o);
-//       carmen_warn("in typemap7\n");
-//    } 
-//    carmen_warn("in typemap8\n");
-//    PyList_SetItem($result, i, tmp);
-//  }
-//  printf("in typemapend\n");
-//}
+	  for(j=0; j<$1->config.y_size; j++){
+		  PyObject* pt = PyFloat_FromDouble((double)$1->map[i][j]);	
+		  PyList_Append(row, pt);
+	  }
 
+	  PyList_Append(map, row);
+	}
 
-//%typemap(memberout) float [ANY] {
-//  int i;
-//  $result = PyList_New($1_dim0);
-//  for (i = 0; i < $1_dim0; i++) {
-//    PyObject *o = PyFloat_FromDouble((double) $1[i]);
-//    PyList_SetItem($result,i,o);
-//  }
-//}
+	$result = map;
+}
+
 
 
 %include "std_string.i"

@@ -12,6 +12,7 @@ class pyMessageHandler(pyCarmen.MessageHandler, Thread):
 	def __init__(self):
 		pyCarmen.carmen_ipc_initialize(1, ["python"])
 		pyCarmen.MessageHandler.__init__(self)
+
 		Thread.__init__(self)
 		self.laser = None
 
@@ -32,10 +33,11 @@ class pyMessageHandler(pyCarmen.MessageHandler, Thread):
 
 	def stop(self):
 		pyCarmen.carmen_ipc_disconnect()
-
+		
 	def __del__(self):
 		print "PyCallback.__del__()"
 		pyCarmen.MessageHandler.__del__(self)
+		
 
 class Robot(pyMessageHandler):
 	def __init__(self):
@@ -43,7 +45,7 @@ class Robot(pyMessageHandler):
 		pyMessageHandler.__init__(self)
 		
 	def callback(self, the_type, msg):
-		#print the_type
+		print the_type
 		
 		#if(the_type == "global_pose"):
 		#     print "global_pose", msg.globalpos.x, msg.globalpos.y
@@ -55,29 +57,29 @@ class Robot(pyMessageHandler):
 		pt.y = y
 		pt.theta = theta
 		pyCarmen.carmen_simulator_set_truepose(pt)
-
+		
 	def set_goal(self, x, y):
 		pyCarmen.carmen_navigator_set_goal(x, y)
-
+		
 	def set_goal_name(self, name):
 		pyCarmen.carmen_navigator_set_goal_place(name)
-
+		
 	def command_velocity(self, tv, rv):
 		pyCarmen.carmen_robot_velocity_command(tv, rv)
-
+		
 	def command_vector(self, distance, theta):
 		pyCarmen.carmen_robot_move_along_vector(distance, theta)
-
+		
 	def command_go(self):
 		pyCarmen.carmen_navigator_go()
-
+		
 	def command_stop(self):
 		pyCarmen.carmen_navigator_stop()
-
+		
 	#test this 
 	def command_arm(self, joint_angles):
 		pyCarmen.carmen_arm_command(len(joint_angles), joint_angles)
-		
+				
 
 
 
