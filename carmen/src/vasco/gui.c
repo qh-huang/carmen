@@ -650,7 +650,7 @@ static GtkWidget *main_menubar_init(GtkWidget *main_window)
      G_CALLBACK(file_open)},
     {"Save", GTK_STOCK_SAVE, "_Save", "<control>S", NULL, 
      G_CALLBACK(file_save)},
-    {"Save_As", GTK_STOCK_SAVE_AS, "Save _As", NULL, NULL, 
+    {"SaveAs", GTK_STOCK_SAVE_AS, "Save _As", NULL, NULL, 
      G_CALLBACK(file_save_as)},
     {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, 
      G_CALLBACK(main_window_destroy)},

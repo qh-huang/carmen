@@ -309,7 +309,6 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
   char message_name[100];
   char line[2000], *mark;
   carmen_robot_laser_message *robot_frontlaser;
-  int i;
   int frontlaser_offset_flag = 1, max_range_flag = 1;
 
   while(!carmen_feof(fp)) {
@@ -319,31 +318,13 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
       robot_frontlaser = (carmen_robot_laser_message *)
 	calloc(1, sizeof(carmen_robot_laser_message));
       carmen_test_alloc(robot_frontlaser);
-      
-      mark = next_word(line);
-      sscanf(mark, "%d", &robot_frontlaser->num_readings);
-      robot_frontlaser->range =
-	(float *)calloc(robot_frontlaser->num_readings, sizeof(float));
-      carmen_test_alloc(robot_frontlaser->range);
-      robot_frontlaser->tooclose =
-	(char *)calloc(robot_frontlaser->num_readings, 1);
-      carmen_test_alloc(robot_frontlaser->tooclose);
-      for(i = 0; i < robot_frontlaser->num_readings; i++) {
-	mark = next_word(mark);
-	sscanf(mark, "%f", &robot_frontlaser->range[i]);
-      }
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.x);
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.y);
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->laser_pose.theta);
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.x);
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.y);
-      mark = next_word(mark);
-      sscanf(mark, "%lf", &robot_frontlaser->robot_pose.theta);
+      carmen_string_to_robot_laser_message_orig(line, robot_frontlaser);
+      return robot_frontlaser;
+    } else if(strcmp(message_name, "ROBOTLASER1") == 0) {
+      robot_frontlaser = (carmen_robot_laser_message *)
+	calloc(1, sizeof(carmen_robot_laser_message));
+      carmen_test_alloc(robot_frontlaser);
+      carmen_string_to_robot_laser_message(line, robot_frontlaser);
       return robot_frontlaser;
     } else if ((frontlaser_offset_flag || max_range_flag) &&
 	       (strcmp(message_name, "PARAM") == 0)) {
@@ -366,7 +347,7 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
 static gint load_logfile_end(gpointer p) {
 
   char buf[1024];
-  int i, cancelled = *(int *) p;
+  int i, cancelled = (int) p;
 
 
   carmen_fclose(logfile);
