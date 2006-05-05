@@ -234,7 +234,7 @@ static MessageHandler *_map_callback;
 class map_change{
  public:
 
-  static void map_update_handler(carmen_map_t *msg) 
+  static void map_update_handler(carmen_map_p msg) 
     {
       _map_callback->set_map_message(msg);
       if (_map_callback) _map_callback->run_cb("map_change", "get_map_message()");
@@ -244,18 +244,39 @@ class map_change{
   {
     carmen_map_p the_latest_map;
     _map_callback = cb;
-    _map_callback->init_map_message();
     
     carmen_map_subscribe_gridmap_update_message
       (NULL, (carmen_handler_t)map_update_handler, CARMEN_SUBSCRIBE_LATEST);
     
-    the_latest_map = (carmen_map_t *)calloc(1, sizeof(carmen_map_t));
+    the_latest_map = (carmen_map_p)calloc(1, sizeof(carmen_map_t));
     carmen_test_alloc(the_latest_map);
     carmen_map_get_gridmap(the_latest_map);
     map_update_handler(the_latest_map);
+    carmen_map_destroy(&the_latest_map);
   }
   
   ~map_change(){
     //carmen_map_destroy(the_latest_map);
   }
+};
+
+/*Deal with the arm handler here*/
+static MessageHandler *_sim_pose_callback;
+class sim_global_pose{
+ public:
+
+  static void sim_pose_handler(carmen_simulator_truepos_message *msg) 
+    {
+      _sim_pose_callback->set_sim_truepos_message(msg);
+      if (_sim_pose_callback) _sim_pose_callback->run_cb("sim_global_pose", "sim_global_pose_message()");
+    }
+
+  sim_global_pose(MessageHandler *cb)
+  {
+    _sim_pose_callback = cb;
+    
+    carmen_simulator_subscribe_truepos_message
+      (NULL, (carmen_handler_t)sim_pose_handler, CARMEN_SUBSCRIBE_LATEST);
+  }
+  
 };

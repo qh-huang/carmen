@@ -41,6 +41,28 @@
   $1 = temp;
 }
 
+//// Map a Python sequence into any sized C int array
+%typemap(in) int* {
+  int i, my_len;
+  if (!PySequence_Check($input)) {
+      PyErr_SetString(PyExc_TypeError,"Expecting a sequence");
+      return NULL;
+  }
+
+  my_len = PyObject_Length($input);
+  int *temp = (int*)calloc(my_len,sizeof(int));
+  //carmen_test_alloc(temp);
+  for (i =0; i < my_len; i++) {
+      PyObject *o = PySequence_GetItem($input,i);
+      if (!PyFloat_Check(o) && !PyInt_Check(o)) {
+         PyErr_SetString(PyExc_ValueError,"Expecting a sequence of doubles");
+         return NULL;
+      }
+      temp[i] = (int)PyFloat_AsDouble(o);
+  }
+  $1 = temp;
+}
+
 //// Map a Python sequence into any sized C double array
 %typemap(in) float* {
   int i, my_len;
@@ -66,6 +88,7 @@
 
 
 %typemap(out) carmen_map_t*{
+
 	PyObject* map= PyList_New(0);
         int i,j;
 	for(i=0; i<$1->config.x_size; i++){
@@ -74,12 +97,56 @@
 	  for(j=0; j<$1->config.y_size; j++){
 		  PyObject* pt = PyFloat_FromDouble((double)$1->map[i][j]);	
 		  PyList_Append(row, pt);
+		  Py_DECREF(pt);
 	  }
 
 	  PyList_Append(map, row);
+	  Py_DECREF(row);
 	}
 
-	$result = map;
+	PyObject* retObj = PyDict_New();
+	PyDict_SetItemString(retObj, "map", map);
+	PyDict_SetItemString(retObj, "resolution", PyFloat_FromDouble((double)$1->config.resolution));
+
+	Py_DECREF(map);
+	$result = retObj;
+}
+
+%typemap(out) carmen_arm_state_message*{
+        int i;
+
+	PyObject* joint_angles= PyList_New(0);
+	for(i=0; i<$1->num_joints; i++){
+	  PyObject* pt = PyFloat_FromDouble((double)$1->joint_angles[i]);		
+	  PyList_Append(joint_angles,pt);
+	  Py_DECREF(pt);
+	}
+
+	PyObject* joint_currents= PyList_New(0);
+	for(i=0; i<$1->num_currents; i++){
+	  PyObject* pt = PyFloat_FromDouble((double)$1->joint_currents[i]);		
+	  PyList_Append(joint_currents,pt);
+	  Py_DECREF(pt);
+	}
+
+	PyObject* joint_angular_vels= PyList_New(0);
+	for(i=0; i<$1->num_vels; i++){
+	  PyObject* pt = PyFloat_FromDouble((double)$1->joint_angular_vels[i]);		
+	  PyList_Append(joint_angular_vels,pt);
+	  Py_DECREF(pt);
+	}
+
+
+	PyObject* gripper_closed = PyFloat_FromDouble((double)$1->gripper_closed);	
+
+	PyObject* retObj = PyDict_New();
+	PyDict_SetItemString(retObj, "joint_angles", joint_angles);
+	PyDict_SetItemString(retObj, "joint_currents", joint_currents);
+	PyDict_SetItemString(retObj, "joint_angular_vels", joint_angular_vels);
+	PyDict_SetItemString(retObj, "gripper_closed", gripper_closed);
+
+	Py_DECREF(gripper_closed);
+	$result = retObj;
 }
 
 

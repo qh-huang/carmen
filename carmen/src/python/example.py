@@ -101,6 +101,6 @@ def test3():
 	sleep(1)
 
 	
-#test1()
-test2()
+test1()
+#test2()
 #test3()

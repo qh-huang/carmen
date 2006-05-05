@@ -43,8 +43,12 @@ class MessageHandler {
   carmen_navigator_autonomous_stopped_message the_latest_navigator_autonomous_stopped;
   carmen_arm_state_message the_latest_arm_state;
   carmen_map_p the_latest_map;
+  carmen_simulator_truepos_message the_latest_truepos;
  public:
-	virtual ~MessageHandler() 
+        MessageHandler(){
+	  the_latest_map = 0;
+	}
+        virtual ~MessageHandler() 
 	  {}
 	virtual void run_cb(char* type, char* msg) //carmen_robot_laser_message *msg) 
 	  {}
@@ -112,16 +116,22 @@ class MessageHandler {
 	carmen_arm_state_message* get_arm_state_message() {return &the_latest_arm_state;}
 
 	/*Map Update Message*/
-	void init_map_message(){
+	/*void init_map_message(){
 	  the_latest_map = 0;
-	}
+	  }*/
 
-	void set_map_message(carmen_map_t *msg){
+	void set_map_message(carmen_map_p msg){
 	  if(!the_latest_map == 0)
 	    carmen_map_destroy(&the_latest_map);
 	  the_latest_map = carmen_map_copy(msg);
 	}
 	carmen_map_t* get_map_message() {return the_latest_map;}
+
+
+	void set_sim_truepos_message(carmen_simulator_truepos_message *msg){
+	  memcpy(&the_latest_truepos, msg, sizeof(carmen_simulator_truepos_message));
+	}
+	carmen_simulator_truepos_message* sim_global_pose_message() {return &the_latest_truepos;}
 
 
 	/*void get_current_map(void){
