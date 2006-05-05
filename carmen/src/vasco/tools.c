@@ -322,7 +322,7 @@ void set_tool(GtkWidget *widget __attribute__ ((unused)), gpointer data) {
 
   int display = 1;
 
-  if (tool != *(int *) data) {
+  if (tool != (int) data) {
     if (tool == TOOL_SHIFT)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(shift_button), FALSE);
     else if (tool == TOOL_ROTATE)
@@ -335,7 +335,7 @@ void set_tool(GtkWidget *widget __attribute__ ((unused)), gpointer data) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_in_button), FALSE);
     else if (tool == TOOL_ZOOM_OUT)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_out_button), FALSE);
-    tool = *(int *) data;
+    tool = (int) data;
   }
   else
     tool = TOOL_NONE;
@@ -347,5 +347,5 @@ void set_tool(GtkWidget *widget __attribute__ ((unused)), gpointer data) {
   }
 
   if (display)
-    gtk_idle_add(laser_scans_display, NULL);
+    g_idle_add(laser_scans_display, NULL);
 }

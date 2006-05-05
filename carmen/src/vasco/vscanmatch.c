@@ -34,7 +34,7 @@
 
 static gint end_scan_matching(gpointer data) {
 
-  int cancelled = *(int *) data;
+  int cancelled = (int) data;
 
   g_mutex_lock(laserscans_mutex);
   scan_matching = 0;
@@ -67,7 +67,7 @@ static gint scan_match(gpointer first) {
   if (stop)
     return FALSE;
 
-  if (*(int *)first) {
+  if ((int)first) {
     if (scan != 0)
       vascocore_reset();
     scan = scan_range_min;
@@ -77,7 +77,7 @@ static gint scan_match(gpointer first) {
     scan++;
 
   if (scan > scan_range_max) {
-    gtk_idle_add(end_scan_matching, 0);
+    g_idle_add(end_scan_matching, 0);
     return FALSE;
   }
 
@@ -106,8 +106,8 @@ static gint scan_match(gpointer first) {
   while (gtk_events_pending())
     gtk_main_iteration_do(0);
 
-  if (*(int *)first) {
-    gtk_idle_add(scan_match, 0);
+  if ((int)first) {
+    g_idle_add(scan_match, 0);
     return FALSE;
   }
 
@@ -122,7 +122,7 @@ static gint begin_scan_matching(gpointer data __attribute__ ((unused))) {
 
   status_print("Scan matching...", "scanmatch");
 
-  gtk_idle_add(scan_match, (gpointer) 1);
+  g_idle_add(scan_match, (gpointer) 1);
 
   return FALSE;
 }
@@ -147,7 +147,7 @@ void do_scan_matching() {
   g_mutex_unlock(laserscans_mutex);
 
   if (!stop)
-    gtk_idle_add(begin_scan_matching, NULL);
+    g_idle_add(begin_scan_matching, NULL);
   else
-    gtk_idle_add(end_scan_matching, (gpointer) 1);
+    g_idle_add(end_scan_matching, (gpointer) 1);
 }

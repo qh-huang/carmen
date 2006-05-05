@@ -85,7 +85,6 @@ hpos( int pos )
 carmen_point_t
 vascocore_scan_match( carmen_laser_laser_message scan, carmen_point_t pos )
 {
-  static int             firsttime = TRUE;
   static carmen_point_t  lastpos;
   carmen_point_t         estpos, centerpos, *histpos, nopos = {0.0, 0.0, 0.0};
   carmen_move_t          estmove, bestmove, move, nullmove = {0.0, 0.0, 0.0};
@@ -95,7 +94,7 @@ vascocore_scan_match( carmen_laser_laser_message scan, carmen_point_t pos )
 
   vascocore_copy_scan( scan, &(carmen_vascocore_history.data[p]) );
   
-  if (firsttime) {
+  if (!carmen_vascocore_history.started) {
     
     /* THE FIRST SCAN WILL BE MAPPED TO 0/0 */
     estpos.x      = 0.0;
@@ -105,7 +104,7 @@ vascocore_scan_match( carmen_laser_laser_message scan, carmen_point_t pos )
       fprintf( stderr, "***************************************\n" );
       fprintf( stderr, "* first scan ...\n" );
     }
-    firsttime = FALSE;
+    carmen_vascocore_history.started = TRUE;
     
   } else {
     

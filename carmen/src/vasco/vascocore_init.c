@@ -186,6 +186,7 @@ vascocore_init( int argc, char **argv )
   vascocore_get_params( argc, argv, &carmen_vascocore_settings );
   vascocore_initialize_maps( &carmen_vascocore_map );
   vascocore_alloc_history( &carmen_vascocore_history );
+  carmen_vascocore_history.started = 0;
 }
 
 void
@@ -200,4 +201,5 @@ void
 vascocore_reset()
 {
   carmen_vascocore_history.ptr = 0;
+  carmen_vascocore_history.started = 0;
 }

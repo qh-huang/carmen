@@ -44,8 +44,8 @@ extern GtkWidget *canvas;
 extern GtkWidget *scrolled_window;
 extern GdkPixmap *pixmap;
 
-#define DEFAULT_DRAWING_AREA_WIDTH 457
-#define DEFAULT_DRAWING_AREA_HEIGHT 457
+#define DEFAULT_DRAWING_AREA_WIDTH 382
+#define DEFAULT_DRAWING_AREA_HEIGHT 382
 
 extern int canvas_width;
 extern int canvas_height;

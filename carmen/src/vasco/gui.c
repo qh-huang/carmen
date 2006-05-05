@@ -831,7 +831,7 @@ static void main_window_init() {
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_window), 10);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window),
 				 GTK_POLICY_ALWAYS, GTK_POLICY_ALWAYS);
-  gtk_widget_set_usize(scrolled_window, 500, 500);
+  gtk_widget_set_usize(scrolled_window, 425, 425);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_window),
 					canvas);
 

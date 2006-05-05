@@ -304,28 +304,24 @@ static char *next_word(char *str) {
 /* read_next_laser_message - parses a log file, returning the next
    robot_laser_message struct */
 
-static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
+static int read_next_laser_message(carmen_FILE* fp, 
+				   carmen_robot_laser_message *
+				   robot_frontlaser)
+{
 
   char message_name[100];
-  char line[2000], *mark;
-  carmen_robot_laser_message *robot_frontlaser;
+  char line[9999], *mark;
   int frontlaser_offset_flag = 1, max_range_flag = 1;
 
   while(!carmen_feof(fp)) {
-    carmen_fgets(line, 2000, fp);
+    carmen_fgets(line, 9999, fp);
     sscanf(line, "%s", message_name);
     if(strcmp(message_name, "FLASER") == 0) {
-      robot_frontlaser = (carmen_robot_laser_message *)
-	calloc(1, sizeof(carmen_robot_laser_message));
-      carmen_test_alloc(robot_frontlaser);
       carmen_string_to_robot_laser_message_orig(line, robot_frontlaser);
-      return robot_frontlaser;
+      return 1;
     } else if(strcmp(message_name, "ROBOTLASER1") == 0) {
-      robot_frontlaser = (carmen_robot_laser_message *)
-	calloc(1, sizeof(carmen_robot_laser_message));
-      carmen_test_alloc(robot_frontlaser);
       carmen_string_to_robot_laser_message(line, robot_frontlaser);
-      return robot_frontlaser;
+      return 1;
     } else if ((frontlaser_offset_flag || max_range_flag) &&
 	       (strcmp(message_name, "PARAM") == 0)) {
       mark = next_word(line);
@@ -341,7 +337,7 @@ static carmen_robot_laser_message *read_next_laser_message(carmen_FILE* fp) {
       }
     }
   }
-  return NULL;
+  return 0;
 }
 
 static gint load_logfile_end(gpointer p) {
@@ -355,7 +351,7 @@ static gint load_logfile_end(gpointer p) {
   if (cancelled) {
     history_restore();
     status_print("Loading logfile...cancelled", "laserscans");
-    gtk_idle_add(load_logfile, NULL);
+    g_idle_add(load_logfile, NULL);
   }  
   else {
     scan_list = (carmen_robot_laser_message*) realloc(scan_list, num_scans * 
@@ -410,29 +406,32 @@ static gint load_logfile_end(gpointer p) {
   return FALSE;
 }
 
-static gint load_scan(gpointer p) {
-
-  carmen_robot_laser_message *front_laser = NULL;
-  int array_length = *((int *) p);
+static gint load_scan(gpointer p) 
+{
+  carmen_robot_laser_message front_laser;
+  int array_length = *((int *)p);
   int cancel = 0;
+  int valid;
 
   g_mutex_lock(laserscans_mutex);
   cancel = !loading_scans;
   g_mutex_unlock(laserscans_mutex);
 
   if (cancel) {
-    gtk_idle_add(load_logfile_end, (gpointer) 1);
+    g_idle_add(load_logfile_end, (gpointer) 1);
     free(p);
     return FALSE;
   }
+
+  memset(&front_laser, 0, sizeof(carmen_robot_laser_message));
 
   if (num_scans % 25 == 0)
     gtk_progress_set_value(GTK_PROGRESS(progress_bar),
       gtk_progress_get_value(GTK_PROGRESS(progress_bar)) + 0.01);
 
   if (!carmen_feof(logfile)) {
-    front_laser = read_next_laser_message(logfile);
-    if(front_laser != NULL) {
+    valid = read_next_laser_message(logfile, &front_laser);
+    if(valid) {
       if(num_scans >= array_length) {
 	array_length += 1000;
 	if (scan_list) {
@@ -446,15 +445,14 @@ static gint load_scan(gpointer p) {
 	  carmen_test_alloc(scan_list);
 	}
       }
-      scan_list[num_scans].laser_pose.x = front_laser->laser_pose.x;
-      scan_list[num_scans].laser_pose.y = front_laser->laser_pose.y;
-      scan_list[num_scans].laser_pose.theta = front_laser->laser_pose.theta;
-      scan_list[num_scans].num_readings = front_laser->num_readings;
-      scan_list[num_scans].range = front_laser->range;
-      scan_list[num_scans].config = front_laser->config;
+      scan_list[num_scans].laser_pose.x = front_laser.laser_pose.x;
+      scan_list[num_scans].laser_pose.y = front_laser.laser_pose.y;
+      scan_list[num_scans].laser_pose.theta = front_laser.laser_pose.theta;
+      scan_list[num_scans].num_readings = front_laser.num_readings;
+      scan_list[num_scans].range = front_laser.range;
+      scan_list[num_scans].config = front_laser.config;
       num_scans++;
-      free(front_laser->tooclose);
-      free(front_laser);
+      carmen_erase_structure(&front_laser, sizeof(carmen_robot_laser_message));
     }
     
     *((int *) p) = array_length;
@@ -462,7 +460,7 @@ static gint load_scan(gpointer p) {
   }
   else {
     free(p);
-    gtk_idle_add(load_logfile_end, 0);
+    g_idle_add(load_logfile_end, 0);
     return FALSE;
   }
 }
@@ -504,7 +502,7 @@ static gint load_logfile_begin(gpointer p __attribute__ ((unused))) {
   array_length_p = (int *) calloc(1, sizeof(int));
   carmen_test_alloc(array_length_p);
   *array_length_p = 0;
-  gtk_idle_add(load_scan, array_length_p);
+  g_idle_add(load_scan, array_length_p);
 
   return FALSE;
 }
@@ -517,14 +515,15 @@ gint load_logfile(gpointer p __attribute__ ((unused))) {
   }
   if(carmen_file_extension(logfilename) == NULL ||
      (strcmp(carmen_file_extension(logfilename), ".log") != 0 &&
-      strcmp(carmen_file_extension(logfilename), ".gz") != 0)) {
-    status_print("Error: logfile must have .log or .gz extension.",
+      strcmp(carmen_file_extension(logfilename), ".gz") != 0 &&
+      strcmp(carmen_file_extension(logfilename), ".clf") != 0) ) {
+    status_print("Error: logfile must have .clf, .log or .gz extension.",
 		 "laserscans");
     return FALSE;
   }
 
   status_print("Loading logfile...", "laserscans");
-  gtk_idle_add(load_logfile_begin, NULL);
+  g_idle_add(load_logfile_begin, NULL);
 
   return FALSE;
 }
@@ -626,7 +625,7 @@ void set_scan_range_min(GtkAdjustment *adj __attribute__ ((unused)),
   if (scan_range_mid < scan_range_min)
     gtk_adjustment_set_value(GTK_ADJUSTMENT(scan_range_mid_adj), scan_range_min);
 
-  gtk_idle_add(laser_scans_display, NULL);
+  g_idle_add(laser_scans_display, NULL);
 }
 
 void set_scan_range_mid(GtkAdjustment *adj __attribute__ ((unused)),
@@ -677,7 +676,7 @@ void set_scan_range_mid(GtkAdjustment *adj __attribute__ ((unused)),
 
   (GTK_ADJUSTMENT(scan_range_mid_adj))->value = scan_range_mid = mid;
 
-  gtk_idle_add(laser_scans_display, NULL);
+  g_idle_add(laser_scans_display, NULL);
 }
 
 void set_scan_range_max(GtkAdjustment *adj __attribute__ ((unused)),
@@ -732,7 +731,7 @@ void set_scan_range_max(GtkAdjustment *adj __attribute__ ((unused)),
   if (scan_range_mid > scan_range_max)
     gtk_adjustment_set_value(GTK_ADJUSTMENT(scan_range_mid_adj), scan_range_max);
 
-  gtk_idle_add(laser_scans_display, NULL);
+  g_idle_add(laser_scans_display, NULL);
 }
 
 void set_scan_range(int min, int max) {

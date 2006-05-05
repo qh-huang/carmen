@@ -374,7 +374,7 @@ static gint scans_to_egrid(gpointer p __attribute__ ((unused))) {
 				       egrid_params[LONG_RANGE],
 				       egrid_params[WALL_THICKNESS]);
 
-  gtk_idle_add(scan_to_egrid, scan_p);
+  g_idle_add(scan_to_egrid, scan_p);
 
   return FALSE;
 }
@@ -495,7 +495,7 @@ static void egrid_dialog_submit(GtkWidget *w __attribute__ ((unused)),
 
     gtk_widget_hide(egrid_dialog);
 
-    gtk_idle_add(scans_to_egrid, NULL);
+    g_idle_add(scans_to_egrid, NULL);
   }
 }
 
@@ -711,7 +711,7 @@ static void egrid_file_ok_sel(GtkWidget *w __attribute__ ((unused)),
   }
 
   gtk_widget_hide(egrid_file_save_window);
-  gtk_idle_add(egrid_file_save_description_dialog_popup, NULL);
+  g_idle_add(egrid_file_save_description_dialog_popup, NULL);
 }
 
 static void egrid_file_cancel_sel(GtkWidget *w __attribute__ ((unused)),

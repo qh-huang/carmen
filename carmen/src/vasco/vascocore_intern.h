@@ -77,6 +77,7 @@ typedef struct {
 
 typedef struct {
   
+  int                                    started;
   int                                    length;
   int                                    ptr;
   carmen_vascocore_extd_laser_t        * data;
