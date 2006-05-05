@@ -34,29 +34,31 @@
 #include "orc.h"
 
 int main( int argn, char **argv ){
-
+  argn = argn;
+  argv = argv;
+  int count;
   fprintf( stderr,  " started program... " );
   orc_comms_impl_t *impl = orc_rawprovider_create("/dev/ttyUSB0");
   
   orc_t *orc = orc_create( impl  );
   fprintf( stderr, " made orc \n" );
 
-  orc_motor_set( orc, 0, -113 );
-  orc_motor_set( orc, 2, 15 );
+  orc_motor_set( orc, 0, -127 );
+  orc_motor_set( orc, 2, 127 );
 
-  int count = orc_quadphase_read( orc, 1 );
+  count = orc_quadphase_read( orc, 1 );
   fprintf( stderr, "encoder count = %d \n", count );
 
   sleep(1);
-  int count = orc_quadphase_read( orc, 1 );
+  count = orc_quadphase_read( orc, 1 );
   fprintf( stderr, "encoder count = %d \n", count );
   
   sleep(1);
-  int count = orc_quadphase_read( orc, 1 );
+  count = orc_quadphase_read( orc, 1 );
   fprintf( stderr, "encoder count = %d \n", count );
 
   sleep(1);
-  int count = orc_quadphase_read( orc, 1 );
+  count = orc_quadphase_read( orc, 1 );
   fprintf( stderr, "encoder count = %d \n", count );
 
   orc_motor_set( orc, 0, 0 );

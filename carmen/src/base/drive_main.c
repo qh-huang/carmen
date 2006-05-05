@@ -36,11 +36,11 @@ static double current_acceleration = 0;
 static double deceleration;
 static carmen_robot_config_t robot_config;
 static carmen_base_odometry_message odometry;
-static carmen_base_binary_data_message binary_data;
+//static carmen_base_binary_data_message binary_data;
 static double reset_time = 0;
 static double relative_wheelbase;
 static double relative_wheelsize;
-
+static  carmen_base_velocity_message current_vel_command;
 static int use_hardware_integrator = 1;
 static int use_sonar = 1;
 static carmen_base_sonar_message sonar;
@@ -95,9 +95,6 @@ initialize_robot(void)
   reset_time = carmen_get_time();
   odometry.host = carmen_get_host();
 
-  binary_data.host = carmen_get_host();
-  binary_data.size = 0;
-  
   return 0;
 }
 
@@ -203,7 +200,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 {
   IPC_RETURN_TYPE err;
   carmen_base_velocity_message vel;
-  int base_err;
+  int base_err = 0;
   FORMATTER_PTR formatter;
 
   formatter = IPC_msgInstanceFormatter(msgRef);
@@ -214,6 +211,26 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_test_ipc_return(err, "Could not unmarshall", 
 			 IPC_msgInstanceName(msgRef));
 
+  if(vel.tv == 0 && vel.rv ==0){
+    carmen_warn("S");
+  }
+  else if(vel.tv < 0.05 && vel.rv <-.05){
+    carmen_warn("R");
+  }
+  else if(vel.tv < 0.05 && vel.rv >.05){
+    carmen_warn("L");
+  }
+  else if(vel.tv > 0.05 && vel.rv <.05){
+    carmen_warn("F");
+  }
+  else if(vel.tv < -0.05 && vel.rv <.05){
+    carmen_warn("R");
+  }
+  else{
+    carmen_warn("B");
+  }
+
+  carmen_warn("1");
   if(vel.tv == 0 && vel.rv == 0) 
     {
       if (moving) 
@@ -227,7 +244,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	  while (base_err < 0);
 	  moving = 0;
 	}
-      carmen_warn("S");
+  
     }
   else if (!moving) 
     {
@@ -240,7 +257,7 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	    initialize_robot();
 	} 
       while (base_err < 0);
-      carmen_warn("V");
+      //carmen_warn("V");
     }  
 
   if (odometry_inverted)
@@ -252,13 +269,20 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       vel.rv /= relative_wheelsize;
       vel.rv /= relative_wheelbase;
     }
-
+  carmen_warn("2");
   do 
     {
-      base_err = carmen_base_direct_set_velocity(vel.tv, vel.rv);
+      //carmen_warn("set_velocity");
+      //carmen_base_direct_reset();
+      current_vel_command.tv = vel.tv;
+      current_vel_command.rv = vel.rv;
+      //base_err = carmen_base_direct_set_velocity(vel.tv, vel.rv);
+      
+      fprintf(stderr, "error: %d", base_err);
+      //base_err = 0;
       last_motion_command = carmen_get_time();
-      if (base_err < 0)
-	initialize_robot();
+      //if (base_err < 0)
+      //initialize_robot();
     } 
   while (base_err < 0);
 }
@@ -296,7 +320,7 @@ binary_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 static void 
 reset_odometry()
 {
- printf("Odometry Reset...\n");
+  printf("Odometry Reset...\n");
   odometry.x=0;
   odometry.y=0;
   odometry.theta=0;
@@ -437,10 +461,15 @@ carmen_base_run(void)
   IPC_RETURN_TYPE err;
   int index;
   static carmen_base_reset_occurred_message reset = {0, 0};  
-  int base_err;
+  int base_err=0;
   double tv, rv;
   double displacement, rotation;
   carmen_base_binary_data_message binary_data;
+  binary_data.host = carmen_get_host();
+  binary_data.size = 0;
+  binary_data.timestamp = carmen_get_time();
+  binary_data.data="";
+
 
   if (reset_time > reset.timestamp) {
     reset.timestamp = reset_time;
@@ -450,6 +479,7 @@ carmen_base_run(void)
     return 1;
   }  
 
+  //fprintf(stderr, "1.1");
   if (moving && carmen_get_time() - last_motion_command > motion_timeout) {
     moving = 0;
     do {
@@ -457,14 +487,14 @@ carmen_base_run(void)
       if (base_err < 0)
 	initialize_robot();
     } while (base_err < 0);
-    carmen_warn("T");      
+    carmen_warn("T");
     do {
       base_err = carmen_base_direct_set_velocity(0, 0);
       if (base_err < 0)
 	initialize_robot();
     } while (base_err < 0);      
   }
-
+  //fprintf(stderr, "2.1");
   do {
     double packet_timestamp=0.;
     base_err = carmen_base_direct_update_status(&packet_timestamp);
@@ -476,18 +506,21 @@ carmen_base_run(void)
       initialize_robot();
   } while (base_err < 0); 
 
+  //fprintf(stderr, "2.12");
+
   carmen_base_direct_get_binary_data(&(binary_data.data), &(binary_data.size));
-  binary_data.host = carmen_get_host();
   /*
   Giorgio 03.03.2006
 	The binary data timestamp should be considered when reading the 1st byte of the packet.
   */
-  binary_data.timestamp = carmen_get_time();
+  //fprintf(stderr, "2.13\n");
+  //fprintf(stderr, "name %s, timestamp %f, host %s, size %d", binary_data.data, binary_data.timestamp, binary_data.host, binary_data.size);
   IPC_publishData(CARMEN_BASE_BINARY_DATA_NAME, &binary_data);
-
+  //fprintf(stderr, "2.14\n");
   if (base_err > 0)
     return 2;
 
+  //fprintf(stderr, "3.1\n");
   do {
     if (!use_hardware_integrator) {
       base_err = carmen_base_direct_get_state
@@ -498,7 +531,7 @@ carmen_base_run(void)
 	integrate_odometry(displacement, rotation, tv, rv);
     } else {
       base_err = carmen_base_direct_get_integrated_state
-	(&(odometry.x), &(odometry.y), &(odometry.theta), &(odometry.tv), 
+	(&(odometry.x),&(odometry.y), &(odometry.theta), &(odometry.tv), 
 	 &(odometry.rv));
       if (base_err < 0)
 	initialize_robot();
@@ -590,10 +623,18 @@ main(int argc, char **argv)
 
   if (carmen_base_start(argc, argv) < 0)
     exit(-1);
-
+ 
+  current_vel_command.tv = 0;
+  current_vel_command.rv = 0;
   while(1) {
     if (carmen_base_run() == 1)
       fprintf(stderr, ".");
+    
+    //fprintf(stderr, "TV:%f, RV:%f", current_vel_command.tv, current_vel_command.rv);
+    carmen_base_direct_set_velocity(current_vel_command.tv, current_vel_command.rv);
+    //fprintf(stderr, "test\n");
+
+
     carmen_ipc_sleep(0.1);
   }
 

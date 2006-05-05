@@ -38,11 +38,11 @@
 
 #define ORC_MAX_ANGULAR_VEL 8.0 // Radians / seconds
 
-#define ORC_MAX_PWM 127
+#define ORC_MAX_PWM 80
 // #define ORC_FF_GAIN ((ORC_MAX_PWM / ORC_MAX_ANGULAR_VEL) * 0.9)
-#define ORC_P_GAIN 5 //20
-#define ORC_D_GAIN 3 //5
-#define ORC_I_GAIN .5 //0
+#define ORC_P_GAIN 20
+#define ORC_D_GAIN 10 //3 //5
+#define ORC_I_GAIN 0 //0
 
 #define ORC_WHEEL_DIAMETER .2525
 #define ORC_WHEEL_BASE .37

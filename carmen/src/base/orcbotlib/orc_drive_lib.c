@@ -93,14 +93,6 @@ int carmen_base_direct_initialize_robot(char *model, char *dev){
   s_orc = orc_create( impl );
   s_initialized = 1;
 
-  // initialized velocities
-  s_time = carmen_get_time();
-  s_left_tick = orc_quadphase_read( s_orc, ORC_LEFT_ENCODER_PORT );
-  s_right_tick = orc_quadphase_read( s_orc, ORC_RIGHT_ENCODER_PORT ); 
-  
-  orc_motor_set_signed( s_orc, ORC_LEFT_MOTOR, 0 );
-  orc_motor_set_signed( s_orc, ORC_RIGHT_MOTOR, 0 );
-
   // reset all variables to defaults
   carmen_base_direct_reset();
   return 0;
@@ -119,11 +111,27 @@ int carmen_base_direct_shutdown_robot(void){
 
 int carmen_base_direct_reset(void)
 {
-  // zero position state
+
+  // initialize time
+  s_time = carmen_get_time();
+
+  // zero all state variables
   printf("carmen_base_direct_reset\n");
   s_x = 0;
   s_y = 0;
   s_theta = 0;
+  s_left_velocity = 0; 
+  s_right_velocity = 0;
+  s_left_error_prev = 0;
+  s_right_error_prev = 0;
+  s_left_displacement = 0;
+  s_right_displacement = 0;
+  s_left_pwm = 0;
+  s_right_pwm = 0;
+  //s_ignore_left_d_term = 1;
+  //s_ignore_right_d_term = 1;
+
+  // set ticks to current encoder values
   s_left_tick = orc_quadphase_read( s_orc, ORC_LEFT_ENCODER_PORT );
   s_right_tick = orc_quadphase_read( s_orc, ORC_RIGHT_ENCODER_PORT );
 
@@ -198,6 +206,11 @@ void carmen_base_command_velocity(double desired_velocity,
 	    , command_pwm , current_pwm, correction, carmen_round( correction ) );
     */
 
+    // make sure that the command pwm is within bounds
+    // note: should this be the only check vs. also bounding the ang vel??
+    if (abs(command_pwm) > ORC_MAX_PWM)
+      command_pwm = (command_pwm > 0 ? ORC_MAX_PWM : -ORC_MAX_PWM);
+
     // update values for the appropriate motor
     if (WHICH_MOTOR == ORC_LEFT_MOTOR) {
       s_left_error_prev = angular_velocity_error * (ORC_WHEEL_DIAMETER/2.0);
@@ -209,15 +222,10 @@ void carmen_base_command_velocity(double desired_velocity,
       s_right_pwm = command_pwm;
     }
 
-    // make sure that the command pwm is within bounds
-    // note: should this be the only check vs. also bounding the ang vel??
-    if (abs(command_pwm) > ORC_MAX_PWM)
-      command_pwm = (command_pwm > 0 ? ORC_MAX_PWM : -ORC_MAX_PWM);
-  
     // debug outputs
-    printf("Setting motor %d: current pwm: %d command pwm %d angular error= %f p=%f i %f d %f\n",
-	   WHICH_MOTOR, current_pwm, command_pwm , angular_velocity_error,
-           pTerm, iTerm, dTerm);
+    //printf("Setting motor %d: current pwm: %d command pwm %d angular error= %f p=%f i %f d %f\n",
+    //WHICH_MOTOR, current_pwm, command_pwm , angular_velocity_error,
+    //pTerm, iTerm, dTerm);
     /*
     printf("   with PID terms p %f, i %f, d %f \n", 
 	   pTerm, iTerm, dTerm );
@@ -230,7 +238,7 @@ void carmen_base_command_velocity(double desired_velocity,
   }
 
   // set the pwm
-  //  printf( "motor %d set to %d \n", WHICH_MOTOR, command_pwm );
+  printf("|M%d to %d|\n", WHICH_MOTOR, command_pwm );
   orc_motor_set_signed( s_orc, WHICH_MOTOR, command_pwm );
 }
 
@@ -243,8 +251,8 @@ int carmen_base_direct_set_velocity(double new_tv, double new_rv) //
   right_desired_velocity += new_rv/2;
   left_desired_velocity -= new_rv/2;
 
-  printf("carmen_base_direct_set_velocity: tv=%.2f, rv=%.2f\n", 
-	 new_tv, new_rv);
+  //printf("carmen_base_direct_set_velocity: tv=%.2f, rv=%.2f\n", 
+  //new_tv, new_rv);
   double last_update_time;
   carmen_base_direct_update_status( &last_update_time );
 
@@ -318,9 +326,9 @@ int carmen_base_direct_update_status(double* packet_timestamp) //
 
 
 
-  printf( "  *** ticks: left %d, right %d \n", left_delta, right_delta );
-  printf( "  *** ticks: left %d, right %d \n", left_delta_velocity , right_delta_velocity );
-  printf( "  *** vels: left %f, right %f \n", s_left_velocity, s_right_velocity );
+  //printf( "  *** ticks: left %d, right %d \n", left_delta, right_delta );
+  //printf( "  *** ticks: left %d, right %d \n", left_delta_velocity , right_delta_velocity );
+  //printf( "  *** vels: left %f, right %f \n", s_left_velocity, s_right_velocity );
 
   // update position information
   double displacement = ( s_left_displacement + s_right_displacement )/2;
@@ -499,11 +507,11 @@ int carmen_base_direct_send_binary_data(unsigned char *data, int size)//
   return 0;
 }
 
-int  carmen_base_direct_get_binary_data(unsigned char **data
-					__attribute__ ((unused)), 
-					int *size __attribute__ ((unused)))//
+int  carmen_base_direct_get_binary_data(unsigned char **data,
+					int *size)
 {
-
+  *data = NULL;
+  *size = 0;
   return 0;
 }
 
