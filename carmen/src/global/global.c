@@ -1521,6 +1521,8 @@ void carmen_publish_heartbeat(char *module_name)
   err = IPC_publishData(CARMEN_HEARTBEAT_NAME, &msg);
   carmen_test_ipc_exit(err, "Could not publish",
 		       CARMEN_HEARTBEAT_NAME);
+
+  free(msg.module_name);
 }
 
 void
