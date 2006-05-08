@@ -25,7 +25,7 @@ drive_main and arm_main may call
 orc_arm_lib.c and orc_drive_lib.c implement the functions in
 drive_low_level and arm_low_level for the orc in particular.  they
 call functions from orclib.  they store pointers to the orc created by
-base_main
+drive and arm main.
 
 * orc library: (located in the orclib sub directory )
 
