@@ -17,10 +17,8 @@ liborc.a: $(ORC_OBJS)
 
 liborc.so: $(ORC_OBJS)
 
-#orctest: main.o liborc.a
+orc_test: orc_test.o liborc.a
 #	$(CC) $(ORCTEST_OBJS) -o $@ -lpthread -lorc -L.
 #	$(CC) $(ORCTEST_OBJS) -o $@ -lpthread liborc.a
-
-orc_test: orc_test.o liborc.a
 
 include ../../../Makefile.rules
