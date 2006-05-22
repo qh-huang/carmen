@@ -6,10 +6,10 @@ CFLAGS += -O0 -g
 
 ifndef NO_GRAPHICS
 CFLAGS 	+= 	-Wno-shadow
-IFLAGS 	+= 	`$(GTK_CONFIG) --cflags` `$(GTHREAD_CONFIG) --cflags`
+IFLAGS 	+= 	`$(GTK_CONFIG) --cflags gthread`
 LFLAGS 	+= 	-lmap_io -lparam_interface -llaser_interface \
 		-lglobal -lglobal_graphics -lipc -lrobot_interface \
-		 `$(GTK_CONFIG) --libs` `$(GTHREAD_CONFIG) --libs`
+		`$(GTK_CONFIG) --libs gthread`
 endif
 
 MODULE_NAME 	= 	VASCO
