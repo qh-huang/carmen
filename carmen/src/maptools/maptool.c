@@ -42,7 +42,7 @@ static void main_usage(char *prog_name)
 #ifndef NO_GRAPHICS
 	     "tomap, "
 #endif
-	     "rotate, minimize, addplace, strip,"
+	     "rotate, minimize, add_place, strip,"
 	     " info\n"
 	     "Run %s help <action> to get help on using each action.\n\n",
 	     prog_name, prog_name);  
@@ -108,7 +108,7 @@ static void help(int argc, char **argv)
   else if (carmen_strcasecmp(action, "minimize") == 0)
     carmen_die("\nUsage: %s minimize <in map filename> <out map filename>\n\n",
 	       argv[0]);
-  else if (carmen_strcasecmp(action, "addplace") == 0) {
+  else if (carmen_strcasecmp(action, "add_place") == 0) {
     fprintf(stderr, "\nUsage: %s <mapfilename> <placename> <place params>\n",
 	    argv[0]);
     fprintf(stderr, "       2, 3, or 6 place parameters can be given.\n");
@@ -123,7 +123,7 @@ static void help(int argc, char **argv)
     fprintf(stderr, "\nAlso: theta is in %sDEGREES%s. I will print out the "
 	    "conversion to radians\n", carmen_red_code, carmen_normal_code);
     fprintf(stderr, "automatically for you.\n\n");
-    fprintf(stderr, "Note that unlike rotate, minimize, etc., addplace "
+    fprintf(stderr, "Note that unlike rotate, minimize, etc., add_place "
 	    "performs an in-place edit\nto the map, and creates a backup "
 	    "copy.\n\n");
     exit(0);
@@ -533,10 +533,10 @@ static void add_place(int argc, char *argv[])
   places = place_list.places;
 
   if(num_args == 4) {
-    strcpy(places[place_list.num_places - 1].name, argv[next_arg+1]);
+    strcpy(places[place_list.num_places - 1].name, argv[next_arg]);
     places[place_list.num_places - 1].type = CARMEN_NAMED_POSITION_TYPE;
-    places[place_list.num_places - 1].x = atof(argv[next_arg+2]);
-    places[place_list.num_places - 1].y = atof(argv[next_arg+3]);
+    places[place_list.num_places - 1].x = atof(argv[next_arg+1]);
+    places[place_list.num_places - 1].y = atof(argv[next_arg+2]);
   }
   else if(num_args == 5) {
     strcpy(places[place_list.num_places - 1].name, argv[next_arg]);
