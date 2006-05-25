@@ -311,8 +311,41 @@ extern inline double carmen_distance(carmen_point_p p1, carmen_point_p p2)
 
 void carmen_get_bresenham_parameters(int p1x, int p1y, int p2x, int p2y, 
 				   carmen_bresenham_param_t *params);
-void carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y);
-int carmen_get_next_point(carmen_bresenham_param_t *params);
+extern inline void carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y)
+{
+  if (params->UsingYIndex) 
+    {
+      *y = params->XIndex;
+      *x = params->YIndex;
+      if (params->Flipped)
+	*x = -*x;
+    } 
+  else 
+    {
+      *x = params->XIndex;
+      *y = params->YIndex;
+      if (params->Flipped)
+	*y = -*y;
+    }
+}
+
+extern inline int carmen_get_next_point(carmen_bresenham_param_t *params)
+{
+  if (params->XIndex == params->X2)
+    {
+      return 0;
+    }
+  params->XIndex += params->Increment;
+  if (params->DTerm < 0 || (params->Increment < 0 && params->DTerm <= 0))     
+    params->DTerm += params->IncrE;
+  else 
+    {
+      params->DTerm += params->IncrNE;
+      params->YIndex += params->Increment;
+    }
+  return 1;
+}
+
 int carmen_sign(double num);
 
 void carmen_rect_to_polar(double x, double y, double *r, double *theta);

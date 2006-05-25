@@ -737,7 +737,7 @@ carmen_get_bresenham_parameters(int p1x, int p1y, int p2x, int p2y, carmen_brese
   params->YIndex = params->Y1;
 }
 
-void 
+inline void 
 carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y) 
 { 
   if (params->UsingYIndex) 
@@ -756,7 +756,7 @@ carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y)
     }
 }
 
-int 
+inline int 
 carmen_get_next_point(carmen_bresenham_param_t *params) 
 {
   if (params->XIndex == params->X2)
