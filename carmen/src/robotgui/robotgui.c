@@ -1045,14 +1045,13 @@ redraw(void)
     draw_robot_sonar(pixmap, &sonar);  
 
   /* In case of screenshots break glass */
-  /* 
-  if(received_front_laser) {
+
+  if(0 && received_front_laser) {
     sprintf(filename, "robotgui%02d.png", screenshot_count++);
     carmen_graphics_write_pixmap_as_png(pixmap, filename, 0, 0, 
 					drawing_area->allocation.width,
 					drawing_area->allocation.height);
   }
-  */
 
   /* udpate the whole window */
 
