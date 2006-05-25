@@ -419,7 +419,7 @@ switch_localize_display(GtkAction *action,
   } else if (strcmp(name, "SimShowTruePosition") == 0) {
     toggle = GTK_TOGGLE_ACTION(action);
     nav_panel_config->show_true_pos = gtk_toggle_action_get_active(toggle);
-  } else if (strcmp(name, "SimShowTruePosition") == 0) {
+  } else if (strcmp(name, "SimShowObjects") == 0) {
     toggle = GTK_TOGGLE_ACTION(action);
     nav_panel_config->show_simulator_objects = 
       gtk_toggle_action_get_active(toggle);
@@ -1321,7 +1321,7 @@ save_image(gpointer data __attribute__ ((unused)),
   y_size = carmen_fmin(gdk_pixbuf_get_height(map_view->current_pixbuf), 
 		       map_view->port_size_y);
 
-  sprintf(filename, "%s%d.png", 
+  sprintf(filename, "%s%02d.png", 
 	  carmen_extract_filename(map_view->internal_map->config.map_name), 
 	  counter++);
 
