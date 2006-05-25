@@ -933,6 +933,9 @@ redraw(void)
   static carmen_point_t last_rear_odom, current_rear_odom;
   static GdkFont *font;
 
+  static char filename[1024];
+  static int screenshot_count = 0;
+
   /* clear all polygons */
   if(first) {
     memset(front_free_polygons, 0, MAX_SAVED_POLYGONS*sizeof(GdkPoint *));
@@ -1041,11 +1044,14 @@ redraw(void)
   else if (received_sonar)
     draw_robot_sonar(pixmap, &sonar);  
 
-  /* In case of screenshots break glass
-     if(new_laser)
-     save_pixmap_screenshot("video", pixmap, 0, 0,
-     drawing_area->allocation.width,
-     drawing_area->allocation.height);
+  /* In case of screenshots break glass */
+  /* 
+  if(received_front_laser) {
+    sprintf(filename, "robotgui%02d.png", screenshot_count++);
+    carmen_graphics_write_pixmap_as_png(pixmap, filename, 0, 0, 
+					drawing_area->allocation.width,
+					drawing_area->allocation.height);
+  }
   */
 
   /* udpate the whole window */
