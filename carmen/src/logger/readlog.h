@@ -177,6 +177,20 @@ char *carmen_string_to_gps_gpgga_message(char *string,
 
 
 
+/** Guesses the field of view for a SICK in case the configuration is underspecified.
+ * @param number of laser beams
+ * @returns the field of view if a SICK with that number of beams
+ **/
+double carmen_laser_guess_fov(int num_beams);
+
+/** Guesses the angle increment (angle between two beams) of a SICK in case the configuration is underspecified.
+ * @param number of laser beams
+ * @returns the angle increment 
+ **/
+double carmen_laser_guess_angle_increment(int num_beams);
+
+
+
 #ifdef __cplusplus
 }
 #endif
