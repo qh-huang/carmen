@@ -1,31 +1,3 @@
- /*********************************************************
- *
- * This source code is part of the Carnegie Mellon Robot
- * Navigation Toolkit (CARMEN)
- *
- * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
- * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
- * and Jared Glover
- *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
- * either version 2 of the License, or (at your option)
- * any later version.
- *
- * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
- * details.
- *
- * You should have received a copy of the GNU General 
- * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
- * Suite 330, Boston, MA  02111-1307 USA
- *
- ********************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -690,6 +662,86 @@ log2pic_read_carmen_map( char * filename, logtools_grid_map2_t * map, double zoo
 }
 
 void
+log2pic_write_bee_map( logtools_grid_map2_t *map, int clip )
+{
+  FILE    * ofp;
+  
+  int       globalSizeX = 0, globalSizeY = 0;
+  int       extendedSizeX = 0, extendedSizeY = 0; 
+  int       top = 0, bottom = 0;
+  int       left = 0, right = 0, x, y;
+
+  if ((ofp = fopen( settings.outfilename, "w")) == 0){
+    fprintf(stderr, "# ERROR: can't write data map file %s\n",
+	    settings.outfilename );
+    return;
+  }
+
+  if (!clip) {
+    if (map->mapsize.x < MINIMUM_MAP_SIZE)
+      extendedSizeX = MINIMUM_MAP_SIZE;
+    else
+      extendedSizeX = ((map->mapsize.x / MAP_SIZE_STEP) + 1) * MAP_SIZE_STEP;
+    
+    if (map->mapsize.y < MINIMUM_MAP_SIZE)
+      extendedSizeY = MINIMUM_MAP_SIZE;
+    else
+      extendedSizeY = ((map->mapsize.y / MAP_SIZE_STEP) + 1) * MAP_SIZE_STEP;
+    
+    top         = (extendedSizeY - map->mapsize.y) / 2;
+    bottom      = extendedSizeY - top - map->mapsize.y;
+    left        = (extendedSizeX - map->mapsize.x) / 2;
+    right       = extendedSizeX - left - map->mapsize.x;
+    
+    globalSizeX = extendedSizeX * map->resolution;
+    globalSizeY = extendedSizeY * map->resolution;
+  
+    fprintf( ofp, "robot_specifications->global_mapsize_x  %d\n", globalSizeY);
+    fprintf( ofp, "robot_specifications->global_mapsize_y  %d\n", globalSizeX);
+    fprintf( ofp, "robot_specifications->resolution %d\n", (int) map->resolution);
+    
+    fprintf( ofp, "global_map[0]: %d %d\n", extendedSizeY, extendedSizeX);
+    
+    for (x = 0; x < left; x++){
+      printUnknown(ofp, extendedSizeY);
+      fprintf( ofp, "\n");
+    }
+  } else {
+
+    fprintf( ofp, "robot_specifications->global_mapsize_x  %d\n",
+	     map->mapsize.y );
+    fprintf( ofp, "robot_specifications->global_mapsize_y  %d\n",
+	     map->mapsize.x) ;
+    fprintf( ofp, "robot_specifications->resolution %d\n", (int) map->resolution);
+    fprintf( ofp, "global_map[0]: %d %d\n", map->mapsize.y, map->mapsize.x );
+  }
+
+  for (x = 0; x < map->mapsize.x; x++){
+    if (!clip)
+      printUnknown( ofp, top);
+    for (y = 0; y < map->mapsize.y; y++)
+      if (map->mapsum[map->mapsize.x-x-1][map->mapsize.y-y-1] == 0)
+	fprintf(ofp, "-1.000 ");
+      else
+	fprintf(ofp, "%.3f ",
+		1.0-( map->maphit[map->mapsize.x-x-1][map->mapsize.y-y-1] /
+		      (double) map->mapsum[map->mapsize.x-x-1][map->mapsize.y-y-1] ) );
+    if (!clip)
+      printUnknown( ofp, bottom);
+    fprintf(ofp, "\n");
+  }
+  
+  if (!clip) {
+    for (x = 0; x < right; x++){
+      printUnknown( ofp, extendedSizeY);
+      fprintf( ofp, "\n");
+    }
+  }
+  
+  fclose(ofp);
+} 
+  
+void
 log2pic_write_carmen_map( logtools_grid_map2_t * map )
 {
   char                creator[MAX_STRING_LENGTH];
@@ -790,15 +842,16 @@ print_usage( void )
 {
   fprintf(stderr,
 	  "\nusage: log2pic [options] <LOG-FILE> <PIC-FILE>\n"
-	  "  -anim-step <STEP-SIZE>:    min distance between scans (in m)\n"
+	  "  -anim-step <STEP-SIZE>:    min distance between scans (in cm)\n"
 	  "  -anim-skip <NUM>:          skip NUM animation dumps (0: no skip\n"
 	  "  -animation:                write sep. pics for animation\n"
 	  "  -background <FILE>:        use background file\n"
+	  "  -bee-map:                  save in bee-map format\n"
 	  "  -bg-offset <X><Y>:         shift by <X>/<Y> pixels\n"
 	  "  -bg-color <COLOR>:         background color\n"
 	  "  -bg-map <FILE>:            read carmen-map as background image\n"
-	  "  -border <BORDER>:          add a border (in m)\n"
-	  "  -carmen-map:               save in carmen-map format\n"
+	  "  -border <BORDER>:          add a border (in cm)\n"
+ 	  "  -carmen-map:               save in carmen-map format\n"
 	  "  -convolve:                 convolve map with gaussian kerne;\n"
 	  "  -crop <X><Y><X><Y>:        crop part of the map (min,max):\n"
 	  "  -darken <FACTOR>:          darken the occ. cells\n"
@@ -809,26 +862,25 @@ print_usage( void )
 	  "  -gps-path:                 draw gps points\n"
 	  "  -id <ID>:                  set laser number\n"
 	  "  -kernel-size <NUM>:        size of the gaussian kernel (>0 and odd)\n"
-	  "  -maxrange <MAX-RANGE>:     max range for building maps (in m)\n"
+	  "  -maxrange <MAX-RANGE>:     max range for building maps\n"
 	  "  -no-scans:                 don't integrate the scans\n"
 	  "  -odds-model:               use odds-model to compute probs\n"
 	  "  -pathcolor <COLORNAME>:    color of the robot path\n"
-	  "  -pathwidth <WIDTH>:        width of the robot path (in m)\n"
-	  "  -raw:                      use RAWLASER scans\n"
-	  "  -start-pose <X><Y><O>:     start pose of the robot (in m, m, deg)\n"
+	  "  -pathwidth <WIDTH>:        width of the robot path\n"
+	  "  -start-pose <X><Y><O>:     start pose of the robot\n"
 	  "  -plot2d:                   save as 2d data file\n"
 	  "  -plot3d:                   save map as 3d data file\n"
-	  "  -pos-start <X><Y>:         pos of lower left bg-corner (in m)\n"
+	  "  -pos-start <X><Y>:         pos of lower left bg-corner\n"
 	  "  -rear-laser:               use rear laser instead of front laser\n"
-	  "  -res   <RES> <RES>:        resolution of the map (in m)\n"
-	  "  -res-x <RES>:              resolution in x direction (in m)\n"
-	  "  -res-y <RES>:              resolution in y direction (in m)\n"
+	  "  -res   <RES> <RES>:        resolution of the map\n"
+	  "  -res-x <RES>:              resolution in x direction\n"
+	  "  -res-y <RES>:              resolution in y direction\n"
 	  "  -rotate <ANGLE>:           rotate the map by ANGLE degree\n"
 	  "  -showpath:                 show robot path\n"
 	  "  -size:                     set the size of the output image\n"
 	  "  -static-prob:              probability for static observation\n"
 	  "  -to <NUM>:                 end animation with scan NUM\n"
-	  "  -usablerange <MAX-RANGE>:  max range for detecting corrupted beams (in m)\n"
+	  "  -usablerange <MAX-RANGE>:  max range for detecting corrupted beams\n"
 	  "  -utm-correct:              corrects gps positions for UTM tiles\n"
 	  "  -zoom <ZOOM>:              scale factor for the map (must be >=1.0)\n" );
 }
@@ -862,21 +914,23 @@ main( int argc, char** argv)
       settings.showpath = TRUE;
     } else if (!strcmp(argv[i],"-carmen-map")) {
       settings.format = CARMEN_MAP; 
+    } else if (!strcmp(argv[i],"-bee-map")) {
+      settings.format = BEE_MAP; 
     } else if (!strcmp(argv[i],"-res") && (argc>i+2)) {
-      settings.resolution_x = 100.0 * atof(argv[++i]);
+      settings.resolution_x = atof(argv[++i]);
       settings.resolution_y = settings.resolution_x;
     } else if (!strcmp(argv[i],"-res-x") && (argc>i+2)) {
-      settings.resolution_x = 100.0 * atof(argv[++i]);
+      settings.resolution_x = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-res-y") && (argc>i+2)) {
-      settings.resolution_y = 100.0 * atof(argv[++i]);
+      settings.resolution_y = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-zoom") && (argc>i+2)) {
       settings.zoom = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-pathcolor") && (argc>i+2)) {
       strncpy( settings.pathcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-pathwidth") && (argc>i+2)) {
-      settings.pathwidth = 100.0 * atof(argv[++i]);
+      settings.pathwidth = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-border") && (argc>i+1)) {
-      settings.border = 100.0 * atof(argv[++i]);
+      settings.border = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-bg-color") && (argc>i+1)) {
       strncpy( settings.bgcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-bg-map") && (argc>i+1)) {
@@ -884,8 +938,6 @@ main( int argc, char** argv)
       readmap = TRUE;
     } else if (!strcmp(argv[i],"-id") && (argc>i+1)) {
       settings.laser_id = atoi(argv[++i]);
-    } else if (!strcmp(argv[i],"-raw")) {
-      settings.laser_id = 10;
     } else if (!strcmp(argv[i],"-rear-laser")) {
       settings.flip = TRUE;
     } else if (!strcmp(argv[i],"-plot2d")) {
@@ -906,10 +958,10 @@ main( int argc, char** argv)
       settings.bgoffset.x = atof( argv[++i] );
       settings.bgoffset.y = atof( argv[++i] );
     } else if (!strcmp(argv[i],"-pos-start") && (argc>i+2)) {
-      settings.posstart.x = 100.0 * atof( argv[++i] );
-      settings.posstart.y = 100.0 * atof( argv[++i] );
+      settings.posstart.x = atof( argv[++i] );
+      settings.posstart.y = atof( argv[++i] );
     } else if (!strcmp(argv[i],"-maxrange") && (argc>i+1)) {
-      settings.max_range = 100.0 * atof(argv[++i]);
+      settings.max_range = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-rotate") && (argc>i+1)) {
       settings.rotation_angle = deg2rad(atof(argv[++i]));
     } else if (!strcmp(argv[i],"-display-arrow")) {
@@ -917,11 +969,11 @@ main( int argc, char** argv)
     } else if (!strcmp(argv[i],"-animation")) {
       settings.animation = TRUE;
     } else if (!strcmp(argv[i],"-anim-step") && (argc>i+1)) {
-      settings.anim_step = 100.0 * atof(argv[++i]);
+      settings.anim_step = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-anim-skip") && (argc>i+1)) {
       settings.anim_skip = atoi(argv[++i]);
     } else if (!strcmp(argv[i],"-usablerange") && (argc>i+1)) {
-      settings.usable_range = 100.0 * atof(argv[++i]);
+      settings.usable_range = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-darken") && (argc>i+1)) {
       settings.darken = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-endpoints")) {
@@ -957,8 +1009,8 @@ main( int argc, char** argv)
       isize.y = atoi(argv[++i]);
       settings.set_size = TRUE;
     } else if (!strcmp(argv[i],"-pos") && (argc>i+3)) {
-      settings.pos_x = 100.0 * atof(argv[++i]);
-      settings.pos_y = 100.0 * atof(argv[++i]);
+      settings.pos_x = atof(argv[++i]);
+      settings.pos_y = atof(argv[++i]);
       settings.pos_o = deg2rad(atof(argv[++i]));
     } else {
       print_usage();
@@ -983,7 +1035,7 @@ main( int argc, char** argv)
   strncpy( settings.infilename, argv[argc-2], MAX_STRING_LENGTH );
   strncpy( settings.outfilename, argv[argc-1], MAX_STRING_LENGTH );
 
-  if (settings.format==CARMEN_MAP) {
+  if (settings.format==CARMEN_MAP || settings.format==BEE_MAP) {
     settings.unknown_val = CARMEN_MAP_STD_VAL;
   }
   
@@ -1275,6 +1327,10 @@ main( int argc, char** argv)
   case CARMEN_MAP:
     log2pic_compute_map( rec, &map );
     log2pic_write_carmen_map( &map );
+    break;
+  case BEE_MAP:
+    log2pic_compute_map( rec, &map );
+    log2pic_write_bee_map( &map, 1 );
     break;
   }
   
