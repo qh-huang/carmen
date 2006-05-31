@@ -343,7 +343,7 @@ static int read_next_laser_message(carmen_FILE* fp,
 static gint load_logfile_end(gpointer p) {
 
   char buf[1024];
-  int i, cancelled = (int) p;
+  int i, cancelled = (long) p;
 
 
   carmen_fclose(logfile);

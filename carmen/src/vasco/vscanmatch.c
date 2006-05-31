@@ -34,7 +34,7 @@
 
 static gint end_scan_matching(gpointer data) {
 
-  int cancelled = (int) data;
+  long cancelled = (long) data;
 
   g_mutex_lock(laserscans_mutex);
   scan_matching = 0;
@@ -67,7 +67,7 @@ static gint scan_match(gpointer first) {
   if (stop)
     return FALSE;
 
-  if ((int)first) {
+  if ((long)first) {
     if (scan != 0)
       vascocore_reset();
     scan = scan_range_min;
@@ -106,7 +106,7 @@ static gint scan_match(gpointer first) {
   while (gtk_events_pending())
     gtk_main_iteration_do(0);
 
-  if ((int)first) {
+  if ((long)first) {
     g_idle_add(scan_match, 0);
     return FALSE;
   }

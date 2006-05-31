@@ -40,7 +40,7 @@
 #define TOOL_ZOOM_IN   6
 #define TOOL_ZOOM_OUT  7
 
-extern int tool;
+extern long tool;
 extern double button1_x, button1_y;
 
 extern GtkWidget *shift_button;
