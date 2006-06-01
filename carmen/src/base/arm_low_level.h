@@ -41,6 +41,7 @@ extern "C" {
     char *dev;
     int num_joints;
     carmen_arm_joint_t *joints;
+    double *link_lengths;
   } carmen_arm_model_t, *carmen_arm_model_p;
 
 
