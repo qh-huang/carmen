@@ -85,7 +85,7 @@ static gint scan_match(gpointer first) {
   laserscan.num_readings = scan_list[scan].num_readings;
   laserscan.range = scan_list[scan].range;
   laserscan.timestamp = 0.0;
-  strcpy(laserscan.host, "");
+  laserscan.host = (char *)calloc(1, sizeof(char));
   pos.x = scan_list[scan].laser_pose.x;
   pos.y = scan_list[scan].laser_pose.y;
   pos.theta = scan_list[scan].laser_pose.theta;
@@ -135,9 +135,6 @@ void do_scan_matching() {
     status_print("Ctrl-O opens a logfile", "tools");
     return;
   }
-
-  if (!g_thread_supported())
-    g_thread_init(NULL);
 
   if (!laserscans_mutex)
     laserscans_mutex = g_mutex_new();

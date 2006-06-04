@@ -2,14 +2,12 @@ include ../Makefile.conf
 
 LFLAGS +=  -lreadlog -lwritelog -lparam_interface -lglobal -lipc 
 
-CFLAGS += -O0 -g
-
 ifndef NO_GRAPHICS
 CFLAGS 	+= 	-Wno-shadow
-IFLAGS 	+= 	`$(GTK_CONFIG) --cflags gthread`
+IFLAGS 	+= 	`$(GTK_CONFIG) --cflags gthread-2.0`
 LFLAGS 	+= 	-lmap_io -lparam_interface -llaser_interface \
 		-lglobal -lglobal_graphics -lipc -lrobot_interface \
-		`$(GTK_CONFIG) --libs gthread`
+		`$(GTK_CONFIG) --libs gthread-2.0`
 endif
 
 MODULE_NAME 	= 	VASCO

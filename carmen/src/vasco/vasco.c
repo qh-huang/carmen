@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
 
   gtk_init(&argc, &argv);
 
+  if (!g_thread_supported())
+    g_thread_init(NULL);
+
   graphics_init();
 
   if (argc >= 2) {

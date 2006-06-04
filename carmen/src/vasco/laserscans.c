@@ -478,9 +478,6 @@ static gint load_logfile_begin(gpointer p __attribute__ ((unused))) {
 
   gtk_progress_set_activity_mode(GTK_PROGRESS(progress_bar), TRUE);
 
-  if (!g_thread_supported())
-    g_thread_init(NULL);
-
   if (!laserscans_mutex)
     laserscans_mutex = g_mutex_new();
 

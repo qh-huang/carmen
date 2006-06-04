@@ -313,9 +313,6 @@ static gint scans_to_egrid(gpointer p __attribute__ ((unused))) {
 
   status_print("Making evidence grid...", "vegrid");
 
-  if (!g_thread_supported())
-    g_thread_init(NULL);
-
   if (!egrid_mutex)
     egrid_mutex = g_mutex_new();
 
