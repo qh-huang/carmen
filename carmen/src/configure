@@ -117,8 +117,8 @@ my $wand = verify_wand() unless ($nowand);
 my $java = verify_java() unless ($nojava);
 my $doxygen = verify_doxygen() unless ($nodoxygen);
 my $swig = verify_swig() unless ($nopython);
-$nopython = ! verify_python() unless ($nopython);
-my $python = ask_python() unless ($nopython);
+$nopython = ! verify_python() unless ($nopython or !$swig);
+my $python = ask_python() unless ($nopython or !$swig);
 
 my $install_path = get_install_path() unless ($install_path);
 my @robots = get_robot_types($os_type, $kernel, $canlib);
@@ -154,7 +154,6 @@ print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
 print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
 print OUTPUT "NO_DOXYGEN = 1\n" unless ($doxygen);
 print OUTPUT "NO_PYTHON = 1\n" unless ($python and $swig);
-#print OUTPUT "NO_SWIG = 1\n" unless ($swig);
 print OUTPUT "PROCESSOR = $processor\n";
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
@@ -415,7 +414,8 @@ These are the robot types CARMEN currently supports:
 4. iRobot ATRV-JR
 5. iRobot B21R
 6. Scout
-7. OrcBoard
+7. OrcBoard v.4 
+8. OrcBoard v.5 (Experimental)
 EOF
 
   my $max = 8;
@@ -449,7 +449,7 @@ EOF
       $type_string eq "$max") {
     print "Very well, compiling support for all base types.\n";
 #    my (@robots) = ("rflex", "pioneer", "scout", "orc");
-    my (@robots) = ("rflex", "pioneer", "orc4");
+    my (@robots) = ("rflex", "pioneer", "orc4", "orc5");
     push @robots, "xr4000" if ($allow_xr4000);
     push @robots, "segway" if ($allow_segway);
     return @robots;
@@ -476,8 +476,13 @@ EOF
       }
     }
     elsif ($_ eq "7") {
-      if ((grep {/orc/} @types) == 0) {
+      if ((grep {/orc4/} @types) == 0) {
 	push @types, "orc4";
+      }
+    }
+    elsif ($_ eq "8") {
+      if ((grep {/orc5/} @types) == 0) {
+	push @types, "orc5";
       }
     }
     elsif ($allow_xr4000 and $_ eq "$allow_xr4000") {
