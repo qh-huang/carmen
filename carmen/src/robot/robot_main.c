@@ -388,9 +388,9 @@ static void follow_vector(void)
   command_rv = theta_gain*angle_difference;
 	
   if (fabs(angle_difference) > 0.0 && 
-      carmen_radians_to_degrees(fabs(angle_difference)) < 15.0)
+      fabs(angle_difference) < carmen_degrees_to_radians(45)) 
     command_rv -= theta_d_gain*carmen_robot_latest_odometry.rv;
-	
+
   command_rv = carmen_clamp(-carmen_robot_config.max_r_vel, command_rv,
 			    carmen_robot_config.max_r_vel);
   
