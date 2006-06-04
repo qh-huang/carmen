@@ -15,6 +15,8 @@ TARGETS = libsegwaycore.a ../segway libsegway_interface.a segway_test
 
 # rules
 
+depend: 
+
 libsegwaycore.a:	segwaycore.o
 
 libsegway_interface.a:	segway_interface.o
