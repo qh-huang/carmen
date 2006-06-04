@@ -1,5 +1,7 @@
 #include ../Makefile.conf
 
+
+SILENT 	   = @
 SWIG      = swig
 SWIGOPT   = -I../../include/carmen 
 CXXSRCS    = pyCarmen.cxx pyCarmenMessages.cxx
@@ -7,6 +9,7 @@ TARGET     = pyCarmen
 INTERFACE  = pyCarmen.i
 LIBS       = -lm
 SWIG      = swig
+ECHO	 = $(SILENT) echo
 
 relink::
 
@@ -38,3 +41,13 @@ distclean::
 	rm -f $(TARGET).py
 
 check: all
+
+tar-clean:
+	$(ECHO) "  Adding Python..."
+	$(SILENT)	dir=$${PWD/#*carmen/}; \
+	cd $(CARMEN_HOME)/..; \
+	tar --delete -f $(CARMEN_HOME)/../carmen.tar carmen$$dir/CVS ; \
+	if [ -f carmen/$$dir/.cvsignore ] ; then \
+		tar --delete -f $(CARMEN_HOME)/../carmen.tar \
+		carmen$$dir/.cvsignore ; \
+	fi 
