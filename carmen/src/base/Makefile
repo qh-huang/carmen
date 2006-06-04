@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base orcbotlibv4 orcbotlib
+SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base segway_base orcbotlibv4 orcbotlib
 
 
 CFLAGS += 
