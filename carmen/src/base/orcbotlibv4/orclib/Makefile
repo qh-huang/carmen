@@ -2,7 +2,7 @@ include ../../../Makefile.conf
 
 LFLAGS += -lglobal -lipc -lparam_interface -lcarmenserial
 
-MODULE_NAME = "ORC"
+MODULE_NAME = "ORCLIB_V4"
 MODULE_COMMENT = "Program for controlling an Orc robot"
 
 SOURCES = orc_lib.c orc_test.c 

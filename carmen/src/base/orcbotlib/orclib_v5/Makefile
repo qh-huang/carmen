@@ -6,7 +6,7 @@ endif
 
 CFLAGS += -std=gnu99
 
-MODULE_NAME = "orclib v5"
+MODULE_NAME = "ORCLIB_V5"
 MODULE_COMMENT = "LIbrary for communication with Orcboard version 5"
 
 SOURCES = orc.c rawprovider.c tcpprovider.c packet.c timespec.c clog.c orc_test.c

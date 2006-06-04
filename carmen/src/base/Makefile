@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base
+SUBDIRS = pioneerlib rflexlib scoutlib xr4000_base orcbotlibv4 orcbotlib
 
 
 CFLAGS += 
@@ -42,15 +42,11 @@ scout: base_main.o scoutlib/libscout.a
 
 pioneer: base_main.o pioneerlib/libpioneer.a 
 
-orc4_main.o: orcbotlibv4/base_main.c
-	$(ECHO) "    ---- Compiling $< to $@ (C)"
-	$(SILENT) $(CC) -DBASE_HAS_ARM $(CFLAGS) $(IFLAGS) -c $< -o $@
+orc4: orcbotlibv4/orc4_main.o orcbotlibv4/orclib/liborc.a
 
-orc4: orc4_main.o orcbotlibv4/orclib/liborc.a
+orc5: drive_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
 
-orc_drive: drive_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
-
-orc_arm: arm_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
+orc5_arm: arm_main.o orcbotlib/orclib_v5/liborc.a orcbotlib/liborcbot.a
 
 rflex: base_main.o rflexlib/librflex.a
 
@@ -69,6 +65,9 @@ pioneerlib/libpioneer.a:
 
 orcbotlibv4/orclib/liborc.a:
 	$(MAKE) -C orcbotlibv4/orclib
+
+orcbotlibv4/orc4_main.o:
+	$(MAKE) -C orcbotlibv4 orc4_main.o 
 
 orcbotlib/orclib_v5/liborc.a:
 	$(MAKE) -C orcbotlib/orclib_v5
