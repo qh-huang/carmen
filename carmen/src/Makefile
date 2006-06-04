@@ -8,17 +8,20 @@ PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
 	   localize navigator vasco proccontrol \
 	   camera joystick pantilt gps 
 
+TAR_PACKAGE_LIST = $(PACKAGES) 
+
 ifndef NO_PYTHON
 PACKAGES += python
+else
+TAR_PACKAGE_LIST += python
 endif
 
 ifdef JAVA_HOME
 PACKAGES += java 
+else
+TAR_PACKAGE_LIST += python
 endif
 
-TAR_PACKAGE_LIST = $(PACKAGES) 
-PACKAGES += $(ROBOT_TYPES)
-TAR_PACKAGE_LIST += scout pioneer rflex xr4000 b21a b21r segway
 
 RECURSE = $(SILENT) \
 	for i in $(PACKAGES) xxxx ; do \
@@ -120,7 +123,10 @@ install:
 	$(INSTALL_RECURSE)
 
 tar:
-	$(MAKE) distclean
+	$(ECHO) $(TAR_PACKAGE_LIST)
+	$(SILENT) cp Makefile.vars Makefile.vars.tmp
+	$(MAKE) distclean	
+	$(SILENT) mv Makefile.vars.tmp Makefile.vars
 	$(ECHO)
 	$(ECHO) "  Adding carmen/data..."
 	$(SILENT) tar -cf $(CARMEN_HOME)/../carmen.tar \
@@ -136,6 +142,8 @@ tar:
 		      -C $(CARMEN_HOME)/.. carmen/doc
 	$(SILENT) tar --delete -f $(CARMEN_HOME)/../carmen.tar \
 		      -C $(CARMEN_HOME)/.. carmen/doc/CVS
+	$(SILENT) tar --delete -f $(CARMEN_HOME)/../carmen.tar \
+		      -C $(CARMEN_HOME)/.. carmen/doc/binaries/CVS
 	cd $(CARMEN_HOME)/.. ; \
 	if [ -f carmen/doc/.cvsignore ] ; then \
 		tar --delete -f carmen.tar carmen/doc/.cvsignore ; \
@@ -148,19 +156,17 @@ tar:
 		fi \
 	done
 	$(SILENT) tar --delete -f $(CARMEN_HOME)/../carmen.tar \
-		      -C $(CARMEN_HOME)/.. carmen/src/carmen.ini
+		-C $(CARMEN_HOME)/.. carmen/src/carmen.ini 
+	$(ECHO) "  Adding subdirs..."
 	cd $(CARMEN_HOME)/.. ; \
 	for i in $(TAR_PACKAGE_LIST) xxxx ; do \
 		if [ -d carmen/src/$$i ] ; then \
-			echo "  Adding carmen/src/$$i..." ; \
-			tar -r -f carmen.tar carmen/src/$$i ; \
-			tar --delete -f carmen.tar carmen/src/$$i/CVS ; \
-			if [ -f carmen/src/$$i/.cvsignore ] ; then \
-				tar --delete -f carmen.tar \
-					carmen/src/$$i/.cvsignore ; \
-			fi \
-		fi \
+			tar -f carmen.tar -r carmen/src/$$i ; \
+			$(MAKE) -C carmen/src/$$i tar-clean ; \
+		fi; \
 	done
+	$(SILENT) tar --delete -f $(CARMEN_HOME)/../carmen.tar \
+		-C $(CARMEN_HOME)/.. carmen/src/Makefile.vars
 	mv $(CARMEN_HOME)/../carmen.tar $(CARMEN_HOME)
 	$(SILENT) gzip -f9 $(CARMEN_HOME)/carmen.tar
 	$(ECHO)

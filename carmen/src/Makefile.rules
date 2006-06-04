@@ -233,8 +233,8 @@ phase3:
 	$(install_libraries_so)
 
 phase4:
-	
-	
+
+
 all:	
 	$(banner)
 	$(ECHO) ""
@@ -299,6 +299,22 @@ debug:
 
 loud:
 	$(SILENT) $(MAKE) MAKEFLAGS= LOUD=1 all
+
+
+# This isn't the rule that adds a directory to the tar ball.
+# That happens in the top-level tar rule using recursion.
+# All this does is remove the unwanted CVS and .cvsignore files.
+
+tar-clean:
+	$(ECHO) "  Adding "$(MODULE_NAME)"..."
+	dir=$${PWD/#*carmen/}; \
+	cd $(CARMEN_HOME)/..; \
+	tar --delete -f $(CARMEN_HOME)/../carmen.tar carmen$$dir/CVS ; \
+	if [ -f carmen/$$dir/.cvsignore ] ; then \
+		tar --delete -f $(CARMEN_HOME)/../carmen.tar \
+		carmen$$dir/.cvsignore ; \
+	fi 
+	$(subdir_recurse)
 
 .SUFFIXES: .c .o .a .so .C
 
