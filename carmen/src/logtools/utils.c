@@ -304,7 +304,7 @@ get_user_time( void )
   if ((int)times(&tms_time)==-1) {
     return(-1);
   }
-  return( (double)tms_time.tms_utime / (double)CLK_TCK );
+  return( (double)tms_time.tms_utime / (double)CLOCKS_PER_SEC );
 }
   
 void

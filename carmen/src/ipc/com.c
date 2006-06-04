@@ -16,8 +16,11 @@
  * REVISION HISTORY 
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2006/06/04 19:55:49  nickr
+ * Replaced CLK_TCK with CLOCKS_PER_SEC (CLK_TCK deprecated.)
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/04/20 02:28:12  nickr
  * Upgraded to IPC 3.7.6.
@@ -832,8 +835,8 @@ struct timeval *gettimeofday(struct timeval *daytime, void *dummy)
   clock_t theTime;
   
   theTime = clock();
-  daytime->tv_usec = (int)theTime % (int)CLK_TCK * 1000000 / (int)CLK_TCK;
-  daytime->tv_sec  = (int)theTime / (int)CLK_TCK;
+  daytime->tv_usec = (int)theTime % (int)CLOCKS_PER_SEC * 1000000 / (int)CLK_TCK;
+  daytime->tv_sec  = (int)theTime / (int)CLOCKS_PER_SEC;
   return (daytime);
 }
 #else
