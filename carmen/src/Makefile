@@ -114,6 +114,9 @@ install:
 	$(ECHO) "	*************"
 	$(ECHO)
 	$(SILENT) $(MKDIR) $(GLOBAL_INC_DIR)/carmen
+	$(SILENT) $(MKDIR) $(GLOBAL_BIN_DIR)
+	$(SILENT) $(MKDIR) $(GLOBAL_LIB_DIR)
+	$(SILENT) $(MKDIR) $(GLOBAL_MAN_DIR)
 	$(INSTALL_RECURSE)
 
 tar:
