@@ -468,7 +468,7 @@ carmen_base_run(void)
   binary_data.host = carmen_get_host();
   binary_data.size = 0;
   binary_data.timestamp = carmen_get_time();
-  binary_data.data="";
+  binary_data.data= NULL;
 
 
   if (reset_time > reset.timestamp) {
