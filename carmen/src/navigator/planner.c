@@ -527,11 +527,11 @@ carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
     if (path.length - next_point < 2)
       break;
     delta_dist = carmen_distance_traj(waypoint, point);
-  } while (delta_dist < 2*nav_conf->goal_size);
+  } while (delta_dist < nav_conf->goal_size);
 
   delta_dist = carmen_distance_traj(waypoint, point);
 
-  if (delta_dist < 2*nav_conf->goal_size && path.length - next_point == 1) {
+  if (delta_dist < nav_conf->goal_size && path.length - next_point == 1) {
     if (allow_any_orientation || !goal_is_accessible)
       return 1;
     delta_theta = fabs(waypoint->theta - requested_goal.theta) ;
