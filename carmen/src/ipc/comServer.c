@@ -16,8 +16,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2006/06/05 02:03:58  nickr
+ * Fixed variable type problem.
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.7  2003/05/22 19:57:58  nickr
  * Patches to eliminate compile warnings.
@@ -2508,7 +2511,7 @@ int deny_severity  = 5;
 static const char *accessibleConnection (int moduleSd)
 {
   struct sockaddr_in peer;
-  int addrlen=sizeof(peer);
+  socklen_t addrlen=sizeof(peer);
   struct hostent *client;
   char *client_machine, *client_hostnum;
 
