@@ -192,6 +192,7 @@ carmen_planner_util_test_trajectory(carmen_planner_path_p path)
     carmen_die("Test failed: clear should set length to 0, but length is %d\n",
 	       path->length);
   
+  memset(&point, 0, sizeof(carmen_traj_point_t));
   for (index = 0; index < 100; index++)
     {
       point.x = index;
