@@ -7,15 +7,15 @@ LFLAGS += -lcanlib -pthread -lparam_interface -lbase_interface -lglobal -lipc -l
 MODULE_NAME = SEGWAY
 MODULE_COMMENT = Segway RMP Base Module
 
+ifeq (segway,$(findstring segway,$(ROBOT_TYPES)))
 SOURCES = segwaycore.c segway_interface.c segway_test.c segway.c
 PUBLIC_INCLUDES = segway_messages.h segway_interface.h
 PUBLIC_LIBRARIES = libsegway_interface.a
 
 TARGETS = libsegwaycore.a ../segway libsegway_interface.a segway_test
+endif
 
 # rules
-
-depend: 
 
 libsegwaycore.a:	segwaycore.o
 
