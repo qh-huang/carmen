@@ -43,6 +43,7 @@ extern "C" {
     int map_update_freespace;
     double replan_frequency;
     int smooth_path;
+    double waypoint_tolerance;
     double goal_size;
     double goal_theta_tolerance;
     int dont_integrate_odometry;

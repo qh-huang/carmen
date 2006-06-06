@@ -390,6 +390,8 @@ read_parameters(int argc, char **argv)
 
     {"navigator", "goal_size", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_size, 1, NULL},
+    {"navigator", "waypoint_tolerance", CARMEN_PARAM_DOUBLE,
+     &nav_config.waypoint_tolerance, 1, NULL},
     {"navigator", "goal_theta_tolerance", CARMEN_PARAM_DOUBLE,
      &nav_config.goal_theta_tolerance, 1, NULL},
 
