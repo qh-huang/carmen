@@ -16,7 +16,9 @@ PUBLIC_BINARIES = robot
 TARGETS =  librobot.a robot librobot_interface.a robot_test
 
 PUBLIC_LIBRARIES_SO = librobot_interface.so
+ifndef NO_PYTHON
 TARGETS += librobot_interface.so.1
+endif
 
 robot:	robot.o librobot.a
 

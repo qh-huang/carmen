@@ -20,8 +20,10 @@ PUBLIC_BINARIES = navigator
 
 TARGETS =  libnavigator_interface.a navigator navigator_test random_nav libconventional.a
 
-TARGETS += libnavigator_interface.so.1
 PUBLIC_LIBRARIES_SO = libnavigator_interface.so
+ifndef NO_PYTHON
+TARGETS += libnavigator_interface.so.1
+endif
 
 ifndef NO_TCPD
 LFLAGS += -lwrap -lnsl

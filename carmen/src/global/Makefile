@@ -34,7 +34,9 @@ error:
 endif
 
 PUBLIC_LIBRARIES_SO = libglobal.so
+ifndef NO_PYTHON
 TARGETS += libglobal.so.1
+endif
 
 ifndef NO_GRAPHICS
 SOURCES += global_graphics.c

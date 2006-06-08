@@ -19,7 +19,9 @@ PUBLIC_BINARIES = gps-nmea
 TARGETS = gps-nmea libgps_nmea_interface.a  gps-test 
 
 PUBLIC_LIBRARIES_SO = libgps_nmea_interface.so
+ifndef NO_PYTHON
 TARGETS += libgps_nmea_interface.so.1
+endif
 
 gps-nmea:			gps-io.o gps-ipc.o gps-nmea.o gps-main.o
 

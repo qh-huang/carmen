@@ -26,7 +26,9 @@ endif
 endif
 
 PUBLIC_LIBRARIES_SO = libcamera_interface.so
+ifndef NO_PYTHON
 TARGETS += libcamera_interface.so.1
+endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags` 

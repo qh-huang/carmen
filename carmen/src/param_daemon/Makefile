@@ -17,7 +17,9 @@ LFLAGS += -lwrap -lnsl
 endif
 
 PUBLIC_LIBRARIES_SO = libparam_interface.so
+ifndef NO_PYTHON
 TARGETS += libparam_interface.so.1
+endif
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`

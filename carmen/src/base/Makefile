@@ -21,7 +21,9 @@ TARGETS += $(ROBOT_TYPES)
 PUBLIC_BINARIES += $(ROBOT_TYPES)
 
 PUBLIC_LIBRARIES_SO = libbase_interface.so libarm_interface.so
+ifndef NO_PYTHON
 TARGETS += libbase_interface.so.1 libarm_interface.so.1
+endif
 
 # rules
 

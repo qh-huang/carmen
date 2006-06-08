@@ -22,7 +22,9 @@ TARGETS = map libmap_interface.a   libmap_util.a \
 
 
 PUBLIC_LIBRARIES_SO = libmap_interface.so
+ifndef NO_PYTHON
 TARGETS += libmap_interface.so.1
+endif
 
 # liblinemapping.a clf2linemap
 ifndef NO_GRAPHICS

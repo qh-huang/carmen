@@ -27,7 +27,9 @@ endif
 endif
 
 PUBLIC_LIBRARIES_SO = liblaser_interface.so
+ifndef NO_PYTHON
 TARGETS += liblaser_interface.so.1
+endif
 
 laser:			sick.o laser_ipc.o laser_main.o laser.o
 

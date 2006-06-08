@@ -22,7 +22,9 @@ TARGETS = localize liblocalize_interface.a localize_initialize \
 	  liblocalize_core.a liblocalize_motion.a model_learn/model_learner
 
 PUBLIC_LIBRARIES_SO = liblocalize_interface.so
+ifndef NO_PYTHON
 TARGETS += liblocalize_interface.so.1
+endif
 
 # rules
 

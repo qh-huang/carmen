@@ -379,6 +379,7 @@ int carmen_serial_close(int dev_fd) {
 
 int carmen_serial_set_low_latency(int fd){
 #ifdef CYGWIN
+  fd = fd;
   return -1;
 #else
 

@@ -34,7 +34,9 @@ TARGETS += playback_control
 endif
 
 PUBLIC_LIBRARIES_SO = libplayback_interface.so
+ifndef NO_PYTHON
 TARGETS += libplayback_interface.so.1
+endif
 
 logger:			logger.o libwritelog.a
 
