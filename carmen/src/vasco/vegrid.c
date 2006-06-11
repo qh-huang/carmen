@@ -270,7 +270,7 @@ static void egrid_size() {
       rtheta = theta + egrid_scan_list[scan].config.start_angle + reading * angle_delta;
       rd = egrid_scan_list[scan].range[reading];
 
-      if (rd < max_range) {
+      if (rd < egrid_scan_list[scan].config.maximum_range) {
 
 	rx = lx + rd * cos(rtheta);
 	ry = ly + rd * sin(rtheta);

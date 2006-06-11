@@ -56,7 +56,6 @@ int loading_scans = 0;
 GMutex *laserscans_mutex = NULL;
 
 double frontlaser_offset;
-double max_range;
 
 void laser_scans_shutdown() {
 
@@ -143,7 +142,7 @@ static void display_scan(int scan, scan_type type) {
     /*	     (rx / map_width) * canvas_width, dbug*/
     /*	     (ry / map_height) * canvas_height); dbug*/
     
-    if (rd < max_range)
+    if (rd < scan_list[scan].config.maximum_range)
       gdk_draw_point(pixmap, drawing_gc, px, py);
   }
   
@@ -240,7 +239,7 @@ void center_map() {
       rtheta = theta + scan_list[scan].config.start_angle + reading * angle_delta;
       rd = scan_list[scan].range[reading];
 
-      if (rd < max_range) {
+      if (rd < scan_list[scan].config.maximum_range) {
 
 	rx = lx + rd * cos(rtheta);
 	ry = ly + rd * sin(rtheta);
@@ -311,7 +310,7 @@ static int read_next_laser_message(carmen_FILE* fp,
 
   char message_name[100];
   char line[9999], *mark;
-  int frontlaser_offset_flag = 1, max_range_flag = 1;
+  int frontlaser_offset_flag = 1;
 
   while(!carmen_feof(fp)) {
     carmen_fgets(line, 9999, fp);
@@ -322,7 +321,7 @@ static int read_next_laser_message(carmen_FILE* fp,
     } else if(strcmp(message_name, "ROBOTLASER1") == 0) {
       carmen_string_to_robot_laser_message(line, robot_frontlaser);
       return 1;
-    } else if ((frontlaser_offset_flag || max_range_flag) &&
+    } else if ((frontlaser_offset_flag) &&
 	       (strcmp(message_name, "PARAM") == 0)) {
       mark = next_word(line);
       sscanf(mark, "%s", message_name);
@@ -330,10 +329,6 @@ static int read_next_laser_message(carmen_FILE* fp,
 	sscanf(next_word(mark), "%lf", &frontlaser_offset);
 	frontlaser_offset_flag = 0;
 	/*printf("front laser offset = %g\n", frontlaser_offset);*/
-      } else if (strcmp(message_name, "robot_front_laser_max") == 0) {
-	sscanf(next_word(mark), "%lf", &max_range);
-	max_range_flag = 0;
-	/*printf("max range = %g\n", max_range);*/
       }
     }
   }
@@ -547,7 +542,6 @@ int save_logfile() {
   }
 
   carmen_fprintf(logfile, "PARAM robot_frontlaser_offset %.2f nohost 0\n", frontlaser_offset);
-  carmen_fprintf(logfile, "PARAM robot_front_laser_max %.1f nohost 0\n", max_range);
   for (i = 0; i < num_scans; i++) {
     if (!scan_mask[i])
       continue;
