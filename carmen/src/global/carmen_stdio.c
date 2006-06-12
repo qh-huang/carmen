@@ -172,6 +172,18 @@ char *carmen_fgets(char *s, int size, carmen_FILE *fp)
 #endif
 }
 
+int carmen_fflush(carmen_FILE *fp)
+{
+#ifndef NO_ZLIB
+  if(!fp->compressed)
+    return fflush(fp->fp);
+  else
+    return gzflush(fp->fp, Z_FINISH);
+#else
+  return fflush(fp->fp);
+#endif
+}
+
 int carmen_fputc(int c, carmen_FILE *fp)
 {
 #ifndef NO_ZLIB

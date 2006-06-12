@@ -79,6 +79,9 @@ int carmen_fputc(int c, carmen_FILE *fp);
 
 void carmen_fprintf(carmen_FILE *fp, const char *fmt, ...);
 
+
+int carmen_fflush(carmen_FILE *fp);
+
 #ifdef __cplusplus
 }
 #endif
