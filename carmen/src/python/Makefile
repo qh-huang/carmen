@@ -9,7 +9,10 @@ TARGET     = pyCarmen
 INTERFACE  = pyCarmen.i
 LIBS       = -lm
 SWIG      = swig
-ECHO	 = $(SILENT) echo
+
+#Nota bene:tkollar@mit.edu
+#the next line causes make to break... fix this before committing again
+#ECHO	 = $(SILENT) echo
 
 relink::
 
@@ -31,7 +34,8 @@ all:
 
 static::
 	$(MAKE) -f Makefile.conf $(SWIGLIB) CXXSRCS='$(CXXSRCS)' SWIG='$(SWIG)' \
-		SWIGOPT='$(SWIGOPT)' TARGET='mypython' INTERFACE='$(INTERFACE)' python_cpp_static
+	   SWIGOPT='$(SWIGOPT)' TARGET='mypython' INTERFACE='$(INTERFACE)' python_cpp_static
+
 clean::
 	$(MAKE) -f Makefile.conf python_clean
 	rm -f $(TARGET).py
