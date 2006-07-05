@@ -184,7 +184,7 @@ void
 carmen_planner_util_test_trajectory(carmen_planner_path_p path)
 {
   int index;
-  carmen_traj_point_t point;
+  carmen_traj_point_t point = {0,0,0,0,0};
   carmen_traj_point_p point_p;
 
   carmen_planner_util_clear_path(path);
