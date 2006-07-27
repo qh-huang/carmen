@@ -314,7 +314,8 @@ static int read_next_laser_message(carmen_FILE* fp,
 
   while(!carmen_feof(fp)) {
     carmen_fgets(line, 9999, fp);
-    sscanf(line, "%s", message_name);
+    if (sscanf(line, "%s", message_name) < 1)  // ignore bad sscanf's
+      continue;
     if(strcmp(message_name, "FLASER") == 0) {
       carmen_string_to_robot_laser_message_orig(line, robot_frontlaser);
       return 1;
@@ -522,7 +523,7 @@ gint load_logfile(gpointer p __attribute__ ((unused))) {
 
 int save_logfile() {
 
-  int i, j;
+  int i;
   char buf[128];
 
   if (scan_list == NULL) {
@@ -541,21 +542,20 @@ int save_logfile() {
     return -1;
   }
 
-  carmen_fprintf(logfile, "PARAM robot_frontlaser_offset %.2f nohost 0\n", frontlaser_offset);
+  sprintf(buf, "%.2f", frontlaser_offset);
+  carmen_logwrite_write_param("robot", "frontlaser_offset", buf, scan_list[0].timestamp,
+			      "nohost", logfile, scan_list[0].timestamp);
+
   for (i = 0; i < num_scans; i++) {
     if (!scan_mask[i])
       continue;
-    carmen_fprintf(logfile, "FLASER %d", scan_list[i].num_readings);
-    for (j = 0; j < scan_list[i].num_readings; j++)
-      carmen_fprintf(logfile, " %.2f", scan_list[i].range[j]);
-    carmen_fprintf(logfile, " %.6f %.6f %.6f %.6f %.6f %.6f\n",	
-		   scan_list[i].laser_pose.x, 
-		   scan_list[i].laser_pose.y, 
-		   scan_list[i].laser_pose.theta, 
-		   0.0, 0.0, 0.0);
+
+    scan_list[i].host = carmen_new_string("nohost");
+    carmen_logwrite_write_robot_laser(&scan_list[i], 1, logfile, scan_list[i].timestamp);
   }
 
   carmen_fprintf(logfile, "\n");
+
   carmen_fclose(logfile);
 
   sprintf(buf, "Saved logfile: %s.", logfilename);
