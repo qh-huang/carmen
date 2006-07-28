@@ -53,6 +53,9 @@ publish_frontlaser_message(carmen_robot_laser_message laser_msg)
   IPC_RETURN_TYPE err;
   err = IPC_publishData(CARMEN_ROBOT_FRONTLASER_NAME, &laser_msg);
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_FRONTLASER_NAME);
+  if(robot_front_laser.host!=NULL){
+    free(robot_front_laser.host);
+  }
 }
 
 static void 
@@ -248,6 +251,7 @@ laser_frontlaser_handler(void)
 
 
 
+
   /* We just got a new laser message. It may be that the new message contains
      a different number of laser readings than we were expecting, maybe
      because the laser server was restarted. Here, we check to make sure that
@@ -291,7 +295,9 @@ laser_frontlaser_handler(void)
     0.5 * carmen_robot_config.width + carmen_robot_config.side_dist;
   robot_front_laser.turn_axis = 1e6;
   robot_front_laser.timestamp = front_laser.timestamp;
-  robot_front_laser.host = front_laser.host;
+
+
+  robot_front_laser.host = carmen_new_string(front_laser.host);
 
   max_velocity = carmen_robot_config.max_t_vel;
 
@@ -413,7 +419,7 @@ laser_rearlaser_handler(void)
     carmen_robot_config.width / 2.0 + carmen_robot_config.side_dist;
   robot_rear_laser.turn_axis = 1e6;
   robot_rear_laser.timestamp = rear_laser.timestamp;
-  robot_rear_laser.host = rear_laser.host;
+  robot_rear_laser.host = carmen_new_string(rear_laser.host);
 
   min_velocity = -carmen_robot_config.max_t_vel;
 
