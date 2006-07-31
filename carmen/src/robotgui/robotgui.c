@@ -355,6 +355,8 @@ key_press_event(GtkWidget *widget __attribute__ ((unused)),
 {
   double tv, rv;
   int err;
+  static double time_since_last_key_command = -1;
+  static double current_commanded_tv = 0, current_commanded_rv = 0; 
 
   if (toupper(key->keyval) == 'C' && (key->state & GDK_CONTROL_MASK))
     shutdown_robotgraph(SIGINT);
@@ -401,9 +403,19 @@ key_press_event(GtkWidget *widget __attribute__ ((unused)),
   err = carmen_keyboard_control(key->keyval, max_tv, max_rv, &tv, &rv);
   if(err < 0)
     shutdown_robotgraph(SIGINT);
-  else
-    carmen_robot_velocity_command(tv, rv);
-
+  else {
+    // Only send the command if it's been longer than 1/10 of a second since
+    // we sent a command, or  if the new command is substantially different
+    // from our last command. 
+    if (carmen_get_time() - time_since_last_key_command > .1 ||
+	fabs(tv - current_commanded_tv) > .1 ||
+	fabs(rv - current_commanded_rv) > carmen_radians_to_degrees(5)) {
+      carmen_robot_velocity_command(tv, rv);
+      current_commanded_tv = tv;
+      current_commanded_rv = rv; 
+      time_since_last_key_command = carmen_get_time();
+    } 
+ }
 
   return 1;
 }
