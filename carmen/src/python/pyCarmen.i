@@ -4,6 +4,7 @@
 %module(directors="1") pyCarmen
 %{
 #include "pyCarmenMessages.h"
+#include "linemapping_messages.h"
 %}
 
 //%typemap(memberin) float * {
@@ -63,6 +64,9 @@
   $1 = temp;
 }
 
+
+
+
 //// Map a Python sequence into any sized C double array
 %typemap(in) float* {
   int i, my_len;
@@ -83,6 +87,54 @@
       temp[i] = (float)PyFloat_AsDouble(o);
   }
   $1 = temp;
+}
+
+
+
+
+%typemap(out) carmen_linemapping_segment_set_t{
+
+	PyObject* segs_start = PyList_New(0);
+	PyObject* segs_end  = PyList_New(0);
+	PyObject* segs_weights  = PyList_New(0);	
+	
+        int i;
+	for(i=0; i<$1.num_segs; i++){
+	     PyObject* segs_start_pt = PyList_New(0);
+	     PyObject* pt_x = PyFloat_FromDouble($1.segs[i].p1.x);	
+	     PyObject* pt_y = PyFloat_FromDouble($1.segs[i].p1.y);
+	     PyList_Append(segs_start_pt, pt_x);
+	     PyList_Append(segs_start_pt, pt_y);
+	     PyList_Append(segs_start, segs_start_pt);
+
+	     PyObject* segs_end_pt  = PyList_New(0);
+	     PyObject* pt_x2 = PyFloat_FromDouble($1.segs[i].p2.x);
+	     PyObject* pt_y2 = PyFloat_FromDouble($1.segs[i].p2.y);
+	     PyList_Append(segs_end_pt, pt_x2);
+	     PyList_Append(segs_end_pt, pt_y2);
+	     PyList_Append(segs_end, segs_end_pt);
+
+	     PyObject* weight = PyFloat_FromDouble($1.segs[i].weight);	
+	     PyList_Append(segs_weights, weight);
+
+   	     Py_DECREF(pt_x);
+   	     Py_DECREF(pt_y);
+   	     Py_DECREF(pt_x2);	
+   	     Py_DECREF(pt_y2);
+   	     Py_DECREF(weight);
+   	     Py_DECREF(segs_start_pt);
+   	     Py_DECREF(segs_end_pt);
+	 }
+
+	PyObject* retObj = PyDict_New();
+	PyDict_SetItemString(retObj, "start_points", segs_start);
+	PyDict_SetItemString(retObj, "end_points", segs_end);
+	PyDict_SetItemString(retObj, "weights", segs_weights);
+
+	Py_DECREF(segs_start);
+	Py_DECREF(segs_end);
+	Py_DECREF(segs_weights);	
+	$result = retObj;
 }
 
 
@@ -183,6 +235,9 @@
 %include param_messages.h
 %include robot_messages.h
 %include simulator_messages.h
+%include linemapping_messages.h
+
+
 //%include hokuyo_messages.h
 //%include pantilt_messages.h
 //%include proccontrol_messages.h
@@ -204,12 +259,12 @@
 %include ipc.h
 %include map_io.h
 
+
 //%include planner_interface.h
 //%include hokuyo_interface.h
 //%include pantilt_interface.h
 //%include proccontrol_interface.h
 //%include segway_interface.h
-
 
 
 // This tells SWIG to treat char ** as a special case
@@ -241,6 +296,5 @@
   free((char *) $1);
 }
 
-
-
 %include "ipc_wrapper.h"
+%include linemapping.h

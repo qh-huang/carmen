@@ -3,7 +3,7 @@
 
 SILENT 	   = @
 SWIG      = swig
-SWIGOPT   = -I../../include/carmen 
+SWIGOPT   = -I../../include/carmen -I../maptools
 CXXSRCS    = pyCarmen.cxx pyCarmenMessages.cxx
 TARGET     = pyCarmen
 INTERFACE  = pyCarmen.i
