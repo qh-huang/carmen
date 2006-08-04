@@ -71,6 +71,23 @@ class rear_laser{
 };
 
 
+static MessageHandler *_laser5_callback;
+class laser5{
+ public:
+  static void lazer5_msg(carmen_robot_laser_message *msg)
+  {
+    _laser5_callback->set_laser5_message(msg);
+    if (_laser5_callback) _laser5_callback->run_cb("laser5", "get_laser5_message()");
+  }
+
+  laser5(MessageHandler *cb)
+  {
+    _laser5_callback = cb;
+    carmen_laser_subscribe_laser5_message
+      (NULL, (carmen_handler_t)lazer5_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
 /*Deal with the rear laser handler here*/
 static MessageHandler *_global_pose_callback;
 class global_pose{

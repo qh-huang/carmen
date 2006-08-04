@@ -34,6 +34,7 @@ class MessageHandler {
  private:
   carmen_robot_laser_message the_latest_msg_front;
   carmen_robot_laser_message the_latest_msg_rear;
+  carmen_robot_laser_message the_latest_msg_laser5;
   carmen_localize_globalpos_message the_latest_globalpos;
   carmen_base_odometry_message the_latest_odometry;
   carmen_base_sonar_message the_latest_sonar;
@@ -64,6 +65,12 @@ class MessageHandler {
 	  {memcpy(&the_latest_msg_rear, msg, sizeof(carmen_robot_laser_message));}
 	carmen_robot_laser_message* get_rear_laser_message(void)
 	  {return &the_latest_msg_rear;}
+
+	/*laser 5 messages, aka hokuyo*/
+	void set_laser5_message(carmen_robot_laser_message *msg)
+	  {memcpy(&the_latest_msg_laser5, msg, sizeof(carmen_robot_laser_message));}
+	carmen_robot_laser_message* get_laser5_message(void)
+	  {return &the_latest_msg_laser5;}
 
 	/*Global Position Message*/
 	void set_globalpos_message(carmen_localize_globalpos_message *msg)
