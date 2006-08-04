@@ -74,7 +74,7 @@ class rear_laser{
 static MessageHandler *_laser5_callback;
 class laser5{
  public:
-  static void lazer5_msg(carmen_robot_laser_message *msg)
+  static void lazer5_msg(carmen_laser_laser_message *msg)
   {
     _laser5_callback->set_laser5_message(msg);
     if (_laser5_callback) _laser5_callback->run_cb("laser5", "get_laser5_message()");

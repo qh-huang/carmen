@@ -4,8 +4,9 @@
 %module(directors="1") pyCarmen
 %{
 #include "pyCarmenMessages.h"
-#include "linemapping_messages.h"
+
 %}
+//#include "linemapping_messages.h"
 
 //%typemap(memberin) float * {
  // int i;
@@ -92,7 +93,7 @@
 
 
 
-%typemap(out) carmen_linemapping_segment_set_t{
+/*%typemap(out) carmen_linemapping_segment_set_t{
 
 	PyObject* segs_start = PyList_New(0);
 	PyObject* segs_end  = PyList_New(0);
@@ -135,11 +136,11 @@
 	Py_DECREF(segs_end);
 	Py_DECREF(segs_weights);	
 	$result = retObj;
-}
+}*/
 
 
 
-%typemap(out) carmen_map_t*{
+/*%typemap(out) carmen_map_t*{
 
 	PyObject* map= PyList_New(0);
         int i,j;
@@ -162,7 +163,130 @@
 
 	Py_DECREF(map);
 	$result = retObj;
+}*/
+
+
+%typemap(out) carmen_laser_laser_message*{
+
+	PyObject* laser_config = PyDict_New();
+	PyObject* start_angle = PyFloat_FromDouble((double)$1->config.start_angle);
+	PyObject* fov = PyFloat_FromDouble((double)$1->config.fov);
+	PyObject* ar = PyFloat_FromDouble((double)$1->config.angular_resolution);
+	PyObject* maximum_range = PyFloat_FromDouble((double)$1->config.maximum_range);
+	PyObject* accuracy = PyFloat_FromDouble((double)$1->config.accuracy);
+	//	PyObject* laser_type = PyFloat_FromDouble((double)$1->config.timestamp);
+	PyDict_SetItemString(laser_config, "start_angle", start_angle);
+	PyDict_SetItemString(laser_config, "fov", fov);
+	PyDict_SetItemString(laser_config, "angular_resolution", ar);
+	PyDict_SetItemString(laser_config, "maximum_range", maximum_range);	
+	PyDict_SetItemString(laser_config, "accuracy", accuracy);	
+	Py_DECREF(start_angle);
+	Py_DECREF(fov);
+	Py_DECREF(ar);
+	Py_DECREF(maximum_range);
+	Py_DECREF(accuracy);
+
+
+	PyObject* range = PyList_New(0);
+        int i;
+	for(i=0; i<$1->num_readings; i++){
+	  PyObject* pt = PyFloat_FromDouble((double)$1->range[i]);
+	  PyList_Append(range, pt);
+	  Py_DECREF(pt);
+	}
+
+	PyObject* retObj = PyDict_New();
+	PyDict_SetItemString(retObj, "range", range);
+
+	PyObject* ts = PyFloat_FromDouble((double)$1->timestamp);
+	PyDict_SetItemString(retObj, "timestamp", ts);
+
+	PyDict_SetItemString(retObj, "laser_config", laser_config);
+
+	Py_DECREF(range);
+	Py_DECREF(laser_config);
+	Py_DECREF(ts);
+	$result = retObj;
 }
+
+
+
+%typemap(out) carmen_robot_laser_message*{
+	PyObject* laser_pose = PyList_New(0);
+	PyObject* x = PyFloat_FromDouble((double)$1->laser_pose.x);
+	PyObject* y = PyFloat_FromDouble((double)$1->laser_pose.y);
+	PyObject* theta = PyFloat_FromDouble((double)$1->laser_pose.theta);
+	PyList_Append(laser_pose, x);
+	PyList_Append(laser_pose, y);
+	PyList_Append(laser_pose, theta);
+	Py_DECREF(x);
+	Py_DECREF(y);
+	Py_DECREF(theta);
+
+	PyObject* robot_pose = PyList_New(0);
+	PyObject* x2 = PyFloat_FromDouble((double)$1->robot_pose.x);
+	PyObject* y2 = PyFloat_FromDouble((double)$1->robot_pose.y);
+	PyObject* theta2 = PyFloat_FromDouble((double)$1->robot_pose.theta);
+	PyList_Append(robot_pose, x2);
+	PyList_Append(robot_pose, y2);
+	PyList_Append(robot_pose, theta2);
+	Py_DECREF(x2);
+	Py_DECREF(y2);
+	Py_DECREF(theta2);
+
+
+  /** The laser message of the laser module (rawlaser) **/
+
+	PyObject* laser_config = PyDict_New();
+	PyObject* start_angle = PyFloat_FromDouble((double)$1->config.start_angle);
+	PyObject* fov = PyFloat_FromDouble((double)$1->config.fov);
+	PyObject* ar = PyFloat_FromDouble((double)$1->config.angular_resolution);
+	PyObject* maximum_range = PyFloat_FromDouble((double)$1->config.maximum_range);
+	PyObject* accuracy = PyFloat_FromDouble((double)$1->config.accuracy);
+	//	PyObject* laser_type = PyFloat_FromDouble((double)$1->config.timestamp);
+	PyDict_SetItemString(laser_config, "start_angle", start_angle);
+	PyDict_SetItemString(laser_config, "fov", fov);
+	PyDict_SetItemString(laser_config, "angular_resolution", ar);
+	PyDict_SetItemString(laser_config, "maximum_range", maximum_range);	
+	PyDict_SetItemString(laser_config, "accuracy", accuracy);	
+	Py_DECREF(start_angle);
+	Py_DECREF(fov);
+	Py_DECREF(ar);
+	Py_DECREF(maximum_range);
+	Py_DECREF(accuracy);
+
+
+	PyObject* range = PyList_New(0);
+        int i;
+	for(i=0; i<$1->num_readings; i++){
+	  PyObject* pt = PyFloat_FromDouble((double)$1->range[i]);
+	  PyList_Append(range, pt);
+	  Py_DECREF(pt);
+	}
+
+	PyObject* retObj = PyDict_New();
+	PyDict_SetItemString(retObj, "range", range);
+
+	PyObject* ts = PyFloat_FromDouble((double)$1->timestamp);
+	PyObject* tv = PyFloat_FromDouble((double)$1->tv);
+	PyObject* rv = PyFloat_FromDouble((double)$1->rv);
+	PyDict_SetItemString(retObj, "tv", tv);
+	PyDict_SetItemString(retObj, "rv", rv);
+	PyDict_SetItemString(retObj, "timestamp", ts);
+	PyDict_SetItemString(retObj, "robot_pose", robot_pose);	
+	PyDict_SetItemString(retObj, "laser_pose", laser_pose);	
+	PyDict_SetItemString(retObj, "laser_config", laser_config);	
+
+	Py_DECREF(robot_pose);
+	Py_DECREF(laser_pose);
+	Py_DECREF(range);
+	Py_DECREF(ts);
+	Py_DECREF(tv);
+	Py_DECREF(rv);
+	Py_DECREF(laser_config);
+	$result = retObj;
+}
+
 
 %typemap(out) carmen_arm_state_message*{
         int i;
@@ -235,7 +359,8 @@
 %include param_messages.h
 %include robot_messages.h
 %include simulator_messages.h
-%include linemapping_messages.h
+//%include linemapping.h
+//%include linemapping_messages.h
 
 
 //%include hokuyo_messages.h
@@ -297,4 +422,4 @@
 }
 
 %include "ipc_wrapper.h"
-%include linemapping.h
+#%include linemapping.h
