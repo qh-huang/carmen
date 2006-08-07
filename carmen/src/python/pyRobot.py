@@ -29,7 +29,10 @@ class pyMessageHandler(pyCarmen.MessageHandler, Thread):
 		pass
 
 	def connect(self):
-		pyCarmen.carmen_ipc_dispatch()
+		while(1):
+			pyCarmen.carmen_ipc_sleep(0.05)
+
+		#pyCarmen.carmen_ipc_dispatch()
 
 	def stop(self):
 		pyCarmen.carmen_ipc_disconnect()
