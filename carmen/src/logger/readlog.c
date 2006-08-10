@@ -225,6 +225,32 @@ char *carmen_string_to_base_odometry_message(char *string,
   return current_pos;
 }
 
+char *carmen_string_to_arm_state_message(char *string,
+					 carmen_arm_state_message *arm)
+{
+  int i;
+  char *current_pos = string;
+
+  if (strncmp(current_pos, "ARM", 3) == 0)
+    current_pos = carmen_next_word(current_pos); 
+  
+  arm->flags = CLF_READ_INT(&current_pos);
+  arm->num_joints = CLF_READ_INT(&current_pos);
+  for (i = 0; i < arm->num_joints; i++)
+    arm->joint_angles[i] = CLF_READ_DOUBLE(&current_pos);
+  arm->num_currents = CLF_READ_INT(&current_pos);
+  for (i = 0; i < arm->num_currents; i++)
+    arm->joint_currents[i] = CLF_READ_DOUBLE(&current_pos);
+  arm->num_vels = CLF_READ_INT(&current_pos);
+  for (i = 0; i < arm->num_vels; i++)
+    arm->joint_angular_vels[i] = CLF_READ_DOUBLE(&current_pos);
+  arm->gripper_closed = CLF_READ_INT(&current_pos);
+
+  arm->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&arm->host, &current_pos);
+  return current_pos;
+}
+
 char *carmen_string_to_simulator_truepos_message(char *string,
 						 carmen_simulator_truepos_message *truepos)
 {

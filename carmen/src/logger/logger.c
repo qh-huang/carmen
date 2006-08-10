@@ -34,7 +34,8 @@ carmen_FILE *outfile = NULL;
 double logger_starttime;
 
 static int log_odometry = 1;
-static int log_laser	= 1;
+static int log_arm = 1;
+static int log_laser = 1;
 static int log_robot_laser = 1;
 static int log_localize = 1;
 static int log_simulator = 1;
@@ -47,6 +48,7 @@ void get_logger_params(int argc, char** argv) {
 
   carmen_param_t param_list[] = {
     {"logger", "odometry",    CARMEN_PARAM_ONOFF, &log_odometry, 0, NULL},
+    {"logger", "arm",    CARMEN_PARAM_ONOFF, &log_arm, 0, NULL},
     {"logger", "laser",       CARMEN_PARAM_ONOFF, &log_laser, 0, NULL},
     {"logger", "robot_laser", CARMEN_PARAM_ONOFF, &log_robot_laser, 0, NULL},
     {"logger", "localize",    CARMEN_PARAM_ONOFF, &log_localize, 0, NULL},
@@ -111,6 +113,13 @@ void base_odometry_handler(carmen_base_odometry_message *odometry)
   fprintf(stderr, "O");
   carmen_logwrite_write_odometry(odometry, outfile, 
 				 carmen_get_time() - logger_starttime);
+}
+
+void arm_state_handler(carmen_arm_state_message *arm)
+{
+  fprintf(stderr, "A");
+  carmen_logwrite_write_arm(arm, outfile, 
+			    carmen_get_time() - logger_starttime);
 }
 
 void robot_frontlaser_handler(carmen_robot_laser_message *laser)
@@ -264,6 +273,11 @@ int main(int argc, char **argv)
     carmen_base_subscribe_odometry_message(NULL, (carmen_handler_t)
 					   base_odometry_handler, 
 					   CARMEN_SUBSCRIBE_ALL);
+
+  if (log_arm) 
+    carmen_arm_subscribe_state_message(NULL, (carmen_handler_t)
+				       arm_state_handler, 
+				       CARMEN_SUBSCRIBE_ALL);
 
   if (log_robot_laser) {
     carmen_robot_subscribe_frontlaser_message(NULL, (carmen_handler_t)

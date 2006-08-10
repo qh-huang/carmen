@@ -74,6 +74,26 @@ void carmen_logwrite_write_odometry(carmen_base_odometry_message *odometry,
 		 timestamp);
 }
 
+void carmen_logwrite_write_arm(carmen_arm_state_message *arm, 
+				    carmen_FILE *outfile,
+				    double timestamp)
+{
+  int i;
+
+  carmen_fprintf(outfile, "ARM %d %d", arm->flags, arm->num_joints);
+  for (i = 0; i < arm->num_joints; i++)
+    carmen_fprintf(outfile, " %f", arm->joint_angles[i]);
+  carmen_fprintf(outfile, " %d", arm->num_currents);
+  for (i = 0; i < arm->num_currents; i++)
+    carmen_fprintf(outfile, " %f", arm->joint_currents[i]);
+  carmen_fprintf(outfile, " %d", arm->num_vels);
+  for (i = 0; i < arm->num_vels; i++)
+    carmen_fprintf(outfile, " %f", arm->joint_angular_vels[i]);
+  carmen_fprintf(outfile, " %d", arm->gripper_closed);
+
+  carmen_fprintf(outfile, " %f %s %f\n", arm->timestamp, arm->host, timestamp);
+}
+
 void carmen_logwrite_write_truepos(carmen_simulator_truepos_message *truepos, 
 				   carmen_FILE *outfile, double timestamp)
 {

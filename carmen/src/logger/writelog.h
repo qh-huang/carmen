@@ -59,6 +59,15 @@ void carmen_logwrite_write_odometry(carmen_base_odometry_message *odometry,
 				    carmen_FILE *outfile, double timestamp);  
 
 /** Converts the corresponding message into a string in the carmen log format.
+ * @param arm The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_arm(carmen_arm_state_message *arm, 
+			       carmen_FILE *outfile,
+			       double timestamp);
+
+/** Converts the corresponding message into a string in the carmen log format.
  * @param laser The message that should be written to the log file.
  * @param laser_num The number of the laser (1=front, 2=rear, 3=laser3, 4=laser4, ...)
  * @param outfile A carmen file pointer.
