@@ -52,6 +52,7 @@ carmen_simulator_truepos_message truepos;
 carmen_robot_laser_message laser1, laser2, laser3, laser4, laser5;
 carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4, rawlaser5;
 carmen_localize_globalpos_message globalpos;
+carmen_arm_state_message arm;
 
 carmen_gps_gpgga_message gpsgga;
 carmen_gps_gprmc_message gpsrmc;
@@ -132,6 +133,10 @@ void register_ipc_messages(void)
   err = IPC_defineMsg(CARMEN_BASE_ODOMETRY_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_BASE_ODOMETRY_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_BASE_ODOMETRY_NAME);
+
+  err = IPC_defineMsg(CARMEN_ARM_STATE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_ARM_STATE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", CARMEN_ARM_STATE_NAME);
 
   err = IPC_defineMsg(CARMEN_SIMULATOR_TRUEPOS_NAME, IPC_VARIABLE_LENGTH,
                       CARMEN_SIMULATOR_TRUEPOS_FMT);
@@ -219,6 +224,8 @@ typedef struct {
 logger_callback_t logger_callbacks[] = {
   {"ODOM", CARMEN_BASE_ODOMETRY_NAME, 
    (converter_func)carmen_string_to_base_odometry_message, &odometry, 0},
+  {"ARM", CARMEN_ARM_STATE_NAME, 
+   (converter_func)carmen_string_to_arm_state_message, &arm, 0},
   {"TRUEPOS", CARMEN_SIMULATOR_TRUEPOS_NAME,
    (converter_func)carmen_string_to_simulator_truepos_message, &odometry, 0},
   {"FLASER", CARMEN_ROBOT_FRONTLASER_NAME, 
@@ -401,6 +408,7 @@ void shutdown_playback_module(int sig)
 int main(int argc, char **argv)
 {
   memset(&odometry, 0, sizeof(odometry));
+  memset(&arm, 0, sizeof(arm));
   memset(&truepos, 0, sizeof(truepos));
   memset(&laser1, 0, sizeof(laser1));
   memset(&laser2, 0, sizeof(laser2));

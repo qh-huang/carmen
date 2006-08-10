@@ -102,6 +102,9 @@ char *carmen_string_to_base_odometry_message(char *string,
 					     carmen_base_odometry_message
 					     *odometry);
 
+char *carmen_string_to_arm_state_message(char *string,
+					 carmen_arm_state_message *arm);
+
 /** Converts the string to a truepos message. 
  * @param string A string describing the message in the *old* carmen logfile format.
  * @param truepos A pointer to the (allocated) structure where the message should be written to.

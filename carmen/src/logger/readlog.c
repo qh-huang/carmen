@@ -236,12 +236,19 @@ char *carmen_string_to_arm_state_message(char *string,
   
   arm->flags = CLF_READ_INT(&current_pos);
   arm->num_joints = CLF_READ_INT(&current_pos);
+  arm->joint_angles = (double *) realloc(arm->joint_angles, arm->num_joints*sizeof(double));
+  carmen_test_alloc(arm->joint_angles);
   for (i = 0; i < arm->num_joints; i++)
     arm->joint_angles[i] = CLF_READ_DOUBLE(&current_pos);
   arm->num_currents = CLF_READ_INT(&current_pos);
+  arm->joint_currents = (double *) realloc(arm->joint_currents, arm->num_currents*sizeof(double));
+  carmen_test_alloc(arm->joint_currents);
   for (i = 0; i < arm->num_currents; i++)
     arm->joint_currents[i] = CLF_READ_DOUBLE(&current_pos);
   arm->num_vels = CLF_READ_INT(&current_pos);
+  arm->joint_angular_vels = (double *) realloc(arm->joint_angular_vels, 
+					       arm->num_vels*sizeof(double));
+  carmen_test_alloc(arm->joint_angular_vels);
   for (i = 0; i < arm->num_vels; i++)
     arm->joint_angular_vels[i] = CLF_READ_DOUBLE(&current_pos);
   arm->gripper_closed = CLF_READ_INT(&current_pos);
