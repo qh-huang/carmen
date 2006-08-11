@@ -125,7 +125,7 @@ void carmen_logwrite_write_laser_laser(carmen_laser_laser_message *laser,
     carmen_fprintf(outfile, "%.2f ", laser->range[i]);
   carmen_fprintf(outfile, "%d ", laser->num_remissions);
   for(i = 0; i < laser->num_remissions; i++)
-    carmen_fprintf(outfile, "%.1f ", laser->range[i]);
+    carmen_fprintf(outfile, "%.1f ", laser->remission[i]);
   carmen_fprintf(outfile, "%f %s %f\n", laser->timestamp,
 		 laser->host, timestamp);
 }
@@ -148,7 +148,7 @@ void carmen_logwrite_write_robot_laser(carmen_robot_laser_message *laser,
     carmen_fprintf(outfile, "%.2f ", laser->range[i]);
   carmen_fprintf(outfile, "%d ", laser->num_remissions);
   for(i = 0; i < laser->num_remissions; i++)
-    carmen_fprintf(outfile, "%.1f ", laser->range[i]);
+    carmen_fprintf(outfile, "%.1f ", laser->remission[i]);
   carmen_fprintf(outfile, "%f %f %f %f %f %f ", laser->laser_pose.x,
 		 laser->laser_pose.y, laser->laser_pose.theta,
 		 laser->robot_pose.x, laser->robot_pose.y, 
