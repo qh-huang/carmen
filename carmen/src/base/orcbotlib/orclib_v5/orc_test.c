@@ -11,11 +11,24 @@ int main( int argn, char **argv ){
   argn = argn;
   argv = argv;
 
+  if (argn < 2) {
+    printf("usage: orc_test <signed pwm>\n");
+    exit(1);
+  }
+
   fprintf( stderr,  " started program... " );
   orc_comms_impl_t *impl = orc_rawprovider_create("/dev/ttyUSB0");
   
   orc_t *orc = orc_create( impl  );
   fprintf( stderr, " made orc \n" );
+
+  orc_motor_set_signed( orc, 1, atof(argv[1]) );
+  sleep( 1 );
+
+  printf("stopping\n");
+
+  orc_motor_set_signed( orc, 1, 0 );
+  sleep( 1 );
 
   /*
   // motors and encoders
