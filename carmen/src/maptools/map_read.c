@@ -905,6 +905,80 @@ int carmen_map_read_named_offlimits_chunk(char *filename, char *chunk_name,
   return carmen_map_read_offlimits_chunk_data(fp, offlimits_list, list_length);
 }
 
+int carmen_map_read_global_offset_chunk(char *filename, 
+					carmen_global_offset_t *global_offset)
+{
+  carmen_FILE *fp;
+  char chunk_type, chunk_description[12];
+  int chunk_size;
+
+  fp = carmen_fopen(filename, "r");
+  if(fp == NULL) {
+    fprintf(stderr, "Error: could not open file %s for reading.\n",
+	    filename);
+    return -1;
+  }
+  if(carmen_map_advance_to_chunk(fp, CARMEN_MAP_GLOBAL_OFFSET_CHUNK) < 0) {
+    carmen_fclose(fp);
+    return -1;
+  }
+  chunk_type = carmen_fgetc(fp);
+  carmen_fread(&chunk_size, sizeof(int), 1, fp);
+  carmen_fread(chunk_description, 10, 1, fp);
+
+  if (CARMEN_MAP_CHUNK_IS_NAMED(chunk_type)) {
+    if (read_string(NULL, -1, fp) < 0) {
+      carmen_warn("Error: Unexpected EOF.\n");
+      carmen_fclose(fp);
+      return -1;
+    }
+  }
+
+  carmen_fread(global_offset, sizeof(carmen_global_offset_t), 1, fp);
+  carmen_fclose(fp);
+
+  return 0;
+}
+
+int carmen_map_read_named_global_offset_chunk(char *filename, char *chunk_name,
+					      carmen_global_offset_t 
+					      *global_offset)
+{
+  carmen_FILE *fp;
+  char chunk_type, chunk_description[12];
+  int chunk_size;
+
+  fp = carmen_fopen(filename, "r");
+  if(fp == NULL) {
+    fprintf(stderr, "Error: could not open file %s for reading.\n",
+	    filename);
+    return -1;
+  }
+  if(carmen_map_advance_to_named_chunk
+     (fp, CARMEN_MAP_GLOBAL_OFFSET_CHUNK, chunk_name) < 0) {
+    fprintf(stderr, "Error: Could not find a global offset chunk "
+	    "named \"%s\"\n", chunk_name);
+    carmen_fclose(fp);
+    return -1;
+  }
+  chunk_type = carmen_fgetc(fp);
+  carmen_fread(&chunk_size, sizeof(int), 1, fp);
+  carmen_fread(chunk_description, 10, 1, fp);
+
+  if (CARMEN_MAP_CHUNK_IS_NAMED(chunk_type)) {
+    if (read_string(NULL, -1, fp) < 0) {
+      carmen_warn("Error: Unexpected EOF.\n");
+      carmen_fclose(fp);
+      return -1;
+    }
+  }
+
+  carmen_fread(global_offset, sizeof(carmen_global_offset_t), 1, fp);
+  carmen_fclose(fp);
+
+  return 0;
+}
+
 int carmen_map_read_offlimits_chunk_into_map(char *filename, carmen_map_p map)
 {
   carmen_offlimits_p offlimits_list;

@@ -66,6 +66,10 @@ typedef struct {
 } carmen_place_t, *carmen_place_p;
 
 typedef struct {
+  double x, y, theta;
+} carmen_global_offset_t, *carmen_global_offset_p;
+
+typedef struct {
   carmen_place_p places;
   int num_places;
 } carmen_map_placelist_t, *carmen_map_placelist_p;

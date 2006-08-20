@@ -42,8 +42,8 @@ static void main_usage(char *prog_name)
 #ifndef NO_GRAPHICS
 	     "tomap, "
 #endif
-	     "rotate, minimize, add_place, strip,"
-	     " info\n"
+	     "rotate, minimize, add_place, add_offset, \n"
+	     "strip, info.\n"
 	     "Run %s help <action> to get help on using each action.\n\n",
 	     prog_name, prog_name);  
 }
@@ -70,11 +70,22 @@ static int handle_options(int argc,  char *argv[], int *force)
       *force = 1;
       break;
     case 'h':
+      main_usage(argv[0]);
     case '?':
-      main_usage(argv[0]);
     default:
-      carmen_warn("Unknown option character %c", optopt);
-      main_usage(argv[0]);
+      carmen_warn("\nUnknown option character %c", optopt);
+      if (isdigit(optopt) || optopt == '.')
+	carmen_die("\n\nThis looks like a negative numeric value. "
+		   "If you want to pass a negative \nvalue, you need "
+		   "to suppress option parsing by using -- after the "
+		   "command.\n Any options before -- will be parsed, but "
+		   "nothing after. For example:\n\n"
+		   "%% maptool add_offset -- map.cmf -1 -1 0\n\n"
+		   "works where \n\n"
+		   "%% maptool add_offset map.cmf -1 -1 0\n\n"
+		   "does not.\n");
+      else
+	main_usage(argv[0]);
       break;
     }
   }
@@ -126,6 +137,11 @@ static void help(int argc, char **argv)
     fprintf(stderr, "Note that unlike rotate, minimize, etc., add_place "
 	    "performs an in-place edit\nto the map, and creates a backup "
 	    "copy.\n\n");
+    exit(0);
+  } else if (carmen_strcasecmp(action, "add_offset") == 0) {
+    carmen_warn("\nUsage: %s <mapfilename> <x> <y> <theta>\n",
+		argv[0]);
+    carmen_warn("       <theta> should be given in degrees.\n");
     exit(0);
   } else if (carmen_strcasecmp(action, "strip") == 0) {
     fprintf(stderr, "\nUsage: %s strip <in map filename> <in map filename> "
@@ -609,6 +625,89 @@ static void add_place(int argc, char *argv[])
 	       tmp_filename, strerror(errno));
 }
 
+static void add_offset(int argc, char *argv[])
+{
+  char *input_filename;
+  int next_arg;
+  int force;
+  char cmd[1024];
+  char tmp_filename[1024];
+  carmen_FILE *fp_in, *fp_out;
+  carmen_global_offset_t offset;
+  int system_err;
+  int num_args;
+  int response;
+
+  next_arg = handle_options(argc, argv, &force);
+  next_arg++;
+
+  num_args = argc - next_arg;
+
+  if(num_args != 4) {
+    carmen_warn("\nError: wrong number of parameters.\n");    
+    carmen_warn("\nUsage: %s <mapfilename> <x> <y> <theta>\n",
+		argv[0]);
+    carmen_warn("       <theta> should be given in degrees.\n");
+  }
+     
+  input_filename = check_mapfile(argv[next_arg]);
+  next_arg++;
+
+  if(!carmen_map_file(input_filename))
+    carmen_die("Error: %s does not appear to be a valid carmen map file;\n" 
+	       "if it is gzipped, make sure it has a \".gz\" extension.\n",
+	       input_filename);
+
+  if(carmen_map_chunk_exists(input_filename, CARMEN_MAP_GLOBAL_OFFSET_CHUNK)) {
+    carmen_warn("Offset chunk exists already. Replace? [y/n] ");
+    response = getchar();
+    if (tolower(response) != 'y')
+      exit(0);
+    carmen_warn("Replacing...\n");
+  }
+
+  offset.x = atof(argv[next_arg]);
+  offset.y = atof(argv[next_arg+1]);
+  offset.theta = carmen_degrees_to_radians(atof(argv[next_arg+2]));
+
+  fprintf(stderr, "Set (%s %s %s) to (%.2f m, %.2f m, %.2f rad)\n", 
+	  argv[next_arg], argv[next_arg+1], argv[next_arg+2], 
+	  offset.x, offset.y, offset.theta);
+  
+  fp_in = carmen_fopen(input_filename, "r");
+  if(fp_in == NULL)
+    carmen_die_syserror("Error: file %s could not be opened for reading", 
+			input_filename);
+  
+  strcpy(tmp_filename, "/tmp/newmapXXXXXX");
+  system_err = mkstemp(tmp_filename);
+  if (system_err == -1) 
+    carmen_die_syserror("I need to create a temporary file in /tmp, but I "
+			"can't for the\n following reason\n");
+  
+  fp_out = carmen_fopen(tmp_filename, "w");
+  if(fp_out == NULL)
+    carmen_die_syserror("Error: file could not be opened for writing");
+
+  if(carmen_map_strip(fp_in, fp_out, CARMEN_MAP_GLOBAL_OFFSET_CHUNK) < 0)
+     carmen_die("Error: could not strip global offset from map file.\n");
+  if(carmen_map_write_global_offset_chunk(fp_out, &offset) < 0)
+    carmen_die("Error: could not write offset chunk.\n");
+
+  carmen_fclose(fp_in);
+  carmen_fclose(fp_out);
+
+  sprintf(cmd, "mv -f %s %s", tmp_filename, input_filename);
+  system_err = system(cmd);
+  if (system_err != 0) 
+    carmen_die("I created a temporary file contained the map with the new "
+	       "place name\nat %s. I tried to copy the new file onto your "
+	       "old file, but the copy\nfailed for the following reason: %s\n"
+	       "\n"
+	       "You will have to copy the new file over yourself.\n", 
+	       tmp_filename, strerror(errno));
+}
+
 static void strip(int argc, char *argv[])
 {
   char *input_filename, *output_filename, *chunk_type;
@@ -672,6 +771,7 @@ static void info(int argc, char *argv[])
   carmen_map_placelist_t place_list;
   carmen_offlimits_t *offlimits_list;
   int list_length;
+  carmen_global_offset_t offset;
 
   /* Check for the appropriate command line argument */
   if(argc != 3) 
@@ -750,7 +850,7 @@ static void info(int argc, char *argv[])
     printf("LASERSCANS    : no\n");
 
   if(carmen_map_chunk_exists(filename, CARMEN_MAP_PLACES_CHUNK)) {
-    printf("\nMap Contains the following places:\n");
+    printf("\nMap contains the following places:\n");
     printf("----------------------------------\n");
     carmen_map_read_places_chunk(filename, &place_list);
     for(i = 0; i < place_list.num_places; i++)
@@ -770,6 +870,15 @@ static void info(int argc, char *argv[])
 	       place_list.places[i].x_std, place_list.places[i].y_std,
 	       carmen_radians_to_degrees(place_list.places[i].theta_std));
   }
+
+  chunk_size = carmen_map_chunk_exists(filename, 
+				       CARMEN_MAP_GLOBAL_OFFSET_CHUNK);
+  if (chunk_size > 0) {
+    carmen_map_read_global_offset_chunk(filename, &offset);
+    printf("OFFLIMITS     : %10.3f %10.3f %10.3f rads\n", offset.x, 
+	   offset.y, offset.theta);
+  } else
+    printf("OFFLIMITS     : no\n");
 }
 
 int main(int argc, char **argv)
@@ -801,6 +910,8 @@ int main(int argc, char **argv)
     minimize(argc, argv);
   else if (carmen_strcasecmp(action, "add_place") == 0)
     add_place(argc, argv);
+  else if (carmen_strcasecmp(action, "add_offset") == 0)
+    add_offset(argc, argv);
   else if (carmen_strcasecmp(action, "strip") == 0)
     strip(argc, argv);
   else if (carmen_strcasecmp(action, "info") == 0)

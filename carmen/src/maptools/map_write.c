@@ -88,6 +88,10 @@ static int vchunk_size(unsigned int chunk_type, va_list ap)
 	size += 16;
     break;
 
+  case CARMEN_MAP_GLOBAL_OFFSET_CHUNK:
+    size += sizeof(carmen_global_offset_t);
+    break;
+
   case CARMEN_MAP_PLACES_CHUNK:
     places = va_arg(ap, carmen_place_p);
     num = va_arg(ap, int);
@@ -470,6 +474,39 @@ int carmen_map_write_named_offlimits_chunk(carmen_FILE *fp, char *name,
   carmen_fputc('\0', fp);
 
   return carmen_map_write_offlimits_chunk_data(fp, offlimits_list, num_items);
+}
+
+int carmen_map_write_global_offset_chunk(carmen_FILE *fp, 
+					 carmen_global_offset_t *global_offset)
+{
+  int size;
+
+  carmen_fputc(CARMEN_MAP_GLOBAL_OFFSET_CHUNK, fp);
+  size = chunk_size(CARMEN_MAP_GLOBAL_OFFSET_CHUNK);
+  carmen_fwrite(&size, sizeof(int), 1, fp);
+  carmen_fprintf(fp, "OFFSET    ");
+  carmen_fwrite(global_offset, sizeof(carmen_global_offset_t), 1, fp);
+
+  return 0;
+}
+
+int carmen_map_write_named_global_offset_chunk(carmen_FILE *fp, char *name,
+					       carmen_global_offset_t 
+					       *global_offset)
+{
+  int size;
+
+  carmen_fputc(CARMEN_MAP_GLOBAL_OFFSET_CHUNK | 
+	       CARMEN_MAP_NAMED_CHUNK_FLAG, fp);
+  size = chunk_size(CARMEN_MAP_GLOBAL_OFFSET_CHUNK, name);
+  carmen_fwrite(&size, sizeof(int), 1, fp);
+  carmen_fprintf(fp, "OFFSET    ");
+  carmen_fprintf(fp, "%s", name);
+  carmen_fputc('\0', fp);
+
+  carmen_fwrite(global_offset, sizeof(carmen_global_offset_t), 1, fp);
+
+  return 0;
 }
 
 static int carmen_map_write_laserscans_chunk_data(carmen_FILE *fp,

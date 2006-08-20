@@ -796,6 +796,68 @@ carmen_map_apply_offlimits_chunk_to_map(carmen_offlimits_p offlimits_list,
   return 0;
 }
 
+int carmen_map_get_global_offset_by_name(char *name, 
+					 carmen_global_offset_t *global_offset)
+{
+
+  IPC_RETURN_TYPE err;
+  static carmen_global_offset_request_message *query;
+  static carmen_map_named_global_offset_request named_query;
+  static carmen_map_global_offset_message *response;
+  unsigned int timeout = 10000;
+
+  if (name) {
+    err = IPC_defineMsg(CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_NAME, 
+			IPC_VARIABLE_LENGTH, 
+			CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_NAME);
+    
+    named_query.name = calloc(strlen(name) + 1, sizeof(char));
+    carmen_test_alloc(named_query.name);
+    strcpy(named_query.name, name);
+    named_query.host = carmen_get_host();
+    named_query.timestamp = carmen_get_time();
+    
+    err = IPC_queryResponseData(CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_NAME, 
+				&named_query, (void **)&response, timeout);
+    carmen_test_ipc(err, "Could not get map_request", 
+		    CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_NAME);
+  } else {
+    err = IPC_defineMsg(CARMEN_GLOBAL_OFFSET_REQUEST_NAME, 
+			IPC_VARIABLE_LENGTH, CARMEN_DEFAULT_MESSAGE_FMT);
+    carmen_test_ipc_exit(err, "Could not define message", 
+			 CARMEN_GLOBAL_OFFSET_REQUEST_NAME);
+    
+    query = carmen_default_message_create();
+    
+    err = IPC_queryResponseData(CARMEN_GLOBAL_OFFSET_REQUEST_NAME, query, 
+				(void **)&response, timeout);
+    carmen_test_ipc(err, "Could not get map_request", 
+		    CARMEN_GLOBAL_OFFSET_REQUEST_NAME);
+  }
+
+  if (err != IPC_OK) {
+    carmen_warn("\nDid you remember to start the mapserver, or give "
+		"a map to the paramServer?\n");
+    return -1;
+  }
+
+  if (global_offset) {
+    *global_offset = response->global_offset;
+  }
+
+  free(response);
+
+  return 0;
+}
+
+int
+carmen_map_get_global_offset(carmen_global_offset_t *global_offset)
+{
+  return carmen_map_get_global_offset_by_name(NULL, global_offset);
+}
+
 inline int 
 carmen_map_to_world(carmen_map_point_p carmen_map_point, 
 		    carmen_world_point_p world_point) 

@@ -56,6 +56,8 @@ typedef carmen_default_message carmen_gridmap_request_message;
 typedef carmen_default_message carmen_placelist_request_message;
 #define CARMEN_OFFLIMITS_REQUEST_NAME    "carmen_offlimits_request"
 typedef carmen_default_message carmen_offlimits_request_message;
+#define CARMEN_GLOBAL_OFFSET_REQUEST_NAME "carmen_global_offset_request"
+typedef carmen_default_message carmen_global_offset_request_message;
 
 typedef struct {
   carmen_hmap_t hmap;
@@ -122,7 +124,6 @@ typedef struct {
 #define CARMEN_MAP_OFFLIMITS_NAME    "carmen_offlimits_message"
 #define CARMEN_MAP_OFFLIMITS_FMT     "{<{int,int,int,int,int}:2>,int,double,string}"
 
-
 typedef struct {
   char *name;
   double timestamp;
@@ -131,6 +132,24 @@ typedef struct {
 
 #define CARMEN_NAMED_OFFLIMITS_REQUEST_NAME    "carmen_named_offlimits_request"
 #define CARMEN_NAMED_OFFLIMITS_REQUEST_FMT     "{string,double,string}"
+
+typedef struct {  
+  carmen_global_offset_t global_offset;
+  double timestamp;
+  char *host;
+} carmen_map_global_offset_message;
+
+#define CARMEN_MAP_GLOBAL_OFFSET_NAME  "carmen_global_offset_message"
+#define CARMEN_MAP_GLOBAL_OFFSET_FMT   "{{double,double,double},double,string}"
+
+typedef struct {
+  char *name;
+  double timestamp;
+  char *host;
+} carmen_map_named_global_offset_request;
+
+#define CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_NAME "carmen_named_global_offset_request"
+#define CARMEN_NAMED_GLOBAL_OFFSET_REQUEST_FMT  "{string,double,string}"
 
 typedef struct {
   char *zone_name;

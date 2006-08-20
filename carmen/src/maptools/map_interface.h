@@ -83,6 +83,11 @@ int carmen_map_get_offlimits_by_name(char *name, carmen_offlimits_p *offlimits, 
 int carmen_map_apply_offlimits_chunk_to_map(carmen_offlimits_p offlimits, 
 					    int list_length, carmen_map_p map);
 
+int
+carmen_map_get_global_offset(carmen_global_offset_t *global_offset);
+int carmen_map_get_global_offset_by_name(char *name, 
+					 carmen_global_offset_t *global_offset);
+
 /* conversions between map_point_t's and other points */
 /* conversions between map_point_t's and other points */
 int carmen_map_to_world(carmen_map_point_p map_point, carmen_world_point_p world_point);

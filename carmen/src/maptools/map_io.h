@@ -46,6 +46,7 @@ extern "C" {
 #define CARMEN_MAP_EXPECTED_CHUNK    8
 #define CARMEN_MAP_LASERSCANS_CHUNK  16
 #define CARMEN_MAP_CREATOR_CHUNK     32
+#define CARMEN_MAP_GLOBAL_OFFSET_CHUNK     64
 #define CARMEN_MAP_HMAP_CHUNK        3
 
 #define CARMEN_MAP_NAMED_CHUNK_FLAG (1 << 7)
@@ -96,6 +97,12 @@ int carmen_map_write_laserscans_chunk(carmen_FILE *fp,
 int carmen_map_write_named_laserscans_chunk(carmen_FILE *fp, char *name,
 					    carmen_laser_scan_p scan_list,
 					    int num_scans);
+
+int carmen_map_write_global_offset_chunk(carmen_FILE *fp,
+					 carmen_global_offset_t *offset);
+int carmen_map_write_named_global_offset_chunk(carmen_FILE *fp, char *name,
+					       carmen_global_offset_t *offset);
+
 int carmen_map_write_hmap_chunk(carmen_FILE *fp, carmen_hmap_p hmap);
 
 int carmen_map_write_to_ppm(carmen_map_p map, char *output_filename);
@@ -135,6 +142,13 @@ int carmen_map_read_laserscans_chunk(char *filename,
 int carmen_map_read_named_laserscans_chunk(char *filename, char *chunk_name,
 					   carmen_laser_scan_p *scan_list,
 					   int *num_scans);
+
+int carmen_map_read_global_offset_chunk(char *filename, 
+					carmen_global_offset_t *global_offset);
+int carmen_map_read_named_global_offset_chunk(char *filename, char *chunk_name,
+					      carmen_global_offset_t 
+					      *global_offset);
+
 int carmen_map_read_hmap_chunk(char *filename, carmen_hmap_p hmap);
 
 int carmen_map_file(char *filename);
