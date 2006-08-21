@@ -73,6 +73,9 @@ void carmen_navigator_subscribe_autonomous_stopped_message
   (carmen_navigator_autonomous_stopped_message *autonomous_stopped,
    carmen_handler_t handler,
    carmen_subscribe_t subscribe_how);
+
+void carmen_navigator_unsubscribe_autonomous_stopped_message
+(carmen_handler_t handler);
   
 int carmen_navigator_query_status(carmen_navigator_status_message **status);
 int carmen_navigator_query_plan(carmen_navigator_plan_message **plan);
