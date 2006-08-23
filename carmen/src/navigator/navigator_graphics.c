@@ -1777,7 +1777,7 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   sprintf(buffer, "Robot: %5.1f m, %5.1f m, %6.2f", robot.pose.x, 
 	  robot.pose.y, carmen_radians_to_degrees(robot.pose.theta));
   gtk_label_set_text(GTK_LABEL(robot_status_label), buffer);
-  sprintf(buffer, "Velocity: %5.1f m/s, %5.1f rad/s", robot_traj.t_vel,
+  sprintf(buffer, "Velocity: %5.1f m/s, %5.1f deg/s", robot_traj.t_vel,
 	  carmen_radians_to_degrees(robot_traj.r_vel));
   gtk_label_set_text(GTK_LABEL(robot_speed_label), buffer);
   sprintf(buffer, "Goal: %.1f m, %.1f m", goal.pose.x, goal.pose.y);
