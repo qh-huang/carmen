@@ -62,6 +62,7 @@ laser_handler(void)
 {
   received_laser = 1;
   laser_count++;
+  carmen_warn(".");
   Redraw();
 }
 
@@ -300,9 +301,11 @@ main(int argc, char **argv)
     laser_range = atof(carmen_param_pair("range"));
   }
   
-  if (carmen_find_param("flaser") || carmen_find_param("frontlaser") || carmen_find_param("laser1")) 
+  if (carmen_find_param("flaser") || carmen_find_param("frontlaser") || 
+      carmen_find_param("laser1")) 
     laser_num  = 0;
-  else if (carmen_find_param("rlaser") || carmen_find_param("rearlaser") || carmen_find_param("laser2")) 
+  else if (carmen_find_param("rlaser") || carmen_find_param("rearlaser") || 
+	   carmen_find_param("laser2")) 
     laser_num  = 1;
   else if (carmen_find_param("laser3")) 
     laser_num  = 2;
@@ -313,37 +316,29 @@ main(int argc, char **argv)
   else
     laser_num  = 0;
   
-    
-  if(laser_num == 0) 
-    carmen_laser_subscribe_frontlaser_message(&laser,
-					      (carmen_handler_t)
-					      laser_handler,
-					      CARMEN_SUBSCRIBE_LATEST);
-  else if(laser_num == 1) 
-    carmen_laser_subscribe_rearlaser_message(&laser,
-					       (carmen_handler_t)
-					     laser_handler,
-					     CARMEN_SUBSCRIBE_LATEST);
+  if (laser_num == 0)
+    carmen_laser_subscribe_frontlaser_message
+      (&laser, (carmen_handler_t)laser_handler, CARMEN_SUBSCRIBE_LATEST);
+
+  if(laser_num == 1) 
+    carmen_laser_subscribe_rearlaser_message
+      (&laser, (carmen_handler_t)laser_handler, CARMEN_SUBSCRIBE_LATEST);
+
   else if(laser_num == 2) 
-    carmen_laser_subscribe_laser3_message(&laser,
-					  (carmen_handler_t)
-					  laser_handler,
-					  CARMEN_SUBSCRIBE_LATEST);
+    carmen_laser_subscribe_laser3_message
+      (&laser, (carmen_handler_t) laser_handler, CARMEN_SUBSCRIBE_LATEST);
     
   else if(laser_num == 3) 
-    carmen_laser_subscribe_laser4_message(&laser,
-					  (carmen_handler_t)
-					    laser_handler,
-					  CARMEN_SUBSCRIBE_LATEST);
+    carmen_laser_subscribe_laser4_message
+      (&laser, (carmen_handler_t)laser_handler, CARMEN_SUBSCRIBE_LATEST);
   
   else if(laser_num == 4) 
-    carmen_laser_subscribe_laser5_message(&laser,
-					  (carmen_handler_t)
-					  laser_handler,
-					  CARMEN_SUBSCRIBE_LATEST);
+    carmen_laser_subscribe_laser5_message
+      (&laser, (carmen_handler_t)laser_handler, CARMEN_SUBSCRIBE_LATEST);
   
   signal(SIGINT, shutdown_laserview);
   start_time = carmen_get_time();
   start_graphics(argc, argv);
+
   return 0;
 }
