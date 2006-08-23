@@ -127,9 +127,11 @@ static void param_change_handler(char *module, char *variable, char *value) {
     if (!strcmp(modules[m], module)) {
       for (p = 0; p < num_params[m]; p++) {
 	if (!strcmp(variables[m][p], variable)) {
-	  update_param_mask[m][p] = -1;
-	  if (entries[m][p])
-	    gtk_entry_set_text(GTK_ENTRY(entries[m][p]), values[m][p]);
+	  update_param_mask[m][p] = -2;
+	  if (entries[m][p]) {
+	    gtk_entry_set_text(GTK_ENTRY(entries[m][p]), value);
+	    update_param_mask[m][p] = 0;
+	  }
 	  else if (!carmen_strncasecmp(values[m][p], "on", 256))
 	    gtk_toggle_button_set_active
 	      (GTK_TOGGLE_BUTTON(radio_buttons[m][p][0]), TRUE);
