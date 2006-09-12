@@ -187,7 +187,7 @@ regenerate_map_pixmap(GtkMapViewer *map_view)
   y_render_size = map_view->rescale_size*config.y_size;
 
   final_image = gdk_pixbuf_scale_simple(rotated_image, x_render_size, 
-					y_render_size, GDK_INTERP_BILINEAR);
+					y_render_size, GDK_INTERP_TILES);
   map_view->current_pixbuf = final_image;
   g_object_unref(rotated_image);
 }
