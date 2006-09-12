@@ -875,10 +875,10 @@ static void info(int argc, char *argv[])
 				       CARMEN_MAP_GLOBAL_OFFSET_CHUNK);
   if (chunk_size > 0) {
     carmen_map_read_global_offset_chunk(filename, &offset);
-    printf("OFFLIMITS     : %10.3f %10.3f %10.3f rads\n", offset.x, 
+    printf("OFFSET        : %10.3f %10.3f %10.3f rads\n", offset.x, 
 	   offset.y, offset.theta);
   } else
-    printf("OFFLIMITS     : no\n");
+    printf("OFFSET        : no\n");
 }
 
 int main(int argc, char **argv)
