@@ -79,8 +79,6 @@ double carmen_geometry_compute_radius_and_centre(carmen_traj_point_p prev, carme
 void carmen_geometry_move_pt_to_rotating_ref_frame(carmen_traj_point_p obstacle_pt, 
 						 double tv, double rv);
 
-void carmen_rotate_2d(double *x, double *y, double theta);
-
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT 
 /* 
    Project a ray from (x, y) in direction theta to the edge of the map defined

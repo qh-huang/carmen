@@ -563,14 +563,6 @@ carmen_geometry_compute_radius_and_centre(carmen_traj_point_p prev,
   return radius;
 }
 
-void carmen_rotate_2d(double *x, double *y, double theta) {
-
-  double x2 = *x;
-
-  *x = cos(theta)*(*x) - sin(theta)*(*y);
-  *y = sin(theta)*x2 + cos(theta)*(*y);
-}
-
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
 double 
 carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point, 

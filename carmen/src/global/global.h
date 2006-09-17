@@ -350,6 +350,8 @@ int carmen_sign(double num);
 
 void carmen_rect_to_polar(double x, double y, double *r, double *theta);
 
+void carmen_rotate_2d(double *x, double *y, double theta);
+
 unsigned int carmen_generate_random_seed(void);
 unsigned int carmen_randomize(int *argc, char ***argv);
 void carmen_set_random_seed(unsigned int seed);

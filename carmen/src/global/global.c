@@ -789,6 +789,15 @@ carmen_rect_to_polar(double x, double y, double *r, double *theta)
   *theta = atan2(y, x);
 }
 
+void
+carmen_rotate_2d(double *x, double *y, double theta)
+{
+  double x2 = *x;
+
+  *x = cos(theta)*(*x) - sin(theta)*(*y);
+  *y = sin(theta)*x2 + cos(theta)*(*y);
+}
+
 unsigned int
 carmen_generate_random_seed(void)
 {
