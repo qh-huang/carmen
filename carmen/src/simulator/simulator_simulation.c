@@ -309,12 +309,14 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
   
   if (is_rear) 
     {
+      laser->id = 2;
       laser_config = &(simulator_config->rear_laser_config);
       point.theta = carmen_normalize_theta
 	(simulator_config->true_pose.theta - M_PI);
     } 
   else 
     {
+      laser->id = 1;
       laser_config = &(simulator_config->front_laser_config);
       point.theta = simulator_config->true_pose.theta;
     }

@@ -115,26 +115,31 @@ void publish_laser_message(sick_laser_p laser,
 
   switch(laser->settings.laser_num) {
   case CARMEN_FRONT_LASER_NUM:
+    msg.id = 1;
     err = IPC_publishData(CARMEN_LASER_FRONTLASER_NAME, &msg);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_FRONTLASER_NAME);
     break;
   case CARMEN_REAR_LASER_NUM:
+    msg.id = 2;
     err = IPC_publishData(CARMEN_LASER_REARLASER_NAME, &msg);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_REARLASER_NAME);
     break;
   case CARMEN_LASER3_NUM:
+    msg.id = 3;
     err = IPC_publishData(CARMEN_LASER_LASER3_NAME, &msg);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_LASER3_NAME);
     break;
   case CARMEN_LASER4_NUM:
+    msg.id = 4;
     err = IPC_publishData(CARMEN_LASER_LASER4_NAME, &msg);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_LASER4_NAME);
     break;
   case CARMEN_LASER5_NUM:
+    msg.id = 5;
     err = IPC_publishData(CARMEN_LASER_LASER5_NAME, &msg);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_LASER_LASER5_NAME);

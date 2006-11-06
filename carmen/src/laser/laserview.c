@@ -62,7 +62,7 @@ laser_handler(void)
 {
   received_laser = 1;
   laser_count++;
-  carmen_warn(".");
+  carmen_warn("%d", laser.id);
   Redraw();
 }
 

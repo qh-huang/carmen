@@ -18,8 +18,9 @@ MAN_PAGES =
 
 TARGETS = simulator simulator_test  libsimulator_interface.a simulator_connect_multiple
 
+
+ifndef NO_SHAREDLIBS
 PUBLIC_LIBRARIES_SO = libsimulator_interface.so
-ifndef NO_PYTHON
 TARGETS += libsimulator_interface.so.1
 endif
 

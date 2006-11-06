@@ -50,13 +50,13 @@ extern "C" {
 		SIMULATED_LASER = 3, 
 		UMKNOWN_PROXIMITY_SENSOR = 99}
   carmen_laser_laser_type_t;
-
+  
   /** Possible remission values **/
   typedef enum {OFF = 0, 
 		DIRECT = 1, 
 		NORMALIZED = 2}          
   carmen_laser_remission_type_t;
-
+  
   /** The configuration of the laser  **/
   typedef struct {
     carmen_laser_laser_type_t laser_type;   /**< what kind of laser is this **/
@@ -64,15 +64,15 @@ extern "C" {
     double fov;                             /**< field of view of the laser **/
     double angular_resolution;              /**< angular resolution of the laser **/
     double maximum_range;                   /**< the maximum valid range of a measurement  **/
-    double accuracy;                        /**< error in the range measurements **/
+    double accuracy;                        /**< error in the range measurements **/  
+    carmen_laser_remission_type_t remission_mode;  /* if and what kind of remission values are used */
     
-  carmen_laser_remission_type_t remission_mode;  /* if and what kind of remission values are used */
+  } carmen_laser_laser_config_t;
 
-} carmen_laser_laser_config_t;
-
-
+  
   /** The laser message of the laser module (rawlaser) **/
   typedef struct {
+    int id;                                /**< id of the laser (FLASER, RLASER, etc) **/
     carmen_laser_laser_config_t config;    /**< configuration of the laser **/
     int num_readings;                      /**< the number of beams of this laser message **/
     float *range;                          /**< the measured distances (in meters) **/
@@ -84,7 +84,7 @@ extern "C" {
 
 
 /** all raw laser messages have the same format **/
-#define      CARMEN_LASER_LASER_FMT       "{{int,double,double,double,double,double,int},int,<float:2>,int,<float:4>,double,string}"
+#define      CARMEN_LASER_LASER_FMT       "{int,{int,double,double,double,double,double,int},int,<float:3>,int,<float:5>,double,string}"
 
 #define      CARMEN_LASER_FRONTLASER_NAME "carmen_laser_frontlaser"
 #define      CARMEN_LASER_FRONTLASER_FMT  CARMEN_LASER_LASER_FMT
