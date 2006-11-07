@@ -842,7 +842,7 @@ print_usage( void )
 {
   fprintf(stderr,
 	  "\nusage: log2pic [options] <LOG-FILE> <PIC-FILE>\n"
-	  "  -anim-step <STEP-SIZE>:    min distance between scans (in cm)\n"
+	  "  -anim-step <STEP-SIZE>:    min distance between scans (in m)\n"
 	  "  -anim-skip <NUM>:          skip NUM animation dumps (0: no skip\n"
 	  "  -animation:                write sep. pics for animation\n"
 	  "  -background <FILE>:        use background file\n"
@@ -850,7 +850,7 @@ print_usage( void )
 	  "  -bg-offset <X><Y>:         shift by <X>/<Y> pixels\n"
 	  "  -bg-color <COLOR>:         background color\n"
 	  "  -bg-map <FILE>:            read carmen-map as background image\n"
-	  "  -border <BORDER>:          add a border (in cm)\n"
+	  "  -border <BORDER>:          add a border (in m)\n"
  	  "  -carmen-map:               save in carmen-map format\n"
 	  "  -convolve:                 convolve map with gaussian kerne;\n"
 	  "  -crop <X><Y><X><Y>:        crop part of the map (min,max):\n"
@@ -867,7 +867,7 @@ print_usage( void )
 	  "  -odds-model:               use odds-model to compute probs\n"
 	  "  -pathcolor <COLORNAME>:    color of the robot path\n"
 	  "  -pathwidth <WIDTH>:        width of the robot path\n"
-	  "  -start-pose <X><Y><O>:     start pose of the robot\n"
+	  "  -start-pose <X><Y><O>:     start pose of the robot (in m, m, deg)\n"
 	  "  -plot2d:                   save as 2d data file\n"
 	  "  -plot3d:                   save map as 3d data file\n"
 	  "  -pos-start <X><Y>:         pos of lower left bg-corner\n"
@@ -917,20 +917,20 @@ main( int argc, char** argv)
     } else if (!strcmp(argv[i],"-bee-map")) {
       settings.format = BEE_MAP; 
     } else if (!strcmp(argv[i],"-res") && (argc>i+2)) {
-      settings.resolution_x = atof(argv[++i]);
+      settings.resolution_x = 100.0 * atof(argv[++i]); 
       settings.resolution_y = settings.resolution_x;
     } else if (!strcmp(argv[i],"-res-x") && (argc>i+2)) {
-      settings.resolution_x = atof(argv[++i]);
+      settings.resolution_x = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-res-y") && (argc>i+2)) {
-      settings.resolution_y = atof(argv[++i]);
+      settings.resolution_y = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-zoom") && (argc>i+2)) {
       settings.zoom = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-pathcolor") && (argc>i+2)) {
       strncpy( settings.pathcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-pathwidth") && (argc>i+2)) {
-      settings.pathwidth = atof(argv[++i]);
+      settings.pathwidth = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-border") && (argc>i+1)) {
-      settings.border = atof(argv[++i]);
+      settings.border = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-bg-color") && (argc>i+1)) {
       strncpy( settings.bgcolor, argv[++i], MAX_STRING_LENGTH );
     } else if (!strcmp(argv[i],"-bg-map") && (argc>i+1)) {
@@ -958,10 +958,10 @@ main( int argc, char** argv)
       settings.bgoffset.x = atof( argv[++i] );
       settings.bgoffset.y = atof( argv[++i] );
     } else if (!strcmp(argv[i],"-pos-start") && (argc>i+2)) {
-      settings.posstart.x = atof( argv[++i] );
-      settings.posstart.y = atof( argv[++i] );
+      settings.posstart.x = 100.0 * atof( argv[++i] );
+      settings.posstart.y = 100.0 * atof( argv[++i] );
     } else if (!strcmp(argv[i],"-maxrange") && (argc>i+1)) {
-      settings.max_range = atof(argv[++i]);
+      settings.max_range = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-rotate") && (argc>i+1)) {
       settings.rotation_angle = deg2rad(atof(argv[++i]));
     } else if (!strcmp(argv[i],"-display-arrow")) {
@@ -969,11 +969,11 @@ main( int argc, char** argv)
     } else if (!strcmp(argv[i],"-animation")) {
       settings.animation = TRUE;
     } else if (!strcmp(argv[i],"-anim-step") && (argc>i+1)) {
-      settings.anim_step = atof(argv[++i]);
+      settings.anim_step = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-anim-skip") && (argc>i+1)) {
       settings.anim_skip = atoi(argv[++i]);
     } else if (!strcmp(argv[i],"-usablerange") && (argc>i+1)) {
-      settings.usable_range = atof(argv[++i]);
+      settings.usable_range = 100.0 * atof(argv[++i]);
     } else if (!strcmp(argv[i],"-darken") && (argc>i+1)) {
       settings.darken = atof(argv[++i]);
     } else if (!strcmp(argv[i],"-endpoints")) {
@@ -1009,8 +1009,8 @@ main( int argc, char** argv)
       isize.y = atoi(argv[++i]);
       settings.set_size = TRUE;
     } else if (!strcmp(argv[i],"-pos") && (argc>i+3)) {
-      settings.pos_x = atof(argv[++i]);
-      settings.pos_y = atof(argv[++i]);
+      settings.pos_x = 100.0 * atof(argv[++i]);
+      settings.pos_y = 100.0 * atof(argv[++i]);
       settings.pos_o = deg2rad(atof(argv[++i]));
     } else {
       print_usage();
@@ -1023,6 +1023,8 @@ main( int argc, char** argv)
     exit(1);
   }
 
+  fprintf( stderr, "\n");
+
   if (settings.use_odds_model) {
     if (settings.dynamic_prob>0.5) {
       fprintf( stderr, "# WARNING: dynamic-prob should not be > 0.5\n" );
@@ -1031,6 +1033,42 @@ main( int argc, char** argv)
       fprintf( stderr, "# WARNING: static-prob should not be < 0.5\n" );
     }
   }
+
+  /** Warnings to avoid m/cm convertion errors  **********************************************/
+
+  if (settings.max_range < 100.0)
+    carmen_warn("# WARNUNG: max_range is comparably small (%f m). Is this value correct?\n",
+		0.01 * settings.max_range);
+
+  if (settings.usable_range < 100.0)
+    carmen_warn("# WARNUNG: usable_range is comparably small (%f m). Is this value correct?\n",
+		0.01 * settings.usable_range);
+
+  if (settings.resolution_x < 1.0)
+    carmen_warn("# WARNUNG: resolution_x is comparably small (%f m). Is this value correct?\n",
+		0.01 * settings.resolution_x);
+
+  if (settings.resolution_y < 1.0)
+    carmen_warn("# WARNUNG: resolution_y is comparably small (%f m). Is this value correct?\n",
+		0.01 * settings.resolution_y);
+
+  if (settings.max_range >= 100000.0)
+    carmen_warn("# WARNUNG: max_range is comparably big (%.2f m). Is this value correct?\n",
+		0.01 * settings.max_range);
+
+  if (settings.usable_range >= 100000.0)
+    carmen_warn("# WARNUNG: usable_range is comparably big (%.2f m). Is this value correct?\n",
+		0.01 * settings.usable_range);
+
+  if (settings.resolution_x >= 1000.0)
+    carmen_warn("# WARNUNG: resolution_x is comparably big (%.2f m). Is this value correct?\n",
+		0.01 * settings.resolution_x);
+
+  if (settings.resolution_y >= 1000.0)
+    carmen_warn("# WARNUNG: resolution_y is comparably big (%.2f m). Is this value correct?\n",
+		0.01 * settings.resolution_y);
+
+  /*******************************************************************************************/
   
   strncpy( settings.infilename, argv[argc-2], MAX_STRING_LENGTH );
   strncpy( settings.outfilename, argv[argc-1], MAX_STRING_LENGTH );
