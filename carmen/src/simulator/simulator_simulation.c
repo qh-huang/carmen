@@ -337,7 +337,7 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
   laser->config.angular_resolution  = laser_config->angular_resolution;
   laser->config.laser_type          = SIMULATED_LASER;
   laser->config.accuracy            = laser_config->variance; 
-  laser->config.remission_mode      = OFF;
+  laser->config.remission_mode      = REMISSION_NONE;
 
 
   carmen_geometry_generate_laser_data(laser->range, &point, laser->config.start_angle, 
