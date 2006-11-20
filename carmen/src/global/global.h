@@ -275,6 +275,20 @@ extern inline double carmen_degrees_to_radians(double theta)
   return (theta * M_PI / 180.0);
 }
 
+extern inline int carmen_imin(int val1, int val2)
+{
+  if (val2 < val1)
+    return val2;
+  return val1;
+}
+
+extern inline int carmen_imax(int val1, int val2)
+{
+  if (val2 > val1)
+    return val2;
+  return val1;
+}
+
 extern inline double carmen_fmin(double val1, double val2)
 {
   if (val2 < val1)

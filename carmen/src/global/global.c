@@ -605,6 +605,22 @@ carmen_trunc(double X)
   return (int)(X);
 }
 
+inline int
+carmen_imin(int val1, int val2) 
+{
+  if (val2 < val1)
+    return val2;
+  return val1;
+}
+
+inline int 
+carmen_imax(int val1, int val2) 
+{
+  if (val2 > val1)
+    return val2;
+  return val1;
+}
+
 inline double 
 carmen_fmin(double val1, double val2) 
 {
