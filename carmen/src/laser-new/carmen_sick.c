@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <carmen/carmen.h>
 #include "carmen_laser_device.h"
 #include "sick_laser.h"
 #include <sys/time.h>
 
 int carmen_sick_init(carmen_laser_device_t* device){
 	sick_laser_t* sick=malloc(sizeof(sick_laser_t));
+	carmen_test_alloc(sick);
 	device->device_data=sick;
 	sick->remission_mode=REMISSION_NONE;
 	return 1;
@@ -158,6 +160,7 @@ int carmen_sick_close(struct carmen_laser_device_t* device){
 
 carmen_laser_device_t* carmen_create_sick_instance(carmen_laser_laser_config_t* config, int laser_id){
 	carmen_laser_device_t* device=(carmen_laser_device_t*)malloc(sizeof(carmen_laser_device_t));
+	carmen_test_alloc(device);
 	device->laser_id=laser_id;
 	device->config=*config;
 	device->f_init=carmen_sick_init;

@@ -47,6 +47,8 @@ int carmen_laser_laser_message_check_configuration(carmen_laser_laser_config_t* 
   char type_string[256];
   if (config->laser_type == SICK_LMS)
     strcpy(type_string,"SICK_LMS");
+  else if (config->laser_type == SICK_S300)
+    strcpy(type_string,"SICK_S300");
   else if (config->laser_type == SICK_PLS)
     strcpy(type_string,"SICK_PLS");
   else if (config->laser_type == HOKUYO_URG)
@@ -85,18 +87,24 @@ int carmen_laser_laser_message_check_configuration(carmen_laser_laser_config_t* 
 /*     carmen_warn("  start angle ...................... not required\n"); */
 /*   } */
   
+
+  if (config->laser_type == SICK_S300) {
+    carmen_warn("  INFO: The current S300 driver requires the laser to be configured\n"); 
+    carmen_warn("        in the 500kbps continuous mode (using the SICK Windows tools).\n\n"); 
+  }
+
   
   for (i=0; i<carmen_laser_configurations_num; i++){
-    int result=!carmen_laser_compare_configuration(config, carmen_laser_configurations+i);
-    if (result) {
-      return 1;
-    }
-  }
+	int result=!carmen_laser_compare_configuration(config, carmen_laser_configurations+i);	  
+	if (result) {
+	  return 1;
+	}
+	}
   return 0;
 }
 
 int carmen_laser_calibrate_timestamp_recover_handler(struct carmen_laser_device_t * device , carmen_laser_laser_static_message* m){
-  //  fprintf(stderr,".");
+  fprintf(stderr,".");
   if (!device->curr_frames){
     device->expected_period/= device->max_frames;
     fprintf(stderr, "Estimated frequency of laser %d is %.4f Hz\n",  

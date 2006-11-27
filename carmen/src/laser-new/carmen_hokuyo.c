@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <carmen/carmen.h>
 #include "carmen_hokuyo.h"
 #include "hokuyourg.h"
 #include <values.h>
@@ -8,6 +9,7 @@
 
 int carmen_hokuyo_init(carmen_laser_device_t* device){
   HokuyoURG* urg=malloc(sizeof(HokuyoURG));
+  carmen_test_alloc(urg);
   device->device_data=urg;
   hokuyo_init(urg);
   return 1;
@@ -111,6 +113,7 @@ int carmen_hokuyo_close(struct carmen_laser_device_t* device){
 carmen_laser_device_t* carmen_create_hokuyo_instance(carmen_laser_laser_config_t* config, int laser_id){
   fprintf(stderr,"init hokuyo\n");
   carmen_laser_device_t* device=(carmen_laser_device_t*)malloc(sizeof(carmen_laser_device_t));
+  carmen_test_alloc(device);
   device->laser_id=laser_id;
   device->config=*config;
   device->f_init=carmen_hokuyo_init;

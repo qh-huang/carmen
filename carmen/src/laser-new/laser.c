@@ -248,6 +248,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 			      sizeof(laser_num_devs) / sizeof(laser_num_devs[0]));
   
   carmen_laser_pdevice        =  calloc(  num_laser_devices, sizeof(carmen_laser_device_t*) );
+  carmen_test_alloc(carmen_laser_pdevice);
 
   if (num_laser_devices<1)
     carmen_die("You have to specify at least one laser device to run laser.\nPlease check you ini file for the parameter num_laser_devices.\n");
@@ -307,15 +308,27 @@ int carmen_laser_read_parameters(int argc, char **argv)
     carmen_laser_pdevice[i] = NULL;
 
   device         = calloc( num_laser_devices, sizeof(char*) );
+  carmen_test_alloc(device);
   remission_mode_string = calloc( num_laser_devices, sizeof(char*) );
+  carmen_test_alloc(remission_mode_string);
   resolution     = calloc( num_laser_devices, sizeof(double) );
+  carmen_test_alloc(resolution);
   fov            = calloc( num_laser_devices, sizeof(double) );
+  carmen_test_alloc(fov);
   laser_used_in_inifile      = calloc( num_laser_devices, sizeof(int) );
+  carmen_test_alloc(laser_used_in_inifile);
   laser_type     = calloc( num_laser_devices, sizeof(char*) );
+  carmen_test_alloc(laser_type);
   baud           = calloc( num_laser_devices, sizeof(int) );
+  carmen_test_alloc(baud);
   carmen_laser_flipped        = calloc( num_laser_devices, sizeof(int) );
+  carmen_test_alloc(carmen_laser_flipped);
   maxrange       = calloc( num_laser_devices, sizeof(double) );
-/*   range_mode     = calloc( num_laser_devices, sizeof(char*) ); */
+  carmen_test_alloc(maxrange);
+/*   range_mode     = calloc( num_laser_devices, sizeof(char*) ); 
+  carmen_test_alloc(range_mode);
+*/
+
 
   for (i=0; i<num_laser_devices; i++)  {
 
@@ -363,47 +376,66 @@ int carmen_laser_read_parameters(int argc, char **argv)
       carmen_param_install_params(argc, argv, param_laser_type, 
 				  sizeof(param_laser_type) / sizeof(param_laser_type[0]));
 
-      if ( !strcmp(laser_type[i], "pls") || !strcmp(laser_type[i], "PLS") ) {
-	carmen_warn("Sorry, the SICK PLS is currently NOT supported. Within the next weeks\n");
-	carmen_warn("the driver will be updates and should then support the PLS. Please use\n");
-	carmen_warn("the old laser driver if you want to use a PLS\n");
-	carmen_die("Laser aborted.\n");
-      }
-      else if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS") ) {
+	if ( !strcmp(laser_type[i], "pls") || !strcmp(laser_type[i], "PLS") ) {
+		carmen_warn("Sorry, the SICK PLS is currently NOT supported. Within the next weeks\n");
+		carmen_warn("the driver will be updates and should then support the PLS. Please use\n");
+		carmen_warn("the old laser driver if you want to use a PLS\n");
+		carmen_die("Laser aborted.\n");
+	}
+	else if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS") ) {
+	
+		maxrange[i] = 81.9;
+		
+		carmen_param_t laser_params[] = {
+		{"laser", var_res, CARMEN_PARAM_DOUBLE,              &(resolution[i]),     0, NULL},
+		{"laser", var_remission_mode, CARMEN_PARAM_STRING,   &(remission_mode_string[i]), 0, NULL},
+		{"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL},
+		{"laser", var_baud, CARMEN_PARAM_INT,                &(baud[i]),           0, NULL},
+		/* 	  {"laser", var_range_mode, CARMEN_PARAM_STRING,       &(range_mode[i]),     0, NULL}, */
+		/* 	  {"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL}, */
+		{"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
+		
+		carmen_param_install_params(argc, argv, laser_params,
+					sizeof(laser_params) / 
+					sizeof(laser_params[0]));
+	}
+	else if ( !strcmp(laser_type[i], "s300") || !strcmp(laser_type[i], "S300") ) {
+	
+		maxrange[i] = 30.0;
+		
+		carmen_param_t laser_params[] = {
+		{"laser", var_res, CARMEN_PARAM_DOUBLE,              &(resolution[i]),     0, NULL},
+		{"laser", var_remission_mode, CARMEN_PARAM_STRING,   &(remission_mode_string[i]), 0, NULL},
+		{"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL},
+		{"laser", var_baud, CARMEN_PARAM_INT,                &(baud[i]),           0, NULL},
+		/* 	  {"laser", var_range_mode, CARMEN_PARAM_STRING,       &(range_mode[i]),     0, NULL}, */
+		/* 	  {"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL}, */
+		{"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
+		
+		carmen_param_install_params(argc, argv, laser_params,
+					sizeof(laser_params) / 
+					sizeof(laser_params[0]));
+	}
+	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
+	
+		carmen_param_t laser_params[] = {
+		{"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
+		carmen_param_install_params(argc, argv, laser_params,
+					sizeof(laser_params) / 
+					sizeof(laser_params[0]));
+		
+		remission_mode_string[i] = "none";
+		resolution[i] = 0;
+		fov[i] = 0;
+		baud[i] = 0;
+		carmen_laser_flipped[i] = 0;
+		/* 	range_mode[i] = 0; */
+		maxrange[i] = 0;
+	}
+	else {
+		carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, S300 or hokuyourg", laser_type[i]);
+	}
 
-	maxrange[i] = 81.9;
-	
-	carmen_param_t laser_params[] = {
-	  {"laser", var_res, CARMEN_PARAM_DOUBLE,              &(resolution[i]),     0, NULL},
-	  {"laser", var_remission_mode, CARMEN_PARAM_STRING,   &(remission_mode_string[i]), 0, NULL},
-	  {"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL},
-	  {"laser", var_baud, CARMEN_PARAM_INT,                &(baud[i]),           0, NULL},
-/* 	  {"laser", var_range_mode, CARMEN_PARAM_STRING,       &(range_mode[i]),     0, NULL}, */
-/* 	  {"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL}, */
-	  {"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
-	
-	carmen_param_install_params(argc, argv, laser_params,
-				    sizeof(laser_params) / 
-				    sizeof(laser_params[0]));
-      }
-      else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
-	
-	carmen_param_t laser_params[] = {
-	  {"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
-	carmen_param_install_params(argc, argv, laser_params,
-				    sizeof(laser_params) / 
-				    sizeof(laser_params[0]));
-
-	remission_mode_string[i] = "none";
-	resolution[i] = 0;
-	fov[i] = 0;
-	baud[i] = 0;
-	carmen_laser_flipped[i] = 0;
-/* 	range_mode[i] = 0; */
-	maxrange[i] = 0;
-      }
-      else 
-      	carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, or hokuyourg", laser_type[i]);
     }
     else {
       laser_used_in_inifile[i] = 0;
@@ -419,7 +451,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
   }
 
   for (i=0; i< num_laser_devices; i++)  {
-    if (requested_lasers[i]) {
+    if (requested_lasers[i] && laser_used_in_inifile[i]) {
 
       carmen_warn("\n--------------------------------------------------\n");
 
@@ -427,18 +459,22 @@ int carmen_laser_read_parameters(int argc, char **argv)
       config.laser_type = UMKNOWN_PROXIMITY_SENSOR;
       config.remission_mode = REMISSION_NONE;
 
-      if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS")) {
-	config.laser_type = SICK_LMS;
-      }
-      else if ( !strcmp(laser_type[i], "pls") || !strcmp(laser_type[i], "PLS")) {
-	config.laser_type = SICK_PLS;
-      }
-      else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
-	config.laser_type = HOKUYO_URG;
-      }
-      else 
-      	carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, or hokuyourg", laser_type[i]);
-      
+	if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS")) {
+		config.laser_type = SICK_LMS;
+	}
+	else if ( !strcmp(laser_type[i], "s300") || !strcmp(laser_type[i], "S300")) {
+		config.laser_type = SICK_S300;
+	}
+	else if ( !strcmp(laser_type[i], "pls") || !strcmp(laser_type[i], "PLS")) {
+		config.laser_type = SICK_PLS;
+	}
+	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
+		config.laser_type = HOKUYO_URG;
+	}
+	else {
+	  carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, or hokuyourg", laser_type[i]);
+	}
+
       if ( !strcmp(remission_mode_string[i], "none")) {
 	config.remission_mode = REMISSION_NONE;
       }
@@ -490,7 +526,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 	}
 	carmen_die("ERROR: Could not init all requested laser devices!\n");
       }
-      carmen_warn("Initializing od laser with %d successfully completed!\n",i);
+      carmen_warn("Initializing of laser with %d successfully completed!\n",i);
     }
   }
   carmen_warn("\n--------------------------------------------------\n");
@@ -535,7 +571,7 @@ int main(int argc, char **argv)
 
   
   //this initializes the driver stuctures
-  camen_laser_register_devices();
+  carmen_laser_register_devices();
 
   num_laser_devices = carmen_laser_read_parameters(argc, argv);
   
@@ -545,6 +581,7 @@ int main(int argc, char **argv)
     
   
   laser_thread = calloc(num_laser_devices, sizeof(laser_thread));
+  carmen_test_alloc(laser_thread);
 
   for(i=0; i<num_laser_devices;i++) {
     if (carmen_laser_pdevice[i]) {
@@ -661,8 +698,3 @@ int main(int argc, char **argv)
     free(carmen_laser_flipped);  
   return 0;
 }
-
-
-
-
-

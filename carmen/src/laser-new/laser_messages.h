@@ -42,20 +42,24 @@
 extern "C" {
 #endif
 
-typedef enum {SICK_LMS                  = 0, 
-	      SICK_PLS                  = 1, 
-	      HOKUYO_URG                = 2, 
-              SIMULATED_LASER           = 3, 
-	      UMKNOWN_PROXIMITY_SENSOR  = 99}
-carmen_laser_laser_type_t;
+/** supported laser types     **/
+typedef enum {
+	SICK_LMS                  = 0, 
+	SICK_PLS                  = 1, 
+	HOKUYO_URG                = 2, 
+	SIMULATED_LASER           = 3, 
+	SICK_S300                 = 4, 
+	UMKNOWN_PROXIMITY_SENSOR  = 99
+} carmen_laser_laser_type_t;
 
-  /** Possible remission values **/
-typedef enum {REMISSION_NONE       = 0, 
-	      REMISSION_DIRECT     = 1, 
-              REMISSION_NORMALIZED = 2}          
-carmen_laser_remission_type_t;
+/** Possible remission values **/
+typedef enum {
+	REMISSION_NONE       = 0, 
+	REMISSION_DIRECT     = 1, 
+	REMISSION_NORMALIZED = 2
+} carmen_laser_remission_type_t;
 
-  /** The laser message of the laser module (rawlaser) **/
+/** The laser message of the laser module (rawlaser) **/
 typedef struct {
   carmen_laser_laser_type_t  laser_type;  /**< what kind of laser is this **/
   double start_angle;                     /**< angle of the first beam relative **/

@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
   
   //this initializes the driver stuctures
-  camen_laser_register_devices();
+  carmen_laser_register_devices();
   carmen_laser_define_alive_message();
   for(i=0; i<num_laser_devices;i++)
     carmen_laser_define_laser_message(i);
@@ -137,8 +137,3 @@ int main(int argc, char **argv)
   
   return 0;
 }
-
-
-
-
-
