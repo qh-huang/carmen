@@ -472,7 +472,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 		config.laser_type = HOKUYO_URG;
 	}
 	else {
-	  carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, or hokuyourg", laser_type[i]);
+	  carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, s300, pls, or hokuyourg", laser_type[i]);
 	}
 
       if ( !strcmp(remission_mode_string[i], "none")) {
