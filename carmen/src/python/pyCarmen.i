@@ -338,7 +338,7 @@
 #define __attribute__(x)
 %include "carmen.h"
 %include "global.h"
-%include "map.h"
+#%include "map.h"
 
 %include "pyCarmen.h"
 %include "pyCarmenMessages.h"
