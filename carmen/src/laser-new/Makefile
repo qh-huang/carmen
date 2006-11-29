@@ -1,4 +1,4 @@
-include $(CARMEN_HOME)/src/Makefile.conf
+include ../Makefile.conf
 
 MODULE_NAME = "LASER"
 MODULE_COMMENT = "The new laser module for SICK and Hokuyo lasers"
@@ -66,4 +66,4 @@ laserclient:            laserclient.o liblaser_interface.a
 
 
 
-include $(CARMEN_HOME)/src/Makefile.rules
+include ../Makefile.rules
