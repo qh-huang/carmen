@@ -337,7 +337,16 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
   laser->config.angular_resolution  = laser_config->angular_resolution;
   laser->config.laser_type          = SIMULATED_LASER;
   laser->config.accuracy            = laser_config->variance; 
+
+  //this was placed here because compiling with the old motion model
+  //did't work, check this if this breaks something
+#ifndef OLD_MOTION_MODEL 
+  laser->config.remission_mode      = OFF;
+#endif 
+#ifdef OLD_MOTION_MODEL  
   laser->config.remission_mode      = REMISSION_NONE;
+#endif
+
 
 
   carmen_geometry_generate_laser_data(laser->range, &point, laser->config.start_angle, 
