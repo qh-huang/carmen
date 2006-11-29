@@ -340,10 +340,10 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
 
   //this was placed here because compiling with the old motion model
   //did't work, check this if this breaks something
-#ifndef OLD_MOTION_MODEL 
+#ifdef OLD_MOTION_MODEL 
   laser->config.remission_mode      = OFF;
 #endif 
-#ifdef OLD_MOTION_MODEL  
+#ifndef OLD_MOTION_MODEL  
   laser->config.remission_mode      = REMISSION_NONE;
 #endif
 
