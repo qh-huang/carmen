@@ -1,5 +1,4 @@
-
-include $(CARMEN_HOME)/src/Makefile.conf
+include ../Makefile.conf
 
 LINK=g++
 
@@ -25,4 +24,4 @@ test : test.o cpp_laser.o cpp_base.o cpp_simulator.o cpp_robot.o cpp_carmenmap.o
 
 test_logfile: test_logfile.o cpp_laser.o cpp_base.o cpp_simulator.o cpp_robot.o cpp_carmenmap.o cpp_logfile.o
 
-include $(CARMEN_HOME)/src/Makefile.rules
+include ../Makefile.rules
