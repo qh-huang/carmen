@@ -1,0 +1,84 @@
+#ifndef CARMEN_CPP_MAP_DEFINITIONS_H
+#define CARMEN_CPP_MAP_DEFINITIONS_H
+
+#include "cpp_genericmap.h"
+
+
+class CharCell {
+public:
+  CharCell(char v=-1) { set(v); }
+  CharCell(const CharCell& x) { *this = x; }
+  void set(char v) { val = v; }
+  
+  inline operator char() const { return val;}
+  inline CharCell& operator= (const char& v)  { val = v; return *this;}
+  
+  char val;
+};
+
+
+class IntCell {
+public:
+  IntCell(int v=-1) { set(v); }
+  IntCell(const IntCell& x) { *this = x; }
+  void set(int v) { val = v; }
+  
+  inline operator int() const { return val;}
+  inline IntCell& operator= (const int& v)  { val = v; return *this;}
+  
+  int val;
+};
+
+class FloatCell {
+public:
+  FloatCell(float v = -1.0) { set(v); }
+  FloatCell(const FloatCell& x) { *this = x; }
+  void set(float v) { val = v; }
+
+  inline operator float() const { return val;}
+  inline FloatCell& operator= (const float& v)  { val = v; return *this;}
+  
+  float val;
+};
+
+class DoubleCell {
+public:
+  DoubleCell(double v = -1.0) { set(v); }
+  DoubleCell(const DoubleCell& x) { *this = x; }
+  void set(double v) { val = v; }
+
+  inline operator double() const { return val;}
+  inline DoubleCell& operator= (const double& v)  { val = v; return *this;}
+  
+  double val;
+};
+
+class RefProbCell {
+public:
+  RefProbCell(int hits=0, int misses=0) { set(hits, misses); }
+  RefProbCell(const RefProbCell& x) {  *this = x;  }
+  
+  void set(int hits, int misses) { 
+    this->hits = hits;  
+    this->misses = misses; 
+    this->val = -1; 
+    if (hits+misses > 0) {
+      val = ((float)hits)/((float) (hits+misses));
+    }
+  }
+	   
+  inline operator float() const {  return val;  }
+  inline operator double() const {  return (double)val;  }
+  
+  int hits;
+  int misses;
+  float val;
+};
+
+typedef GenericMap<CharCell>     CharMap;
+typedef GenericMap<IntCell>      IntMap;
+typedef GenericMap<FloatCell>    FloatMap;
+typedef GenericMap<DoubleCell>   DoubleMap;
+typedef GenericMap<RefProbCell>  RefProbMap;
+
+#endif
