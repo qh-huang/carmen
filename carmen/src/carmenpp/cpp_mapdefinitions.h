@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_MAP_DEFINITIONS_H
 #define CARMEN_CPP_MAP_DEFINITIONS_H
 
-#include "cpp_genericmap.h"
+#include <carmen/cpp_genericmap.h>
 
 
 class CharCell {

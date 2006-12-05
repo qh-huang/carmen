@@ -2,23 +2,24 @@
 #define CARMEN_CPP_CARMEN_H
 
 #include <carmen/carmen.h>
-#include "cpp_global.h"
+#include <carmen/cpp_global.h>
 
-#include "cpp_genericpoint.h"
-#include "cpp_point.h"
-#include "cpp_movement.h"
+#include <carmen/cpp_genericpoint.h>
+#include <carmen/cpp_point.h>
+#include <carmen/cpp_movement.h>
 
-#include "cpp_abstractmessage.h"
-#include "cpp_laser.h" 
-#include "cpp_robot.h" 
-#include "cpp_simulator.h" 
-#include "cpp_base.h" 
-#include "cpp_logfile.h" 
+#include <carmen/cpp_abstractmessage.h>
+#include <carmen/cpp_laser.h> 
+#include <carmen/cpp_robot.h> 
+#include <carmen/cpp_simulator.h> 
+#include <carmen/cpp_base.h> 
+#include <carmen/cpp_logfile.h> 
 
-#include "cpp_abstractmap.h" 
-#include "cpp_carmenmap.h" 
-#include "cpp_genericmap.h" 
-#include "cpp_mapdefinitions.h" 
+#include <carmen/cpp_mapconfig.h> 
+#include <carmen/cpp_abstractmap.h> 
+#include <carmen/cpp_carmenmap.h> 
+#include <carmen/cpp_genericmap.h> 
+#include <carmen/cpp_mapdefinitions.h> 
 
 #endif
 

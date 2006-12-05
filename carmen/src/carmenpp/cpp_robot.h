@@ -1,10 +1,10 @@
 #ifndef CARMEN_CPP_ROBOT_MESSAGE_H
 #define CARMEN_CPP_ROBOT_MESSAGE_H
 
-#include "cpp_global.h"
-#include "cpp_abstractmessage.h"
-#include "cpp_point.h"
-#include "cpp_laser.h"
+#include <carmen/cpp_global.h>
+#include <carmen/cpp_abstractmessage.h>
+#include <carmen/cpp_point.h>
+#include <carmen/cpp_laser.h>
 
 
 class RobotLaserMessage : public AbstractMessage {

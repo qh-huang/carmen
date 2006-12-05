@@ -1,9 +1,9 @@
 #ifndef CARMEN_CPP_LASER_MESSAGE_H
 #define CARMEN_CPP_LASER_MESSAGE_H
 
-#include "cpp_global.h"
-#include "cpp_abstractmessage.h"
-#include "cpp_point.h"
+#include <carmen/cpp_global.h>
+#include <carmen/cpp_abstractmessage.h>
+#include <carmen/cpp_point.h>
 
 class LaserConfig {
  public:

@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_POINT_H
 #define CARMEN_CPP_POINT_H
 
-#include "cpp_genericpoint.h"
+#include <carmen/cpp_genericpoint.h>
 
 typedef point2d<int> IntPoint;
 

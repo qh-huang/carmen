@@ -2,7 +2,7 @@
 #define CARMEN_CPP_GLOABL_H
 
 #include <carmen/carmen.h>
-#include "cpp_global_macros.h"
+#include <carmen/cpp_global_macros.h>
 
 #endif
 

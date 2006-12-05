@@ -2,7 +2,7 @@
 #define CARMEN_CPP_CARMENMAP_H
 
 #include <carmen/carmen.h>
-#include "cpp_abstractmap.h"
+#include <carmen/cpp_abstractmap.h>
 
 
 class CarmenMap : public AbstractMap<float> {

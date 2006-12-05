@@ -2,38 +2,8 @@
 #define CARMEN_CPP_ABSTRACT_MAP_H
 
 #include <carmen/carmen.h>
-#include "cpp_point.h"
-
-
-class MapConfig {
- public:
-  inline MapConfig();
-  virtual ~MapConfig() {};
-  inline MapConfig(int sizeX, int sizeY,  double res, Point offset);
-  inline MapConfig(const MapConfig& src);
-  inline bool isValid() const ;
-
-  int m_sizeX;
-  int m_sizeY;
-  double m_res;
-  Point m_offset;
-};
-
-inline bool operator==(const MapConfig& cfg1, const MapConfig& cfg2)  {
-  if (cfg1.m_sizeX  == cfg2.m_sizeX && 
-      cfg1.m_sizeY  == cfg2.m_sizeY && 
-      cfg1.m_res    == cfg2.m_res && 
-      cfg1.m_offset == cfg2.m_offset)
-    return true;
-  else
-    return false;
-};
-
-inline bool operator!=(const MapConfig& cfg1, const MapConfig& cfg2)  {
-  return !(cfg1 == cfg2);
-};
-
-///////////////////////////////////////////////////////////////////////////
+#include <carmen/cpp_point.h>
+#include <carmen/cpp_mapconfig.h>
 
 template <class CELL>
 class AbstractMap {

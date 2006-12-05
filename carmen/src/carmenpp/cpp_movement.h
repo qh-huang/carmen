@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_FSRMOVEMENT_H
 #define CARMEN_CPP_FSRMOVEMENT_H
 
-#include "cpp_point.h"
+#include <carmen/cpp_point.h>
 
 /** fsr-movement (forward, sideward, rotate) **/
 class FSRMovement  {

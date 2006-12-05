@@ -1,8 +1,8 @@
 #ifndef CARMEN_CPP_GENERIC_MAP_H
 #define CARMEN_CPP_GENERIC_MAP_H
 
-#include "cpp_point.h"
-#include "cpp_abstractmap.h"
+#include <carmen/cpp_point.h>
+#include <carmen/cpp_abstractmap.h>
 
 template<class CELL>
 class GenericMap : public AbstractMap<CELL> {

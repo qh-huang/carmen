@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_ABSTRACT_MESSAGE_H
 #define CARMEN_CPP_ABSTRACT_MESSAGE_H
 
-#include "cpp_global.h"
+#include <carmen/cpp_global.h>
 
 class AbstractMessage {
  public: 
