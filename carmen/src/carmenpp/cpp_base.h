@@ -2,13 +2,13 @@
 #define CARMEN_CPP_BASE_MESSAGE_H
 
 #include "cpp_global.h"
-#include "cpp_genericmessage.h"
+#include "cpp_abstractmessage.h"
 #include "cpp_point.h"
 
 
 
 
-class OdometryMessage : public GenericMessage {
+class OdometryMessage : public AbstractMessage {
  public:
   OdometryMessage();
   OdometryMessage(const OrientedPoint& robotPose, double vTrans=0.0, double vRot=0.0, double acc=0.0);
@@ -45,7 +45,7 @@ class OdometryMessage : public GenericMessage {
 
   virtual void save(carmen_FILE *logfile, double logger_timestamp);
   virtual char*  fromString(char* s);
-  virtual GenericMessage* clone() const;
+  virtual AbstractMessage* clone() const;
 
  protected:
   carmen_base_odometry_message * m_msg;

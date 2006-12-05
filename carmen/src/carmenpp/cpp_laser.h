@@ -2,7 +2,7 @@
 #define CARMEN_CPP_LASER_MESSAGE_H
 
 #include "cpp_global.h"
-#include "cpp_genericmessage.h"
+#include "cpp_abstractmessage.h"
 #include "cpp_point.h"
 
 class LaserConfig {
@@ -27,7 +27,7 @@ class LaserConfig {
   DEFAULT_STRUCT_PARAM_SET_GET(m_Config, carmen_laser_remission_type_t,   RemissionMode, remission_mode);
 };
 
-class LaserMessage : public GenericMessage {
+class LaserMessage : public AbstractMessage {
  public:
   LaserMessage(int num_readings=0, int num_remissions=0);
   LaserMessage(int num_readings, int num_remissions, const LaserConfig& cfg);
@@ -81,7 +81,7 @@ class LaserMessage : public GenericMessage {
 
   virtual void save(carmen_FILE *logfile, double logger_timestamp);
   virtual char*  fromString(char* s);
-  virtual GenericMessage* clone() const;
+  virtual AbstractMessage* clone() const;
 
 
  protected:

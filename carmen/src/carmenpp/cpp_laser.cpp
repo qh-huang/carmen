@@ -28,20 +28,20 @@ void LaserConfig::setLaserConfig(const carmen_laser_laser_config_t& x) {
 ///////////////////////////////////////////////////////////
 
 LaserMessage::LaserMessage(int num_readings, int num_remissions)
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init(num_readings, num_remissions);
 }
 
 LaserMessage::LaserMessage(int num_readings, int num_remissions, const LaserConfig& cfg) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init(num_readings, num_remissions);
   m_msg->config = cfg;
 }
 
 LaserMessage::LaserMessage(const LaserMessage& x) 
-  : GenericMessage(x) {
+  : AbstractMessage(x) {
   m_msg = NULL;
   clone(x);
 }
@@ -77,7 +77,7 @@ void LaserMessage::save(carmen_FILE *logfile, double logger_timestamp) {
   carmen_logwrite_write_laser_laser(m_msg, m_msg->id, logfile, logger_timestamp);
 }
 
-GenericMessage* LaserMessage::clone() const {
+AbstractMessage* LaserMessage::clone() const {
   return new LaserMessage(*this);
 }
 

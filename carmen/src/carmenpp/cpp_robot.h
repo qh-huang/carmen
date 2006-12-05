@@ -2,12 +2,12 @@
 #define CARMEN_CPP_ROBOT_MESSAGE_H
 
 #include "cpp_global.h"
-#include "cpp_genericmessage.h"
+#include "cpp_abstractmessage.h"
 #include "cpp_point.h"
 #include "cpp_laser.h"
 
 
-class RobotLaserMessage : public GenericMessage {
+class RobotLaserMessage : public AbstractMessage {
  public:
   RobotLaserMessage(int num_readings=0, int num_remissions=0);
   RobotLaserMessage(int num_readings, int num_remissions, const LaserConfig& cfg);
@@ -83,7 +83,7 @@ class RobotLaserMessage : public GenericMessage {
 
   virtual void save(carmen_FILE *logfile, double logger_timestamp);
   virtual char*  fromString(char* s);
-  virtual GenericMessage* clone() const;
+  virtual AbstractMessage* clone() const;
 
  protected:
   carmen_robot_laser_message * m_msg;

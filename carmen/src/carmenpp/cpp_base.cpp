@@ -2,13 +2,13 @@
 #include <carmen/carmen.h>
 
 OdometryMessage::OdometryMessage()
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init();
 }
 
 OdometryMessage::OdometryMessage(const OrientedPoint& robotPose, double tv, double rv, double acc) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init();
   m_msg->x = robotPose.x;
@@ -20,7 +20,7 @@ OdometryMessage::OdometryMessage(const OrientedPoint& robotPose, double tv, doub
 }
 
 OdometryMessage::OdometryMessage(const OdometryMessage& x) 
-  : GenericMessage(x) {
+  : AbstractMessage(x) {
   m_msg = NULL;
   clone(x);
 }
@@ -56,7 +56,7 @@ char* OdometryMessage::fromString(char* s) {
   return carmen_string_to_base_odometry_message(s, m_msg);
 }
 
-GenericMessage* OdometryMessage::clone() const {
+AbstractMessage* OdometryMessage::clone() const {
   return new OdometryMessage(*this);
 }
 

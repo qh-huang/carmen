@@ -2,33 +2,33 @@
 
 
 RobotLaserMessage::RobotLaserMessage(int num_readings, int num_remissions)
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init(num_readings, num_remissions);
 }
 
 RobotLaserMessage::RobotLaserMessage(int num_readings, int num_remissions, const LaserConfig& cfg) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init(num_readings, num_remissions);
   m_msg->config = cfg;
 }
 
 RobotLaserMessage::RobotLaserMessage(const RobotLaserMessage& x) 
-  : GenericMessage(x) {
+  : AbstractMessage(x) {
   m_msg = NULL;
   clone(x);
 }
 
 RobotLaserMessage::RobotLaserMessage(const LaserMessage& x, const OrientedPoint& laserPose) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   clone(x, laserPose.x, laserPose.y, laserPose.theta);
 }
 
 RobotLaserMessage::RobotLaserMessage(const carmen_laser_laser_message& x, 
 				     const carmen_point_t& laserPose) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   clone(x, laserPose.x, laserPose.y, laserPose.theta );
 }
@@ -64,7 +64,7 @@ char* RobotLaserMessage::fromString(char* s) {
   return carmen_string_to_robot_laser_message(s, m_msg);
 }
 
-GenericMessage* RobotLaserMessage::clone() const {
+AbstractMessage* RobotLaserMessage::clone() const {
   return new RobotLaserMessage(*this);
 }
 

@@ -2,13 +2,13 @@
 #define CARMEN_CPP_TRUEPOS_MESSAGE_H
 
 #include "cpp_global.h"
-#include "cpp_genericmessage.h"
+#include "cpp_abstractmessage.h"
 #include "cpp_point.h"
 
 
 
 
-class TrueposMessage : public GenericMessage {
+class TrueposMessage : public AbstractMessage {
  public:
   TrueposMessage();
   TrueposMessage(const OrientedPoint& truepose, const OrientedPoint& odometrypose);
@@ -48,7 +48,7 @@ class TrueposMessage : public GenericMessage {
 
   virtual void save(carmen_FILE *logfile, double logger_timestamp);
   virtual char*  fromString(char* s);
-  virtual GenericMessage* clone() const;
+  virtual AbstractMessage* clone() const;
 
  protected:
   carmen_simulator_truepos_message * m_msg;

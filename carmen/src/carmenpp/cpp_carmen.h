@@ -7,7 +7,8 @@
 #include "cpp_genericpoint.h"
 #include "cpp_point.h"
 #include "cpp_movement.h"
-#include "cpp_genericmessage.h"
+
+#include "cpp_abstractmessage.h"
 #include "cpp_laser.h" 
 #include "cpp_robot.h" 
 #include "cpp_simulator.h" 

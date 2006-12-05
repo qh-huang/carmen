@@ -1,13 +1,13 @@
 #include "cpp_simulator.h"
 
 TrueposMessage::TrueposMessage()
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init();
 }
 
 TrueposMessage::TrueposMessage(const OrientedPoint& truepose, const OrientedPoint& odometrypose) 
-  : GenericMessage() {
+  : AbstractMessage() {
   m_msg = NULL;
   init();
   m_msg->truepose.x = truepose.x;
@@ -20,7 +20,7 @@ TrueposMessage::TrueposMessage(const OrientedPoint& truepose, const OrientedPoin
 }
 
 TrueposMessage::TrueposMessage(const TrueposMessage& x) 
-  : GenericMessage(x) {
+  : AbstractMessage(x) {
   m_msg = NULL;
   clone(x);
 }
@@ -56,7 +56,7 @@ char* TrueposMessage::fromString(char* s) {
   return carmen_string_to_simulator_truepos_message(s, m_msg);
 }
 
-GenericMessage* TrueposMessage::clone() const {
+AbstractMessage* TrueposMessage::clone() const {
   return new TrueposMessage(*this);
 }
 
