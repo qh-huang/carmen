@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_TRUEPOS_MESSAGE_H
 #define CARMEN_CPP_TRUEPOS_MESSAGE_H
 
-#include "cpp_carmen.h"
+#include "cpp_global.h"
 #include "cpp_genericmessage.h"
 #include "cpp_point.h"
 

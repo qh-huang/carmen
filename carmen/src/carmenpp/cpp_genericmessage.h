@@ -1,7 +1,7 @@
 #ifndef CARMEN_CPP_GENERIC_MESSAGE_H
 #define CARMEN_CPP_GENERIC_MESSAGE_H
 
-#include "cpp_carmen.h"
+#include "cpp_global.h"
 
 class GenericMessage {
  public: 
