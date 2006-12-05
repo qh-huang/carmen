@@ -49,6 +49,12 @@ bool LogFile::load(char* filename, bool verbose) {
     else if(strncmp(line, "ROBOTLASER", 10) == 0) {
       push_back(new RobotLaserMessage(line));
     }
+    else if(strncmp(line, "FLASER ", 7) == 0) {
+      push_back(new RobotLaserMessage(line));
+    }
+    else if(strncmp(line, "RLASER ", 7) == 0) {
+      push_back(new RobotLaserMessage(line));
+    }
     else if(strncmp(line, "TRUEPOS ", 8) == 0) {
       push_back(new TrueposMessage(line));
     }
