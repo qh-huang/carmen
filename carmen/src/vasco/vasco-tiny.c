@@ -26,20 +26,6 @@
  *
  ********************************************************/
 
-/* #include <stdio.h> */
-/* #include <stdlib.h> */
-/* #include <string.h> */
-/* #include <signal.h> */
-/* #include <math.h> */
-/* #include <unistd.h> */
-/* #include <termios.h> */
-/* #include <fcntl.h> */
-/* #include <sys/signal.h> */
-/* #include <sys/types.h> */
-/* #include <sys/time.h> */
-/* #include <time.h> */
-/* #include <sys/ioctl.h> */
-
 #include <carmen/carmen.h>
 #include <carmen/carmen_stdio.h>
 
@@ -50,7 +36,8 @@ void
 print_usage( void )
 {
   fprintf( stderr, "usage: vasco-tiny [options] <carmen-log-file>\n" );
-  fprintf( stderr, "  Options:  -f, --flaser   : use old FLASER instead of ROBOTLASER1\n" );
+   fprintf( stderr, "  Options:  -f, --flaser      : use only the old FLASER messages\n" ); 
+   fprintf( stderr, "  Options:  -r, --robotlaser  : use only the new  ROBOTLASER1 messages\n" ); 
 }
 
 double
@@ -71,7 +58,7 @@ main( int argc, char *argv[] )
   carmen_move_t                   corr_move = {0.0, 0.0, 0.0};
   carmen_point_t                  old_pos = {0.0, 0.0, 0.0};
   carmen_point_t                  old_corrpos = {0.0, 0.0, 0.0};
-  int use_flaser = 0;
+  int which_laser = 0;
 
   carmen_FILE stdout_carmen;
   stdout_carmen.compressed = 0;  
@@ -85,7 +72,9 @@ main( int argc, char *argv[] )
   scancnt=0;
   for (i=1; i < argc-1; i++) {
     if (!strcmp(argv[i], "-f")  || !strcmp(argv[i], "--flaser"))
-      use_flaser = 1;
+      which_laser = 1;
+    if (!strcmp(argv[i], "-r")  || !strcmp(argv[i], "--robotlaser"))
+      which_laser = 2;
   }
 
   carmen_ipc_initialize(argc, argv);
@@ -124,13 +113,13 @@ main( int argc, char *argv[] )
 				  line);
     
     /*     what kind of message it this? */
-    if (use_flaser == 0 && strncmp(line, "ROBOTLASER1 ", 12) == 0) {
+    if (which_laser != 1 && strncmp(line, "ROBOTLASER1 ", 12) == 0) {
       /*  convert the string using the corresponding read function */
       char* next = carmen_string_to_robot_laser_message(line, &l);
       time = atof( strtok( next, " ") );
 
     }
-    else if (use_flaser == 1 && strncmp(line, "FLASER ", 7) == 0) {
+    else if (which_laser != 2 && strncmp(line, "FLASER ", 7) == 0) {
       /*  convert the string using the corresponding read function */
       char* next = carmen_string_to_robot_laser_message_orig(line, &l);
       time = atof( strtok( next, " ") );
