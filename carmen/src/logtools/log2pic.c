@@ -546,10 +546,10 @@ log2pic_write_plot3d_data( logtools_grid_map2_t *map )
   for (x = 0; x < map->mapsize.x; x++){
     for (y = 0; y < map->mapsize.y; y++) {
       if (map->mapsum[map->mapsize.x-x-1][map->mapsize.y-y-1] == 0)
-	fprintf(ofp, "%d %d 0.0\n", x, y );
+	fprintf(ofp, "%d %d 0.5\n", x, y );
       else
 	fprintf(ofp, "%d %d %.3f\n", x, y,
-		0.005 * map->maphit[map->mapsize.x-x-1][map->mapsize.y-y-1] /
+		1.0 * map->maphit[map->mapsize.x-x-1][map->mapsize.y-y-1] /
 		(double) map->mapsum[map->mapsize.x-x-1][map->mapsize.y-y-1] );
     }
     fprintf(ofp, "\n" );
