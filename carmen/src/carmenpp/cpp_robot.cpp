@@ -20,7 +20,8 @@ RobotLaserMessage::RobotLaserMessage(const RobotLaserMessage& x)
   clone(x);
 }
 
-RobotLaserMessage::RobotLaserMessage(const LaserMessage& x, const OrientedPoint& laserPose) 
+RobotLaserMessage::RobotLaserMessage(const LaserMessage& x, 
+				     const OrientedPoint& laserPose) 
   : AbstractMessage() {
   m_msg = NULL;
   clone(x, laserPose.x, laserPose.y, laserPose.theta);
@@ -61,7 +62,13 @@ char* RobotLaserMessage::fromString(char* s) {
     m_msg = new carmen_robot_laser_message;
     carmen_erase_structure(m_msg, sizeof(carmen_robot_laser_message));
   }
-  return carmen_string_to_robot_laser_message(s, m_msg);
+
+  if (!strncmp(s,"FLASER ", 7))
+    return carmen_string_to_robot_laser_message_orig(s, m_msg);
+  else if (!strncmp(s,"RLASER ", 7))
+    return carmen_string_to_robot_laser_message_orig(s, m_msg);
+  else 
+    return carmen_string_to_robot_laser_message(s, m_msg);
 }
 
 AbstractMessage* RobotLaserMessage::clone() const {
