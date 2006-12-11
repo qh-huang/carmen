@@ -386,20 +386,16 @@ sub ask_oldlaser{
 }
 
 sub set_laser_link{
-
-    if (-e "laser") {
-	print "ERROR: The link or directory called laser exitsts.\nPlease remove it and run configure again.\n\n";
+    if (-e "laser" && !(-l "laser")) {
+	print "ERROR: The directory called laser exitsts.\nPlease remove it and run configure again.\n\n";
 	exit(0);
     }
-
-    if ($oldlaser) {
+    elsif($oldlaser && !(-l "laser")) {
 	system('ln -s laser-old laser');
     }
-    else {
+    elsif(!(-l "laser")) {
 	system('ln -s laser-new laser');
     }
-
-  
 }
 
 
