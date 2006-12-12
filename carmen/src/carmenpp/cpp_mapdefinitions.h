@@ -67,6 +67,15 @@ public:
     }
   }
 	   
+  void hit() { 
+    hits++;
+  }
+
+  void miss() { 
+    misses++;
+  }
+
+
   inline operator float() const {  return val;  }
   inline operator double() const {  return (double)val;  }
   

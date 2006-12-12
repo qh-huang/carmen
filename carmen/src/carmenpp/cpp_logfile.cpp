@@ -61,13 +61,6 @@ bool LogFile::load(char* filename, bool verbose) {
     else if(strlen(line) > 1) {
       push_back(new UnknownMessage(line));
     }
-//     else if(strncmp(line, "PARAM ", 6) == 0) {
-//     }
-//     else if(strlen(line) < 1) {
-//     }
-//     else 
-//       if (verbose)
-// 	carmen_warn("Warning: Lofile::load: Unkown message:\n%s\n", line);
   }
   carmen_fclose(logfile);  
   return true;
