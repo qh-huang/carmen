@@ -59,7 +59,7 @@ bool LogFile::load(char* filename, bool verbose) {
       push_back(new TrueposMessage(line));
     }
     else if(strlen(line) > 1) {
-      push_back(new UnknownMessage(line));
+      //      push_back(new UnknownMessage(line));
     }
   }
   carmen_fclose(logfile);  

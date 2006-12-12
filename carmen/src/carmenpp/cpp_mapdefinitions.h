@@ -65,23 +65,39 @@ public:
     if (hits+misses > 0) {
       val = ((float)hits)/((float) (hits+misses));
     }
+    updated = false;
   }
 	   
   void hit() { 
     hits++;
+    updated = true;
   }
 
   void miss() { 
     misses++;
+    updated = true;
+    val = ((float)hits)/((float) (hits+misses));
   }
 
-
-  inline operator float() const {  return val;  }
-  inline operator double() const {  return (double)val;  }
+  inline operator float() {  
+    if (updated) {
+      val = ((float)hits)/((float) (hits+misses));
+      updated = false;
+    }
+    return val;  
+  }
+  inline operator double() {      
+    if (updated) {
+      val = ((float)hits)/((float) (hits+misses));
+      updated = false;
+    }
+    return val;  
+  }
   
   int hits;
   int misses;
   float val;
+  bool updated;
 };
 
 typedef GenericMap<CharCell>     CharMap;
