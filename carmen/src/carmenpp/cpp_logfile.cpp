@@ -58,6 +58,9 @@ bool LogFile::load(char* filename, bool verbose) {
     else if(strncmp(line, "TRUEPOS ", 8) == 0) {
       push_back(new TrueposMessage(line));
     }
+    else if(strlen(line) > 1) {
+      push_back(new UnknownMessage(line));
+    }
 //     else if(strncmp(line, "PARAM ", 6) == 0) {
 //     }
 //     else if(strlen(line) < 1) {
