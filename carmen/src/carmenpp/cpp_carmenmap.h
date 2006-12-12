@@ -25,8 +25,8 @@ class CarmenMap : public AbstractMap<float> {
 
   virtual void init(const MapConfig& cfg);
  
-  virtual float& cell(const IntPoint& p) ;
-  virtual float& cell(const IntPoint& p) const ;
+  virtual float& getCell(int x, int y) ;
+  virtual float& getCell(int x, int y) const ;
 
   virtual const float& defaultCell() const;
 

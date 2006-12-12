@@ -187,24 +187,35 @@ inline IntPoint AbstractMap<CELL>::putInside(const IntPoint& p) const {
   return  pnew;		
 }
 
+
+template<class CELL>
+inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) const {
+  return getCell(p.x,p.y);
+}
+
+template<class CELL>
+inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) {
+  return getCell(p.x,p.y);
+}
+
 template<class CELL>
 inline CELL& AbstractMap<CELL>::cell(int x, int y)  {
-  return cell(IntPoint(x,y));
+  return getCell(x,y);
 }
 
 template<class CELL>
 inline CELL& AbstractMap<CELL>::cell(int x, int y) const {
-  return cell(IntPoint(x,y));
+  return getCell(x,y);
 }
 
 template<class CELL>
 inline CELL& AbstractMap<CELL>::cell(double x, double y)  {
-  return cell(Point(x,y));
+  return getCell(x,y);
 }
 
 template<class CELL>
 inline CELL& AbstractMap<CELL>::cell(double x, double y) const {
-  return cell(Point(x,y));
+  return getCell(x,y);
 }
 
 template<class CELL>
@@ -295,3 +306,4 @@ void AbstractMap<CELL>::resetCells(const CELL& val, const IntPoint& from, const 
     for (int y=from.y; y< to.y; y++)
       cell(IntPoint(x,y)) = val;
 }
+

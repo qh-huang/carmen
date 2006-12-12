@@ -13,12 +13,14 @@ class AbstractMap {
   AbstractMap(const MapConfig& cfg);
   virtual ~AbstractMap();  
 
+
+  virtual CELL& getCell(int x, int y) = 0;
+  virtual CELL& getCell(int x, int y) const = 0;
+  
+
   // Vitual function to be defined in subclass
   virtual void init(const MapConfig& cfg) = 0;
   virtual const CELL& defaultCell() const = 0;
-
-  virtual CELL& cell(const IntPoint& p) = 0;  
-  virtual CELL& cell(const IntPoint& p) const = 0;
 
   // non-virtual function for the map handling
   void init(int sizeX, int sizeY, double res=1.0, Point offset = Point(0.0, 0.0) ); 
@@ -27,7 +29,7 @@ class AbstractMap {
 
   const MapConfig& getConfig() const;
 
-  inline  IntPoint getMin() const;
+  inline IntPoint getMin() const;
   inline IntPoint getMax() const;
   inline int getMapSizeX() const;
   inline int getMapSizeY() const;
@@ -53,6 +55,9 @@ class AbstractMap {
   inline IntPoint minInside(const IntPoint& p) const;
   inline IntPoint maxInside(const IntPoint& p) const;
   inline IntPoint putInside(const IntPoint& p) const;
+
+  inline CELL& cell(const IntPoint& p);  
+  inline CELL& cell(const IntPoint& p) const;
 
   inline CELL& cell(int x, int y);
   inline CELL& cell(int x, int y) const;

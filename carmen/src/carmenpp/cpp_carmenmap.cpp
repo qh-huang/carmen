@@ -89,12 +89,12 @@ void CarmenMap::copyMap(carmen_map_t* m) {
   mapConfigUpdated();
 }
 
-float& CarmenMap::cell(const IntPoint& p) const {
-  return m_map->map[p.x][p.y];
+float& CarmenMap::getCell(int x, int y) const {
+  return m_map->map[x][y];
 }
 
-float& CarmenMap::cell(const IntPoint& p) {
-  return m_map->map[p.x][p.y];
+float& CarmenMap::getCell(int x, int y) {
+  return m_map->map[x][y];
 }
 
 const float& CarmenMap::defaultCell() const {

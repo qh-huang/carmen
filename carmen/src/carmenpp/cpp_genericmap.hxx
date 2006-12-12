@@ -76,14 +76,16 @@ void GenericMap<CELL>::init(const MapConfig& cfg) {
 }
 
 template<class CELL>
-inline CELL& GenericMap<CELL>::cell(const IntPoint& p) const {
-  return m_map[p.x][p.y];
+CELL& GenericMap<CELL>::getCell(int x, int y) {
+  return m_map[x][y];
 }
 
+
 template<class CELL>
-inline CELL& GenericMap<CELL>::cell(const IntPoint& p) {
-  return m_map[p.x][p.y];
+CELL& GenericMap<CELL>::getCell(int x, int y) const {
+  return m_map[x][y];
 }
+
 
 template<class CELL>
 const CELL& GenericMap<CELL>:: defaultCell() const {

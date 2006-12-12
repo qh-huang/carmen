@@ -15,8 +15,8 @@ class GenericMap : public AbstractMap<CELL> {
   virtual void init(const MapConfig& cfg);  
   virtual const CELL& defaultCell() const;
   
-  inline CELL& cell(const IntPoint& p) ;
-  inline CELL& cell(const IntPoint& p) const ;
+  virtual CELL& getCell(int x, int y);
+  virtual CELL& getCell(int x, int y) const;
 
  protected:
   CELL*  m_maplinear;
