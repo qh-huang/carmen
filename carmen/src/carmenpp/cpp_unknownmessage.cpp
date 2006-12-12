@@ -1,28 +1,28 @@
 #include "cpp_unknownmessage.h"
 
-UnknownMessage::UnknownMessage() {
-  s=NULL;
+UnknownMessage::UnknownMessage() : AbstractMessage() {
+  logstr=NULL;
 }
 
 UnknownMessage::~UnknownMessage() {
-  if (this->s!=NULL)
-    delete [] this->s;
+  if (logstr!=NULL)
+    delete logstr;
 }
 
 
 UnknownMessage::UnknownMessage(const UnknownMessage& x) : AbstractMessage(x) {
-  if (this->s!=NULL)
-    delete [] this->s;
-  this->s = new char[strlen(x.s)+1];
-  strcpy(this->s, x.s);
+  logstr = NULL;
+  
+  if (x.logstr != NULL) {
+    logstr = new char[strlen(x.logstr)+1];
+    carmen_test_alloc(logstr);
+    strcpy(logstr, x.logstr);
+  }
 }
   
 UnknownMessage::UnknownMessage(char* s) {
+  logstr = NULL;
   fromString(s);
-//   if (this->s!=NULL)
-//     delete [] this->s;
-//   this->s = new char[strlen(s)+1];
-//   strcpy(this->s, s);
 }
 
 double UnknownMessage::getTimestamp() const { 
@@ -30,15 +30,23 @@ double UnknownMessage::getTimestamp() const {
 }
 
 void UnknownMessage::save(carmen_FILE *logfile, double ) {
-  carmen_fprintf(logfile, s);
+  carmen_fprintf(logfile, logstr);
 }
 
 char*  UnknownMessage::fromString(char* s) {
-  if (this->s!=NULL)
-    delete [] this->s;
-  this->s = new char[strlen(s)+1];
-  strcpy(this->s, s);
-  return (char*) &(s[strlen(s)-1]);
+  if (logstr!=NULL)
+    delete logstr;
+  logstr = NULL;
+
+  if (s != NULL) {
+    logstr = new char[strlen(s)+1];
+    carmen_test_alloc(logstr);
+    strcpy(logstr, s);
+    return (char*) &(logstr[strlen(s)-1]);
+  }
+  else
+    return NULL;
+    
 }
 
 
@@ -47,5 +55,5 @@ AbstractMessage* UnknownMessage::clone() const {
 }
 
 char*  UnknownMessage::getString() {
-  return s;
+  return logstr;
 }

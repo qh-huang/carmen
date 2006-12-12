@@ -9,7 +9,7 @@ class UnknownMessage : public AbstractMessage {
   UnknownMessage();
   virtual ~UnknownMessage();
   UnknownMessage(const UnknownMessage& x);
-  UnknownMessage(char* w);
+  UnknownMessage(char* s);
 
   char*  getString();
 
@@ -25,7 +25,7 @@ class UnknownMessage : public AbstractMessage {
 
 
  protected:
-  char* s;
+  char* logstr;
 };
 
 #endif
