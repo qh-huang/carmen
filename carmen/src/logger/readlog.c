@@ -136,7 +136,7 @@ void carmen_logfile_free_index(carmen_logfile_index_p* pindex) {
 
 int carmen_logfile_eof(carmen_logfile_index_p index)
 {
-  if(index->current_position >= index->num_messages - 1)
+  if(index->current_position > index->num_messages - 1)
     return 1;
   else
     return 0;
