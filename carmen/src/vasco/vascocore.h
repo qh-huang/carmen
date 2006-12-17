@@ -39,6 +39,11 @@
 #ifndef VASCOCORE_UTILS_H
 #define VASCOCORE_UTILS_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -192,6 +197,12 @@ vascocore_scan_match_general(int num_readings, float *range, float *angle,
 
 void
 vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type );
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* ifdef BD_UTILS_H */
 
