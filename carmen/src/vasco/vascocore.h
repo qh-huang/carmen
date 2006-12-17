@@ -190,6 +190,9 @@ vascocore_scan_match_general(int num_readings, float *range, float *angle,
 			     double fov,
 			     carmen_point_t pos, int first);
 
+void
+vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type );
+
 #endif /* ifdef BD_UTILS_H */
 
 // @}
