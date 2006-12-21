@@ -262,7 +262,7 @@ logger_callback_t logger_callbacks[] = {
   {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
    (converter_func)carmen_string_to_gps_gpgga_message, &gpsgga, 0},
   {"NMEARMC", CARMEN_GPS_GPRMC_MESSAGE_NAME, 
-   (converter_func)carmen_string_to_gps_gpgga_message, &gpsrmc, 0},
+   (converter_func)carmen_string_to_gps_gprmc_message, &gpsrmc, 0},
 };
 
 int read_message(int message_num, int publish)

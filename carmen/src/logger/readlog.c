@@ -510,8 +510,10 @@ char *carmen_string_to_gps_gpgga_message(char *string,
   gps_msg->nr               = CLF_READ_INT(&current_pos);
   gps_msg->utc              = CLF_READ_DOUBLE(&current_pos);
   gps_msg->latitude         = CLF_READ_DOUBLE(&current_pos);
+  current_pos = carmen_next_word(current_pos); 
   gps_msg->lat_orient       = CLF_READ_CHAR(&current_pos);
   gps_msg->longitude        = CLF_READ_DOUBLE(&current_pos);
+  current_pos = carmen_next_word(current_pos); 
   gps_msg->long_orient      = CLF_READ_CHAR(&current_pos);
   gps_msg->gps_quality      = CLF_READ_INT(&current_pos);
   gps_msg->num_satellites   = CLF_READ_INT(&current_pos);
@@ -541,10 +543,12 @@ char *carmen_string_to_gps_gprmc_message(char *string,
   gps_msg->latitude         = CLF_READ_DOUBLE(&current_pos);
   gps_msg->lat_orient       = CLF_READ_CHAR(&current_pos);
   gps_msg->longitude        = CLF_READ_DOUBLE(&current_pos);
+  current_pos = carmen_next_word(current_pos); 
   gps_msg->long_orient      = CLF_READ_CHAR(&current_pos);
   gps_msg->speed            = CLF_READ_INT(&current_pos);
   gps_msg->true_course      = CLF_READ_INT(&current_pos);
   gps_msg->variation        = CLF_READ_DOUBLE(&current_pos);
+  current_pos = carmen_next_word(current_pos); 
   gps_msg->var_dir          = CLF_READ_CHAR(&current_pos);
   gps_msg->date             = CLF_READ_INT(&current_pos);
   gps_msg->timestamp        = CLF_READ_DOUBLE(&current_pos);
