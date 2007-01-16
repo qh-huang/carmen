@@ -26,32 +26,21 @@
  *
  ********************************************************/
 
-#include <unistd.h>
-#include <stdio.h>
-
-#include "display-laserdata.h"
+#include <qapplication.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <signal.h>
-#include <math.h>
-#include <values.h>
-#include <sys/time.h>
-#include <time.h>
 #include <carmen/carmen.h>
 #include <carmen/logtools.h>
 
 #ifdef __cplusplus
 }
 #endif
+
+#include "display-laserdata.h"
+
 
 #define MAX_STRING_LENGTH       256
 #define MAX_NUM_LASER_VALUES    801
@@ -60,7 +49,7 @@ logtools_log_data_t rec;
 int                 LASER_ID      = 0;
   
 
-ScriptDisplay::ScriptDisplay( QWidget *parent, const char *name )
+QLaserDisplay::QLaserDisplay( QWidget *parent, const char *name )
   : QWidget( parent, name )
 {
   QVBoxLayout   * vbox;
@@ -70,7 +59,7 @@ ScriptDisplay::ScriptDisplay( QWidget *parent, const char *name )
   use_grid  = FALSE;
   recreate  = TRUE;
   
-  setCaption( "DISPLAY LASERDATA" );
+  setCaption( "QLaserDisplay" );
 
   vbox = new QVBoxLayout( this, 1);
 
@@ -129,10 +118,10 @@ ScriptDisplay::ScriptDisplay( QWidget *parent, const char *name )
   connect( pb, SIGNAL(clicked()), SLOT(slotStepNext()) );
 
   vbox->addWidget(buttons);
-  
-  cell = new QVBox( this );
-  pic = new QPainter( cell );
-  vbox->addWidget( cell );
+
+  drawbox = new QFrame( this );
+  qpainter = new QPainter( drawbox );
+  vbox->addWidget( drawbox );
 
   slider = new QSlider( 1, 100, 1, 1, Qt::Horizontal, this );
   vbox->addWidget(slider);
@@ -145,14 +134,13 @@ ScriptDisplay::ScriptDisplay( QWidget *parent, const char *name )
   scale        = 5.0;
   dontrepaint  = 0;
   wait         = 4;
-  qpixmap      = 0;
+
   setBackgroundMode (NoBackground);
   resize( 700, 700 );
-  show();
 }
  
 void
-ScriptDisplay::resizeEvent (QResizeEvent *) {
+QLaserDisplay::resizeEvent (QResizeEvent *) {
   recreate = TRUE;
 }
  
@@ -225,7 +213,7 @@ stretch( double angle, double val )
 }
   
 void
-ScriptDisplay::paintEvent( QPaintEvent *ev  )
+QLaserDisplay::paintEvent( QPaintEvent *ev  )
 {
   int i, ix, iy, sx, sy, s, s_2, grid_size, max_size;
   double val, angle;
@@ -234,13 +222,11 @@ ScriptDisplay::paintEvent( QPaintEvent *ev  )
   QPen        pen;
 
   if (recreate) {
-    if (qpixmap!=0)
-      delete qpixmap;
+    qpainter->end();
     qpixmap = new QPixmap (width(), height());
-    qpainter.begin (qpixmap, this);
+    qpainter->begin (qpixmap, this);
     recreate = FALSE;
   }
-  
   
   ev = NULL;
   
@@ -253,15 +239,15 @@ ScriptDisplay::paintEvent( QPaintEvent *ev  )
     else
       max_size = (int) (sy * scale);
     
-    qpainter.eraseRect( 0, 0, width(), height() );
+    qpainter->eraseRect( 0, 0, width(), height() );
    
-    qpainter.drawText( 5, 20, createTimeString( rec.lsens[recpos].laser.time,
+    qpainter->drawText( 5, 20, createTimeString( rec.lsens[recpos].laser.time,
 						recpos ));
     
-    qpainter.drawText( 5, 40, createPosString( rec.lsens[recpos].estpos ));
+    qpainter->drawText( 5, 40, createPosString( rec.lsens[recpos].estpos ));
     
     if (use_grid) {
-      qpainter.setPen(gray);
+      qpainter->setPen(gray);
       if (100.0/scale > MIN_PIXEL_DIST ) 
 	grid_size = 100; 
       else if (200.0/scale > MIN_PIXEL_DIST ) 
@@ -276,34 +262,34 @@ ScriptDisplay::paintEvent( QPaintEvent *ev  )
 	   i = i+grid_size ) {
 	s    = (int) (2*i/scale);
 	s_2  = (int) (s / 2.0);
-	qpainter.drawArc( sx-s_2, sy-s_2, s, s, 0, 180*16 );
+	qpainter->drawArc( sx-s_2, sy-s_2, s, s, 0, 180*16 );
 	sprintf( str, "%dm", (int) (i/100.0) );
-	qpainter.drawText( sx-s_2-5, sy+15, str );
-	  qpainter.drawText( sx-s_2+s-5, sy+15, str );
+	qpainter->drawText( sx-s_2-5, sy+15, str );
+	  qpainter->drawText( sx-s_2+s-5, sy+15, str );
 	}
-      qpainter.drawLine( sx-10, sy, sx+10, sy );
-      qpainter.drawLine( sx, sy-10, sx, sy+10 );
+      qpainter->drawLine( sx-10, sy, sx+10, sy );
+      qpainter->drawLine( sx, sy-10, sx, sy+10 );
       pen.setStyle(Qt::DotLine);
       pen.setColor(gray);
-      qpainter.setPen(pen);
+      qpainter->setPen(pen);
       for (i = 0;
 	   i<= (int) (max_size);
 	   i = i+(grid_size/2) ) {
 	s_2  = (int) (i/scale);
-	qpainter.drawLine( 0, sy-s_2, 2*sx, sy-s_2 );
+	qpainter->drawLine( 0, sy-s_2, 2*sx, sy-s_2 );
       }
       for (i = 0;
 	   i<= (int) (max_size/2.0);
 	   i = i+(grid_size/2) ) {
 	s_2  = (int) (i/scale);
-	qpainter.drawLine( sx-s_2, 0, sx-s_2, sy );
-	qpainter.drawLine( sx+s_2, 0, sx+s_2, sy );
+	qpainter->drawLine( sx-s_2, 0, sx-s_2, sy );
+	qpainter->drawLine( sx+s_2, 0, sx+s_2, sy );
       }
       
     }
     
-    qpainter.setPen(black);
-    qpainter.setBrush(black);
+    qpainter->setPen(black);
+    qpainter->setBrush(black);
       
     for (i=0; i<rec.lsens[recpos].laser.numvalues; i++) {
       val   = rec.lsens[recpos].laser.val[i] / scale;
@@ -311,17 +297,17 @@ ScriptDisplay::paintEvent( QPaintEvent *ev  )
       val += stretch( angle, val );
       ix  = (int) (sx-(val*sin(angle))); 
       iy  = (int) (sy-(val*cos(angle)));
-      qpainter.drawEllipse(ix-1,iy-1,3,3);
+      qpainter->drawEllipse(ix-1,iy-1,3,3);
     }
     //      slider->setValue(recpos+1);
   }
-  bitBlt( cell, 0, 0, qpixmap );
+  bitBlt( drawbox, 0, 0, qpixmap );
   dontrepaint = true;
   slider->setValue(recpos);
 }
 
 void
-ScriptDisplay::slotChangeValue( int value )
+QLaserDisplay::slotChangeValue( int value )
 {
   if (!dontrepaint) {
     recpos = value;
@@ -333,7 +319,7 @@ ScriptDisplay::slotChangeValue( int value )
 
 
 void
-ScriptDisplay::closeEvent( QCloseEvent *ev )
+QLaserDisplay::closeEvent( QCloseEvent *ev )
 {
   ev = NULL;
   exit(0);
@@ -344,7 +330,7 @@ ScriptDisplay::closeEvent( QCloseEvent *ev )
 /***********************************************************/
 
 void
-ScriptDisplay::slotJumpToStart()
+QLaserDisplay::slotJumpToStart()
 {
   recpos = 0;
   repaint();
@@ -352,25 +338,25 @@ ScriptDisplay::slotJumpToStart()
 }
 
 void
-ScriptDisplay::slotRevPlay()
+QLaserDisplay::slotRevPlay()
 {
   mode = MODE_REVPLAY;
 }
 
 void
-ScriptDisplay::slotStop()
+QLaserDisplay::slotStop()
 {
   mode = MODE_STOP;
 }
 
 void
-ScriptDisplay::slotPlay()
+QLaserDisplay::slotPlay()
 {
   mode = MODE_PLAY;
 }
 
 void
-ScriptDisplay::slotJumpToEnd()
+QLaserDisplay::slotJumpToEnd()
 {
   recpos = rec.numlaserscans-1;
   repaint();
@@ -378,14 +364,14 @@ ScriptDisplay::slotJumpToEnd()
 }
 
 void
-ScriptDisplay::slotGrid()
+QLaserDisplay::slotGrid()
 {
   use_grid = gpb->isOn();
   repaint();
 }
 
 void
-ScriptDisplay::slotSpeedSlower()
+QLaserDisplay::slotSpeedSlower()
 {
   if (wait<1000) {
     wait+=5;
@@ -393,7 +379,7 @@ ScriptDisplay::slotSpeedSlower()
 }
 
 void
-ScriptDisplay::slotSpeedFaster()
+QLaserDisplay::slotSpeedFaster()
 {
   if (wait>1) {
     wait--;
@@ -401,7 +387,7 @@ ScriptDisplay::slotSpeedFaster()
 }
 
 void
-ScriptDisplay::slotZoomIn()
+QLaserDisplay::slotZoomIn()
 {
   if (scale>1.0) {
     scale = scale-1.0;
@@ -413,7 +399,7 @@ ScriptDisplay::slotZoomIn()
 }
 
 void
-ScriptDisplay::slotZoomOut()
+QLaserDisplay::slotZoomOut()
 {
   if (scale<30.0) { 
     if (scale>=1.0) {
@@ -426,7 +412,7 @@ ScriptDisplay::slotZoomOut()
 }
 
 void
-ScriptDisplay::slotStepPrev()
+QLaserDisplay::slotStepPrev()
 {
   if (recpos>0) {
     recpos--;
@@ -435,7 +421,7 @@ ScriptDisplay::slotStepPrev()
 }
 
 void
-ScriptDisplay::slotStepNext()
+QLaserDisplay::slotStepNext()
 {
   if (recpos<rec.numlaserscans-1) {
     recpos++;
@@ -455,7 +441,7 @@ print_usage( void )
 }
 
 void
-check_mode( ScriptDisplay *w )
+check_mode( QLaserDisplay *w )
 {
   switch(w->mode) {
   case MODE_START:
@@ -489,7 +475,7 @@ int
 main( int argc, char *argv[] )
 {
   QApplication         app( argc, argv );
-  ScriptDisplay        window;
+  QLaserDisplay        window;
   int                  i, cnt=1;
   
   for (i=1; i<argc-1; i++) {
@@ -503,12 +489,23 @@ main( int argc, char *argv[] )
   
   if (!logtools_read_logfile( &rec, argv[argc-1] ))
     exit(0);
-  
+
+  while (rec.lsens[window.recpos].id!=LASER_ID) {
+    window.recpos++;
+    if (window.recpos>=rec.numlaserscans) {
+      fprintf( stderr, "# ERROR: no laser scans with id %d !!!\n",
+	       LASER_ID );
+      exit(0);
+    }
+  }
+
   if (rec.numlaserscans>1)
     window.slider->setMaxValue(rec.numlaserscans-2);
   else
     window.slider->setMaxValue(1);
-    
+  
+  window.show();
+
   while(1) {
     if (cnt%window.wait==0) {
       check_mode( &window );

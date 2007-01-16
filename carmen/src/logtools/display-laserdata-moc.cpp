@@ -1,7 +1,7 @@
 /****************************************************************************
-** ScriptDisplay meta object code from reading C++ file 'display-laserdata.h'
+** QLaserDisplay meta object code from reading C++ file 'display-laserdata.h'
 **
-** Created: Mon Jan 15 14:06:59 2007
+** Created: Tue Jan 16 07:59:25 2007
 **      by: The Qt MOC ($Id$)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -14,32 +14,32 @@
 
 #include <private/qucomextra_p.h>
 #if !defined(Q_MOC_OUTPUT_REVISION) || (Q_MOC_OUTPUT_REVISION != 26)
-#error "This file was generated using the moc from 3.3.4. It"
+#error "This file was generated using the moc from 3.3.7. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
 
-const char *ScriptDisplay::className() const
+const char *QLaserDisplay::className() const
 {
-    return "ScriptDisplay";
+    return "QLaserDisplay";
 }
 
-QMetaObject *ScriptDisplay::metaObj = 0;
-static QMetaObjectCleanUp cleanUp_ScriptDisplay( "ScriptDisplay", &ScriptDisplay::staticMetaObject );
+QMetaObject *QLaserDisplay::metaObj = 0;
+static QMetaObjectCleanUp cleanUp_QLaserDisplay( "QLaserDisplay", &QLaserDisplay::staticMetaObject );
 
 #ifndef QT_NO_TRANSLATION
-QString ScriptDisplay::tr( const char *s, const char *c )
+QString QLaserDisplay::tr( const char *s, const char *c )
 {
     if ( qApp )
-	return qApp->translate( "ScriptDisplay", s, c, QApplication::DefaultCodec );
+	return qApp->translate( "QLaserDisplay", s, c, QApplication::DefaultCodec );
     else
 	return QString::fromLatin1( s );
 }
 #ifndef QT_NO_TRANSLATION_UTF8
-QString ScriptDisplay::trUtf8( const char *s, const char *c )
+QString QLaserDisplay::trUtf8( const char *s, const char *c )
 {
     if ( qApp )
-	return qApp->translate( "ScriptDisplay", s, c, QApplication::UnicodeUTF8 );
+	return qApp->translate( "QLaserDisplay", s, c, QApplication::UnicodeUTF8 );
     else
 	return QString::fromUtf8( s );
 }
@@ -47,7 +47,7 @@ QString ScriptDisplay::trUtf8( const char *s, const char *c )
 
 #endif // QT_NO_TRANSLATION
 
-QMetaObject* ScriptDisplay::staticMetaObject()
+QMetaObject* QLaserDisplay::staticMetaObject()
 {
     if ( metaObj )
 	return metaObj;
@@ -84,7 +84,7 @@ QMetaObject* ScriptDisplay::staticMetaObject()
 	{ "slotStepNext()", &slot_12, QMetaData::Protected }
     };
     metaObj = QMetaObject::new_metaobject(
-	"ScriptDisplay", parentObject,
+	"QLaserDisplay", parentObject,
 	slot_tbl, 13,
 	0, 0,
 #ifndef QT_NO_PROPERTIES
@@ -92,18 +92,18 @@ QMetaObject* ScriptDisplay::staticMetaObject()
 	0, 0,
 #endif // QT_NO_PROPERTIES
 	0, 0 );
-    cleanUp_ScriptDisplay.setMetaObject( metaObj );
+    cleanUp_QLaserDisplay.setMetaObject( metaObj );
     return metaObj;
 }
 
-void* ScriptDisplay::qt_cast( const char* clname )
+void* QLaserDisplay::qt_cast( const char* clname )
 {
-    if ( !qstrcmp( clname, "ScriptDisplay" ) )
+    if ( !qstrcmp( clname, "QLaserDisplay" ) )
 	return this;
     return QWidget::qt_cast( clname );
 }
 
-bool ScriptDisplay::qt_invoke( int _id, QUObject* _o )
+bool QLaserDisplay::qt_invoke( int _id, QUObject* _o )
 {
     switch ( _id - staticMetaObject()->slotOffset() ) {
     case 0: slotChangeValue((int)static_QUType_int.get(_o+1)); break;
@@ -125,16 +125,16 @@ bool ScriptDisplay::qt_invoke( int _id, QUObject* _o )
     return TRUE;
 }
 
-bool ScriptDisplay::qt_emit( int _id, QUObject* _o )
+bool QLaserDisplay::qt_emit( int _id, QUObject* _o )
 {
     return QWidget::qt_emit(_id,_o);
 }
 #ifndef QT_NO_PROPERTIES
 
-bool ScriptDisplay::qt_property( int id, int f, QVariant* v)
+bool QLaserDisplay::qt_property( int id, int f, QVariant* v)
 {
     return QWidget::qt_property( id, f, v);
 }
 
-bool ScriptDisplay::qt_static_property( QObject* , int , int , QVariant* ){ return FALSE; }
+bool QLaserDisplay::qt_static_property( QObject* , int , int , QVariant* ){ return FALSE; }
 #endif // QT_NO_PROPERTIES

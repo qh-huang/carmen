@@ -26,36 +26,19 @@
  *
  ********************************************************/
 
+#include <qobject.h>
 #include <qapplication.h>
-#include <qmainwindow.h>
 #include <qlayout.h>
 #include <qslider.h>
 #include <qpainter.h>
 #include <qframe.h>
-
 #include <qwidget.h>
-#include <qmenubar.h>
-#include <qpopupmenu.h>
-
 #include <qpainter.h>
-#include <qpixmap.h>
-#include <qimage.h>
-
 #include <qvbox.h>
-#include <qtabbar.h>
-#include <qtabdialog.h>
-#include <qtabwidget.h>
-#include <qwidgetstack.h>
-#include <qspinbox.h>
-
 #include <qlabel.h>
 #include <qbuttongroup.h>
 #include <qpushbutton.h>
-#include <qcheckbox.h>
-#include <qlistbox.h>
 #include <qstring.h>
-#include <qfileinfo.h>
-#include <qfiledialog.h>
 
 #define MODE_START        0
 #define MODE_REVPLAY      1
@@ -63,11 +46,11 @@
 #define MODE_PLAY         3
 #define MODE_END          4
 
-class ScriptDisplay : public QWidget {
+class QLaserDisplay : public QWidget {
   Q_OBJECT
   
 public:
-  ScriptDisplay( QWidget *parent = 0, const char *name = 0 );
+  QLaserDisplay( QWidget *parent = 0, const char *name = 0 );
   int         mode;
   int         wait;
   int         recpos;
@@ -75,14 +58,13 @@ public:
   
 private:
   int             use_grid;
-  QPainter      * pic;
-  QPushButton   * gpb;
   double          scale;
   int             dontrepaint;
-  QPixmap       * qpixmap;
-  QVBox         * cell;
-  QPainter        qpainter;
   int             recreate;
+  QPushButton   * gpb;
+  QPixmap       * qpixmap;
+  QFrame        * drawbox;
+  QPainter      * qpainter;
   
 protected:
   void closeEvent( QCloseEvent *ev );
