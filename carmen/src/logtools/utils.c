@@ -145,7 +145,7 @@ logtools_rotate_and_translate_vector2( logtools_vector2_t p, double rot,
 }
 
 double
-vector2_distance( logtools_vector2_t p1, logtools_vector2_t p2 ) {
+logtools_vector2_distance( logtools_vector2_t p1, logtools_vector2_t p2 ) {
   return sqrt( (p1.x-p2.x)*(p1.x-p2.x) +
 	       (p1.y-p2.y)*(p1.y-p2.y) );
 }
