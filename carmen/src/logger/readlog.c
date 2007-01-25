@@ -182,7 +182,10 @@ int carmen_logfile_read_next_line(carmen_logfile_index_p index, carmen_FILE *inf
 
 int first_wordlength(char *str)
 {
-  return strchr(str, ' ') - str;
+  //  return strchr(str, ' ') - str;
+  char* x = carmen_next_word(str);
+  return (int) (x-str);
+
 }
 
 void copy_host_string(char **host, char **string)
