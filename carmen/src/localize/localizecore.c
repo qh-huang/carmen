@@ -144,7 +144,7 @@ static void initialize_temp_weights(carmen_localize_particle_filter_p filter)
 					  sizeof(float *));
   carmen_test_alloc(filter->temp_weights);
   for(i = 0; i < filter->param->num_particles; i++) {
-    filter->temp_weights[i] = (float *)calloc(361, sizeof(float));
+    filter->temp_weights[i] = (float *)calloc(MAX_SCANNS_PER_SCANN, sizeof(float));
     carmen_test_alloc(filter->temp_weights[i]);
   }
 }
@@ -162,7 +162,7 @@ static void realloc_temp_weights(carmen_localize_particle_filter_p filter,
 					   num_particles * sizeof(float *));
   carmen_test_alloc(filter->temp_weights);
   for(i = 0; i < num_particles; i++) {
-    filter->temp_weights[i] = (float *)calloc(361, sizeof(float));
+    filter->temp_weights[i] = (float *)calloc(MAX_SCANNS_PER_SCANN, sizeof(float));
     carmen_test_alloc(filter->temp_weights[i]);
   }
 }

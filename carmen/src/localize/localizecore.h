@@ -49,6 +49,8 @@ extern "C" {
 
 #define      SMALL_PROB        0.01
 
+#define      MAX_SCANNS_PER_SCANN   1024
+
   /** localize parameter structure **/
 typedef struct {
   double front_laser_offset, rear_laser_offset;
@@ -83,7 +85,7 @@ typedef struct {
   carmen_point_t last_odometry_position;
   float **temp_weights;
   float distance_travelled;
-  char laser_mask[361];
+  char laser_mask[MAX_SCANNS_PER_SCANN];
 } carmen_localize_particle_filter_t, *carmen_localize_particle_filter_p;
 
 typedef struct {
@@ -98,7 +100,7 @@ typedef struct {
   double xy_cov;
   int converged;
   int num_readings;
-  carmen_localize_laser_point_t mean_scan[361];
+  carmen_localize_laser_point_t mean_scan[MAX_SCANNS_PER_SCANN];
 } carmen_localize_summary_t, *carmen_localize_summary_p;
 
 #include "likelihood_map.h"

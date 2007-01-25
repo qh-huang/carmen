@@ -34,7 +34,7 @@ carmen_map_t mod_map;
 
 int received_sensor = 0;
 carmen_localize_sensor_message sensor;
-float expected_laser[361];
+float expected_laser[MAX_SCANNS_PER_SCANN];
 
 double front_laser_offset, occupied_prob, lmap_std, global_lmap_std;
 
