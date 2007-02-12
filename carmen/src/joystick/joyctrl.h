@@ -57,6 +57,18 @@ extern "C" {
 #define         CARMEN_JOYSTICK_DEADSPOT       1
 #define         CARMEN_JOYSTICK_DEADSPOT_SIZE  0.2
 
+#define WINGMAN 1
+#define RUMBLEPAD2 2
+
+#define RP2_TV_AXIS 1
+#define RP2_RV_AXIS	2
+#define RP2_START_BTN	8
+
+#define WM_TV_AXIS 1
+#define WM_RV_AXIS	3
+#define WM_START_BTN	8
+
+#define THROTTLE_TV 0.3
 typedef struct {
   int fd;
   int nb_axes;
@@ -66,6 +78,7 @@ typedef struct {
   int deadspot;
   double deadspot_size;
   int initialized;
+  int type;
 } carmen_joystick_type;
 
 /* Set joystick deadspot */

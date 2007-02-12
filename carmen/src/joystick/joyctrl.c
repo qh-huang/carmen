@@ -39,6 +39,25 @@ int carmen_initialize_joystick(carmen_joystick_type *joystick)
   ioctl(joystick->fd, JSIOCGAXES, &joystick->nb_axes);
   ioctl(joystick->fd, JSIOCGBUTTONS, &joystick->nb_buttons);
 
+  char name[128];
+  if (ioctl(joystick->fd, JSIOCGNAME(sizeof(name)), name) < 0)
+	strncpy(name, "Unknown", sizeof(name));
+  printf("Name: %s\n", name);
+
+ 
+
+ if (strstr(name,"RumblePad 2")!=NULL)
+	{
+	joystick->type = RUMBLEPAD2;
+	printf("Detected Rumblepad 2\n");
+	} 
+
+else if (strstr(name,"Wingman")!=NULL)
+        {
+        joystick->type = WINGMAN;
+        printf("Detected Wingman.\n");
+        }
+
   joystick->axes = (int *)calloc(joystick->nb_axes, sizeof(int));
   carmen_test_alloc(joystick->axes);
   joystick->buttons = (int *)calloc(joystick->nb_buttons, sizeof(int));
