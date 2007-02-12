@@ -270,8 +270,10 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       vel.rv /= relative_wheelbase;
     }
   carmen_warn("2");
-  do 
-    {
+
+  /* While-loop not needed since carmen_base_direct_set_velocity it not called here */
+  /*   do  */
+  /*     { */
       //carmen_warn("set_velocity");
       //carmen_base_direct_reset();
       current_vel_command.tv = vel.tv;
@@ -283,8 +285,8 @@ velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       last_motion_command = carmen_get_time();
       //if (base_err < 0)
       //initialize_robot();
-    } 
-  while (base_err < 0);
+      /*     }  */
+      /*   while (base_err < 0); */
 }
 
 static void
