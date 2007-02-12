@@ -545,11 +545,11 @@ int sick_parse_conf_data(sick_laser_p laser, unsigned char *buf, int length)
   if((laser->settings.range_res == CM && data[6] != 0) ||
      (laser->settings.range_res == MM && data[6] != 1) ||
      (laser->settings.range_res == DM && data[6] != 2) ||
-     (laser->settings.range_dist == RANGE80M  && data[5] != 1) ||
-     (laser->settings.range_dist == RANGE160M && data[5] != 3) ||
-     (laser->settings.range_dist == RANGE320M && data[5] != 5) ||
-     (laser->settings.range_dist == REMISSION_NORM && data[5] != 13) ||
-     (laser->settings.range_dist == REMISSION_DIRECT && data[5] != 14)) {
+     (laser->settings.range_dist == SICK_RANGE80M  && data[5] != 1) ||
+     (laser->settings.range_dist == SICK_RANGE160M && data[5] != 3) ||
+     (laser->settings.range_dist == SICK_RANGE320M && data[5] != 5) ||
+     (laser->settings.range_dist == SICK_REMISSION_NORM && data[5] != 13) ||
+     (laser->settings.range_dist == SICK_REMISSION_DIRECT && data[5] != 14)) {
 
     //    fprintf(stderr, "ok\n");
     fprintf(stderr, "config-mode ... ");
@@ -560,19 +560,19 @@ int sick_parse_conf_data(sick_laser_p laser, unsigned char *buf, int length)
     //    data[4] |= 1;
 
     switch(laser->settings.range_dist) {
-    case RANGE80M:
+    case SICK_RANGE80M:
       data[5] = 1; 
       break;
-    case RANGE160M:
+    case SICK_RANGE160M:
       data[5] = 3;
       break;
-    case RANGE320M:
+    case SICK_RANGE320M:
       data[5] = 5;
       break;
-    case REMISSION_NORM:
+    case SICK_REMISSION_NORM:
       data[5] = 13;
       break;
-    case REMISSION_DIRECT:
+    case SICK_REMISSION_DIRECT:
       data[5] = 14;
       break;
     default:
@@ -876,10 +876,10 @@ void sick_start_laser(sick_laser_p laser)
   if(laser->settings.use_remission == 1) {
 
     fprintf(stderr, "INFO: using remission mode ............ ");
-    if (laser->settings.range_dist == REMISSION_NORM) {
+    if (laser->settings.range_dist == SICK_REMISSION_NORM) {
       fprintf(stderr, "normalized\n");
     }
-    else  if (laser->settings.range_dist == REMISSION_DIRECT) {
+    else  if (laser->settings.range_dist == SICK_REMISSION_DIRECT) {
       fprintf(stderr, "direct\n");
     }
     else fprintf(stderr, "unknwon\n");

@@ -52,10 +52,11 @@ extern "C" {
   carmen_laser_laser_type_t;
   
   /** Possible remission values **/
-  typedef enum {OFF = 0, 
-		DIRECT = 1, 
-		NORMALIZED = 2}          
-  carmen_laser_remission_type_t;
+  typedef enum {
+    REMISSION_NONE       = 0, 
+    REMISSION_DIRECT     = 1, 
+    REMISSION_NORMALIZED = 2
+  } carmen_laser_remission_type_t;
   
   /** The configuration of the laser  **/
   typedef struct {

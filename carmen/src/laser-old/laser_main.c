@@ -45,7 +45,7 @@ void set_default_parameters(sick_laser_p laser, int laser_num)
 {
   laser->settings.type = LMS;
   laser->settings.range_res = CM;
-  laser->settings.range_dist = RANGE80M;
+  laser->settings.range_dist = SICK_RANGE80M;
   laser->settings.laser_num = laser_num;
   strcpy(laser->settings.device_name, "/dev/ttyS0");
   laser->settings.detect_baudrate = TRUE;
@@ -185,11 +185,11 @@ void interpret_params(sick_laser_p laser, char *dev, char *type, double res, cha
   /* remission values - start */
   if(strcmp(rem, "direct") == 0) {
     laser->settings.use_remission = 1;
-    laser->settings.range_dist = REMISSION_DIRECT;
+    laser->settings.range_dist = SICK_REMISSION_DIRECT;
   }
   else if(strcmp(rem, "normalized") == 0) {
     laser->settings.use_remission = 1;
-    laser->settings.range_dist = REMISSION_NORM;
+    laser->settings.range_dist = SICK_REMISSION_NORM;
   }
   else if(strcmp(rem, "no") == 0) {
     laser->settings.use_remission = 0;
@@ -394,13 +394,13 @@ void  set_laser_config_structure(sick_laser_p laser,
   }
 
   if (laser->settings.use_remission == 1 && 
-      laser->settings.range_dist == REMISSION_DIRECT) 
-    config->remission_mode = DIRECT;
+      laser->settings.range_dist == SICK_REMISSION_DIRECT) 
+    config->remission_mode = REMISSION_DIRECT;
   else   if (laser->settings.use_remission == 1 && 
-      laser->settings.range_dist == REMISSION_NORM) 
-    config->remission_mode = NORMALIZED;
+      laser->settings.range_dist == SICK_REMISSION_NORM) 
+    config->remission_mode = REMISSION_NORMALIZED;
   else
-    config->remission_mode = OFF;
+    config->remission_mode = REMISSION_NONE;
 
 }
 

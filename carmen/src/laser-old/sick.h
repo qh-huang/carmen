@@ -73,7 +73,7 @@
 
 typedef enum { PLS, LMS } laser_model_t;
 typedef enum { CM, MM, DM } range_res_t;
-typedef enum { RANGE80M, RANGE160M, RANGE320M, REMISSION_NORM, REMISSION_DIRECT } range_dist_t;
+typedef enum { SICK_RANGE80M, SICK_RANGE160M, SICK_RANGE320M, SICK_REMISSION_NORM, SICK_REMISSION_DIRECT } range_dist_t;
 typedef enum { N, E, O } parity_t;
 
 typedef struct {
