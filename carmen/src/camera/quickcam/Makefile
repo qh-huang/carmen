@@ -1,4 +1,4 @@
-CARMEN_HOME = ../../../
+#CARMEN_HOME = ../../../
 include ../../Makefile.conf
 
 MODULE_NAME = "QUICKCAM"
