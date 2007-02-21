@@ -5,6 +5,30 @@
 
 <table>
 <tr>
+<td valign=top>02/2007<td>
+<td width=20>&nbsp;</td>
+<td>New carmen release <a href="http://sourceforge.net/project/showfiles.php?group_id=121727">0.6.5-beta</a> fixes a problem with the old laser driver.</td>
+</tr>
+<!-- ---- -->
+<tr>
+<td valign=top>11/2006<td>
+<td width=20>&nbsp;</td>
+<td>New carmen release <a href="http://sourceforge.net/project/showfiles.php?group_id=121727">0.6.4-beta</a> with support for SICK S300 laser.</td>
+</tr>
+<!-- ---- -->
+<tr>
+<td valign=top>11/2006<td>
+<td width=20>&nbsp;</td>
+<td>New carmen release <a href="http://sourceforge.net/project/showfiles.php?group_id=121727">0.6.2-beta</a>.</td>
+</tr>
+<!-- ---- -->
+<tr>
+<td valign=top>11/2006<td>
+<td width=20>&nbsp;</td>
+<td>New laser server for carmen with support for Hokuyo URG scanner.</td>
+</tr>
+<!-- ---- -->
+<tr>
 <td valign=top>02/2006<td>
 <td width=20>&nbsp;</td>
 <td>Fixed a problem in navigator when dealing with dynamic obstacles.</td>
