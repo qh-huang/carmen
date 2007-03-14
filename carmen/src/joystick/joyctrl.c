@@ -88,7 +88,7 @@ int carmen_get_joystick_state(carmen_joystick_type *joystick)
       if(mybuffer[i].type & JS_EVENT_BUTTON &~ JS_EVENT_INIT) {
 	joystick->buttons[mybuffer[i].number] = mybuffer[i].value;
       }
-      else if(mybuffer[i].type & JS_EVENT_AXIS &~ JS_EVENT_INIT) {
+      else if(mybuffer[i].type == JS_EVENT_AXIS) {
 	joystick->axes[mybuffer[i].number] = mybuffer[i].value;
 	
 	if(mybuffer[i].number == 0 || mybuffer[i].number == 1) {
