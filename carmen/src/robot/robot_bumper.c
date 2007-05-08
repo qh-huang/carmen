@@ -35,6 +35,7 @@
 static carmen_base_bumper_message base_bumper;
 static carmen_robot_bumper_message robot_bumper;
 
+static carmen_running_average_t bumper_average;
 static int bumper_count = 0;
 static int bumper_ready = 0;
 static int num_bumpers;
@@ -97,7 +98,7 @@ void carmen_robot_correct_bumper_and_publish(void)
   check_message_data_chunk_sizes();
   
   bumper_ready = carmen_robot_get_skew(bumper_count, &bumper_skew,
-				       CARMEN_ROBOT_BUMPER_AVERAGE, 
+				       &bumper_average, 
 				       base_bumper.host);
   if (!bumper_ready) {
     carmen_warn("Waiting for bumper data to accumulate\n");
@@ -133,7 +134,7 @@ int carmen_robot_bumper_on()
 
 static void bumper_handler(void)
 {
-  carmen_robot_update_skew(CARMEN_ROBOT_BUMPER_AVERAGE, &bumper_count, 
+  carmen_robot_update_skew(&bumper_average, &bumper_count, 
 			   base_bumper.timestamp, base_bumper.host);
   
   bumper_ready=1;  
@@ -152,7 +153,7 @@ void carmen_robot_add_bumper_handler(void)
 				       (carmen_handler_t)bumper_handler,
 				       CARMEN_SUBSCRIBE_LATEST);
 
-  carmen_running_average_clear(CARMEN_ROBOT_BUMPER_AVERAGE);
+  carmen_running_average_clear(&bumper_average);
 }
 
 void carmen_robot_add_bumper_parameters(char *progname __attribute__ ((unused)) ) 

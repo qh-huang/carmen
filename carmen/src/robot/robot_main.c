@@ -48,6 +48,7 @@ static char *robot_host;
 static double turn_before_driving_if_heading_bigger_than = M_PI/2;
 static int odometry_count = 0;
 static double odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS];
+static carmen_running_average_t odometry_average;
 
 #ifndef COMPILE_WITHOUT_LASER_SUPPORT
 static int use_laser = 1;
@@ -85,11 +86,11 @@ static inline double get_odometry_skew(void)
   if(strcmp(robot_host, carmen_robot_latest_odometry.host) == 0)
     return 0;  
   else 
-    return carmen_running_average_report(CARMEN_ROBOT_ODOMETRY_AVERAGE);
+    return carmen_running_average_report(&odometry_average);
 }
 
 int carmen_robot_get_skew(int msg_count, double *skew,
-			   int data_type, char *hostname)
+			  carmen_running_average_t *average, char *hostname)
 {
   if (msg_count < CARMEN_ROBOT_ESTIMATES_CONVERGE) 
     return 0;
@@ -97,7 +98,7 @@ int carmen_robot_get_skew(int msg_count, double *skew,
   if (strcmp(robot_host, hostname) == 0) 
     *skew = 0;
   else
-    *skew = carmen_running_average_report(data_type);
+    *skew = carmen_running_average_report(average);
 
   if (odometry_count < CARMEN_ROBOT_ESTIMATES_CONVERGE) {
     carmen_warn("Waiting for odometry to accumulate\n");
@@ -107,8 +108,8 @@ int carmen_robot_get_skew(int msg_count, double *skew,
   return 1;
 }
 
-void carmen_robot_update_skew(int data_type, int *count, double time,
-			      char *hostname)
+void carmen_robot_update_skew(carmen_running_average_t *average, int *count, 
+			      double time, char *hostname)
 {
   if (strcmp(robot_host, hostname) == 0) 
     *count = CARMEN_ROBOT_ESTIMATES_CONVERGE;
@@ -116,7 +117,7 @@ void carmen_robot_update_skew(int data_type, int *count, double time,
   if(*count <= CARMEN_ROBOT_ESTIMATES_CONVERGE)
     (*count)++;
 
-  carmen_running_average_add(data_type, carmen_get_time() - time);
+  carmen_running_average_add(average, carmen_get_time() - time);
 }
 
 double carmen_robot_get_fraction(double timestamp, double skew,
@@ -257,7 +258,7 @@ static void base_odometry_handler(void)
     carmen_robot_latest_odometry;
   odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS - 1] = carmen_get_time();
 
-  carmen_running_average_add(CARMEN_ROBOT_ODOMETRY_AVERAGE, 
+  carmen_running_average_add(&odometry_average, 
 			     odometry_local_timestamp[CARMEN_ROBOT_MAX_READINGS - 1]- 
 			     carmen_robot_latest_odometry.timestamp);
 
@@ -714,7 +715,7 @@ int carmen_robot_start(int argc, char **argv)
 {
   robot_host = carmen_get_host();
   
-  carmen_running_average_clear(CARMEN_ROBOT_ODOMETRY_AVERAGE);
+  carmen_running_average_clear(&odometry_average);
   
   if (read_robot_parameters(argc, argv) < 0)
     return -1;

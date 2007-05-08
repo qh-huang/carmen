@@ -35,6 +35,7 @@
 static carmen_base_sonar_message base_sonar;
 static carmen_robot_sonar_message robot_sonar;
 
+static carmen_running_average_t sonar_average;
 static int sonar_count = 0;
 static int sonar_ready = 0;
 
@@ -105,8 +106,7 @@ void carmen_robot_correct_sonar_and_publish(void)
     return;
 
   sonar_ready = carmen_robot_get_skew(sonar_count, &sonar_skew, 
-				      CARMEN_ROBOT_SONAR_AVERAGE, 
-				      base_sonar.host);
+				      &sonar_average, base_sonar.host);
   if (!sonar_ready) {
     carmen_warn("Waiting for sonar data to accumulate\n");
     return;
@@ -147,7 +147,7 @@ static void sonar_handler(void)
   
   check_message_data_chunk_sizes();
 
-  carmen_robot_update_skew(CARMEN_ROBOT_SONAR_AVERAGE, &sonar_count, 
+  carmen_robot_update_skew(&sonar_average, &sonar_count, 
 			   base_sonar.timestamp, base_sonar.host);
   
   memcpy(robot_sonar.ranges, base_sonar.range, robot_sonar.num_sonars * 
@@ -236,7 +236,7 @@ void carmen_robot_add_sonar_handler(void)
 				    (carmen_handler_t)sonar_handler,
 				    CARMEN_SUBSCRIBE_LATEST);
 
-  carmen_running_average_clear(CARMEN_ROBOT_SONAR_AVERAGE);
+  carmen_running_average_clear(&sonar_average);
 }
 
 void carmen_robot_add_sonar_parameters(char *progname __attribute__ ((unused)) ) 
