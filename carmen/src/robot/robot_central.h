@@ -61,13 +61,6 @@ extern "C" {
 
 #define      CARMEN_ROBOT_MIN_ALLOWED_VELOCITY 0.03 // cm/s
 
-#define      CARMEN_ROBOT_ODOMETRY_AVERAGE     0
-#define      CARMEN_ROBOT_FRONT_LASER_AVERAGE  1
-#define      CARMEN_ROBOT_REAR_LASER_AVERAGE   2
-
-#define      CARMEN_ROBOT_BUMPER_AVERAGE       3
-#define      CARMEN_ROBOT_SONAR_AVERAGE        4
-
 extern carmen_base_odometry_message carmen_robot_latest_odometry;
 extern carmen_base_odometry_message carmen_robot_odometry[CARMEN_ROBOT_MAX_READINGS];
 extern int carmen_robot_position_received;
@@ -82,9 +75,9 @@ extern double carmen_robot_sensor_time_of_last_update;
 double carmen_robot_get_fraction(double timestamp, double skew,
 				 int *low, int *high);
 int carmen_robot_get_skew(int msg_count, double *skew,
-			  int data_type, char *hostname);
-void carmen_robot_update_skew(int data_type, int *count, double time,
-			      char *hostname);
+			  carmen_running_average_t *average, char *hostname);
+void carmen_robot_update_skew(carmen_running_average_t *average, int *count, 
+			      double time, char *hostname);
 
 #ifdef __cplusplus
 }

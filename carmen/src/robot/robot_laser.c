@@ -35,6 +35,9 @@
 static double frontlaser_offset;
 static double rearlaser_offset;
 
+static carmen_running_average_t frontlaser_average;
+static carmen_running_average_t rearlaser_average;
+
 static double carmen_robot_laser_bearing_skip_rate = 0.33;
 
 static carmen_laser_laser_message front_laser, rear_laser;
@@ -80,8 +83,7 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 
   if (!rear) {
     laser_ready = carmen_robot_get_skew(front_laser_count, &skew,
-					CARMEN_ROBOT_FRONT_LASER_AVERAGE, 
-					msg->host);
+					&frontlaser_average, msg->host);
     if (!laser_ready) {
       carmen_warn("Waiting for front laser data to accumulate in order to estimate the time skew.\n");
       return 0;
@@ -89,8 +91,7 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 
   } else {
     laser_ready = carmen_robot_get_skew(rear_laser_count, &skew,
-					CARMEN_ROBOT_REAR_LASER_AVERAGE, 
-					msg->host);
+					&rearlaser_average, msg->host);
     if (!laser_ready) {
       carmen_warn("Waiting for rear laser data to accumulate in order to estimate the time skew.\n");
       return 0;
@@ -260,8 +261,7 @@ laser_frontlaser_handler(void)
 
   check_message_data_chunk_sizes(&front_laser);
 
-  carmen_robot_update_skew(CARMEN_ROBOT_FRONT_LASER_AVERAGE, 
-			   &front_laser_count, 
+  carmen_robot_update_skew(&frontlaser_average, &front_laser_count, 
 			   front_laser.timestamp, front_laser.host);
 
   memcpy(robot_front_laser.range, front_laser.range, 
@@ -391,8 +391,7 @@ laser_rearlaser_handler(void)
 
   check_message_data_chunk_sizes(&rear_laser);
 
-  carmen_robot_update_skew(CARMEN_ROBOT_REAR_LASER_AVERAGE, 
-			   &rear_laser_count, 
+  carmen_robot_update_skew(&rearlaser_average, &rear_laser_count, 
 			   rear_laser.timestamp, rear_laser.host);
 
   memcpy(robot_rear_laser.range, rear_laser.range, 
@@ -499,8 +498,8 @@ carmen_robot_add_laser_handlers(void)
   carmen_laser_subscribe_rearlaser_message
     (&rear_laser, (carmen_handler_t)laser_rearlaser_handler,
      CARMEN_SUBSCRIBE_LATEST);
-  carmen_running_average_clear(CARMEN_ROBOT_FRONT_LASER_AVERAGE);
-  carmen_running_average_clear(CARMEN_ROBOT_REAR_LASER_AVERAGE);
+  carmen_running_average_clear(&frontlaser_average);
+  carmen_running_average_clear(&rearlaser_average);
 }
 
 void 
