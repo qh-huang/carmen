@@ -47,7 +47,7 @@ extern "C" {
 
 #define CARMEN_MAJOR_VERSION 0
 #define CARMEN_MINOR_VERSION 6
-#define CARMEN_REVISION 0
+#define CARMEN_REVISION 1
 
 #ifndef TRUE
 #define TRUE 1
@@ -206,9 +206,18 @@ char *carmen_get_host(void);
 
 carmen_default_message *carmen_default_message_create(void);
 
-void carmen_running_average_clear(int which);
-void carmen_running_average_add(int which, double x);
-double carmen_running_average_report(int which);
+#define AVERAGE_LENGTH 20
+
+typedef struct {
+  double data[AVERAGE_LENGTH];
+  int index;
+  double sum;
+  int count;
+} carmen_running_average_t;
+
+void carmen_running_average_clear(carmen_running_average_t *average);
+void carmen_running_average_add(carmen_running_average_t *average, double x);
+double carmen_running_average_report(carmen_running_average_t *average);
 
 /* This weirdness of extern inline is to allow the function to be inlined
    outside the library. Guess what! There's an exact copy of this function in

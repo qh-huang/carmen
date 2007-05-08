@@ -534,50 +534,32 @@ carmen_carp_get_verbose(void) {
 
 extern IPC_VERBOSITY_TYPE ipcVerbosity;
 
-#define MAX_AVERAGE_NUM 5
-#define AVERAGE_LENGTH 20
-
-typedef struct {
-  double data[AVERAGE_LENGTH];
-  int index;
-  double sum;
-  int count;
-} running_average;
-
-running_average averages[MAX_AVERAGE_NUM];
-
-void 
-carmen_running_average_clear(int which)
+void carmen_running_average_clear(carmen_running_average_t *average)
 {
   int i;
 
-  if (which < MAX_AVERAGE_NUM) 
-    {
-      for(i = 0; i < AVERAGE_LENGTH; i++)
-	averages[which].data[i] = 0.0;
-      averages[which].index = 0;
-      averages[which].sum = 0.0;
-      averages[which].count = 0;
-    }
+  for(i = 0; i < AVERAGE_LENGTH; i++)
+    average->data[i] = 0.0;
+  average->index = 0;
+  average->sum = 0.0;
+  average->count = 0;
 }
 
-void 
-carmen_running_average_add(int which, double x)
+void carmen_running_average_add(carmen_running_average_t *average, double x)
 {
-  averages[which].sum -= averages[which].data[averages[which].index];
-  averages[which].data[averages[which].index] = x;
-  averages[which].sum += x;
-  averages[which].index++;
-  if(averages[which].index == AVERAGE_LENGTH)
-    averages[which].index = 0;
-  if(averages[which].count < AVERAGE_LENGTH)
-    averages[which].count++;
+  average->sum -= average->data[average->index];
+  average->data[average->index] = x;
+  average->sum += x;
+  average->index++;
+  if(average->index == AVERAGE_LENGTH)
+    average->index = 0;
+  if(average->count < AVERAGE_LENGTH)
+    average->count++;
 }
 
-double 
-carmen_running_average_report(int which)
+double carmen_running_average_report(carmen_running_average_t *average)
 {
-  return averages[which].sum / (double)averages[which].count;
+  return (average->sum / (double)average->count);
 }
 
 inline int
