@@ -10,20 +10,20 @@ int carmen_laser_compare_configuration(carmen_laser_laser_config_t* c1, carmen_l
     return 1;
   }
 
-  if ((c1->angular_resolution!=MAXDOUBLE || c2->angular_resolution!=MAXDOUBLE) && 
+  if ((c1->angular_resolution!=MAXDOUBLE && c2->angular_resolution!=MAXDOUBLE) && 
       fabs(c1->angular_resolution - c2->angular_resolution) > carmen_degrees_to_radians(0.01))
     return 2;
 
-  if ((c1->start_angle!=MAXDOUBLE || c2->start_angle!=MAXDOUBLE) && c1->start_angle!=c2->start_angle)
+  if ((c1->start_angle!=MAXDOUBLE && c2->start_angle!=MAXDOUBLE) && c1->start_angle!=c2->start_angle)
     return 4;
   
-  if ((c1->fov!=MAXDOUBLE || c2->fov!=MAXDOUBLE) && c1->fov!=c2->fov)
+  if ((c1->fov!=MAXDOUBLE && c2->fov!=MAXDOUBLE) && c1->fov!=c2->fov)
     return 5;
 
-  if ((c1->maximum_range!=MAXDOUBLE || c2->maximum_range!=MAXDOUBLE) && c1->maximum_range!=c2->maximum_range)
+  if ((c1->maximum_range!=MAXDOUBLE && c2->maximum_range!=MAXDOUBLE) && c1->maximum_range!=c2->maximum_range)
     return 6;
 
-  if ((c1->accuracy!=MAXDOUBLE || c2->accuracy!=MAXDOUBLE) && c1->accuracy!=c2->accuracy)
+  if ((c1->accuracy!=MAXDOUBLE && c2->accuracy!=MAXDOUBLE) && c1->accuracy!=c2->accuracy)
     return 7;
 
   if (c1->remission_mode!=c2->remission_mode)
