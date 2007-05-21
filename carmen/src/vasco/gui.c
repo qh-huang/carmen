@@ -26,6 +26,8 @@
  *
  ********************************************************/
 
+#include <carmen/carmen_graphics.h>
+
 #include <gdk/gdkkeysyms.h>
 #include "gui.h"
 #include "vscanmatch.h"

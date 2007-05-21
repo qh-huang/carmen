@@ -52,41 +52,41 @@ static GtkWidget *name_entry, *x_entry, *y_entry, *theta_entry, *x_std_entry,
  *  Menu functions                                      *
  ********************************************************/
 
-void toggle_view(gpointer callback_data __attribute__ ((unused)), 
-		 guint callback_action, 
-		 GtkWidget *w __attribute__ ((unused)))
+void toggle_view(GtkAction *action, gpointer user_data __attribute__ ((unused)))
 {
-  if (callback_action == 1) {
-    GtkWidget *menu_item = 
-      gtk_item_factory_get_widget(item_factory, "/View/Show Placenames");
-    show_place_names = ((struct _GtkCheckMenuItem *)menu_item)->active;
-  } else if (callback_action == 2) {
-    GtkWidget *menu_item = 
-      gtk_item_factory_get_widget(item_factory, "/View/Show Offlimits");
-    show_offlimits = ((struct _GtkCheckMenuItem *)menu_item)->active;
+  char *name;
+  GtkToggleAction *toggle;
+
+  name = (char *)gtk_action_get_name(action);
+
+  if (strcmp(name, "ShowPlacenames") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    show_place_names = gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "ShowOfflimits") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    show_offlimits = gtk_toggle_action_get_active(toggle);
   } 
-  gdk_pixmap_unref(map_pixmap);
-  map_pixmap = NULL;
+  if (tmp_pixmap) {
+    gdk_pixmap_unref(tmp_pixmap);
+    tmp_pixmap = NULL;
+  }
   redraw();
 }
 
-void add_placename(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action __attribute__ ((unused)), 
-		   GtkWidget *w __attribute__ ((unused)))
+void add_placename(GtkAction *action  __attribute__ ((unused)), 
+		   gpointer user_data __attribute__ ((unused)))
 {
   adding_placename = 1;
 }
 
-void delete_placename(gpointer callback_data __attribute__ ((unused)), 
-		      guint callback_action __attribute__ ((unused)), 
-		      GtkWidget *w __attribute__ ((unused)))
+void delete_placename(GtkAction *action __attribute__ ((unused)), 
+		      gpointer user_data __attribute__ ((unused)))
 {
   deleting_placename = 1;
 }
 
-void add_door(gpointer callback_data __attribute__ ((unused)), 
-	      guint callback_action __attribute__ ((unused)), 
-	      GtkWidget *w __attribute__ ((unused)))
+void add_door(GtkAction *action __attribute__ ((unused)), 
+	      gpointer user_data __attribute__ ((unused)))
 {
   adding_door = 2;
 }
@@ -100,8 +100,8 @@ void do_delete_placename(int i)
 
   place_list->num_places--;
 
-  gdk_pixmap_unref(map_pixmap);
-  map_pixmap = NULL;
+  gdk_pixmap_unref(tmp_pixmap);
+  tmp_pixmap = NULL;
   redraw();
 
   modified++;
@@ -233,8 +233,8 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
   
   place_list->num_places++;
 
-  gdk_pixmap_unref(map_pixmap);
-  map_pixmap = NULL;
+  gdk_pixmap_unref(tmp_pixmap);
+  tmp_pixmap = NULL;
   redraw();
 
   modified++;
@@ -374,8 +374,8 @@ void start_add_door(double x, double y)
   
   place_list->num_places++;
 
-  gdk_pixmap_unref(map_pixmap);
-  map_pixmap = NULL;
+  gdk_pixmap_unref(tmp_pixmap);
+  tmp_pixmap = NULL;
   redraw();
 
   modified++;
@@ -408,8 +408,8 @@ void finish_add_door(double x, double y)
   
   place_list->num_places++;
 
-  gdk_pixmap_unref(map_pixmap);
-  map_pixmap = NULL;
+  gdk_pixmap_unref(tmp_pixmap);
+  tmp_pixmap = NULL;
   redraw();
 
   modified++;
@@ -597,13 +597,14 @@ int map_open(char *filename, int have_graphics __attribute__ ((unused)))
 
   map = new_map;
 
-  if(map_pixmap) {
-    gdk_pixmap_unref(map_pixmap);
+  if(tmp_pixmap) 
     gdk_pixmap_unref(tmp_pixmap);
-  }
+  if (map_pixmap)
+    gdk_pixmap_unref(map_pixmap);
+
 
   map_pixmap = NULL;
-  tmp_pixmap = NULL;
+  map_pixmap = NULL;
 
   if(backup)
     free(backup);
@@ -617,41 +618,57 @@ int map_open(char *filename, int have_graphics __attribute__ ((unused)))
   return 1;
 }
 
-void map_open_ok_button(GtkWidget *selector_button __attribute__ ((unused)),
-			gpointer user_data)
-{
-  gchar *filename;
-  GtkWidget *selector = (GtkWidget *)user_data;
-  
-  filename =
-    gtk_file_selection_get_filename(GTK_FILE_SELECTION(selector));
-  map_open(filename, 1);
-
-  set_up_map_widgets();
-}
-
 void create_open_map_selector(void)
 {
-  GtkWidget *file_select;
+  GtkWidget *dialog;
+  char parent_dir[1024];
+  char *tail;
+  int length;
 
-  file_select = gtk_file_selection_new("Please select a map for editing.");
-  if(strlen(map_filename))
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), 
-				    map_filename);
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION
-				(file_select)->ok_button),
-		     "clicked", (GtkSignalFunc)map_open_ok_button,
-		     file_select);
+  dialog = gtk_file_chooser_dialog_new("Please select a map for editing.",
+					    GTK_WINDOW(window),
+					    GTK_FILE_CHOOSER_ACTION_OPEN,
+					    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					    GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					    NULL);
+  if(strlen(map_filename)) {
+    if (map_filename[0] == '/') {
+      tail = strrchr(map_filename, '/');
+      if (tail != map_filename) {
+	length = tail-map_filename;	
+	if (length < 1023) {
+	  strncpy(parent_dir, map_filename, length);
+	  parent_dir[length] = '\0';
+	}
+      }
+    } else if (strrchr(map_filename, '/') != NULL && getenv("PWD") != NULL) {
+      if (strlen(getenv("PWD")) < 1023) 
+	sprintf(parent_dir, "%s/", getenv("PWD"));
+      tail = strrchr(map_filename, '/');
+      if (tail != map_filename) {
+	length = tail-map_filename;	
+	if (strlen(parent_dir) + length < 1023) {
+	  strncat(parent_dir, map_filename, length);
+	  parent_dir[length+strlen(getenv("PWD"))+1] = '\0';
+	}
+      }
+    } else if (getenv("PWD") != NULL) {
+      if (strlen(getenv("PWD")) < 1023) 
+	sprintf(parent_dir, "%s/", getenv("PWD"));
+    }
+    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), parent_dir);
+  }
 
-  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION
-				       (file_select)->cancel_button),
-			    "clicked", (GtkSignalFunc)gtk_widget_destroy,
-			    (gpointer)file_select);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION
-				       (file_select)->ok_button),
-			    "clicked", (GtkSignalFunc)gtk_widget_destroy, 
-			    (gpointer)file_select);
-  gtk_widget_show(file_select);
+  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+    char *filename;
+    
+    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+    map_open(filename, 1);
+    set_up_map_widgets();
+    g_free (filename);
+  }
+  
+  gtk_widget_destroy (dialog);
 }
 
 void new_map_button(GtkWidget *selector_button __attribute__ ((unused)),
@@ -731,10 +748,10 @@ void new_map_button(GtkWidget *selector_button __attribute__ ((unused)),
 
   map = new_map;
 
-  if(map_pixmap) {
-    gdk_pixmap_unref(map_pixmap);
+  if(tmp_pixmap) 
     gdk_pixmap_unref(tmp_pixmap);
-  }
+  if (map_pixmap)
+    gdk_pixmap_unref(map_pixmap);
 
   map_pixmap = NULL;
   tmp_pixmap = NULL;
@@ -753,14 +770,6 @@ void new_map_button(GtkWidget *selector_button __attribute__ ((unused)),
   return;	
 }
 
-void handle_key_in_new_map_box( GtkWidget *widget, GdkEventKey *event )
-{
-  if ((event->keyval & 0x7f) == 13)
-    new_map_button(widget, NULL);
-  if ((event->keyval & 0x7f) == 13 || (event->keyval & 0x7f) == 27)
-    gtk_widget_destroy(widget);
-}
-
 void create_new_map(void)
 {
   GtkWidget *dialog = NULL;
@@ -770,11 +779,6 @@ void create_new_map(void)
   vbox = GTK_DIALOG(dialog)->vbox;
   gtk_window_set_modal(&(GTK_DIALOG(dialog)->window), 1);
   gtk_widget_grab_focus(dialog);
-
-  gtk_widget_set_events (dialog, GDK_KEY_PRESS_MASK);
-
-  gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		     (GtkSignalFunc)handle_key_in_new_map_box, NULL);
 
   label = gtk_label_new("New map size: ");		
   gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 5);
@@ -833,38 +837,56 @@ void create_new_map(void)
 	
 }
 
-void save_map_ok_button(GtkWidget *selector_button __attribute__ ((unused)),
-			gpointer user_data)
-{
-  gchar *filename;
-  GtkWidget *selector = (GtkWidget *)user_data;
-  
-  filename =
-    gtk_file_selection_get_filename(GTK_FILE_SELECTION(selector));
-  map_save(filename);
-}
-
 void create_save_map_selector(void)
 {
-  GtkWidget *file_select;
+  GtkWidget *dialog;
+  char parent_dir[1024];
+  char *tail;
+  int length;
 
-  file_select = gtk_file_selection_new("Choose a name for the new map.");
-  if(strlen(map_filename))
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), 
-				    map_filename);
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION
-				(file_select)->ok_button),
-		     "clicked", (GtkSignalFunc)save_map_ok_button,
-		     file_select);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION
-				       (file_select)->cancel_button),
-			    "clicked", (GtkSignalFunc)gtk_widget_destroy,
-			    (gpointer)file_select);
-  gtk_signal_connect_object(GTK_OBJECT(GTK_FILE_SELECTION
-				       (file_select)->ok_button),
-			    "clicked", (GtkSignalFunc)gtk_widget_destroy, 
-			    (gpointer)file_select);
-  gtk_widget_show(file_select);
+  dialog = gtk_file_chooser_dialog_new("Choose a name for the new map.",
+					    GTK_WINDOW(window),
+					    GTK_FILE_CHOOSER_ACTION_SAVE,
+					    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					    GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					    NULL);
+  if(strlen(map_filename)) {
+    if (map_filename[0] == '/') {
+      tail = strrchr(map_filename, '/');
+      if (tail != map_filename) {
+	length = tail-map_filename;	
+	if (length < 1023) {
+	  strncpy(parent_dir, map_filename, length);
+	  parent_dir[length] = '\0';
+	}
+      }
+    } else if (strrchr(map_filename, '/') != NULL && getenv("PWD") != NULL) {
+      if (strlen(getenv("PWD")) < 1023) 
+	sprintf(parent_dir, "%s/", getenv("PWD"));
+      tail = strrchr(map_filename, '/');
+      if (tail != map_filename) {
+	length = tail-map_filename;	
+	if (strlen(parent_dir) + length < 1023) {
+	  strncat(parent_dir, map_filename, length);
+	  parent_dir[length+strlen(getenv("PWD"))+1] = '\0';
+	}
+      }
+    } else if (getenv("PWD") != NULL) {
+      if (strlen(getenv("PWD")) < 1023) 
+	sprintf(parent_dir, "%s/", getenv("PWD"));
+    }
+    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), parent_dir);
+  }
+
+  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+    char *filename;
+    
+    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+    map_save(filename);
+    g_free (filename);
+  }
+  
+  gtk_widget_destroy (dialog);
 }
 
 /* dbug
@@ -880,9 +902,8 @@ void dont_save_question(gint reply, gpointer data)
 }
 */
 
-void new_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		  guint callback_action __attribute__ ((unused)), 
-		  GtkWidget *w __attribute__ ((unused)))
+void new_map_menu(GtkAction *action __attribute__ ((unused)), 
+		  gpointer user_data __attribute__ ((unused)))
 {
   /* dbug
   if(modified)
@@ -897,9 +918,8 @@ void new_map_menu(gpointer callback_data __attribute__ ((unused)),
   create_new_map();
 }
 
-void open_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action __attribute__ ((unused)), 
-		   GtkWidget *w __attribute__ ((unused)))
+void open_map_menu(GtkAction *action __attribute__ ((unused)), 
+		   gpointer user_data __attribute__ ((unused)))
 {
   /* dbug
   if(modified)
@@ -914,17 +934,15 @@ void open_map_menu(gpointer callback_data __attribute__ ((unused)),
   create_open_map_selector();
 }
 
-void save_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action __attribute__ ((unused)), 
-		   GtkWidget *w __attribute__ ((unused)))
+void save_map_menu(GtkAction *action __attribute__ ((unused)), 
+		   gpointer user_data __attribute__ ((unused)))
 {
   if(modified)
     map_save(map_filename);
 }
 
-void save_map_as_menu(gpointer callback_data __attribute__ ((unused)), 
-		      guint callback_action __attribute__ ((unused)), 
-		      GtkWidget *w __attribute__ ((unused)))
+void save_map_as_menu(GtkAction *action __attribute__ ((unused)), 
+		      gpointer user_data __attribute__ ((unused)))
 {
   create_save_map_selector();
 }
@@ -938,9 +956,8 @@ void quit_question(gint reply __attribute__ ((unused)),
 }
 */
 
-void quit_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action __attribute__ ((unused)), 
-	       GtkWidget *w __attribute__ ((unused)))
+void quit_menu(GtkAction *action __attribute__ ((unused)), 
+	       gpointer user_data __attribute__ ((unused)))
 {
   /* dbug
   if(modified)
@@ -956,36 +973,34 @@ void quit_menu(gpointer callback_data __attribute__ ((unused)),
   gtk_exit(1);
 }
 
-/* undoes the emidiatly previous action (only one)*/
-void undo_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action __attribute__ ((unused)), 
-	       GtkWidget *w __attribute__ ((unused)))
+/* undoes the immediately previous action (only one)*/
+void undo_menu(GtkAction *action __attribute__ ((unused)), 
+	       gpointer user_data __attribute__ ((unused)))
 {
   if(!modified || !backup)
     return;
   memcpy(map->complete_map, backup, 
 	 sizeof(float) * map->config.x_size * map->config.y_size);
   modified--;
-  if(map_pixmap) {
-    gdk_pixmap_unref(map_pixmap);
+
+  if(tmp_pixmap) 
     gdk_pixmap_unref(tmp_pixmap);
-  }
+  if (map_pixmap)
+    gdk_pixmap_unref(map_pixmap);
+
   map_pixmap = NULL;
   tmp_pixmap = NULL;
+
   redraw();
 }
 
 /* Opens a new window containing helpful info */
-void help_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action __attribute__ ((unused)), 
-	       GtkWidget *w __attribute__ ((unused)))
+void help_menu(GtkAction *action __attribute__ ((unused)), 
+	       gpointer user_data __attribute__ ((unused)))
 {
   GtkWidget *tree;
-  GtkWidget *sub_tree1, *sub_tree2, *sub_tree3;
-  GtkWidget *item;
   static GtkWidget *window1 = NULL;
   GtkWidget *scrolled_win;
-  GtkWidget *text;
   GtkWidget *box;
 
   if(window1)
@@ -999,347 +1014,191 @@ void help_menu(gpointer callback_data __attribute__ ((unused)),
   gtk_container_add(GTK_CONTAINER(window1), box);
   gtk_widget_show(box);
 
-  tree = gtk_tree_new();
-  scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_win),
-				  GTK_POLICY_AUTOMATIC,
-				  GTK_POLICY_AUTOMATIC);
-  gtk_widget_set_usize (scrolled_win, 420, 500);
-  gtk_box_pack_start(GTK_BOX(box), scrolled_win, TRUE, TRUE, 0);
-  gtk_widget_show (scrolled_win);
+  GtkTreeStore *tree_store = gtk_tree_store_new (1, G_TYPE_STRING);
+  GtkTreeIter iter1, iter2, iter3, iter4;
+
+  gtk_tree_store_append (tree_store, &iter1, NULL); 
+  gtk_tree_store_set(tree_store, &iter1, 0, "Menus", -1);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "File", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set(tree_store, &iter3, 0, "Open Map", -1);
+  gtk_tree_store_append (tree_store, &iter4, &iter3); 
+  gtk_tree_store_set
+    (tree_store, &iter4, 0, "Opens a previously created map file.", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set(tree_store, &iter3, 0, "Save Map", -1);
+  gtk_tree_store_append (tree_store, &iter4, &iter3); 
+  gtk_tree_store_set
+    (tree_store, &iter4, 0, 
+     "Saves the current map to its original file name.", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set(tree_store, &iter3, 0, "Save Map As", -1);
+  gtk_tree_store_append (tree_store, &iter4, &iter3); 
+  gtk_tree_store_set
+    (tree_store, &iter4, 0, "Saves the current map to a new file name.", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set(tree_store, &iter3, 0, "Quit", -1);
+  gtk_tree_store_append (tree_store, &iter4, &iter3); 
+  gtk_tree_store_set(tree_store, &iter4, 0, "Exits the program.", -1);
+
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Edit", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set(tree_store, &iter3, 0, "Undo", -1);
+  gtk_tree_store_append (tree_store, &iter4, &iter3); 
+  gtk_tree_store_set(tree_store, &iter4, 0, "Undoes the last edit action.", -1);
   
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled_win), tree);
+  gtk_tree_store_append (tree_store, &iter1, NULL); 
+  gtk_tree_store_set(tree_store, &iter1, 0, "Tools", -1);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Brush", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0, 
+     "The brush draws squares ('brush size' on a side) of \n"
+     "probability given by 'ink' onto the map. The brush is activated \n"
+     "by clicking the left mouse button and dragging the cursor \n"
+     "across the screen.", -1);
 
-  item = gtk_tree_item_new_with_label("Menus");
-  gtk_tree_append(GTK_TREE(tree), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Rectangle", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The rectangle draws a rectangle of probability 'ink'\n"
+     "(either filled or not) with edges of width 'line size' onto the map. \n"
+     "The rectangle is activated by clicking the left mouse button, \n"
+     "dragging the cursor across the screen, and releasing.", -1);  
 
-  sub_tree1 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree1);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Line", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0, 
+     "The line draws a line of probablilty 'ink' onto the map.\n"
+     "The width of the line is (approximately) 'line size'. The line is \n"
+     "activated by clicking the left mouse button at the starting location, \n"
+     "dragging the cursor across the screen, and releasing.", -1);
 
-  item = gtk_tree_item_new_with_label("File");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Fill", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The fill tool fills in a contiguous area of the same probability\n"
+     "with probability 'ink'. The fill tool is activated by clicking the\n"
+     "left mouse button on a location in the area you desire to fill.", -1);
 
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Fuzzy Fill", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The fuzzy fill tool fills probability 'ink' into a contiguous area\n"
+     "of probability within 'fuzziness' of the probability at the point\n"
+     "you clicked. The fill tool is activated by clicking the left mouse \n"
+     "button on a location in the area you desire to fill.", -1);
 
-  item = gtk_tree_item_new_with_label("Open Map");
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Eye Dropper", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The eye dropper changes the current 'ink' probability \n"
+     "to the probability of the grid clicked upon. The eye dropper will get\n"
+     "both probabilities and unknown. The eye dropper is actived by \n"
+     "clicking the left mouse button on a grid.", -1);
 
-  sub_tree3 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree3);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Zoom", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The zoom tool allows you to zoom in or out of the map. \n"
+     "Clicking the left mouse button zooms in to the point you clicked.\n"
+     "Clicking the right mouse button zooms out from the point you \n"
+     "clicked. (currently gtk complains if you zoom in more than twice)", -1);
 
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Opens a previously created map file.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree3), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1); 
+  gtk_tree_store_set(tree_store, &iter2, 0, "Mover", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "The mover tool allows you to move the contents of the window.\n"
+     "Clicking the left mouse button at the point you want to move, \n"
+     "dragging the mouse to where you want that point to be and\n"
+     "releasing the button here will move the map in the window as \n"
+     "desired. Note that the mover utility won't change your map \n"
+     "(as does the zoom).", -1);
 
-  item = gtk_tree_item_new_with_label("Save Map");
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter1, NULL); 
+  gtk_tree_store_set(tree_store, &iter1, 0, "Settings", -1);
 
-  sub_tree3 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree3);
+  gtk_tree_store_append (tree_store, &iter2, &iter1);
+  gtk_tree_store_set(tree_store, &iter2, 0, "Ink (probability)", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "Ink sets the probability that the tools write onto the map.", -1);
 
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Saves the current map to its original file name.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree3), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1);
+  gtk_tree_store_set(tree_store, &iter2, 0, "Fuzziness", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "Fuzziness sets the range accepted for fuzzy fill.", -1);
 
-  item = gtk_tree_item_new_with_label("Save Map as...");
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1);
+  gtk_tree_store_set(tree_store, &iter2, 0, "Brush Size", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "Brush size sets the length of a side of the brush. \n"
+     "(the brush is a square)", -1);
 
-  sub_tree3 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree3);
+  gtk_tree_store_append (tree_store, &iter2, &iter1);
+  gtk_tree_store_set(tree_store, &iter2, 0, "Line Size", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "Line size sets the width of lines for the edges of\n"
+     "any shapes (rectangles) and the width of lines.", -1);
 
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Saves the current map to a new file name.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree3), item);
-  gtk_widget_show(item);
+  gtk_tree_store_append (tree_store, &iter2, &iter1);
+  gtk_tree_store_set(tree_store, &iter2, 0, "Shape Fill", -1);
+  gtk_tree_store_append (tree_store, &iter3, &iter2); 
+  gtk_tree_store_set
+    (tree_store, &iter3, 0,
+     "Shape fill sets whether or not the shapes are filled\n"
+     "or not. (Currently the only shape is a rectangle)", -1);
 
-  item = gtk_tree_item_new_with_label("Quit");
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
+  tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (tree_store));
 
-  sub_tree3 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree3);
+   /* The view now holds a reference.  We can get rid of our own
+    * reference */
+   g_object_unref (G_OBJECT (tree_store));
 
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Exits the program.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree3), item);
-  gtk_widget_show(item);
+   /* Create a cell render and arbitrarily make it red for demonstration
+    * purposes */
+   GtkCellRenderer *renderer = gtk_cell_renderer_text_new ();
+   g_object_set (G_OBJECT (renderer), "foreground", "black", NULL);
 
-  item = gtk_tree_item_new_with_label("Edit");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new_with_label("Undo");
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  sub_tree3 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree3);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Undoes the last edit action.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree3), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("tools");
-  gtk_tree_append(GTK_TREE(tree), item);
-  gtk_widget_show(item);
-
-  sub_tree1 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree1);
-
-  item = gtk_tree_item_new_with_label("Brush");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The brush draws squares ('brush size' on a side) of \n"
-		       "probability given by 'ink' onto the map. The brush is activated \n"
-		       "by clicking the left mouse button and dragging the cursor \n"
-		       "across the screen.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Rectangle");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The rectangle draws a rectangle of probability 'ink'\n"
-		       "(either filled or not) with edges of width 'line size' onto the map. The \n"
-		       "rectangle is activated by clicking the left mouse button, dragging the\n"
-		       "cursor across the screen, and releasing.");  
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Line");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The line draws a line of probablilty 'ink' onto the \n"
-		       "map. The width of the line is (approximately) 'line size'. The line is \n"
-		       "activated by clicking the left mouse button at the starting location, \n"
-		       "dragging the cursor across the screen, and releasing.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Fill");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The fill tool fills in a contiguous area of the \n"
-		       "same probability with probability 'ink'. The fill tool is activated by \n"
-		       "clicking the left mouse button on a location in the area you desire to fill. \n");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Fuzzy Fill");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The fuzzy fill tool fills probability 'ink' into a \n"
-		       "contiguous area of probability within 'fuzziness' of the probability at the \n"
-		       "point you clicked. The fill tool is activated by clicking the left mouse \n"
-		       "button on a location in the area you desire to fill.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Eye Dropper");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The eye dropper changes the current 'ink' probability \n \
-to the probability of the grid clicked upon. The eye dropper will get \n \
-both probabilities and unknown. The eye dropper is actived by \n \
-clicking the left mouse button on a grid.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Zoom");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The zoom tool allows you to zoom in or out of the \n \
-map. Clicking the left mouse button zooms in to the point you clicked. \n \
-Clicking the right mouse button zooms out from the point you \n \
-clicked. (currently gtk complains if you zoom in more than twice)");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Mover");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("The mover tool allows you to move the contents of the window.\n \
-Clicking the left mouse button at the point you want to move, dragging \n \
-the mouse to where you want that point to be and releasing the button \n \
-here will move the map in the window as desired. Note that the mover \n \
-utility won't change your map (as does the zoom)");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("settings");
-  gtk_tree_append(GTK_TREE(tree), item);
-  gtk_widget_show(item);
-  sub_tree1 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree1);
-
-  item = gtk_tree_item_new_with_label("Ink (probability)");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new(); 
-  text = gtk_label_new("Ink sets the probability that the tools write onto the map.          ");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Fuzziness");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Fuzziness sets the range accepted for fuzzy fill.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Brush Size");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Brush size sets the length of a side of the brush. \n"
-		       "(the brush is a square)");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Line Size");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
-
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
-
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Line size sets the width of lines for the edges of\n"
-		       "any shapes (rectangles) and the width of lines.");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
-
-  item = gtk_tree_item_new_with_label("Shape Fill");
-  gtk_tree_append(GTK_TREE(sub_tree1), item);
-  gtk_widget_show(item);
+   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_win),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+   gtk_widget_set_usize (scrolled_win, 420, 500);
+   gtk_box_pack_start(GTK_BOX(box), scrolled_win, TRUE, TRUE, 0);
+   gtk_widget_show (scrolled_win);
   
-  sub_tree2 = gtk_tree_new();
-  gtk_tree_item_set_subtree(GTK_TREE_ITEM(item), sub_tree2);
+  gtk_scrolled_window_add_with_viewport
+    (GTK_SCROLLED_WINDOW(scrolled_win), tree);
+  
+  GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes 
+    ("Help", renderer, "text", 0, NULL);
 
-  item = gtk_tree_item_new();
-  text = gtk_label_new("Shape fill sets whether or not the shapes are filled\n"
-		       "or not. (currently the only shape is a recangle)");
-  gtk_label_set_justify(GTK_LABEL(text), GTK_JUSTIFY_LEFT);
-  gtk_container_add (GTK_CONTAINER (item), text);
-  gtk_widget_show(text);
-  gtk_tree_append(GTK_TREE(sub_tree2), item);
-  gtk_widget_show(item);
+  gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
 
   gtk_widget_show(tree);
   gtk_widget_show(window1);

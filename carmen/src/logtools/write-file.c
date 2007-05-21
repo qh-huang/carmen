@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <fnmatch.h>
 
+#include <carmen/global.h>
 #include <carmen/logtools.h>
 
 #include "defines.h"

@@ -29,8 +29,6 @@
 #ifndef CARMEN_MULTICENTRAL_H
 #define CARMEN_MULTICENTRAL_H
 
-#include <carmen/carmen.h>
-
 typedef struct {
   int connected, ready_for_reconnect;
   char host[256];

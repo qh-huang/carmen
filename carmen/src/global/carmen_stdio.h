@@ -43,7 +43,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
 #ifndef NO_ZLIB
 #include <zlib.h>
 #endif

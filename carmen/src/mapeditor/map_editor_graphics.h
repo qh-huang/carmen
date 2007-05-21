@@ -91,9 +91,8 @@ void map_to_tmp(void);
 /* redraw the pixmap */
 void redraw(void);
 /* start the main window */
-void start_drawing_window(void);
+void start_drawing_window(int *argc, char **argv[]);
 /* library initialization functions */
-void init_graphics(int argc, char **argv);
 
 void set_up_map_widgets(void);
 

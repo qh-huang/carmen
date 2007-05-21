@@ -29,8 +29,6 @@
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
 
-#include <carmen/carmen.h>
-
 #include "simulator_messages.h"
 
 #ifdef __cplusplus

@@ -33,7 +33,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
 #include "proccontrol.h"
 
 void proccontrol_register_ipc_messages(void);

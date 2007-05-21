@@ -27,6 +27,7 @@
  ********************************************************/
 
 #include <carmen/carmen.h>
+#include <sys/ioctl.h>
 #include <carmen/pantilt_messages.h>
 #include <carmen/pantilt_interface.h>
 

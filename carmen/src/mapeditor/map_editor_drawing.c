@@ -343,7 +343,7 @@ draw_brush( GtkWidget *widget __attribute__ ((unused)),
 
   GdkRectangle update_rect;
 
-  gdk_gc_set_foreground (Drawing_GC, &color);
+  gdk_gc_set_foreground (drawing_gc, &color);
 
   x_left = pix_x_to_map(pix_x) - brush_size + .5;
   y_top  = pix_y_to_map(pix_y) + brush_size + .5;
@@ -358,7 +358,7 @@ draw_brush( GtkWidget *widget __attribute__ ((unused)),
   if(update_rect.height < 1)
     update_rect.height = 1;
   gdk_draw_rectangle (map_pixmap,
-		      Drawing_GC,
+		      drawing_gc,
 		      TRUE,
 		      update_rect.x, update_rect.y,
 		      update_rect.width, update_rect.height);
@@ -403,7 +403,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
       map_y2 = pix_y_to_map(pix_y1) + .40;
     }
   
-  gdk_gc_set_foreground (Drawing_GC, &color);
+  gdk_gc_set_foreground (drawing_gc, &color);
 
   if (drawing_offlimits)
     {
@@ -416,7 +416,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 
       num_offlimits_segments++;
 			
-      gdk_gc_set_foreground (Drawing_GC, &red);
+      gdk_gc_set_foreground (drawing_gc, &red);
       draw_offlimits(num_offlimits_segments-1);
 
       map_to_tmp();
@@ -436,7 +436,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
       if(height < 1)
 	height = 1;
 
-      gdk_draw_rectangle (map_pixmap, Drawing_GC, 1, 
+      gdk_draw_rectangle (map_pixmap, drawing_gc, 1, 
 			  map_x_to_map_pix(map_x1) + 1.0, 
 			  map_y_to_map_pix(map_y2) + 1.0, 
 			  width, height);
@@ -462,7 +462,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	  width = map_x_to_map_pix(map_x2) - (int)(map_x_to_map_pix(map_x1));
 	  if(width < 1)
 	    width = 1;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x1) + 1.0, 
 			      map_y_to_map_pix(map_y2) + 1.0, 
 			      width, height);
@@ -477,7 +477,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	  
 	  if(width < 1)
 	    width = 1;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x1) + 1.0, 
 			      map_y_to_map_pix(map_y2) + 1.0, 
 			      width, height);
@@ -492,7 +492,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	      for(i = map_x2 - line_size; i < map_x2; i++)
 		if(i >= 0 && i < map->config.x_size)
 		  map->map[i][j] = ink;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x2-line_size) + 1.0, 
 			      map_y_to_map_pix(map_y2) + 1.0, width, height);
 	  
@@ -514,7 +514,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	  height = map_y_to_map_pix(map_y1) - (int)(map_y_to_map_pix(map_y2));
 	  if(height < 1)
 	    height = 1;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x1) + 1.0, map_y_to_map_pix(map_y2) + 1.0, 
 			      width, map_y_to_map_pix(map_y1) - map_y_to_map_pix(map_y2));
 	}
@@ -529,7 +529,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	  
 	  if(height < 1)
 	    height = 1;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x1) + 1.0, 
 			      map_y_to_map_pix(map_y1+line_size) + 1.0, width, height);
 	  //top line
@@ -542,7 +542,7 @@ draw_rectangle(GtkWidget *widget __attribute__ ((unused)),
 	      for(j = map_y2 - line_size; j < map_y2; j++)
 		if(j >= 0 && j < map->config.y_size)
 		  map->map[i][j] = ink;
-	  gdk_draw_rectangle (map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle (map_pixmap, drawing_gc, 1,
 			      map_x_to_map_pix(map_x1) + 1.0, map_y_to_map_pix(map_y2) + 1.0, 
 			      width, height);
 	}
@@ -603,8 +603,8 @@ creating_rectangle(GtkWidget *widget, int state, double pix_x, double pix_y)
       map_to_tmp();
       if (x_1 < x_2 && y_2 < y_1)
 	{
-	  gdk_gc_set_foreground (Drawing_GC, &yellow);
-	  gdk_draw_rectangle (tmp_pixmap, Drawing_GC, 0,
+	  gdk_gc_set_foreground (drawing_gc, &yellow);
+	  gdk_draw_rectangle (tmp_pixmap, drawing_gc, 0,
 			      x_1 + 1.0, y_2 + 1.0, 
 			      x_2 - x_1 - 1.0, 
 			      y_1 - y_2 - 1.0);
@@ -619,33 +619,27 @@ creating_rectangle(GtkWidget *widget, int state, double pix_x, double pix_y)
     }
 }
 
-void 
-crop(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
+void crop(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 {
   int i;
   int map_x1, map_x2, map_y1, map_y2;
   double dx, dy;
 
-  if(pix_x1 < pix_x2)
-    {
-      map_x1 = pix_x_to_map(pix_x1) + .60;
-      map_x2 = pix_x_to_map(pix_x2) + .40;
-    }
-  else
-    {
-      map_x1 = pix_x_to_map(pix_x2) + .60;
-      map_x2 = pix_x_to_map(pix_x1) + .40;
-    }
-  if(pix_y1 > pix_y2)
-    {
-      map_y1 = pix_y_to_map(pix_y1) + .60;
-      map_y2 = pix_y_to_map(pix_y2) + .40;
-    }
-  else
-    {
-      map_y1 = pix_y_to_map(pix_y2) + .60;
-      map_y2 = pix_y_to_map(pix_y1) + .40;
-    }
+  if(pix_x1 < pix_x2) {
+    map_x1 = pix_x_to_map(pix_x1) + .60;
+    map_x2 = pix_x_to_map(pix_x2) + .40;
+  } else {
+    map_x1 = pix_x_to_map(pix_x2) + .60;
+    map_x2 = pix_x_to_map(pix_x1) + .40;
+  }
+
+  if(pix_y1 > pix_y2) {
+    map_y1 = pix_y_to_map(pix_y1) + .60;
+    map_y2 = pix_y_to_map(pix_y2) + .40;
+  } else {
+    map_y1 = pix_y_to_map(pix_y2) + .60;
+    map_y2 = pix_y_to_map(pix_y1) + .40;
+  }
   
   for (i = 0; i < map_x2 - map_x1; i++) {
     memmove(&map->complete_map[i*(map_y2-map_y1)],
@@ -660,7 +654,7 @@ crop(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
   dx = map_x1 * map->config.resolution;
   dy = map_y1 * map->config.resolution;
 
-  for (i = 0; i < place_list->num_places; i++) {
+  for (i = 0; place_list && i < place_list->num_places; i++) {
     if (place_list->places[i].x < map_x1 * map->config.resolution ||
 	place_list->places[i].x >= map_x2 * map->config.resolution ||
 	place_list->places[i].y < map_y1 * map->config.resolution ||
@@ -740,8 +734,8 @@ cropping(GtkWidget *widget __attribute__ ((unused)), int state, double pix_x, do
       map_to_tmp();
       if (x_1 < x_2 && y_2 < y_1)
 	{
-	  gdk_gc_set_foreground (Drawing_GC, &yellow);
-	  gdk_draw_rectangle (tmp_pixmap, Drawing_GC, 0,
+	  gdk_gc_set_foreground (drawing_gc, &yellow);
+	  gdk_draw_rectangle (tmp_pixmap, drawing_gc, 0,
 			      x_1 + 1.0, y_2 + 1.0, 
 			      x_2 - x_1 - 1.0, 
 			      y_1 - y_2 - 1.0);
@@ -782,7 +776,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
       offlimits_array[num_offlimits_segments].y2 = map_y2;
 
       num_offlimits_segments++;
-      gdk_gc_set_foreground (Drawing_GC, &red);
+      gdk_gc_set_foreground (drawing_gc, &red);
       draw_offlimits(num_offlimits_segments-1);
 
       map_to_tmp();
@@ -803,7 +797,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 	    (int)(map_y_to_map_pix(map_y1));
 	  if(h < 1)
 	    h = 1;
-	  gdk_draw_rectangle(map_pixmap, Drawing_GC, 1,
+	  gdk_draw_rectangle(map_pixmap, drawing_gc, 1,
 			     map_x_to_map_pix(map_x1-1.0) + 1.0, 
 			     map_y_to_map_pix(map_y1+1.0) + 1.0, 
 			     w, h);
@@ -814,7 +808,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
       theta = calc_theta(map_x1, map_y1, map_x2, map_y2);
       carmen_get_bresenham_parameters(map_x1, map_y1, map_x2, map_y2, &length);
       
-      gdk_gc_set_foreground (Drawing_GC, &color);
+      gdk_gc_set_foreground (drawing_gc, &color);
       do
 	{
 	  carmen_get_current_point(&length, &x, &y);
@@ -835,7 +829,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 		  if(h < 1)
 		    h = 1;
 		  map->map[x][y] = ink;
-		  gdk_draw_rectangle(map_pixmap, Drawing_GC, 1,
+		  gdk_draw_rectangle(map_pixmap, drawing_gc, 1,
 				     map_x_to_map_pix(x) + 1.0, 
 				     map_y_to_map_pix(y+1) + 1.0, w, h);
 		}
@@ -859,7 +853,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 		      if(h < 1)
 			h = 1;
 		      map->map[x][y] = ink;
-		      gdk_draw_rectangle(map_pixmap, Drawing_GC, 1,
+		      gdk_draw_rectangle(map_pixmap, drawing_gc, 1,
 					 map_x_to_map_pix(x) + 1.0, 
 					 map_y_to_map_pix(y+1) + 1.0, w,h);
 		    }
@@ -886,7 +880,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 		      if(h < 1)
 			h = 1;
 		      map->map[x][y] = ink;
-		      gdk_draw_rectangle(map_pixmap, Drawing_GC, 1,
+		      gdk_draw_rectangle(map_pixmap, drawing_gc, 1,
 					 map_x_to_map_pix(x) + 1.0, 
 					 map_y_to_map_pix(y+1) + 1.0, w,h);
 		    }
@@ -912,7 +906,7 @@ draw_line(double pix_x1, double pix_y1, double pix_x2, double pix_y2)
 		      if(h < 1)
 			h = 1;
 		      map->map[x][y] = ink;
-		      gdk_draw_rectangle(map_pixmap, Drawing_GC, 1,
+		      gdk_draw_rectangle(map_pixmap, drawing_gc, 1,
 					 map_x_to_map_pix(x) + 1.0, 
 					 map_y_to_map_pix(y+1) + 1.0, 
 					 w,h);
@@ -944,8 +938,8 @@ creating_line(int state, double pix_x, double pix_y)
       break;
     case 1:
       map_to_tmp();
-      gdk_gc_set_foreground (Drawing_GC, &yellow);
-      gdk_draw_line (tmp_pixmap, Drawing_GC, xs, ys, pix_x, pix_y);
+      gdk_gc_set_foreground (drawing_gc, &yellow);
+      gdk_draw_line (tmp_pixmap, drawing_gc, xs, ys, pix_x, pix_y);
       break;
     case 2:
       draw_line(xs, ys, pix_x, pix_y);
@@ -998,9 +992,9 @@ fill(double under, int map_x, int map_y)
       if(h < 1)
 	h = 1;
       map->map[map_x][map_y] = ink;
-      gdk_gc_set_foreground (Drawing_GC, &color);
+      gdk_gc_set_foreground (drawing_gc, &color);
       gdk_draw_rectangle (map_pixmap,
-			  Drawing_GC,
+			  drawing_gc,
 			  TRUE,
 			  map_x_to_map_pix(map_x) + 1.0, map_y_to_map_pix(map_y+1) + 1.0,
 			  w, h);
@@ -1084,9 +1078,9 @@ fuzzy_fill(double under, int map_x, int map_y, int ** seen)
 	h = 1;
       seen[map_x][map_y] = 1;
       map->map[map_x][map_y] = ink;
-      gdk_gc_set_foreground (Drawing_GC, &color);
+      gdk_gc_set_foreground (drawing_gc, &color);
       gdk_draw_rectangle (map_pixmap,
-			  Drawing_GC,
+			  drawing_gc,
 			  TRUE,
 			  map_x_to_map_pix(map_x) + 1.0, map_y_to_map_pix(map_y+1) + 1.0,
 			  w, h);
@@ -1253,8 +1247,8 @@ move(int state, double pix_x, double pix_y)
 	    }
 	  /*² It would be nice to show a line to indicate the movement but this is too slow imho
 	  map_to_tmp();
-	  gdk_gc_set_foreground (Drawing_GC, &yellow);
-	  gdk_draw_line (tmp_pixmap, Drawing_GC, xm, ym, pix_x, pix_y);*/
+	  gdk_gc_set_foreground (drawing_gc, &yellow);
+	  gdk_draw_line (tmp_pixmap, drawing_gc, xm, ym, pix_x, pix_y);*/
 	}
 
       break;

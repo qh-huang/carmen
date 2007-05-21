@@ -1,12 +1,12 @@
-include ../Makefile.conf
+include $(CARMEN_HOME)/src/Makefile.conf
 
 MODULE_NAME = MAP_EDITOR
 MODULE_COMMENT = "Provides photoshop-like map editor."
 
 ifndef NO_GRAPHICS
-IFLAGS += `gtk-config --cflags`
-LFLAGS += -lglobal -lmap_interface -lmap_io -lglobal_graphics -lgdk_imlib \
-	`gtk-config --libs` -lipc
+IFLAGS += `$(GTK_CONFIG) --cflags`
+LFLAGS += -lmap_interface -lmap_io -lglobal_graphics -lgdk_imlib \
+	`$(GTK_CONFIG) --libs` -lglobal -lipc
 SOURCES = map_editor.c map_editor_drawing.c map_editor_menus.c \
 	   map_editor_graphics.c 
 TARGETS = map_editor 
@@ -17,4 +17,6 @@ endif
 
 map_editor: map_editor.o map_editor_graphics.o map_editor_menus.o map_editor_drawing.o 
 
-include ../Makefile.rules
+test_menu: test_menu.o
+
+include $(CARMEN_HOME)/src/Makefile.rules

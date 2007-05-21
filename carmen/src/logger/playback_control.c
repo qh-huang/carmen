@@ -28,6 +28,9 @@
 
 #include <carmen/carmen_graphics.h>
 
+#include "playback_messages.h"
+#include "playback_interface.h"
+
 GdkGC *rrwd_gc, *rewind_gc, *stop_gc, *play_gc, *fwd_gc, *ffwd_gc;
 GtkWidget *playback_speed_widget_label, *playback_speed_widget;
 int speed_pending_update = 0;

@@ -43,7 +43,21 @@
 extern "C" {
 #endif
 
-#include <carmen/ipc_wrapper.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
+#include <math.h>
+#include <ctype.h>
+#include <carmen/ipc.h>
 
 #define CARMEN_MAJOR_VERSION 0
 #define CARMEN_MINOR_VERSION 6
@@ -447,13 +461,6 @@ extern inline char *carmen_next_n_words(char *str, int n)
     result = carmen_next_word(result);
   return result;
 }
-
-void carmen_publish_heartbeat(char *module_name);
-
-void
-carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
-				   carmen_handler_t handler,
-				   carmen_subscribe_t subscribe_how);
 
 #ifdef __cplusplus
 }

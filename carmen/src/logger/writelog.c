@@ -179,7 +179,7 @@ void carmen_logwrite_write_sync(carmen_logger_sync_message *sync_message,
 void carmen_logwrite_write_localize(carmen_localize_globalpos_message *msg, 
 				    carmen_FILE *outfile, double timestamp)
 {
-  carmen_fprintf(outfile, "TRUEPOS %f %f %f %f %f %f %f %s %f\n",
+  carmen_fprintf(outfile, "GLOBALPOS %f %f %f %f %f %f %f %s %f\n",
 		 msg->globalpos.x, msg->globalpos.y, msg->globalpos.theta,
 		 msg->odometrypos.x, msg->odometrypos.y, 
 		 msg->odometrypos.theta, msg->timestamp, msg->host, timestamp);

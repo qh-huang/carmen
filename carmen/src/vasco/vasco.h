@@ -29,6 +29,5 @@
 #ifndef vasco_h
 #define vasco_h
 
-#include <carmen/carmen_graphics.h>
 
 #endif

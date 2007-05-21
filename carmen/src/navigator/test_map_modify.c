@@ -26,7 +26,9 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <carmen/global_graphics.h>
+#include <carmen/carmen.h>
+#include <carmen/map_graphics.h>
 #include <assert.h>
 
 #include "navigator.h"

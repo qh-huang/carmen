@@ -34,7 +34,8 @@ extern "C" {
 #endif
 
 #include <gtk/gtk.h>
-#include <carmen/carmen.h>
+#include <carmen/global.h>
+#include <carmen/map.h>
 
 #define CARMEN_GRAPHICS_INVERT          1
 #define CARMEN_GRAPHICS_RESCALE         2
@@ -87,7 +88,6 @@ extern "C" {
 					     carmen_map_config_p config, 
 					     double zoom);
   
-  #include <carmen/map_graphics.h>
   #endif
 
 #ifdef __cplusplus

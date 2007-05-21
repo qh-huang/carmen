@@ -29,8 +29,9 @@
 #define CARMEN_LASER_USE_SELECT 1
 #define CARMEN_LASER_LOW_LATENCY 1
 
-#include <carmen/carmen.h>
+#include <carmen/global.h>
 #include <carmen/carmenserial.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/select.h>
 

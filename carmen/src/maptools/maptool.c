@@ -34,6 +34,7 @@
 
 #include <getopt.h>
 #include "map_io.h"
+#include "map_util.h"
 
 static void main_usage(char *prog_name)
 {

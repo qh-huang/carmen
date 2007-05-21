@@ -78,6 +78,8 @@ extern "C" {
 #endif
 
 #include <carmen/global.h>
+#include <carmen/ipc_wrapper.h>
+
 #include <carmen/carmenserial.h>
 
 #include <carmen/pswrap.h>
@@ -123,14 +125,14 @@ extern "C" {
 #include <carmen/localize_messages.h>
 #include <carmen/localize_interface.h>
 
-#include <carmen/navigator_interface.h>
 #include <carmen/navigator_messages.h>
+#include <carmen/navigator_interface.h>
 
-#include <carmen/gps_nmea_interface.h>
 #include <carmen/gps_nmea_messages.h>
+#include <carmen/gps_nmea_interface.h>
 
-#include <carmen/logger.h>
 #include <carmen/logger_messages.h>
+#include <carmen/logger.h>
 #include <carmen/writelog.h>
 #include <carmen/readlog.h>
 #include <carmen/playback_interface.h>

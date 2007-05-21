@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
-
   /** rtr-movement (1st rotation, translation, 2nd rotation) **/
 typedef struct  {
   double r1;

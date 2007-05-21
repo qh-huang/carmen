@@ -39,39 +39,17 @@ extern "C" {
 
 /* file */
 
-void new_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		  guint callback_action __attribute__ ((unused)), 
-		  GtkWidget *w __attribute__ ((unused)));
-void open_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action __attribute__ ((unused)), 
-		   GtkWidget *w __attribute__ ((unused)));
-void save_map_menu(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action __attribute__ ((unused)), 
-		   GtkWidget *w __attribute__ ((unused)));
-void save_map_as_menu(gpointer callback_data __attribute__ ((unused)), 
-		      guint callback_action, 
-		      GtkWidget *w __attribute__ ((unused)));
-void quit_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action __attribute__ ((unused)), 
-	       GtkWidget *w __attribute__ ((unused)));
-void undo_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action, 
-	       GtkWidget *w __attribute__ ((unused)));
-void add_placename(gpointer callback_data __attribute__ ((unused)), 
-		   guint callback_action, 
-		   GtkWidget *w __attribute__ ((unused)));
-void delete_placename(gpointer callback_data __attribute__ ((unused)), 
-		      guint callback_action, 
-		      GtkWidget *w __attribute__ ((unused)));
-void add_door(gpointer callback_data __attribute__ ((unused)), 
-	      guint callback_action, 
-	      GtkWidget *w __attribute__ ((unused)));
-void toggle_view(gpointer callback_data __attribute__ ((unused)), 
-		 guint callback_action, 
-		 GtkWidget *w __attribute__ ((unused)));
-void help_menu(gpointer callback_data __attribute__ ((unused)), 
-	       guint callback_action, 
-	       GtkWidget *w __attribute__ ((unused)));
+void new_map_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void open_map_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void save_map_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void save_map_as_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void quit_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void undo_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void add_placename(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void delete_placename(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void add_door(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void toggle_view(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void help_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 
 int map_open(char *filename, int have_graphics);
 void do_delete_placename(int i);

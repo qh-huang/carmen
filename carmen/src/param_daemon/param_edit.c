@@ -27,7 +27,6 @@
  ********************************************************/
 
 #include <carmen/carmen_graphics.h>
-#include <carmen/param_interface.h>
 
 #define MAX_VARIABLE_LENGTH 2048
 

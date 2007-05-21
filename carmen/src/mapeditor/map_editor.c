@@ -27,13 +27,12 @@
  ********************************************************/
 
 #include <gtk/gtk.h>
-#include <carmen/carmen.h>
+#include <signal.h>
+#include <carmen/carmen_graphics.h>
 #include "map_editor.h"
 #include "map_editor_menus.h"
 #include "map_editor_drawing.h"
 #include "map_editor_graphics.h"
-
-#include "cursors.h"              /* cursor bitmaps */
 
 char map_filename[255];
 
@@ -63,7 +62,7 @@ GdkPixmap *map_pixmap;
 GdkPixmap *tmp_pixmap;
 GtkWidget *drawing_area;
 GtkWidget *scrolled_window;
-GdkGC     *Drawing_GC;
+GdkGC     *drawing_gc;
 GdkColor   color;
 GdkColor   yellow, purple, blue, red;
 GtkWidget *save_file;
@@ -110,49 +109,6 @@ shutdown_module(int x)
     exit(1);
 }
 
-void create_cursors(void)
-{
-  static GdkColor color1={0,0xFFFF,0xFFFF,0xFFFF};
-  static GdkColor color2={0,0x0000,0x0000,0x0000};
-  GdkBitmap *curs_pix, *msk_pix;
-
-  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)point_bits, 
-					 point_width, point_height);
-  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pointmsk_bits, 
-					pointmsk_width, pointmsk_height);
-  cpoint = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
-				      3,0);
-  gdk_bitmap_unref(curs_pix);
-  gdk_bitmap_unref(msk_pix);
-
-  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pour_bits, 
-					 pour_width, pour_height);
-  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pourmsk_bits, 
-					pourmsk_width, pourmsk_height);
-  cfill = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
-				     14, 13);
-  gdk_bitmap_unref(curs_pix);
-  gdk_bitmap_unref(msk_pix);
-  
-  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)cross_bits, 
-					 cross_width, cross_height);
-  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)crossmsk_bits, 
-					crossmsk_width, crossmsk_height);
-  ccross = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
-				      8,8);
-  gdk_bitmap_unref(curs_pix);
-  gdk_bitmap_unref(msk_pix);
-  
-  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)select_bits, 
-					 select_width, select_height);
-  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)selectmsk_bits, 
-					selectmsk_width, selectmsk_height);
-  cselect = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
-				       0,select_height);
-  gdk_bitmap_unref(curs_pix);
-  gdk_bitmap_unref(msk_pix);
-}
-
 int 
 main(int argc, char ** argv)
 {
@@ -171,37 +127,31 @@ main(int argc, char ** argv)
       exit(-1);
   }
 
-  init_graphics(argc, argv);
-
   brush_size = 1.5;
   line_size = 2;
   ink = -2;
 
   map_pixmap = NULL;
   tmp_pixmap = NULL;
-  Drawing_GC = NULL;
+  drawing_gc = NULL;
   filled = 0;
   fuzzyness = .1;
   move_enable = 0;
 
   image_data = NULL;
 
-  create_cursors();
+  xstart = 0;
+  ystart = 0;
+  xend = 0;
+  yend = 0;
+  
+  start_drawing_window(&argc, &argv);
+  gtk_main();
 
-  while(1) 
-    { fprintf(stderr, "_NOW_");	      
-      xstart = 0;
-      ystart = 0;
-      xend = 0;
-      yend = 0;
-
-      start_drawing_window();
-      gtk_main();
-      if(window) 
-	{
-	  gtk_widget_hide(window);
-	  gtk_widget_destroy(window);
-	}
-    }
+  if(window) {
+    gtk_widget_hide(window);
+    gtk_widget_destroy(window);
+  }
+  
   return 0;
 }

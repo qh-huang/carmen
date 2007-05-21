@@ -26,7 +26,7 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+#include "global.h"
 
 void test_carmen_int_random(void)
 {

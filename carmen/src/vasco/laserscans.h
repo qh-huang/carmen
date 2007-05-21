@@ -29,7 +29,6 @@
 #ifndef laserscans_h
 #define laserscans_h
 
-#include <carmen/carmen_graphics.h>
 #include <carmen/robot_messages.h>
 
 extern char logfilename[];

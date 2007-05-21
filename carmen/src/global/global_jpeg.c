@@ -26,7 +26,9 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include "global.h"
+#include <carmen/map.h>
+#include "global_graphics.h"
 #include <jpeglib.h>
 
 void

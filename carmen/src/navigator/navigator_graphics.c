@@ -26,7 +26,10 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <carmen/global_graphics.h>
+#include <carmen/carmen.h>
+#include <carmen/map_graphics.h>
+
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #include <ctype.h>

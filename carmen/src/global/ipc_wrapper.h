@@ -46,8 +46,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
-
 typedef enum {CARMEN_UNSUBSCRIBE, 
 	      CARMEN_SUBSCRIBE_LATEST, 
 	      CARMEN_SUBSCRIBE_ALL} carmen_subscribe_t;
@@ -112,6 +110,14 @@ carmen_ipc_addPeriodicTimer(double interval, TIMER_HANDLER_TYPE handler,
 #define carmen_ipc_define_test_exit(name,fmt) { IPC_RETURN_TYPE err; err = IPC_defineMsg(name, IPC_VARIABLE_LENGTH, fmt); carmen_test_ipc_exit(err, "Could not define", name); }
 
 #define carmen_ipc_publish_exit(name,msg) { IPC_RETURN_TYPE err; err = IPC_publishData(name, &msg); carmen_test_ipc_exit(err, "Could not publish", name); }
+
+void carmen_publish_heartbeat(char *module_name);
+
+void
+carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
+				   carmen_handler_t handler,
+				   carmen_subscribe_t subscribe_how);
+
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,13 @@
 #ifndef KEYCTRL_H
 #define KEYCTRL_H
 
-#include <carmen/carmen.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include "global.h"
+#include "keyctrl.h"
 
 
 #ifdef CYGWIN

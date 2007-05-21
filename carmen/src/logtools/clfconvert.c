@@ -26,7 +26,12 @@
  *
  ********************************************************/
 
-
+#include <carmen/global.h>
+#include <carmen/ipc_wrapper.h>
+#include <carmen/base_interface.h>
+#include <carmen/laser_interface.h>
+#include <carmen/robot_interface.h>
+#include <carmen/simulator_interface.h>
 #include "clfconvert.h"
 #include <carmen/movement.h>
 

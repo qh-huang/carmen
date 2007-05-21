@@ -26,8 +26,8 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
-#include <carmen/carmen_stdio.h>
+#include "global.h"
+#include "carmen_stdio.h"
 
 carmen_FILE *carmen_fopen(const char *filename, const char *mode)
 {

@@ -29,8 +29,6 @@
 #ifndef vegrid_h
 #define vegrid_h
 
-#include <carmen/carmen_graphics.h>
-
 void egrid_dialog_popup(GtkWidget *w, gpointer p);
 void egrid_shutdown();
 

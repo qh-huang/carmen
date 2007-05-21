@@ -29,8 +29,6 @@
 #ifndef gui_h
 #define gui_h
 
-#include <carmen/carmen_graphics.h>
-
 #define HELP_FILE_NAME "vasco_help.txt"
 
 extern GdkGC *drawing_gc;

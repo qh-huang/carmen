@@ -26,6 +26,7 @@
  *
  ********************************************************/
 
+#include <carmen/carmen_graphics.h>
 #include "gui.h"
 #include "laserscans.h"
 #include "vascocore.h"

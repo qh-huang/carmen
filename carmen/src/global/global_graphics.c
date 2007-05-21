@@ -26,7 +26,11 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <gtk/gtk.h>
+#include "global.h"
+#include <values.h>
+#include <carmen/map.h>
+#include "global_graphics.h"
 #include <sys/types.h>
 
 fd_set *x_ipcGetConnections(void);

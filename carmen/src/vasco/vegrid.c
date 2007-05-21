@@ -26,6 +26,7 @@
  *
  ********************************************************/
 
+#include <carmen/carmen_graphics.h>
 #include "egrid.h"
 #include "vegrid.h"
 #include "laserscans.h"
