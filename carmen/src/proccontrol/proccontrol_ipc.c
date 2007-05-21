@@ -29,6 +29,7 @@
 #include <carmen/carmen.h>
 #include <carmen/proccontrol_messages.h>
 //#include <heartbeat_messages.h>
+#include "proccontrol_ipc.h"
 #include "proccontrol.h"
 
 carmen_proccontrol_process_t plist[MAX_PROCESSES];

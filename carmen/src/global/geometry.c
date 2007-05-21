@@ -26,10 +26,17 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+#include "global.h"
+
+#ifndef COMPILE_WITHOUT_MAP_SUPPORT
+#include <carmen/map.h>
+#endif
+
+#include "geometry.h"
 #include <assert.h>
 
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
+
 int carmen_geometry_x_offset[CARMEN_NUM_OFFSETS] = {0, 1, 1, 1, 0, -1, -1, -1};
 int carmen_geometry_y_offset[CARMEN_NUM_OFFSETS] = {-1, -1, 0, 1, 1, 1, 0, -1};
 #endif

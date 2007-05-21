@@ -54,8 +54,6 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
-
 #define      CARMEN_GENERATE_PS         0
 #define      CARMEN_GENERATE_EPS        1
 

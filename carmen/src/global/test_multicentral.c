@@ -26,8 +26,8 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
-#include <carmen/multicentral.h>
+#include "global.h"
+#include "multicentral.h"
 
 void test_subscribe_messages(void)
 {

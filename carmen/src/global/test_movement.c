@@ -26,10 +26,9 @@
  *
  ********************************************************/
 
-#include "movement.h"
-#include <carmen/carmen.h>
-
 #include <stdio.h>
+#include "global.h"
+#include "movement.h"
 
 
 int is_close_pt(carmen_point_t p1, carmen_point_t p2) {

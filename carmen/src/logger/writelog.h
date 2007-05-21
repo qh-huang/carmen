@@ -40,7 +40,6 @@
 #ifndef CARMEN_LOGWRITE_H
 #define CARMEN_LOGWRITE_H
 
-#include <carmen/carmen.h>
 #include <carmen/carmen_stdio.h>
 
 #define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"

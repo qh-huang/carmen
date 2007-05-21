@@ -26,12 +26,8 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
+
+#include "global.h"
 
 #define        NUM_ROBOT_NAMES        7
 
@@ -1511,33 +1507,3 @@ inline char *carmen_next_n_words(char *str, int n)
   return result;
 }
 
-void carmen_publish_heartbeat(char *module_name)
-{
-  carmen_heartbeat_message msg;
-  IPC_RETURN_TYPE err;
-  
-  msg.module_name = carmen_new_string(module_name);
-  msg.pid = getpid();
-  msg.hostname = carmen_get_host();
-  msg.timestamp = carmen_get_time();
-  
-  err = IPC_defineMsg(CARMEN_HEARTBEAT_NAME, IPC_VARIABLE_LENGTH,
-		      CARMEN_HEARTBEAT_FMT);
-  carmen_test_ipc_exit(err, "Could not define", CARMEN_HEARTBEAT_NAME);  
-  
-  err = IPC_publishData(CARMEN_HEARTBEAT_NAME, &msg);
-  carmen_test_ipc_exit(err, "Could not publish",
-		       CARMEN_HEARTBEAT_NAME);
-
-  free(msg.module_name);
-}
-
-void
-carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
-				   carmen_handler_t handler,
-				   carmen_subscribe_t subscribe_how)
-{
-  carmen_subscribe_message(CARMEN_HEARTBEAT_NAME, CARMEN_HEARTBEAT_FMT,
-                           heartbeat, sizeof(carmen_heartbeat_message), 
-			   handler, subscribe_how);
-}

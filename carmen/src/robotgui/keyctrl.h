@@ -30,13 +30,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-
-
 /* Initialization of asynchronous keyboard; *
  * has to be called first                   */
 void carmen_initialize_keyboard(void);

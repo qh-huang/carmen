@@ -31,191 +31,13 @@
  * the pixmaps and the main window *
  * which display the map.          *
  ***********************************/
-//#include <gnome.h>
-
-// This chunk of code is ripped from global_graphics.c and 
-// global_graphics.h. Because those files have been upgraded
-// to GTK 2.0, they can't be included here.
 
 #include <gtk/gtk.h>
-#include <gdk_imlib.h>
-#include <carmen/carmen.h>
+#include <carmen/carmen_graphics.h>
+#include <carmen/ipc_wrapper.h>
+#include <carmen/map_interface.h>
 
-#define CARMEN_GRAPHICS_INVERT          1
-#define CARMEN_GRAPHICS_RESCALE         2
-#define CARMEN_GRAPHICS_ROTATE          4
-#define CARMEN_GRAPHICS_BLACK_AND_WHITE 8
-
-unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags) 
-{
-  register float *data_ptr;
-  unsigned char *image_data = NULL;
-  register unsigned char *image_ptr = NULL;
-  double value;
-  int x_size, y_size;
-  int x_index, y_index;
-  int index;
-  double max_val = -MAXDOUBLE, min_val = MAXDOUBLE;
-
-  int rescale = flags & CARMEN_GRAPHICS_RESCALE;
-  int invert = flags & CARMEN_GRAPHICS_INVERT;
-  int rotate = flags & CARMEN_GRAPHICS_ROTATE;
-  int black_and_white = flags & CARMEN_GRAPHICS_BLACK_AND_WHITE;
-
-  if (map == NULL) {
-    carmen_warn("carmen_graphics_convert_to_image was passed NULL map.\n");
-    return NULL;
-  }
-
-  x_size = map->config.x_size;
-  y_size = map->config.y_size;
-  image_data = (unsigned char *)calloc(x_size*y_size*3, sizeof(unsigned char));
-  carmen_test_alloc(image_data);
-
-  if (rescale) {
-    max_val = -MAXDOUBLE;
-    min_val = MAXDOUBLE;
-    data_ptr = map->complete_map;
-    for (index = 0; index < map->config.x_size*map->config.y_size; index++) {
-      max_val = carmen_fmax(max_val, *data_ptr);
-      if (*data_ptr >= 0)
-	min_val = carmen_fmin(min_val, *data_ptr);
-      data_ptr++;
-    }
-  }
-
-  if (max_val < 0)
-    rescale = 0;
-  
-  image_ptr = image_data;
-  data_ptr = map->complete_map;
-  for (x_index = 0; x_index < x_size; x_index++) {
-    for (y_index = 0; y_index < y_size; y_index++) {
-      value = *(data_ptr++);	    
-      if (rotate)
-	image_ptr = image_data+y_index*x_size*3+x_index;
-      if (value < 0) {
-	if (black_and_white) {
-	  *(image_ptr++) = 255;
-	  *(image_ptr++) = 255;
-	  *(image_ptr++) = 255;
-	} else {
-	  *(image_ptr++) = 0;
-	  *(image_ptr++) = 0;
-	  *(image_ptr++) = 255;
-	}
-      } else if(!rescale && value > 1.0) {
-	if (black_and_white) {
-	  *(image_ptr++) = 128;
-	  *(image_ptr++) = 128;
-	  *(image_ptr++) = 128;
-	} else {
-	  *(image_ptr++) = 255;
-	  *(image_ptr++) = 0;
-	  *(image_ptr++) = 0;
-	}
-      } else {
-	if (rescale)
-	  value = (value - min_val) / (max_val - min_val);
-	if (!invert)
-	  value = 1 - value;
-	for (index = 0; index < 3; index++)
-	  *(image_ptr++) = value * 255;
-      }
-    }
-  }
-  return image_data;
-}
-
-static GdkColormap *cmap = NULL;
-
-GdkColor carmen_red, carmen_blue, carmen_white, carmen_yellow, 
-  carmen_green, carmen_light_blue, carmen_black, carmen_orange, 
-  carmen_grey, carmen_light_grey, carmen_purple;
-
-
-static void _add_color(GdkColor *color, char *name)
-{
-  if(cmap == NULL)
-    cmap = gdk_colormap_get_system();
-
-  if (!gdk_color_parse (name, color)) {
-    g_error("couldn't parse color");
-    return;
-  }
-
-  if(!gdk_colormap_alloc_color(cmap, color, FALSE, TRUE))
-    g_error("couldn't allocate color");
-}
-
-void
-carmen_graphics_setup_colors(void)
-{
-  _add_color(&carmen_red, "red");
-  _add_color(&carmen_blue, "blue");
-  _add_color(&carmen_white, "white");
-  _add_color(&carmen_yellow, "yellow");
-  _add_color(&carmen_green, "green");
-  _add_color(&carmen_light_blue, "DodgerBlue");
-  _add_color(&carmen_black, "black");
-  _add_color(&carmen_orange, "tomato");
-  _add_color(&carmen_grey, "ivory4");
-  _add_color(&carmen_light_grey, "grey79");
-  _add_color(&carmen_purple, "purple");
-}
-
-GdkColor carmen_graphics_add_color(char *name) 
-{
-  GdkColor color;
-
-  _add_color(&color, name);
-  return color;
-}
-
-GdkColor carmen_graphics_add_color_rgb(int r, int g, int b) 
-{
-  GdkColor color;
-
-  if(cmap == NULL)
-    cmap = gdk_colormap_get_system();
-
-  color.red = r * 256;
-  color.green = g * 256;
-  color.blue = b * 256;
-
-  if(!gdk_colormap_alloc_color(cmap, &color, FALSE, TRUE))
-    g_error("couldn't allocate color");
-
-  return color;
-}
-
-GdkPixmap * 
-carmen_graphics_generate_pixmap(GtkWidget* drawing_area, unsigned char* image_data,
-				carmen_map_config_p config, double zoom) 
-{
-  GdkImlibImage *image;
-  GdkPixmap *pixmap;
-
-  if (drawing_area == NULL || image_data == NULL) 
-    {
-      carmen_warn("carmen_graphics_generate_pixmap was passed bad arguments.\n");
-      return NULL;
-    }
-
-  image =  gdk_imlib_create_image_from_data
-    (image_data, (unsigned char *)NULL, config->y_size, config->x_size);
-  
-  gdk_imlib_rotate_image(image, -1);
-  gdk_imlib_flip_image_vertical(image);
-  gdk_imlib_render(image, config->x_size*zoom, config->y_size*zoom);
-
-  pixmap = gdk_imlib_move_image(image);
-
-  gdk_imlib_kill_image(image);  
-
-  return pixmap;
-}
-
+#include "cursors.h"              /* cursor bitmaps */
 
 
 #include "map_editor.h"
@@ -231,7 +53,99 @@ static GtkWidget *drawing_table, *window_box;
 
 static GdkFont *place_font;
 static int current_place = -1;
-GtkItemFactory *item_factory;
+static GtkUIManager *ui_manager;
+
+void create_cursors(void)
+{
+  static GdkColor color1={0,0xFFFF,0xFFFF,0xFFFF};
+  static GdkColor color2={0,0x0000,0x0000,0x0000};
+  GdkBitmap *curs_pix, *msk_pix;
+
+  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)point_bits, 
+					 point_width, point_height);
+  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pointmsk_bits, 
+					pointmsk_width, pointmsk_height);
+  cpoint = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
+				      3,0);
+  gdk_bitmap_unref(curs_pix);
+  gdk_bitmap_unref(msk_pix);
+
+  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pour_bits, 
+					 pour_width, pour_height);
+  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)pourmsk_bits, 
+					pourmsk_width, pourmsk_height);
+  cfill = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
+				     14, 13);
+  gdk_bitmap_unref(curs_pix);
+  gdk_bitmap_unref(msk_pix);
+  
+  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)cross_bits, 
+					 cross_width, cross_height);
+  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)crossmsk_bits, 
+					crossmsk_width, crossmsk_height);
+  ccross = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
+				      8,8);
+  gdk_bitmap_unref(curs_pix);
+  gdk_bitmap_unref(msk_pix);
+  
+  curs_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)select_bits, 
+					 select_width, select_height);
+  msk_pix = gdk_bitmap_create_from_data(NULL, (const gchar *)selectmsk_bits, 
+					selectmsk_width, selectmsk_height);
+  cselect = gdk_cursor_new_from_pixmap(curs_pix, msk_pix, &color2, &color1,
+				       0,select_height);
+  gdk_bitmap_unref(curs_pix);
+  gdk_bitmap_unref(msk_pix);
+}
+
+static void pixbuf_destroyed(guchar *pixels, 
+			     gpointer data __attribute__ ((unused)))
+{
+  free(pixels);
+}
+
+static GdkPixmap *generate_pixmap(unsigned char* image_data,
+				  carmen_map_config_p config, 
+				  double zoom) 
+{
+  GdkPixbuf *image, *rotated_image, *final_image;
+
+  if (image_data == NULL) {
+    carmen_warn("carmen_graphics_generate_pixmap was passed bad arguments.\n");
+    return NULL;
+  }
+
+  image = gdk_pixbuf_new_from_data((guchar *)image_data, GDK_COLORSPACE_RGB,
+				   FALSE, 8,  config->y_size, config->x_size, 
+				   config->y_size*3, pixbuf_destroyed, NULL);
+
+  rotated_image = gdk_pixbuf_rotate_simple(image, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+  g_object_unref(image);  
+
+  final_image = gdk_pixbuf_scale_simple(rotated_image, config->x_size*zoom, 
+					config->y_size*zoom, GDK_INTERP_TILES);
+  
+  g_object_unref(rotated_image);
+
+  if (map_pixmap) 
+    gdk_pixmap_unref(map_pixmap);
+  map_pixmap = NULL;
+
+  map_pixmap = gdk_pixmap_new(drawing_area->window, config->x_size*zoom, 
+			      config->y_size*zoom, -1);
+  
+  gdk_draw_pixbuf(map_pixmap, 
+		  drawing_area->style->fg_gc[GTK_WIDGET_STATE (drawing_area)],
+		  final_image, 0, 0, 
+		  0, 0, -1, -1, 
+		  GDK_RGB_DITHER_NONE, 0, 0);
+
+  g_object_unref(final_image);
+  
+  return map_pixmap;
+}
+
+
 
 /*****************************************************************
  * Conversions from the coordinates on the screen to the         *
@@ -301,11 +215,11 @@ draw_offlimits(int i)
   case CARMEN_OFFLIMITS_POINT_ID:
     break;
   case CARMEN_OFFLIMITS_LINE_ID:
-    gdk_draw_line (map_pixmap, Drawing_GC, pix_x1, pix_y1, pix_x2, 
+    gdk_draw_line (tmp_pixmap, drawing_gc, pix_x1, pix_y1, pix_x2, 
 		   pix_y2);
     break;
   case CARMEN_OFFLIMITS_RECT_ID:
-    gdk_draw_rectangle(map_pixmap, Drawing_GC, 1, pix_x1, pix_y2, 
+    gdk_draw_rectangle(tmp_pixmap, drawing_gc, 1, pix_x1, pix_y2, 
 		       pix_x2-pix_x1, pix_y1-pix_y2);
     break;
   default:
@@ -321,18 +235,18 @@ draw_place_name(int i, GdkPixmap *pixmap, GdkColor *draw_color)
   pix_x1 = map_x_to_pix(place_list->places[i].x/map->config.resolution);
   pix_y1 = map_y_to_pix(place_list->places[i].y/map->config.resolution);
 	
-  gdk_gc_set_foreground (Drawing_GC, draw_color);
+  gdk_gc_set_foreground (drawing_gc, draw_color);
 
-  gdk_draw_arc(pixmap, Drawing_GC, 1, pix_x1-5, pix_y1-5,
+  gdk_draw_arc(pixmap, drawing_gc, 1, pix_x1-5, pix_y1-5,
 	       10, 10, 0, 360*64);
 
-  gdk_gc_set_foreground (Drawing_GC, &carmen_black);
+  gdk_gc_set_foreground (drawing_gc, &carmen_black);
 
-  gdk_draw_arc(pixmap, Drawing_GC, 0, pix_x1-5, pix_y1-5,
+  gdk_draw_arc(pixmap, drawing_gc, 0, pix_x1-5, pix_y1-5,
 	       10, 10, 0, 360*64); 
 
-  gdk_gc_set_foreground (Drawing_GC, &carmen_black);
-  gdk_draw_string(pixmap, place_font, Drawing_GC, pix_x1, pix_y1-5,
+  gdk_gc_set_foreground (drawing_gc, &carmen_black);
+  gdk_draw_string(pixmap, place_font, drawing_gc, pix_x1, pix_y1-5,
 		  place_list->places[i].name);
 }
 
@@ -349,8 +263,8 @@ map_to_tmp(void)
   ydest = 0;
   h = yend*mult;
 
-  gdk_gc_set_foreground(Drawing_GC, &purple);
-  gdk_draw_rectangle(tmp_pixmap, Drawing_GC, TRUE, 0, 0,
+  gdk_gc_set_foreground(drawing_gc, &purple);
+  gdk_draw_rectangle(tmp_pixmap, drawing_gc, TRUE, 0, 0,
 		     drawing_area->allocation.width,
 		     drawing_area->allocation.height);
 
@@ -360,14 +274,14 @@ map_to_tmp(void)
 }
 
 
-/* sets up the default colors and Drawing_GC */
+/* sets up the default colors and drawing_gc */
 void 
 setup_colors(void)
 {
-  if (Drawing_GC == NULL) 
-    Drawing_GC = gdk_gc_new(drawing_area->window);
-  if (Drawing_GC == NULL)	
-    carmen_die("Drawing_GC could not be initialized\n");
+  if (drawing_gc == NULL) 
+    drawing_gc = gdk_gc_new(drawing_area->window);
+  if (drawing_gc == NULL)	
+    carmen_die("drawing_gc could not be initialized\n");
 
   yellow = carmen_graphics_add_color("Yellow");
   blue = carmen_graphics_add_color_rgb(0, 0, 255);
@@ -379,36 +293,34 @@ setup_colors(void)
 void 
 redraw(void)
 {
-  int i;
+  int i;  
 
-  if(map_pixmap == NULL)
-    {
-      if (image_data != NULL)
-	free(image_data);
-      setup_colors();
-      image_data = carmen_graphics_convert_to_image(map, 0);
-      map_pixmap = carmen_graphics_generate_pixmap(drawing_area, image_data, 
-						   &(map->config), mult);
+  if (drawing_area == NULL || drawing_area->window == NULL)
+    return;  
 
-      if (show_offlimits) 
-	{
-	  gdk_gc_set_foreground (Drawing_GC, &red);
-	  for (i = 0; i < num_offlimits_segments; i++) 
-	    draw_offlimits(i);
-	}
+  if(tmp_pixmap == NULL) {
+    setup_colors();
+    image_data = carmen_graphics_convert_to_image(map, 0);
+    map_pixmap = generate_pixmap(image_data, &(map->config), mult);
 
-      if (show_place_names && place_list)
-	{
-	  for (i = 0; i < place_list->num_places; i++) 
-	    draw_place_name(i, map_pixmap, &carmen_red);
-	}
+    tmp_pixmap = gdk_pixmap_new(drawing_area->window,
+				drawing_area->allocation.width,
+				drawing_area->allocation.height,
+				-1);
+    map_to_tmp();
 
-      tmp_pixmap = gdk_pixmap_new(drawing_area->window,
-				  drawing_area->allocation.width,
-				  drawing_area->allocation.height,
-				  -1);
-      map_to_tmp();
-    }	
+  }	
+  
+  if (show_offlimits) {
+    gdk_gc_set_foreground (drawing_gc, &red);
+    for (i = 0; i < num_offlimits_segments; i++) 
+      draw_offlimits(i);
+  }
+  
+  if (show_place_names && place_list) {
+    for (i = 0; i < place_list->num_places; i++) 
+      draw_place_name(i, tmp_pixmap, &carmen_red);
+  }
   
   gdk_draw_pixmap(drawing_area->window,   //dest
 		  drawing_area->style->fg_gc[GTK_WIDGET_STATE (drawing_area)],
@@ -427,7 +339,7 @@ redraw(void)
 static gint 
 button_press_event( GtkWidget *widget, GdkEventButton *event )
 {  
-  if(map_pixmap == NULL)
+  if(tmp_pixmap == NULL)
     return -1;
 
   if (deleting_placename)
@@ -525,7 +437,7 @@ button_release_event(GtkWidget *widget, GdkEventButton *event )
     return TRUE;
   }
 
-  if (event->button == 1 && map_pixmap != NULL)
+  if (event->button == 1 && tmp_pixmap != NULL)
     switch(utensil)
       {
       case CARMEN_MAP_RECTANGLE:
@@ -596,10 +508,10 @@ motion_notify_event( GtkWidget *widget, GdkEventMotion *event )
   static carmen_world_point_t world_point;
 	
 
-  GTK_WIDGET_CLASS(GTK_OBJECT(vrule)->klass)->motion_notify_event(vrule, event);
-  GTK_WIDGET_CLASS(GTK_OBJECT(hrule)->klass)->motion_notify_event(hrule, event);
+  gtk_propagate_event(GTK_WIDGET(vrule), (GdkEvent *)event);
+  gtk_propagate_event(GTK_WIDGET(hrule), (GdkEvent *)event);
 
-  //   map_to_tmp();
+  map_to_tmp();
 
   if (event->is_hint)
     gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -618,7 +530,7 @@ motion_notify_event( GtkWidget *widget, GdkEventMotion *event )
 	  world_point.pose.y);
   gtk_label_set_text(GTK_LABEL(coords_label), label_buffer);
 
-  if (map_pixmap == NULL)
+  if (tmp_pixmap == NULL)
     return TRUE;
 
   if (deleting_placename) 
@@ -687,12 +599,12 @@ configure_event (GtkWidget *widget __attribute__ ((unused)),
   gtk_signal_emit_by_name (GTK_OBJECT (adjustment), "value_changed");
   gtk_signal_emit_by_name (GTK_OBJECT (adjustment), "changed");
 
-if(map_pixmap)
-    {
-      gdk_pixmap_unref(map_pixmap);
-      gdk_pixmap_unref(tmp_pixmap);
-    }
+  if (map_pixmap)
+    gdk_pixmap_unref(map_pixmap);
   map_pixmap = NULL;
+
+  if(tmp_pixmap) 
+    gdk_pixmap_unref(tmp_pixmap);
   tmp_pixmap = NULL;
 
   redraw();
@@ -819,7 +731,6 @@ off_pixmap(void)
       map_to_tmp();
       redraw();
     }
-  fprintf(stderr, "off pixmap\n");
   set_point();
   return 1;
 }
@@ -828,50 +739,93 @@ off_pixmap(void)
  * startup                                                               *
  *************************************************************************/
 
-static GtkItemFactoryEntry menu_items[] = {
-  { "/_File",         NULL,         NULL, 0, "<Branch>" },
-  { "/File/_New Map...",    "<control>N", new_map_menu, 0, NULL },
-  { "/File/_Open Map...",    "<control>O", open_map_menu, 0, NULL },
-  { "/File/_Save Map",    "<control>S", save_map_menu, 0, NULL },
-  { "/File/Save Map _As...", NULL,         save_map_as_menu, 0, NULL },
-  { "/File/_Export...", NULL,         NULL, 0, NULL },
-  { "/File/sep1",    NULL,        NULL, 0, "<Separator>" },
-  { "/File/_Quit",    "<control>Q", quit_menu, 0, NULL },
-  { "/_Edit",         NULL,         NULL, 0, "<Branch>" },
-  { "/Edit/_Undo",    "<control>Z",         undo_menu, 0, NULL },
-  { "/Edit/sep1",    NULL,         NULL, 0, "<Separator>" },
-  //	{ "/Edit/_Minimize",    NULL,         minimize_map, 0, NULL },
-  //	{ "/Edit/sep1",    NULL,         NULL, 0, "<Separator>" },
-  { "/Edit/_Add Placename", NULL,  add_placename, 0, NULL },
-  { "/Edit/_Delete Placename", NULL, delete_placename, 0, NULL },
-  { "/Edit/sep2",    NULL,         NULL, 0, "<Separator>" },
-  { "/Edit/Add Doo_r", NULL,  add_door, 0, NULL },
-  { "/_View",         NULL,         NULL, 0, "<Branch>" },
-  { "/View/Show _Placenames", NULL, toggle_view, 1, "<ToggleItem>" },
-  { "/View/Show _Offlimits",  NULL, toggle_view, 2, "<ToggleItem>" },
-  { "/Help",         NULL,         NULL, 0, "<LastBranch>" },
-  { "/Help/About",   NULL,         help_menu, 0, NULL },
+static GtkActionEntry action_entries[] = {
+  {"FileMenu", NULL, "_File", NULL, NULL, NULL},
+  {"NewMap", NULL, "_New Map...", "<control>N", NULL, G_CALLBACK(new_map_menu)},
+  {"OpenMap", NULL, "_Open Map...", "<control>O", NULL, G_CALLBACK(open_map_menu)},
+  {"SaveMap", GTK_STOCK_SAVE, "_Save Map", "<control>S", NULL, G_CALLBACK(save_map_menu)},
+  {"SaveMapAs", NULL, "Save Map _As...", NULL, NULL, G_CALLBACK(save_map_as_menu)},
+  {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, G_CALLBACK(quit_menu)},
+  {"EditMenu", NULL, "_Edit", NULL, NULL, NULL},
+  {"Undo", NULL, "_Undo", "<control>Z", NULL, G_CALLBACK(undo_menu)},
+  {"AddPlacename", NULL, "_Add Placename", NULL, NULL, G_CALLBACK(add_placename)},
+  {"DeletePlacename", NULL, "_Delete Placename", NULL, NULL, G_CALLBACK(delete_placename)},
+  {"AddDoor", NULL, "Add Doo_r", NULL, NULL, G_CALLBACK(add_door)},
+  {"ViewMenu", NULL, "_View", NULL, NULL, NULL},
+  {"HelpMenu", NULL, "_Help", NULL, NULL, NULL},
+  {"About", NULL, "_About", NULL, NULL, G_CALLBACK(help_menu)}};
+
+static GtkToggleActionEntry toggle_entries[] = {
+  {"ShowPlacenames", NULL, "Show _Placenames", NULL, NULL, G_CALLBACK(toggle_view), FALSE},
+  {"ShowOfflimits", NULL, "Show _Offlimits", NULL, NULL, G_CALLBACK(toggle_view), FALSE}
 };
 
-void get_main_menu(GtkWidget  *the_window, GtkWidget **menubar)
+const char *ui_description = 
+  "<ui>"
+  "  <menubar name='MainMenu'>"
+  "    <menu action='FileMenu'>"
+  "      <menuitem action='NewMap'/>"
+  "      <menuitem action='OpenMap'/>"
+  "      <menuitem action='SaveMap'/>"
+  "      <menuitem action='SaveMapAs'/>"
+  "      <separator/>"
+  "      <menuitem action='Quit'/>"
+  "    </menu>"
+  "    <menu action='EditMenu'>"
+  "      <menuitem action='Undo'/>"
+  "      <separator/>"
+  "      <menuitem action='AddPlacename'/>"
+  "      <menuitem action='DeletePlacename'/>"
+  "      <separator/>"
+  "      <menuitem action='AddDoor'/>"
+  "    </menu>"
+  "    <menu action='ViewMenu'>"
+  "      <menuitem action='ShowPlacenames'/>"
+  "      <menuitem action='ShowOfflimits'/>"
+  "    </menu>"
+  "    <menu action='HelpMenu'>"
+  "      <menuitem action='About'/>"
+  "    </menu>"
+  "  </menubar>"
+  "</ui>";
+
+static GtkWidget *get_main_menu(void)
 {
+  GtkWidget *menubar;
+  GtkActionGroup *action_group;
   GtkAccelGroup *accel_group;
-  gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
-  GtkWidget *menu_item;
+  GError *error;
+  GtkAction* action;
 
-  accel_group = gtk_accel_group_new();
-  item_factory = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>",
-				      accel_group);
-  gtk_item_factory_create_items(item_factory, nmenu_items, menu_items, NULL);
-  gtk_window_add_accel_group(GTK_WINDOW (the_window), accel_group);
-  if(menubar)
-    *menubar = gtk_item_factory_get_widget(item_factory, "<main>");
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions (action_group, action_entries, 
+				G_N_ELEMENTS (action_entries), window);
+  gtk_action_group_add_toggle_actions (action_group, toggle_entries, 
+				       G_N_ELEMENTS (toggle_entries), window);
 
-  menu_item = gtk_item_factory_get_item(item_factory, "/View/Show Placenames");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = show_place_names;
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
+  
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, 
+					  &error)) {
+    g_message ("building menus failed: %s", error->message);
+    g_error_free (error);
+    exit (EXIT_FAILURE);
+  }
+  
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
 
-  menu_item = gtk_item_factory_get_item(item_factory, "/View/Show Offlimits");
-  ((struct _GtkCheckMenuItem *)menu_item)->active = show_offlimits;
+  action = gtk_action_group_get_action(action_group, "ShowPlacenames");
+  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(action), show_place_names);
+
+  action = gtk_action_group_get_action(action_group, "ShowOfflimits");
+  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(action), show_offlimits);
+
+  return menubar;
 }
 
 void 
@@ -902,6 +856,10 @@ set_up_map_widgets(void)
 
   gtk_drawing_area_size (GTK_DRAWING_AREA(drawing_area), screen_width, 
 			 screen_height);
+
+  gtk_widget_set_usize(drawing_table, screen_width+25, screen_height+25);
+  gtk_widget_set_usize(scrolled_window, screen_width+25, screen_height+25);
+
   /*
   gtk_ruler_set_range(GTK_RULER(hrule),
 		      map->config.resolution*xstart/1.0, 
@@ -941,8 +899,7 @@ set_up_map_widgets(void)
 }
 
 /* builds the main window and drawing area for the editor */
-void 
-start_drawing_window(void)
+void start_drawing_window(int *argc, char **argv[])
 {
   GtkWidget *box2, *box3, *box4, *box5;
   GtkWidget *separator;
@@ -955,19 +912,30 @@ start_drawing_window(void)
   char line_text[10];
   char fuzzyness_text[10];
 
+  gtk_init(argc, argv);
+  carmen_graphics_setup_colors();
+  create_cursors();
+  place_font = gdk_font_load ("fixed");
+
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  g_signal_connect (GTK_OBJECT (window), "destroy", 
+		    G_CALLBACK(gtk_main_quit), "WM destroy");
+
   gtk_window_set_title (GTK_WINDOW (window), "Map");
   gtk_signal_connect (GTK_OBJECT (window), "delete_event", 
 		      GTK_SIGNAL_FUNC (gtk_exit), NULL);
-  gtk_widget_set_events (window, GDK_POINTER_MOTION_MASK);
+  gtk_container_set_border_width (GTK_CONTAINER (window), 0);
+
+  //  gtk_widget_set_events (window, GDK_POINTER_MOTION_MASK);
 
   window_box = gtk_vbox_new(FALSE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (window_box), 0);
   gtk_container_add(GTK_CONTAINER(window), window_box);
   gtk_widget_show(window_box);
 
   /* create menus */
-
-  get_main_menu(window, &menu_bar);
+  menu_bar = get_main_menu();
   gtk_box_pack_start(GTK_BOX(window_box), menu_bar, FALSE, TRUE, 0);
   gtk_widget_show(menu_bar);
 
@@ -1051,6 +1019,7 @@ start_drawing_window(void)
 
   /* table */
   drawing_table = gtk_table_new(2,2,FALSE);
+  gtk_widget_set_usize(drawing_table, 225, 225);
   gtk_box_pack_start(GTK_BOX(window_box), drawing_table, TRUE, TRUE, 0);
 
   /* (m) */
@@ -1070,6 +1039,7 @@ start_drawing_window(void)
 		   GTK_EXPAND|GTK_SHRINK|GTK_FILL,
 		   GTK_EXPAND|GTK_SHRINK|GTK_FILL,
                    1,1);
+  gtk_widget_set_usize(scrolled_window, 225, 225);
   gtk_widget_show (scrolled_window);
 
   /* Create the drawing area */
@@ -1338,16 +1308,5 @@ start_drawing_window(void)
   else
     gtk_widget_show(window);
 
-  place_font = gdk_font_load ("fixed");
-
 }
 
-/* calls the necessary graphics initialization functions */
-void init_graphics(int argc, char **argv)
-{
-  //gnome_init("map_editor", "1.0", argc, argv);
-  gtk_init(&argc, &argv);
-  gdk_imlib_init();	
-  carmen_graphics_setup_colors();
-
-}

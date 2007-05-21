@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
-
 #define CARMEN_LINEMAPPING_ROBOT_FRAME  1
 #define CARMEN_LINEMAPPING_GLOBAL_FRAME 0
 

@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-#include <carmen/carmen.h>
-
 
 void 
 carmen_clfconvert_transform_laser_message(carmen_point_t refpose_currentframe,

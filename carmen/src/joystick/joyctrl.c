@@ -26,6 +26,7 @@
  *
  ********************************************************/
 
+#include <carmen/global.h>
 #include "joyctrl.h"
 
 int carmen_initialize_joystick(carmen_joystick_type *joystick)

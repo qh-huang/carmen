@@ -26,7 +26,9 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+#include <carmen/ipc.h>
+#include <carmen/global.h>
+#include <carmen/ipc_wrapper.h>
 #include "arm_interface.h"
 #include "arm_messages.h"
 

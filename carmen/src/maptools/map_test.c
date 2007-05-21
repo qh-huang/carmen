@@ -31,7 +31,12 @@
  * loads a map and displays it       *
  *************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <carmen/global_graphics.h>
+#include <carmen/ipc_wrapper.h>
+#include <carmen/param_interface.h>
+#include <signal.h>
+#include "map_graphics.h"
+#include "map_interface.h"
 
 carmen_map_t map;
 

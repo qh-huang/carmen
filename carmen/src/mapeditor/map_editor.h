@@ -34,7 +34,6 @@ extern "C" {
 #endif
 
 #include <gtk/gtk.h>
-#include <gdk_imlib.h>
 
 extern char map_filename[255];
 
@@ -70,7 +69,7 @@ extern GdkPixmap *map_pixmap;
 extern GdkPixmap *tmp_pixmap;
 extern GtkWidget *drawing_area;
 extern GtkWidget *scrolled_window;
-extern GdkGC     *Drawing_GC;
+extern GdkGC     *drawing_gc;
 extern GdkColor   color;
 extern GdkColor   yellow, purple, blue, red;
 extern GtkWidget *save_file;

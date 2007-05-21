@@ -26,7 +26,10 @@
  *
  ********************************************************/
 
-#include <carmen/carmen_graphics.h>
+#include <carmen/global_graphics.h>
+#include "map_graphics.h"
+#include <carmen/ipc_wrapper.h>
+#include "map_interface.h"
 
 #define ELLIPSE_PLOTPOINTS 30
 

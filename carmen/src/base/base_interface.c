@@ -26,7 +26,8 @@
  *
  ********************************************************/
 
-#include <carmen/carmen.h>
+#include <carmen/global.h>
+#include <carmen/ipc_wrapper.h>
 #include <carmen/base_messages.h>
 
 void

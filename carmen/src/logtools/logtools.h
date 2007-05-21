@@ -29,8 +29,6 @@
 #ifndef LOGTOOLS_UTILS_H
 #define LOGTOOLS_UTILS_H
 
-#include <carmen/carmen.h>
-
 #ifndef _STDIO_H
 #include <stdio.h>
 #endif
