@@ -7,7 +7,7 @@ CFLAGS += -DLASER_USE_PTHREAD
 LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread 
 
 SOURCES = carmen_hokuyo.c  dummylaser.c hokuyourg_test.c laser_interface.c sick_laser_init_500k.c \
-          carmen_laser_device.c carmen_laser_message_queue.c laser.c laserview.c sick_laser_test.c \
+          carmen_laser_device.c carmen_laser_message_queue.c laser.c sick_laser_test.c \
           carmen_laser_device_init.c carmen_sick.c hokuyourg.c laserclient.c sick_laser.c
 
 SOURCES += s300_laser.c carmen_s300.c
