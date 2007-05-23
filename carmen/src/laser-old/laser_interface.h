@@ -90,6 +90,9 @@ carmen_laser_subscribe_laser5_message(carmen_laser_laser_message *laser,
 				      carmen_handler_t handler,
 				      carmen_subscribe_t subscribe_how);
 
+void 
+carmen_laser_get_offset(int which, carmen_point_t *laser_offset);
+
 /** Subscribes the corresonding message.  **/
 void
 carmen_laser_subscribe_alive_message(carmen_laser_alive_message *alive,
