@@ -27,6 +27,7 @@
  ********************************************************/
 
 #include "global.h"
+#include <values.h>
 
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/map.h>
@@ -45,7 +46,8 @@ double carmen_geometry_compute_safety_distance(carmen_robot_config_t *robot_conf
 					       carmen_traj_point_t *robot)
 {
   return robot_config->length / 2.0 + robot_config->approach_dist + 
-    robot->t_vel * robot_config->reaction_time;
+    robot->t_vel * robot_config->reaction_time + 
+    robot->t_vel*robot->t_vel/(2*robot_config->acceleration) ;
 }
 
 static double compute_velocity_at_side(carmen_traj_point_t robot, 
@@ -122,7 +124,8 @@ static double compute_forward_velocity(carmen_traj_point_t robot,
   if (forward_distance < -robot_config->length/2.0) 
     return robot_config->max_t_vel;
 
-  forward_safety_distance = carmen_geometry_compute_safety_distance(robot_config, &robot);
+  forward_safety_distance = 
+    carmen_geometry_compute_safety_distance(robot_config, &robot);
 
   // How far to the obstacle? Remove the safety distance and the distance we travel 
   // while reacting 
@@ -570,6 +573,67 @@ carmen_geometry_compute_radius_and_centre(carmen_traj_point_p prev,
   return radius;
 }
 
+static void intersect(carmen_point_t *edge1, carmen_point_t *edge2,
+		      carmen_point_t *ray3, carmen_point_t *ray4,
+		      carmen_point_t *intersect_pt)
+{
+  double slope1, slope2, intercept1, intercept2;
+  double det, a, b, x_nom, y_nom;
+
+  if (fabs(edge2->x-edge1->x) < 1e-6 &&
+      fabs(ray4->x-ray3->x) < 1e-6) {
+    if (fabs(edge2->x-ray3->x) < 1e-6) {
+      if (fabs(edge1->x - ray3->x) < fabs(edge2->x - ray3->x)) {
+	intersect_pt->x = edge1->x;
+	intersect_pt->y = edge1->y;
+      } else {
+	intersect_pt->x = edge2->x;
+	intersect_pt->y = edge2->y;
+      }
+    } else {
+      intersect_pt->x = ray4->x;
+      intersect_pt->y = ray4->y;
+    }
+    return;
+  }
+
+  // Check if the lines are parallel
+
+  slope1 = (edge2->y - edge1->y)/(edge2->x - edge1->x);
+  slope2 = (ray4->y - ray3->y)/(ray4->x - ray3->x);
+
+  if (fabs(slope1 - slope2) < 1e-6) {
+    intercept1 = edge2->y - slope1*edge2->x;
+    intercept2 = ray4->y - slope2*ray4->x;
+    if (fabs(intercept1 - intercept2)) {
+      if (hypot(edge1->x-ray3->x, edge1->y-ray3->y) < hypot(edge2->x-ray3->x, edge2->y-ray3->y)) {
+	intersect_pt->x = edge1->x;
+	intersect_pt->y = edge1->y;
+      } else {
+	intersect_pt->x = edge2->x;
+	intersect_pt->y = edge2->y;
+      }
+    }
+    else {
+      intersect_pt->x = ray4->x;
+      intersect_pt->y = ray4->y;
+    }      
+    
+    return;
+  }
+  
+  det = (edge1->x-edge2->x)*(ray3->y-ray4->y)-(ray3->x-ray4->x)*(edge1->y-edge2->y);
+  
+  a = edge1->x*edge2->y - edge2->x*edge1->y;
+  b = ray3->x*ray4->y-ray4->x*ray3->y;
+  
+  x_nom = a*(ray3->x-ray4->x) - b*(edge1->x-edge2->x);
+  intersect_pt->x = x_nom/det;
+  
+  y_nom = a*(ray3->y-ray4->y) - b*(edge1->y-edge2->y);
+  intersect_pt->y = y_nom/det;
+}
+
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
 double 
 carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point, 
@@ -582,6 +646,20 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
   double resolution;
   int map_x, map_y;
   carmen_map_config_t map_defn;
+  int index;
+
+  double min_distance = MAXDOUBLE;
+  int best = -1;
+  carmen_point_t ray3, ray4;
+  carmen_point_t edge1, edge2;
+  carmen_point_t intersect_pt;
+
+  int x_offset[8] = {1, 1, -1, 1, -1, -1, -1, 1};
+  int y_offset[8] = {-1, 1, 1, 1, -1, 1, -1, -1};
+
+  double distance_to_obstacle, min_distance_to_obstacle = MAXDOUBLE;
+  int best_obstacle;
+  carmen_point_t best_intersect_obstacle_pt;
 
   map_defn = map->config;
 
@@ -606,10 +684,48 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
     } 
   while (carmen_get_next_point(&params));
 
-  distance = hypot((map_x*resolution - traj_point->x), 
-		   (map_y*resolution - traj_point->y));
+  ray3.x = traj_point->x;
+  ray3.y = traj_point->y;
+  ray4.x = traj_point->x + (distance+1)*cos(theta);
+  ray4.y = traj_point->y + (distance+1)*sin(theta);
+  
+  for (index = 0; index < 4; index++) {
+    edge1.x = map_x*resolution+x_offset[2*index]*resolution*0.5;
+    edge1.y = map_y*resolution+y_offset[2*index]*resolution*0.5;
+  
+    edge2.x = map_x*resolution+x_offset[2*index+1]*resolution*0.5;
+    edge2.y = map_y*resolution+y_offset[2*index+1]*resolution*0.5;
 
-  return distance;
+    intersect(&edge1, &edge2, &ray3, &ray4, &intersect_pt);
+
+    distance = hypot(intersect_pt.x-traj_point->x, intersect_pt.y-traj_point->y);
+    distance_to_obstacle = hypot(intersect_pt.x - map_x*resolution,
+				 intersect_pt.y - map_y*resolution);
+    
+    if (distance_to_obstacle < min_distance_to_obstacle) {
+      min_distance_to_obstacle = distance_to_obstacle;
+      best_intersect_obstacle_pt = intersect_pt;
+      best_obstacle = index;
+    }    
+
+    if (index == 0 || index == 2) {
+      if (intersect_pt.y >= edge1.y && intersect_pt.y <= edge2.y && distance < min_distance ) {
+	min_distance = distance;
+	best = index;
+      }
+    } else {
+      if (intersect_pt.x >= edge1.x && intersect_pt.x <= edge2.x && distance < min_distance ) {
+	min_distance = distance;
+	best = index;
+      }
+    }
+  }
+
+  if (min_distance > MAXDOUBLE/2) 
+    min_distance = hypot(best_intersect_obstacle_pt.x-traj_point->x,
+			 best_intersect_obstacle_pt.y-traj_point->y);
+
+  return min_distance;
 
   /* Project map up to cm level co-ordinates, and walk backwards to find the
      first **unoccupied** cm grid cell, to find out where the obstacle actually
