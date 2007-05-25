@@ -642,7 +642,7 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
   int x2, y2, px, py;
   carmen_bresenham_param_t params;
   carmen_traj_point_t obstacle;
-  double distance;
+  double distance=0;
   double resolution;
   int map_x, map_y;
   carmen_map_config_t map_defn;
@@ -659,7 +659,7 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
 
   double distance_to_obstacle, min_distance_to_obstacle = MAXDOUBLE;
   int best_obstacle;
-  carmen_point_t best_intersect_obstacle_pt;
+  carmen_point_t best_intersect_obstacle_pt = {0.0, 0.0, 0.0};
 
   map_defn = map->config;
 
