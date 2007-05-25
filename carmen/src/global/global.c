@@ -1507,3 +1507,8 @@ inline char *carmen_next_n_words(char *str, int n)
   return result;
 }
 
+double carmen_global_convert_degmin_to_double(double dm_format) {
+  double degree   = floor(dm_format / 100.0);
+  double minutes  = (dm_format - degree*100.0) / 60.0;
+  return degree + minutes;
+}

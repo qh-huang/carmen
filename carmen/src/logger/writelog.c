@@ -49,8 +49,8 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# RAWLASER4 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# ROBOTLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# ROBOTLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
-  carmen_fprintf(outfile, "# NMEAGGA gpsnr utc latitude lat_orient longitude long_orient gps_quality num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age\n");
-  carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude lat_orient longitude long_orient speed course variation var_dir date\n");
+  carmen_fprintf(outfile, "# NMEAGGA gpsnr utc latitude_dm lat_orient longitude_dm long_orient gps_quality num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age\n");
+  carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude_dm lat_orient longitude_dm long_orient speed course variation var_dir date\n");
 
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
@@ -200,9 +200,9 @@ void carmen_logger_write_gps_gpgga(carmen_gps_gpgga_message *gps_msg,
   carmen_fprintf(outfile,"NMEAGGA %d %lf %lf %c %lf %c %d %d %lf %lf %lf %lf %lf %d %lf %s %lf\n", 
 		 gps_msg->nr,
 		 gps_msg->utc,
-		 gps_msg->latitude, 
+		 gps_msg->latitude_dm, 
 		 lat_o, 
-		 gps_msg->longitude,
+		 gps_msg->longitude_dm,
 		 long_o, 
 		 gps_msg->gps_quality, gps_msg->num_satellites,
 		 gps_msg->hdop,
@@ -239,9 +239,9 @@ void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg,
 		 gps_msg->nr, 
 		 gps_msg->validity, 
 		 gps_msg->utc,
-		 gps_msg->latitude, 
+		 gps_msg->latitude_dm, 
 		 lat_o, 
-		 gps_msg->longitude,
+		 gps_msg->longitude_dm,
 		 long_o, 
 		 gps_msg->speed, 
 		 gps_msg->true_course, 

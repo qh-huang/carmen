@@ -2,8 +2,7 @@
  *
  * This source code is part of the Carnegie Mellon Robot
  * Navigation Toolkit (CARMEN)
- *
- * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
+ * * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
@@ -45,6 +44,8 @@
 #include "gps.h"
 #include "gps-io.h"
  
+
+
 int
 gps_parse_gga( char * line, int num_chars )
 {
@@ -65,7 +66,8 @@ gps_parse_gga( char * line, int num_chars )
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gpgga_ptr->latitude = atof(ptr);
+    carmen_extern_gpgga_ptr->latitude_dm = atof(ptr);
+    carmen_extern_gpgga_ptr->latitude = carmen_global_convert_degmin_to_double(carmen_extern_gpgga_ptr->latitude_dm);
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
@@ -73,7 +75,8 @@ gps_parse_gga( char * line, int num_chars )
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gpgga_ptr->longitude = atof(ptr);
+    carmen_extern_gpgga_ptr->longitude_dm = atof(ptr);
+    carmen_extern_gpgga_ptr->longitude = carmen_global_convert_degmin_to_double(carmen_extern_gpgga_ptr->longitude_dm);
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
@@ -140,7 +143,8 @@ gps_parse_rmc( char * line, int num_chars )
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gprmc_ptr->latitude = atof(ptr);
+    carmen_extern_gprmc_ptr->latitude_dm = atof(ptr);
+    carmen_extern_gprmc_ptr->latitude = carmen_global_convert_degmin_to_double(carmen_extern_gprmc_ptr->latitude_dm);
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
@@ -149,6 +153,7 @@ gps_parse_rmc( char * line, int num_chars )
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
     carmen_extern_gprmc_ptr->longitude = atof(ptr);
+    carmen_extern_gprmc_ptr->longitude = carmen_global_convert_degmin_to_double(carmen_extern_gprmc_ptr->longitude_dm);
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
