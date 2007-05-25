@@ -95,8 +95,10 @@ main( int argc, char *argv[] )
       fprintf( stderr, "===================================\n" );
       fprintf( stderr, " utc:            %f\n", gps_gpgga.utc );
       fprintf( stderr, " latitude:       %f\n", gps_gpgga.latitude );
+      fprintf( stderr, " latitude (DM):  %f\n", gps_gpgga.latitude_dm );
       fprintf( stderr, " lat_orient:     %c\n", gps_gpgga.lat_orient );
       fprintf( stderr, " longitude:      %f\n", gps_gpgga.longitude );
+      fprintf( stderr, " longitude (DM): %f\n", gps_gpgga.longitude_dm );
       fprintf( stderr, " long_orient:    %c\n", gps_gpgga.long_orient ); 
       fprintf( stderr, " gps_quality:    %d\n", gps_gpgga.gps_quality );
       fprintf( stderr, " num_satellites: %d\n", gps_gpgga.num_satellites );
@@ -118,8 +120,10 @@ main( int argc, char *argv[] )
       fprintf( stderr, " validity:          %d\n", gps_gprmc.validity );
       fprintf( stderr, " utc:               %f\n", gps_gprmc.utc );
       fprintf( stderr, " latitude:          %f\n", gps_gprmc.latitude );
+      fprintf( stderr, " latitude (DM):     %f\n", gps_gprmc.latitude_dm );
       fprintf( stderr, " lat_orient:        %c\n", gps_gprmc.lat_orient );
       fprintf( stderr, " longitude:         %f\n", gps_gprmc.longitude );
+      fprintf( stderr, " longitude (DM):    %f\n", gps_gprmc.longitude_dm );
       fprintf( stderr, " long_orient:       %c\n", gps_gprmc.long_orient ); 
       fprintf( stderr, " speed over ground: %f\n", gps_gprmc.speed );
       fprintf( stderr, " true_course:       %f\n", gps_gprmc.true_course ); 

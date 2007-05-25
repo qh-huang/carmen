@@ -331,6 +331,8 @@ extern inline double carmen_square(double val)
 	return (val*val);
 }
 
+double carmen_global_convert_degmin_to_double(double dm_format);
+
 extern inline double carmen_distance_traj(carmen_traj_point_p p1, carmen_traj_point_p p2)
 {
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
