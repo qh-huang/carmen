@@ -194,7 +194,7 @@ void copy_host_string(char **host, char **string)
 
   while(*string[0] == ' ')
     *string += 1;                           /* advance past spaces */
-  l = first_wordlength(*string) + 1;
+  l = first_wordlength(*string);
   if(*host != NULL)
     free(*host);
   *host = (char *)calloc(1, l);
@@ -407,7 +407,7 @@ char *carmen_string_to_laser_laser_message(char *string,
   char *current_pos = string;
   int i, num_readings, num_remissions;
 
-  if (strncmp(current_pos, "RAWLASER", 6) == 0)
+  if (strncmp(current_pos, "RAWLASER", 8) == 0)
     current_pos = carmen_next_word(current_pos); 
 
   laser->config.laser_type = CLF_READ_INT(&current_pos);
@@ -548,8 +548,8 @@ char *carmen_string_to_gps_gprmc_message(char *string,
   gps_msg->longitude        = CLF_READ_DOUBLE(&current_pos);
   current_pos = carmen_next_word(current_pos); 
   gps_msg->long_orient      = CLF_READ_CHAR(&current_pos);
-  gps_msg->speed            = CLF_READ_INT(&current_pos);
-  gps_msg->true_course      = CLF_READ_INT(&current_pos);
+  gps_msg->speed            = CLF_READ_DOUBLE(&current_pos);
+  gps_msg->true_course      = CLF_READ_DOUBLE(&current_pos);
   gps_msg->variation        = CLF_READ_DOUBLE(&current_pos);
   current_pos = carmen_next_word(current_pos); 
   gps_msg->var_dir          = CLF_READ_CHAR(&current_pos);
