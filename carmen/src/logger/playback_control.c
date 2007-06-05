@@ -60,7 +60,7 @@ static void speed_changed(GtkWidget *w, gpointer data __attribute__ ((unused)))
     gtk_label_set_pattern(GTK_LABEL(playback_speed_widget_label), "");
 }
 
-static void params_save(GtkWidget *w __attribute__ ((unused)),
+static gboolean params_save(GtkWidget *w,// __attribute__ ((unused)),
 			GdkEvent *event,
 			gpointer pntr __attribute__ ((unused)))
 {
@@ -73,7 +73,9 @@ static void params_save(GtkWidget *w __attribute__ ((unused)),
     gtk_label_set_pattern(GTK_LABEL(playback_speed_widget_label), "");
     carmen_playback_command(CARMEN_PLAYBACK_COMMAND_SET_SPEED, 
 			    0, playback_speed);
+    return TRUE;
   }
+  return FALSE;
 }
 
 static gint 
