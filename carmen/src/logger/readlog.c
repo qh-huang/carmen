@@ -372,8 +372,10 @@ char *carmen_string_to_robot_laser_message_orig(char *string,
     laser->tooclose = (char *)realloc(laser->tooclose, laser->num_readings);
     carmen_test_alloc(laser->tooclose);
   }
-  for(i = 0; i < laser->num_readings; i++)
+  for(i = 0; i < laser->num_readings; i++) {
     laser->range[i] = CLF_READ_DOUBLE(&current_pos);
+    laser->tooclose[i] = 0;
+  }
 
   laser->laser_pose.x = CLF_READ_DOUBLE(&current_pos);
   laser->laser_pose.y = CLF_READ_DOUBLE(&current_pos);
@@ -467,9 +469,18 @@ char *carmen_string_to_robot_laser_message(char *string,
     laser->range = (float *)realloc(laser->range, laser->num_readings * 
 				    sizeof(float));
     carmen_test_alloc(laser->range);
+
+
+    laser->tooclose = (char *)realloc(laser->tooclose, laser->num_readings * 
+				       sizeof(char));
+    carmen_test_alloc(laser->tooclose);
+    
+
   }
-  for(i = 0; i < laser->num_readings; i++)
+  for(i = 0; i < laser->num_readings; i++) {
     laser->range[i] = CLF_READ_DOUBLE(&current_pos);
+    laser->tooclose[i] = 0;
+  }
 
   num_remissions = CLF_READ_INT(&current_pos);
   if(laser->num_remissions != num_remissions) {
