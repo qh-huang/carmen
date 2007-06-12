@@ -15,8 +15,11 @@
  * REVISION HISTORY:
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:14  tomkol
- * Initial revision
+ * Revision 1.2  2007/06/12 11:24:44  stachnis
+ * fixed command line parameters
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:14  tomkol
+ * Initial Import
  *
  * Revision 1.4  2003/04/20 02:28:12  nickr
  * Upgraded to IPC 3.7.6.
@@ -439,7 +442,9 @@ void parseOption(char *option, BOOLEAN started)
 #endif
     break;
   case 'u':
-    GET_S_GLOBAL(listenToStdin) = FALSE;
+    // Changed by Boris Lau, June 11 2007
+    // -u now activates the interactive user interface.
+    GET_S_GLOBAL(listenToStdin) = TRUE;
     break;
   case 'c':
     GET_S_GLOBAL(directDefault) = TRUE;
@@ -513,7 +518,7 @@ void parseOpsFromStr(char *str, int *expectedMods, BOOLEAN started)
 static void displayOptions1 (BOOLEAN commandLineP)
 {
   printf(" -v: display server version info.\n");
-  printf(" -l: logging onto terminal.\n");
+  printf(" -l: logging onto terminal, use together with -s.\n");
   printf("     options are: m (message traffic)\n");
   printf("                  s (status of IPC)\n");
   printf("                  t (time messages are handled)\n");
@@ -543,8 +548,8 @@ static void displayOptions1 (BOOLEAN commandLineP)
   printf(" -q: test quantity lattice insertions for task tree nodes.\n");
   printf(" -d: flag random debugging.\n");
 #endif
-  printf(" -s: silent running, don't print anything to stdout.\n");
-  printf(" -u: Don't run the user interface (stdin).\n");
+  printf(" -s: disable silent running (activates printing to stdout).\n");
+  printf(" -u: activate interactive user interface (stdin), use together with -s.\n");
   printf(" -r: try resending non-completed messages when modules crash\n");
   fflush(stdout);
 }
