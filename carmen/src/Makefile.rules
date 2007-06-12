@@ -335,12 +335,12 @@ tar-clean:
 
 %.o:	%.cpp
 	$(ECHO) "    ---- Compiling $< to $@ (C++)"
-	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< 
+	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
 
 
 %.o:	%.cc
 	$(ECHO) "    ---- Compiling $< to $@ (C++)"
-	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< 
+	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
 
 %.so.1:	
 	$(ECHO) "    ---- Archiving $^ into $@ (C)"
