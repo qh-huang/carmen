@@ -12,8 +12,11 @@
  * REVISION HISTORY
  *
  * $Log$
- * Revision 1.1  2004/10/15 14:33:15  tomkol
- * Initial revision
+ * Revision 1.2  2007/06/12 11:24:45  stachnis
+ * fixed command line parameters
+ *
+ * Revision 1.1.1.1  2004/10/15 14:33:15  tomkol
+ * Initial Import
  *
  * Revision 1.5  2003/07/22 15:22:57  nickr
  * Turned -u to be on by default.
@@ -488,6 +491,8 @@ void globalSInit(void)
 #else
   // Changed by Nick Roy, July 22, 2003
   // Sets -u as default 
+  // Note by Boris Lau, June 11, 2007:
+  // -u now activates user input, no -u is default.
   GET_S_GLOBAL(listenToStdin) = FALSE;
 #endif
   
