@@ -644,6 +644,8 @@ void  carmen_robot_usage(char *progname, char *fmt, ...)
 static int read_robot_parameters(int argc, char **argv)
 {
   int num_items;
+  double turn_before_driving_if_heading_bigger_than_deg;
+  turn_before_driving_if_heading_bigger_than_deg = 90;
 
   carmen_param_t param_list[] = {
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, 
@@ -688,9 +690,9 @@ static int read_robot_parameters(int argc, char **argv)
      &collision_avoidance, 1, NULL},
     {"robot", "collision_avoidance_frequency", CARMEN_PARAM_DOUBLE,
      &carmen_robot_collision_avoidance_frequency, 1, NULL},
-    {"robot", "turn_before_driving_if_heading_bigger_than",
+    {"robot", "turn_before_driving_if_heading_bigger_than_deg",
      CARMEN_PARAM_DOUBLE,
-     &turn_before_driving_if_heading_bigger_than, 1, NULL},
+     &turn_before_driving_if_heading_bigger_than_deg, 0, NULL},
     {"robot", "interpolate_odometry",
      CARMEN_PARAM_ONOFF,
      &carmen_robot_config.interpolate_odometry, 1, NULL}
@@ -705,6 +707,9 @@ static int read_robot_parameters(int argc, char **argv)
     carmen_robot_add_sonar_parameters(argv[0]);
   if (use_bumper)
     carmen_robot_add_bumper_parameters(argv[0]);
+
+  turn_before_driving_if_heading_bigger_than = 
+    carmen_degrees_to_radians(turn_before_driving_if_heading_bigger_than_deg);
 
   // that sucks!
   // carmen_robot_config.acceleration = 0.5;
