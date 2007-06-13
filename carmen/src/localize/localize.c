@@ -357,6 +357,9 @@ int register_ipc_messages(void)
 
 void read_parameters(int argc, char **argv, carmen_localize_param_p param)
 {
+  double integrate_angle_deg;
+  integrate_angle_deg=1.0;
+
   carmen_param_t param_list[] = {
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &param->front_laser_offset, 0, NULL},
@@ -373,8 +376,8 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
      &param->outlier_fraction, 0, NULL},
     {"localize", "update_distance", CARMEN_PARAM_DOUBLE, 
      &param->update_distance, 0, NULL},
-    {"localize", "integrate_angle", CARMEN_PARAM_DOUBLE,
-     &param->integrate_angle, 0, NULL},
+    {"localize", "integrate_angle_deg", CARMEN_PARAM_DOUBLE,
+     &integrate_angle_deg, 0, NULL},
     {"localize", "do_scanmatching", CARMEN_PARAM_ONOFF,
      &param->do_scanmatching, 1, NULL},
     {"localize", "constrain_to_map", CARMEN_PARAM_ONOFF, 
@@ -403,6 +406,9 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
 
   carmen_param_install_params(argc, argv, param_list, 
 			      sizeof(param_list) / sizeof(param_list[0]));
+
+  param->integrate_angle = carmen_degrees_to_radians(integrate_angle_deg);
+
 }
 
 /* create localize specific maps */
