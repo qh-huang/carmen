@@ -40,6 +40,7 @@ endif
 PUBLIC_LIBRARIES_SO = liblaser_interface.so
 ifndef NO_PYTHON
 TARGETS += liblaser_interface.so.1
+liblaser_interface.so.1: laser_interface.o carmen_laser_device.o
 endif
 
 liblaser_interface.a:	laser_interface.o carmen_laser_device.o
