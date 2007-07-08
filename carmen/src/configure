@@ -466,7 +466,7 @@ These are the robot types CARMEN currently supports:
 8. OrcBoard v.5 (Experimental)
 EOF
 
-  my $max = 8;
+  my $max = 9;
   my ($allow_xr4000);
 
   if ($os_type eq "linux" and $kernel eq $xr4000Kernel) {
