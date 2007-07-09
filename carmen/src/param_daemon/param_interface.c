@@ -271,6 +271,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   carmen_param_response_modules_message *response;
   int m;
   static int initialized = 0;
+  int status;
 
   if (!initialized) {
     err = IPC_defineMsg(CARMEN_PARAM_QUERY_MODULES_NAME,
@@ -290,7 +291,8 @@ carmen_param_get_modules(char ***modules, int *num_modules)
 
   query.module_name = "paramServer";
   query.variable_name = "modules";
-
+  
+  response = NULL;
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_MODULES_NAME, &query,
 			      (void **) &response, timeout);
   carmen_test_ipc(err, "Could not query parameter",
@@ -303,8 +305,9 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   }
 
   *num_modules = response->num_modules;
+  status = response->status;
 
-  if (response->status == CARMEN_PARAM_OK) {
+  if (status == CARMEN_PARAM_OK) {
     *modules = (char **) calloc(*num_modules, sizeof(char *));
     carmen_test_alloc(*modules);
     for (m = 0; m < *num_modules; m++) {
@@ -320,7 +323,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   free(response->modules);
   free(response);
 
-  if (response->status == CARMEN_PARAM_OK)
+  if (status == CARMEN_PARAM_OK)
     return 0;
 
   return -1;
