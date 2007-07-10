@@ -38,32 +38,36 @@ $arg_oldlaser = 0;
 
 $notcp862=1;
 
-my @user_libs;
+my (@user_libs, $header_dir);
 
 foreach (@ARGV) {
   if (/help/ or /\-h/) {
     my ($prog_name) = $PROGRAM_NAME =~ /([^\/]+)$/;
     die<<EOF;
 Usage: $prog_name [--help] [--prefix=<install path>] [options]
-Options: [--nographics]  : compile without graphics
-	 [--nojoystick]  : compile without joystick support
-	 [--notcpd]      : compile without using TCPD wrappers
-	 [--nojpeg]      : compile without JPEG support
-	 [--nozlib]      : compile without ZLib support
-	 [--nowand]      : compile without ImageMagick support
-	 [--nojava]      : compile without java support
-         [--nopython]    : compile without python support 
-         [--oldlaser]    : use the old (original) laser server
-         [--tcp862]      : use tcp862 support if using the new laser server
-	 [--nodoxygen]   : no doxygen support for creating the documentation
-	 [-L<libpath>]   : compile with additional library paths
-                           (can have multiple -L option switchs)
+Options: [--nographics]     : compile without graphics
+	 [--nojoystick]     : compile without joystick support
+	 [--notcpd]         : compile without using TCPD wrappers
+	 [--nojpeg]         : compile without JPEG support
+	 [--nozlib]         : compile without ZLib support
+	 [--nowand]         : compile without ImageMagick support
+	 [--nojava]         : compile without java support
+         [--nopython]       : compile without python support 
+         [--oldlaser]       : use the old (original) laser server
+         [--tcp862]         : use tcp862 support if using the new laser server
+	 [--nodoxygen]      : no doxygen support for creating the documentation
+         [--headers <path>] : path to linux headers include directory 
+	 [-L<libpath>]      : compile with additional library paths
+                              (can have multiple -L option switchs)
 EOF
   }
 
   if (/^-L/) {
     push @user_libs, $_;
   }
+  if (/^--headers/) {
+    $header_dir = $_;
+  } 
   if (/nographics/) {
     $nographics = 1;
   }
@@ -119,6 +123,7 @@ my $processor = verify_processor();
 my ($os_type, $kernel) = verify_kernel();
 
 my ($suse) = verify_suse();
+my $header_dir = verify_headers() unless ($header_dir);
 my ($canlib) = verify_canlib();
 
 my $gtk_config = verify_graphics() unless ($nographics);
@@ -189,6 +194,7 @@ if ($no_strict_aliasing) {
 }
 print OUTPUT "CYGWIN = 1\n" if ($os_type eq "cygwin");
 print OUTPUT "NO_TCP862_SERIAL_SUPPORT = 1\n" unless (!$notcp862);
+print OUTPUT "KERNEL_HEADERS_DIR = $header_dir\n" unless (!$header_dir);
 close OUTPUT;
 
 write_out_config($gtk_config, $jpeg, $zlib, $libart);
@@ -826,7 +832,8 @@ sub verify_kernel {
 
 sub verify_processor {
   my $processor = `uname -p 2>/dev/null`;
-  if ($? >> 8 != 0) {
+  chomp $processor;
+  if ($? >> 8 != 0 or $processor eq "unknown") {
     $processor = `uname -m 2>/dev/null`;
   } 
   if ($? >> 8 != 0) {
@@ -837,6 +844,29 @@ sub verify_processor {
   chomp $processor;
   print "Found processor $processor.\n";
   return ($processor);
+}
+
+sub verify_headers {
+  print "Searching for linux kernel headers... ";
+
+  my $distro = `uname -r 2>/dev/null`;
+  chomp $distro;
+  my $path = "/usr/src/linux-headers-$distro/include";
+  if (-d $path) {
+    print "found at $path\n";
+    return $path;
+  }
+
+  $path = "/usr/src/linux/include";
+  if (-d $path) {
+    print "found at $path\n";
+    return $path;
+  }
+  print "${red}not found${normal}\n";
+
+  print "You need the kernel headers to compile he quickcam camera driver. \n";
+  print "Please install these, or if they are installed in a non-standard place,\n";
+  print "please provide the --headers flag.\n";
 }
 
 sub write_out_config {
@@ -1023,6 +1053,8 @@ EOF
 EOF
   close CONFIG;
 }
+
+
 
 ##############################################################################
 # Specifically added because SuSE has a broken gnome, which means that

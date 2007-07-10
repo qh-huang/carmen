@@ -18,9 +18,11 @@ error:
 else 
 ifneq ($(VENDOR),apple) 
 ifneq ($(PROCESSOR),x86_64)
+ifdef KERNEL_HEADERS_DIR
 SUBDIRS += quickcam
 PUBLIC_BINARIES += camera_quickcam
 TARGETS += camera_quickcam
+endif
 endif
 endif
 endif
