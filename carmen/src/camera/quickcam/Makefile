@@ -7,6 +7,8 @@ MODULE_COMMENT = "Phillips Camera Module"
 SOURCES = ccvt_mmx.S ccvt_misc.c quickcam.c
 TARGETS = libccvt.a libquickcam.a
 
+IFLAGS += -I$(KERNEL_HEADERS_DIR)
+
 all: 
 
 libccvt.a: ccvt_mmx.o ccvt_misc.o 
