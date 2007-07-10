@@ -1,4 +1,4 @@
-include $(CARMEN_HOME)/src/Makefile.conf
+include ../Makefile.conf
 
 MODULE_NAME = MAP_EDITOR
 MODULE_COMMENT = "Provides photoshop-like map editor."
@@ -19,4 +19,4 @@ map_editor: map_editor.o map_editor_graphics.o map_editor_menus.o map_editor_dra
 
 test_menu: test_menu.o
 
-include $(CARMEN_HOME)/src/Makefile.rules
+include ../Makefile.rules
