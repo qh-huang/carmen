@@ -8,7 +8,7 @@ PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
 	   localize navigator vasco proccontrol \
 	   camera joystick pantilt gps 
 
-TAR_PACKAGE_LIST = $(PACKAGES) 
+TAR_PACKAGE_LIST = $(filter-out laser, $(PACKAGES)) laser-new laser-old
 
 ifndef NO_PYTHON
 PACKAGES += python

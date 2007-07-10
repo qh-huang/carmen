@@ -47,8 +47,8 @@ distclean::
 check: all
 
 tar-clean:
-	$(ECHO) "  Adding Python..."
-	$(SILENT)	dir=$${PWD/#*carmen/}; \
+	@echo "  Adding Python..."
+	dir=$${PWD/#*carmen/}; \
 	cd $(CARMEN_HOME)/..; \
 	tar --delete -f $(CARMEN_HOME)/../carmen.tar carmen$$dir/CVS ; \
 	if [ -f carmen/$$dir/.cvsignore ] ; then \

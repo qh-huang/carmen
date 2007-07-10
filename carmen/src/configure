@@ -50,7 +50,7 @@ Options: [--nographics]     : compile without graphics
 	 [--notcpd]         : compile without using TCPD wrappers
 	 [--nojpeg]         : compile without JPEG support
 	 [--nozlib]         : compile without ZLib support
-	 [--nowand]         : compile without ImageMagick support
+	 [--nomagick]       : compile without ImageMagick support
 	 [--nojava]         : compile without java support
          [--nopython]       : compile without python support 
          [--oldlaser]       : use the old (original) laser server
@@ -92,7 +92,7 @@ EOF
   if (/nolibart/) {
     $nolibart = 1;
   }
-  if (/nowand/) {
+  if (/nomagick/) {
     $nowand = 1;
   }
   if (/nojava/) {
@@ -719,7 +719,7 @@ EOF
 sub verify_wand {
   my $error = undef;
 
-  print "Searching for Wand... ";
+  print "Searching for ImageMagick (Wand)... ";
   $error = system ("pkg-config Wand");
   if (!$error) {
     print "found\n";
