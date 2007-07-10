@@ -139,8 +139,9 @@ my $wand = verify_wand() unless ($nowand);
 my $java = verify_java() unless ($nojava);
 my $doxygen = verify_doxygen() unless ($nodoxygen);
 my $swig = verify_swig() unless ($nopython);
-$nopython = ! verify_python() unless ($nopython or !$swig);
-my $python = ask_python() unless ($nopython or !$swig);
+my $python = undef;
+$python = ask_python() unless ($nopython or !$swig);
+$nopython = !$python;
 
 $oldlaser = ask_oldlaser() unless ($arg_oldlaser);
 set_laser_link();
@@ -179,6 +180,7 @@ print OUTPUT "NO_CANLIB = 1\n" unless ($canlib);
 print OUTPUT "FOUND_SUSE = 1\n" if ($suse);
 print OUTPUT "NO_DOXYGEN = 1\n" unless ($doxygen);
 print OUTPUT "NO_PYTHON = 1\n" unless ($python and $swig);
+print OUTPUT "PYTHON = $python\n" unless ($nopython);
 print OUTPUT "PROCESSOR = $processor\n";
 if ($java) {
   print OUTPUT "JAVA_HOME = $java\n";
@@ -352,14 +354,22 @@ EOF
 sub verify_python {
   my $error = undef;
 
-  print "Searching for Python... ";
-  $error = system ("python -h > /dev/null  2>&1");
+  print "Searching for Python2.5... ";
+  $error = system ("python2.5 -h > /dev/null  2>&1");
   if (!$error) {
     print "found\n";
-    return 1;
+    return "python2.5";
   }  
 
   print "${red}not found${normal}\n";
+
+  print "Searching for Python2.4... ";
+  $error = system ("python2.4 -h > /dev/null  2>&1");
+  if (!$error) {
+    print "found\n";
+    return "python2.4";
+  }  
+
   return undef;
 }
 
@@ -371,10 +381,10 @@ sub ask_python{
   chomp $python_install;
 
   if($python_install eq "Y" or $python_install eq "y"){
-      return 1;
+      return verify_python();
   }
   
-  return 0;
+  return undef;
 }
 
 sub ask_oldlaser{

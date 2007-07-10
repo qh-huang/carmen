@@ -107,7 +107,7 @@ ifndef NO_PYTHON
 	$(ECHO) "       P Y T H O N"
 	$(ECHO) "       ***********"
 	$(ECHO)
-	$(RECURSE)
+	$(SILENT) make -C python phase4
 endif
 
 install:
