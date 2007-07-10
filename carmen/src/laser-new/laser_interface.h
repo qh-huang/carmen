@@ -118,6 +118,9 @@ carmen_laser_unsubscribe_alive_message(carmen_handler_t handler);
 void
 carmen_laser_define_alive_message();
 
+void 
+carmen_laser_get_offset(int which, carmen_point_t *laser_offset);
+
 /* void */
 /* carmen_laser_publish_alive_message(carmen_laser_alive_message* msg);*/
 

@@ -162,3 +162,42 @@ carmen_laser_subscribe_rearlaser_message(carmen_laser_laser_message *laser,
   carmen_laser_subscribe_laser2_message(laser, handler, subscribe_how);
 
 }
+
+void 
+carmen_laser_get_offset(int which, carmen_point_t *laser_offset)
+{
+  char param_name[2048];
+  char module_name[2048];
+  int got_module_name = 0;
+
+  char *laser_pose_str;
+  double x, y, theta;
+  int num_scanned;
+  int error;
+
+  if (carmen_param_get_module() != NULL) {
+    strcpy(module_name, carmen_param_get_module());
+    got_module_name = 1;
+    carmen_param_set_module(NULL);
+  }
+
+  sprintf(param_name, "laser_laser%d_position", which);
+  error = carmen_param_get_string(param_name, &laser_pose_str, NULL);
+  if (error == -1) 
+    carmen_die(carmen_param_get_error());
+  
+  num_scanned = sscanf(laser_pose_str, "%*c %lf %lf %lf %*c", &x, &y, 
+		       &theta);
+  theta = carmen_degrees_to_radians(theta);
+  if (num_scanned != 3)
+    carmen_die("Bad string for %s: %s\n", param_name, laser_pose_str);
+
+  laser_offset->x = x;
+  laser_offset->y = y;
+  laser_offset->theta = theta;
+
+  free(laser_pose_str);
+
+  if (got_module_name) 
+    carmen_param_set_module(module_name);
+}
