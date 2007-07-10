@@ -387,21 +387,24 @@ sub ask_oldlaser{
   if($oldlaser_install eq "Y" or $oldlaser_install eq "y"){
       return 1;
   }
-  
+
   return 0;
 }
 
-sub set_laser_link{
-    if (-e "laser" && !(-l "laser")) {
-	print "ERROR: The directory called laser exitsts.\nPlease remove it and run configure again.\n\n";
-	exit(0);
+sub set_laser_link {
+  if (-e "laser") {
+    if (!(-l "laser")) {
+      print "ERROR: The directory called laser exists.\n";
+      print "Please remove it and run configure again.\n\n";
+      exit(0);
     }
-    elsif($oldlaser && !(-l "laser")) {
-	system('ln -s laser-old laser');
-    }
-    elsif(!(-l "laser")) {
-	system('ln -s laser-new laser');
-    }
+    unlink "laser";
+  }
+  if ($oldlaser) {
+    system('ln -s laser-old laser');
+  } else {
+    system('ln -f -s laser-new laser');
+  }
 }
 
 
