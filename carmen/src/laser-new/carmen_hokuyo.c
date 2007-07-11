@@ -65,6 +65,8 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
     message.timestamp=(double)timestamp.tv_sec+1e-6*timestamp.tv_usec;
     for (j=0; j<size; j++){
       message.range[j]=0.001*readings[j];
+      if (message.range[j] < 0.02)
+	message.range[j] += device->config.maximum_range;
     }
     if (device->f_onreceive!=NULL)
       (*device->f_onreceive)(device, &message);

@@ -334,12 +334,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 
     int id_of_laser_i = index_to_id(i);
 
-    if (id_of_laser_i==1)
-      sprintf(var_name,"front_laser");
-    else if (id_of_laser_i==2)
-      sprintf(var_name,"rear_laser");
-    else
-      sprintf(var_name,"laser%d", id_of_laser_i);
+    sprintf(var_name,"laser%d", id_of_laser_i);
     
     strcpy(var_dev,var_name);
     strcat(var_dev, "_dev");
