@@ -34,6 +34,10 @@ class MessageHandler {
  private:
   carmen_robot_laser_message the_latest_msg_front;
   carmen_robot_laser_message the_latest_msg_rear;
+  carmen_laser_laser_message the_latest_msg_laser1;
+  carmen_laser_laser_message the_latest_msg_laser2;
+  carmen_laser_laser_message the_latest_msg_laser3;
+  carmen_laser_laser_message the_latest_msg_laser4;
   carmen_laser_laser_message the_latest_msg_laser5;
   carmen_localize_globalpos_message the_latest_globalpos;
   carmen_base_odometry_message the_latest_odometry;
@@ -66,7 +70,29 @@ class MessageHandler {
 	carmen_robot_laser_message* get_rear_laser_message(void)
 	  {return &the_latest_msg_rear;}
 
-	/*laser 5 messages, aka hokuyo*/
+	/*laser numbered messages, from robot */
+
+	/*laser numbered messages, from laser */
+	void set_laser1_message(carmen_laser_laser_message *msg)
+	  {memcpy(&the_latest_msg_laser1, msg, sizeof(carmen_laser_laser_message));}
+	carmen_laser_laser_message* get_laser1_message(void)
+	  {return &the_latest_msg_laser1;}
+
+	void set_laser2_message(carmen_laser_laser_message *msg)
+	  {memcpy(&the_latest_msg_laser2, msg, sizeof(carmen_laser_laser_message));}
+	carmen_laser_laser_message* get_laser2_message(void)
+	  {return &the_latest_msg_laser2;}
+
+	void set_laser3_message(carmen_laser_laser_message *msg)
+	  {memcpy(&the_latest_msg_laser3, msg, sizeof(carmen_laser_laser_message));}
+	carmen_laser_laser_message* get_laser3_message(void)
+	  {return &the_latest_msg_laser3;}
+
+	void set_laser4_message(carmen_laser_laser_message *msg)
+	  {memcpy(&the_latest_msg_laser4, msg, sizeof(carmen_laser_laser_message));}
+	carmen_laser_laser_message* get_laser4_message(void)
+	  {return &the_latest_msg_laser4;}
+
 	void set_laser5_message(carmen_laser_laser_message *msg)
 	  {memcpy(&the_latest_msg_laser5, msg, sizeof(carmen_laser_laser_message));}
 	carmen_laser_laser_message* get_laser5_message(void)
