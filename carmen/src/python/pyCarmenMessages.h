@@ -70,6 +70,74 @@ class rear_laser{
   }
 };
 
+/* Numbered lasers here */
+static MessageHandler *_laser1_callback;
+class laser1{
+ public:
+  static void lazer1_msg(carmen_laser_laser_message *msg)
+  {
+    _laser1_callback->set_laser1_message(msg);
+    if (_laser1_callback) _laser1_callback->run_cb("laser1", "get_laser1_message()");
+  }
+
+  laser1(MessageHandler *cb)
+  {
+    _laser1_callback = cb;
+    carmen_laser_subscribe_laser1_message
+      (NULL, (carmen_handler_t)lazer1_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
+static MessageHandler *_laser2_callback;
+class laser2{
+ public:
+  static void lazer2_msg(carmen_laser_laser_message *msg)
+  {
+    _laser2_callback->set_laser2_message(msg);
+    if (_laser2_callback) _laser2_callback->run_cb("laser2", "get_laser2_message()");
+  }
+
+  laser2(MessageHandler *cb)
+  {
+    _laser2_callback = cb;
+    carmen_laser_subscribe_laser2_message
+      (NULL, (carmen_handler_t)lazer2_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
+static MessageHandler *_laser3_callback;
+class laser3{
+ public:
+  static void lazer3_msg(carmen_laser_laser_message *msg)
+  {
+    _laser3_callback->set_laser3_message(msg);
+    if (_laser3_callback) _laser3_callback->run_cb("laser3", "get_laser3_message()");
+  }
+
+  laser3(MessageHandler *cb)
+  {
+    _laser3_callback = cb;
+    carmen_laser_subscribe_laser3_message
+      (NULL, (carmen_handler_t)lazer3_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
+static MessageHandler *_laser4_callback;
+class laser4{
+ public:
+  static void lazer4_msg(carmen_laser_laser_message *msg)
+  {
+    _laser4_callback->set_laser4_message(msg);
+    if (_laser4_callback) _laser4_callback->run_cb("laser4", "get_laser4_message()");
+  }
+
+  laser4(MessageHandler *cb)
+  {
+    _laser4_callback = cb;
+    carmen_laser_subscribe_laser4_message
+      (NULL, (carmen_handler_t)lazer4_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
 
 static MessageHandler *_laser5_callback;
 class laser5{
@@ -88,7 +156,7 @@ class laser5{
   }
 };
 
-/*Deal with the rear laser handler here*/
+/*Deal with the global pose handler here*/
 static MessageHandler *_global_pose_callback;
 class global_pose{
  public:
