@@ -33,15 +33,15 @@ carmen_logfile_index_p logfile_index = NULL;
 
 int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)))
 {
-  int i, percent, last_percent = 0;
-  char line[100000];
+  int i;
+  char line[100001];
 
   carmen_point_t last_odom   = {MAXDOUBLE, MAXDOUBLE, MAXDOUBLE};
   carmen_point_t last_laser  = {MAXDOUBLE, MAXDOUBLE, MAXDOUBLE};
 
   double odom_dist  = 0;
   double laser_dist = 0;
-  double starttime  = MAXDOUBLE;
+  double starttime  = -1;
   double lasttimestamp = 0;
 
   carmen_base_odometry_message odometry;
@@ -49,10 +49,6 @@ int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)
 
   carmen_robot_laser_message laser;
   carmen_erase_structure(&laser, sizeof(laser) );
-
-/*   /\* initialize connection to IPC network *\/ */
-/*   carmen_ipc_initialize(argc, argv); */
-/*   carmen_param_check_version(argv[0]);   */
 
   /* open the logfile */
   logfile = carmen_fopen(argv[1], "r");
@@ -63,13 +59,6 @@ int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)
   logfile_index = carmen_logfile_index_messages(logfile);
 
   for(i = 0; i < logfile_index->num_messages; i++) {
-    /* print out percentage read */
-    percent = (int)floor(i / (double)logfile_index->num_messages * 100.0);
-    if(percent > last_percent) {
-      fprintf(stderr, "\rReading logfile (%d%%)   ", percent);
-      last_percent = percent;
-    }
-    
     /* read i-th line */
     carmen_logfile_read_line(logfile_index, logfile, i, 100000, line);
 
@@ -78,6 +67,8 @@ int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)
       carmen_string_to_base_odometry_message(carmen_next_word(line), 
 					     &odometry);
 
+
+      fprintf(stderr,"O");
       if (last_odom.x != MAXDOUBLE) {
 	odom_dist += hypot(last_odom.x - odometry.x, last_odom.y - odometry.y);
       }
@@ -85,22 +76,23 @@ int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)
       last_odom.y = odometry.y;
       last_odom.theta = odometry.theta;
 
-      if (starttime == MAXDOUBLE)
+      if (starttime < 0)
 	starttime = odometry.timestamp;
-      lasttimestamp = laser.timestamp;
+      lasttimestamp = odometry.timestamp;
 
     }
     else if(strncmp(line, "ROBOTLASER0 ", 12) == 0) {
       carmen_string_to_robot_laser_message(carmen_next_word(line), 
 					   &laser);
 
+      fprintf(stderr,"L");
       if (last_laser.x != MAXDOUBLE) {
 	laser_dist += hypot(last_laser.x - laser.laser_pose.x,
 			    last_laser.y - laser.laser_pose.y);
       }
       last_laser = laser.laser_pose;
 
-      if (starttime == MAXDOUBLE)
+      if (starttime < 0)
 	starttime = laser.timestamp;
       lasttimestamp = laser.timestamp;
 
@@ -110,18 +102,22 @@ int main(int argc  __attribute__ ((unused)), char **argv __attribute__ ((unused)
       carmen_string_to_robot_laser_message_orig(carmen_next_word(line), 
 						&laser);
 
+      fprintf(stderr,"l");
       if (last_laser.x != MAXDOUBLE) {
 	laser_dist += hypot(last_laser.x - laser.laser_pose.x,last_laser.y - laser.laser_pose.y);
       }
       last_laser = laser.laser_pose;
       
-      if (starttime == MAXDOUBLE)
+      if (starttime <0) {
 	starttime = laser.timestamp;
+      fprintf(stderr,"%s\n",line);
+
+      }
       lasttimestamp = laser.timestamp;
     }
-
   }
-  fprintf(stderr, "\rReading logfile (100%%)   \n");
+
+  fprintf(stderr,"%s\n",line);
 
   fprintf(stderr, "Time                         : %.2f s\n", lasttimestamp-starttime);
   fprintf(stderr, "Traveled distance (odometry) : %.2f m   =>  %.2f m/s\n", odom_dist, odom_dist/(lasttimestamp-starttime));

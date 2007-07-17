@@ -20,7 +20,7 @@ SOURCES = logger.c playback_interface.c playback.c laserint_to_carmenlog.c \
 PUBLIC_INCLUDES = logger.h logger_messages.h playback_messages.h \
 		  playback_interface.h writelog.h readlog.h
 PUBLIC_LIBRARIES = libplayback_interface.a  libwritelog.a libreadlog.a
-PUBLIC_BINARIES = logger playback playback_control
+PUBLIC_BINARIES = logger playback playback_control logtool
 
 TARGETS = libwritelog.a libreadlog.a logger libplayback_interface.a  playback \
 	  laserint_to_carmenlog log_timestamp_repair log_corrected_laser \
