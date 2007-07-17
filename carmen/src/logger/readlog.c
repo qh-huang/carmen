@@ -182,25 +182,36 @@ int carmen_logfile_read_next_line(carmen_logfile_index_p index, carmen_FILE *inf
 
 int first_wordlength(char *str)
 {
-  //  return strchr(str, ' ') - str;
-  char* x = carmen_next_word(str);
-  return (int) (x-str);
+  char* c_enter = strchr(str, '\n'); // check also for newline
+  char* c = strchr(str, ' ');
 
+  if (c_enter == NULL && c == NULL) // it is the last word in the string
+    return strlen(str); 
+
+  if (c_enter != NULL && c == NULL) // there is no space but a newline
+    return c_enter - str;
+
+  if (c_enter == NULL && c != NULL) // there is a space but no newline
+    return c - str;
+
+  if (c_enter < c )    // use whatever comes first
+    return c_enter - str;
+  else
+    return c - str;
 }
 
 void copy_host_string(char **host, char **string)
 {
   int l;
-
   while(*string[0] == ' ')
     *string += 1;                           /* advance past spaces */
   l = first_wordlength(*string);
   if(*host != NULL)
     free(*host);
-  *host = (char *)calloc(1, l);
+  *host = (char *)calloc(1, l+1);     /* allocate one extra char for the \0 */
   carmen_test_alloc(*host);
-  strncpy(*host, *string, l - 1);
-  (*host)[l] = '\0';
+  strncpy(*host, *string, l);
+  (*host)[l+1] = '\0';
   *string += l;
 }
 
