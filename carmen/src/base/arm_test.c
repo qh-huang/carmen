@@ -30,7 +30,7 @@
 #include <carmen/arm_interface.h>
 
 
-static int num_joints = 3;
+static int num_joints = 4;
 static double joints[10];
 
 
@@ -52,16 +52,19 @@ int main(int argc, char **argv)
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
-  if (argc < 4)
-    carmen_die("usage: %s <joint1 position> <joint2 position> <joint3 position>\n", argv[0]);
+  if (argc < 5)
+    carmen_die("usage: %s <joint1 position> <joint2 position> <joint3 position> <joint4 position>\n", argv[0]);
 
   joints[0] = atof(argv[1]);
   joints[1] = atof(argv[2]);
   joints[2] = atof(argv[3]);
+  joints[3] = atof(argv[4]);
 
   carmen_arm_command(num_joints, joints);
 
   carmen_arm_subscribe_state_message(NULL, (carmen_handler_t) arm_state_handler, CARMEN_SUBSCRIBE_LATEST);
+
+  carmen_ipc_dispatch();
 
   return 0;
 }

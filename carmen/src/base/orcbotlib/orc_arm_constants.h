@@ -4,15 +4,17 @@
 
 // ---- Initialize ---- //
 // it would be cool if portmap was used in the later arrays, but for now
-// we assume that items are always in the order elbow-shoulder-hip
+// we assume that items are always in the order elbow-shoulder-hip-gripper
 #define ELBOW 0
 #define SHOULDER 1
 #define HIP 2
+#define GRIPPER 3
 
 #define ELBOW_MOTOR_PORT 0
 #define SHOULDER_MOTOR_PORT 1
 #define HIP_MOTOR_PORT 2
- int MOTOR_PORTMAP[] = { ELBOW_MOTOR_PORT, SHOULDER_MOTOR_PORT, HIP_MOTOR_PORT };
+#define GRIPPER_PORT 0
+ int MOTOR_PORTMAP[] = { ELBOW_MOTOR_PORT, SHOULDER_MOTOR_PORT, HIP_MOTOR_PORT, GRIPPER_PORT };
 
 #define ELBOW_ENCODER_PORT 0
 #define SHOULDER_ENCODER_PORT 1
@@ -37,8 +39,9 @@ double TICKS_PER_RADIAN[] = { ELBOW_TICKS_PER_RADIAN,
 #define SHOULDER_THETA_OFFSET 0
 #define ELBOW_THETA_OFFSET 0
 #define HIP_THETA_OFFSET 0
+#define GRIPPER_THETA_OFFSET 0
 double THETA_OFFSET[] = { ELBOW_THETA_OFFSET, 
-		       SHOULDER_THETA_OFFSET, HIP_THETA_OFFSET };
+		       SHOULDER_THETA_OFFSET, HIP_THETA_OFFSET, GRIPPER_THETA_OFFSET };
 
 // ---- Limits ---- //
 #define MAX_CURRENT 0  // not currently being used
@@ -60,10 +63,13 @@ double THETA_OFFSET[] = { ELBOW_THETA_OFFSET,
 #define ELBOW_MAX_PWM 80
 #define ELBOW_MIN_PWM 10
 
+#define GRIPPER_MAX_THETA 1.5708
+#define GRIPPER_MIN_THETA 0
+
  double MAX_THETA[] = { ELBOW_MAX_THETA, 
-			  SHOULDER_MAX_THETA, HIP_MAX_THETA };
+			  SHOULDER_MAX_THETA, HIP_MAX_THETA, GRIPPER_MAX_THETA };
  double MIN_THETA[] = { ELBOW_MIN_THETA, 
-			  SHOULDER_MIN_THETA, HIP_MIN_THETA };
+			  SHOULDER_MIN_THETA, HIP_MIN_THETA, GRIPPER_MIN_THETA };
  int MAX_PWM[] = { ELBOW_MAX_PWM, 
 			SHOULDER_MAX_PWM, HIP_MAX_PWM };
  int MIN_PWM[] = { ELBOW_MIN_PWM, 
