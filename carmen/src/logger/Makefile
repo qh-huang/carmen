@@ -24,7 +24,7 @@ PUBLIC_BINARIES = logger playback playback_control
 
 TARGETS = libwritelog.a libreadlog.a logger libplayback_interface.a  playback \
 	  laserint_to_carmenlog log_timestamp_repair log_corrected_laser \
-	  test_logfileread arm_dump_state
+	  test_logfileread arm_dump_state logtool
 
 ifndef NO_GRAPHICS
 SOURCES += playback_control.c
@@ -59,6 +59,8 @@ log_timestamp_repair: 	log_timestamp_repair.o
 log_corrected_laser: 	log_corrected_laser.o libwritelog.a
 
 test_logfileread:	test_logfileread.o libreadlog.a
+
+logtool:	        logtool.o libreadlog.a libwrite.a
 
 arm_dump_state:		arm_dump_state.o
 
