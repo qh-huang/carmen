@@ -77,6 +77,9 @@ carmen_ipc_connect_locked(char *module_name);
 int
 carmen_ipc_connect(char *module_name);
 
+void 
+carmen_ipc_connect_long(char *module_name, char *host, int port);
+
 void
 carmen_ipc_initialize_locked(int argc, char **argv);
 
