@@ -37,9 +37,9 @@ int carmen_hokuyo_connect(carmen_laser_device_t * device, char* filename, int ba
 
 int carmen_hokuyo_configure(carmen_laser_device_t * device ){
   HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  device->config.start_angle=hokuyo_getStartAngle(urg,-1);
+  //device->config.start_angle=hokuyo_getStartAngle(urg,-1);
   device->config.angular_resolution=hokuyo_getStep(urg,-1);
-  device->config.fov=device->config.angular_resolution*(urg->endStep-urg->startStep);
+  //device->config.fov=device->config.angular_resolution*(urg->endStep-urg->startStep);
   device->config.accuracy=0.001;
   device->config.maximum_range=4.095;	
   return 1;
@@ -55,6 +55,12 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
   unsigned short readings[1024];
   struct timeval timestamp;
   int size=hokuyo_getReading(urg, readings, &timestamp, -1, -1, -1, -1, -1);
+
+  // figure out the amount of padding required to match fov in ini file
+  int pad_size = carmen_round( size / 2 * ( 1 - device->config.fov / urg->fov  ) );
+  pad_size = ( pad_size < 0 ) ? 0 : pad_size;
+  size = size - 2 * pad_size;
+ 
   if (size){
     int j;
     carmen_laser_laser_static_message message;
@@ -64,7 +70,7 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
     message.num_remissions=0;
     message.timestamp=(double)timestamp.tv_sec+1e-6*timestamp.tv_usec;
     for (j=0; j<size; j++){
-      message.range[j]=0.001*readings[j];
+      message.range[j]=0.001*readings[j + pad_size];
       if (message.range[j] < 0.02)
 	message.range[j] += device->config.maximum_range;
     }
