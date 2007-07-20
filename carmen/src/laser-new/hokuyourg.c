@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <carmen/carmen.h>
 
 #define BUFSIZE 8192
 #define CMD_EOF       "\26\n"
@@ -133,6 +134,7 @@ void hokuyo_init(HokuyoURG *h){
   h->cluster=1;
   h->txretries=20;
   h->dataretries=10;
+  h->fov = carmen_degrees_to_radians( 270 );
   h->fd=-1;
 }
 

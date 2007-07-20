@@ -6,6 +6,7 @@
 
 typedef struct {
 	int startStep, endStep, cluster, txretries, dataretries;
+        double fov;
 	int fd;
 } HokuyoURG;
 
