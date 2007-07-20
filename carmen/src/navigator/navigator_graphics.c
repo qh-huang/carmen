@@ -55,7 +55,7 @@ Cursor gdk_x11_cursor_get_xcursor (GdkCursor *cursor);
 #define BUTTON_HEIGHT 30
 #define GRADIENT_COLORS 40
 
-#define ALWAYS_REDRAW 0
+#define ALWAYS_REDRAW 1
 
 #define DEFAULT_ROBOT_COLOUR carmen_red
 #define DEFAULT_GOAL_COLOUR carmen_yellow
@@ -783,8 +783,17 @@ static void draw_lasers(GtkMapViewer *the_map_view, double pixel_size)
   particle = robot; 
   for(index = 0; index < sensor_msg.num_readings; 
       index += sensor_msg.laser_skip) {
-    angle = sensor_msg.pose.theta - M_PI_2 + 
-      index / (float)(sensor_msg.num_readings - 1) * M_PI;
+    
+    // finale: doesn't this assume a 180 fov?
+    // angle = sensor_msg.pose.theta - M_PI_2 + 
+    //  index / (float)(sensor_msg.num_readings - 1) * M_PI;
+
+    fprintf( stderr, "spt %f", sensor_msg.pose.theta );
+
+    angle = sensor_msg.pose.theta - sensor_msg.config.fov / 2 + 
+      index / (float)(sensor_msg.num_readings - 1) * sensor_msg.config.fov;
+    
+
     particle.pose.x = sensor_msg.pose.x + sensor_msg.range[index] *
       cos(angle);
     particle.pose.y = sensor_msg.pose.y + sensor_msg.range[index] *
