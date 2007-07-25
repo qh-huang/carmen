@@ -209,7 +209,7 @@ Redraw(void)
 		    drawing_area->allocation.height - 40, str);
   }
 
-  sprintf(str, "Sensor maxrange  = %.1fm", laser.config.maximum_range);
+  sprintf(str, "Sensor maxrange  = %.3fm", laser.config.maximum_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  drawing_area->allocation.width - 155.0, 
