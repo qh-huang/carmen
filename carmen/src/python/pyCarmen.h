@@ -34,6 +34,8 @@ class MessageHandler {
  private:
   carmen_robot_laser_message the_latest_msg_front;
   carmen_robot_laser_message the_latest_msg_rear;
+  carmen_robot_laser_message the_latest_msg_robot_laser1;
+  carmen_robot_laser_message the_latest_msg_robot_laser2;
   carmen_laser_laser_message the_latest_msg_laser1;
   carmen_laser_laser_message the_latest_msg_laser2;
   carmen_laser_laser_message the_latest_msg_laser3;
@@ -71,6 +73,15 @@ class MessageHandler {
 	  {return &the_latest_msg_rear;}
 
 	/*laser numbered messages, from robot */
+	void set_robot_laser1_message(carmen_robot_laser_message *msg)
+	  {memcpy(&the_latest_msg_robot_laser1, msg, sizeof(carmen_robot_laser_message));}
+	carmen_robot_laser_message* get_robot_laser1_message(void)
+	  {return &the_latest_msg_robot_laser1;}
+
+	void set_robot_laser2_message(carmen_robot_laser_message *msg)
+	  {memcpy(&the_latest_msg_robot_laser2, msg, sizeof(carmen_robot_laser_message));}
+	carmen_robot_laser_message* get_robot_laser2_message(void)
+	  {return &the_latest_msg_robot_laser2;}
 
 	/*laser numbered messages, from laser */
 	void set_laser1_message(carmen_laser_laser_message *msg)

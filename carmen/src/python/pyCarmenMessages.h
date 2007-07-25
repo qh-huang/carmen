@@ -33,7 +33,6 @@
 
 
 /*Deal with the front laser handler here*/
-
 static MessageHandler *_laser_callback;
 class front_laser{
  public:
@@ -70,7 +69,43 @@ class rear_laser{
   }
 };
 
-/* Numbered lasers here */
+/* Numbered lasers here -- robot messages */
+static MessageHandler *_robot_laser1_callback;
+class robot_laser1{
+ public:
+  static void robot_lazer1_msg(carmen_robot_laser_message *msg)
+  {
+    _robot_laser1_callback->set_robot_laser1_message(msg);
+    if (_robot_laser1_callback) _robot_laser1_callback->run_cb("robot_laser1", "get_robot_laser1_message()");
+  }
+
+  robot_laser1(MessageHandler *cb)
+  {
+    _robot_laser1_callback = cb;
+    carmen_robot_subscribe_laser1_message
+      (NULL, (carmen_handler_t)robot_lazer1_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
+static MessageHandler *_robot_laser2_callback;
+class robot_laser2{
+ public:
+  static void robot_lazer2_msg(carmen_robot_laser_message *msg)
+  {
+    _robot_laser2_callback->set_robot_laser2_message(msg);
+    if (_robot_laser2_callback) _robot_laser2_callback->run_cb("robot_laser2", "get_robot_laser2_message()");
+  }
+
+  robot_laser2(MessageHandler *cb)
+  {
+    _robot_laser2_callback = cb;
+    carmen_robot_subscribe_laser2_message
+      (NULL, (carmen_handler_t)robot_lazer2_msg, CARMEN_SUBSCRIBE_LATEST);
+  }
+};
+
+
+/* Numbered lasers here -- laser messages */
 static MessageHandler *_laser1_callback;
 class laser1{
  public:
