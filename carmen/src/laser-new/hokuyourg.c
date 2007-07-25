@@ -1,10 +1,11 @@
 #include "hokuyourg.h"
+#include <carmen/carmen.h>
 #include <stdio.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
-#include <carmen/carmen.h>
 
 #define BUFSIZE 8192
 #define CMD_EOF       "\26\n"
@@ -14,6 +15,8 @@
 #define CMD_ACQUIRE   "G"
 #define CMD_RESPONSE_PERIOD        3000
 #define READING_ACQUIRE_PERIOD     70000
+#define READ_WAIT_USEC 300000
+#define MAX_NULLREADS 10
 
 //helper functions
 inline char* skipLine(char* s){
@@ -25,16 +28,29 @@ inline char* skipLine(char* s){
 }
 
 inline int write_cmd(int fd, char* s){
+  //fprintf (stderr, "wfd=%d ", fd);
   return write(fd,s,strlen(s));
 } 
 
 inline int read_cmd(int fd, char* s, int bufsize){
   char* cbuf=s;
   int lfcount=0;
-  int d=cbuf-s;
+
+  fd_set  dSet;
+  FD_ZERO(&dSet);
+  FD_SET(fd,&dSet);
+  struct timeval tv={0,READ_WAIT_USEC};
+  int nullreads=MAX_NULLREADS;
+  //fprintf (stderr, "rfd=%d ", fd);
+
   while (lfcount<2){
     char* c=cbuf;
-    int count=read(fd,cbuf,bufsize);
+    int available=select(fd+1, &dSet, NULL, NULL, &tv);
+    int readchars=cbuf-s;
+    int bufferspace=bufsize-readchars;
+    available=available<bufferspace-1?available:bufferspace-1;
+    // fprintf(stderr, "bufferspace=%05d \n", bufferspace);
+    int count=read(fd,cbuf,available);
     if (count>0){
       cbuf+=count;
       for (;c<cbuf;c++){
@@ -42,21 +58,28 @@ inline int read_cmd(int fd, char* s, int bufsize){
 	  lfcount++;
 	else
 	  lfcount=0;
-      }
+      } 
+    } else {
+      nullreads--;
+    }
+    if (nullreads<0){
+      fprintf (stderr, "F");
+      break;
     }
   }
-  *cbuf=0;
-  return d;
+  return cbuf-s;
 }
 
-inline int blocking_request(int fd, char* cmd, int retries, char* answer, int bufsize){
+
+inline int nonblocking_request(int fd, char* cmd, int retries, char* answer, int bufsize){
   int i;
   for (i=0; i<retries; i++){
+    char* p0=answer;
     int l=write_cmd(fd,cmd);
     usleep(CMD_RESPONSE_PERIOD);
-    read_cmd(fd,answer,bufsize);
+    p0+=read_cmd(fd,p0,bufsize);
     if (!strncmp(cmd,answer,l))
-      return 1;
+      return (int) (p0-answer);
     else{
       write_cmd(fd,CMD_EOF);
     }
@@ -65,21 +88,21 @@ inline int blocking_request(int fd, char* cmd, int retries, char* answer, int bu
 }
 
 inline int queryVersion(int fd, int retries, char* s, int bufsize){
-  return blocking_request(fd,CMD_VERSION,retries,s,bufsize);
+  return nonblocking_request(fd,CMD_VERSION,retries,s,bufsize);
 }
 
 inline int laserOn(int fd, int retries, char* s, int bufsize){
-  return blocking_request(fd,CMD_LASER_ON,retries,s,bufsize);
+  return nonblocking_request(fd,CMD_LASER_ON,retries,s,bufsize);
 }
 
 inline int laserOff(int fd, int retries, char* s, int bufsize){
-  return blocking_request(fd,CMD_LASER_OFF,retries,s,bufsize);
+  return nonblocking_request(fd,CMD_LASER_OFF,retries,s,bufsize);
 }
 
 inline int requestReading(int fd, int retries, int min, int max, int cluster, char* s, int bufsize){
   char cmd[bufsize];
   sprintf(cmd,"%s%03d%03d%02d\n",CMD_ACQUIRE,min,max,cluster);
-  return blocking_request(fd,cmd,retries,s,bufsize);
+  return nonblocking_request(fd,cmd,retries,s,bufsize);
 }
 
 inline int waitReading(int fd, struct timeval* tv, int min, int max, int cluster, int retries, int reading_retries, unsigned short* readings, int bufsize){
@@ -93,7 +116,7 @@ inline int waitReading(int fd, struct timeval* tv, int min, int max, int cluster
 
   sprintf(cmd,"%s%03d%03d%02d\n",CMD_ACQUIRE,min,max,cluster);
   for (i=0; i<reading_retries; i++){
-    if (!blocking_request(fd,cmd,retries,answer,bufsize))
+    if (!nonblocking_request(fd,cmd,retries,answer,bufsize))
       return 0;
     if (answer[10]=='0')
       break;
@@ -134,8 +157,8 @@ void hokuyo_init(HokuyoURG *h){
   h->cluster=1;
   h->txretries=20;
   h->dataretries=10;
-  h->fov = carmen_degrees_to_radians( 270 );
   h->fd=-1;
+  h->fov = carmen_degrees_to_radians( 270 );
 }
 
 
