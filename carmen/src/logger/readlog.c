@@ -569,6 +569,7 @@ char *carmen_string_to_gps_gprmc_message(char *string,
   gps_msg->utc              = CLF_READ_DOUBLE(&current_pos);
   gps_msg->latitude_dm      = CLF_READ_DOUBLE(&current_pos);
   gps_msg->latitude         = carmen_global_convert_degmin_to_double(gps_msg->latitude_dm);
+  current_pos = carmen_next_word(current_pos); 
   gps_msg->lat_orient       = CLF_READ_CHAR(&current_pos);
   gps_msg->longitude_dm     = CLF_READ_DOUBLE(&current_pos);
   gps_msg->longitude        = carmen_global_convert_degmin_to_double(gps_msg->longitude_dm);
