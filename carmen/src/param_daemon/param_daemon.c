@@ -1149,6 +1149,18 @@ get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
 }
 
 static void
+publish_started_message()
+{
+  IPC_RETURN_TYPE err;
+
+  carmen_param_started_message msg;
+  msg.timestamp = carmen_get_time();
+  msg.host      = carmen_get_host();
+  err = IPC_publishData(CARMEN_PARAM_STARTED_NAME, &msg);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VARIABLE_CHANGE_NAME);
+}
+
+static void
 reread_command(MSG_INSTANCE msgRef  __attribute__ ((unused)), 
 	       BYTE_ARRAY callData __attribute__ ((unused)) __attribute__ ((unused)),
 	       void *clientData __attribute__ ((unused)))
@@ -1301,6 +1313,11 @@ initialize_param_ipc(void)
   carmen_test_ipc_exit(err, "Could not subscribe to", CARMEN_PARAM_SET_NAME);
   IPC_setMsgQueueLength(CARMEN_PARAM_SET_NAME, 100);
 
+  err = IPC_defineMsg(CARMEN_PARAM_STARTED_NAME, IPC_VARIABLE_LENGTH, 
+		      CARMEN_PARAM_STARTED_FMT);
+  carmen_test_ipc_exit(err, "Could not define message",
+                       CARMEN_PARAM_STARTED_NAME);
+
   return 0;
 }
 
@@ -1330,6 +1347,7 @@ main(int argc, char **argv)
     carmen_map_set_filename(map_filename);
   }
 #endif
+  publish_started_message();
   IPC_dispatch();
 
   return 0;

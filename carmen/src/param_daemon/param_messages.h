@@ -266,6 +266,17 @@ typedef struct {
 #define CARMEN_PARAM_VERSION_NAME "carmen_param_version"
 #define CARMEN_PARAM_VERSION_FMT  "{int, int, int, double, string}"
 
+/**
+ * This message will be sent out whenever the param_daemon starts or rereads
+ * the whole paramfile
+ */
+typedef struct {
+  double timestamp;
+  char* host;
+} carmen_param_started_message;
+#define CARMEN_PARAM_STARTED_NAME "carmen_param_started"
+#define CARMEN_PARAM_STARTED_FMT  "{double, string}"
+
 #ifdef __cplusplus
 }
 #endif
