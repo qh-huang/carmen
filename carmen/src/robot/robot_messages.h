@@ -47,9 +47,9 @@ extern "C" {
   /** Sonar measurement message **/
 typedef struct {
   int num_sonars;
-  double sensor_angle;               /**< width of sonar cone **/
+  double cone_angle;               /**< width of sonar cone **/
   double *ranges;
-  carmen_point_t *positions;
+  carmen_point_t *sonar_offsets;
   carmen_point_t robot_pose;
   double tv, rv;
   double timestamp;
@@ -75,6 +75,7 @@ typedef struct {
 #ifndef COMPILE_WITHOUT_LASER_SUPPORT
   /** Laser measurement message with interpolated pose estimate of the robot **/
 typedef struct {
+  int id;
   carmen_laser_laser_config_t config;   /**< Configuration of the laser sensor **/
   int num_readings;                     /**< Number of beams in this message **/
   float *range;                         /**< Array of proximity measurements **/
@@ -90,7 +91,7 @@ typedef struct {
   char *host;                          /**< The host from which this message was sent **/
 } carmen_robot_laser_message;
 
-#define      CARMEN_ROBOT_LASER_FMT             "{{int,double,double,double,double,double,int},int,<float:2>,<char:2>,int,<float:5>,{double,double,double},{double,double,double},double,double,double,double,double,double,string}"
+#define      CARMEN_ROBOT_LASER_FMT             "{int,{int,double,double,double,double,double,int},int,<float:3>,<char:3>,int,<float:6>,{double,double,double},{double,double,double},double,double,double,double,double,double,string}"
 
 
 #define      CARMEN_ROBOT_FRONTLASER_NAME       "carmen_robot_frontlaser"

@@ -391,9 +391,18 @@ publish_readings(void)
     }
     
     if (simulator_config->use_sonar) {
+      int i;
+
       sonar.host = carmen_get_host();
       sonar.num_sonars = simulator_config->sonar_config.num_sonars;
-      sonar.sensor_angle = simulator_config->sonar_config.sensor_angle;
+      sonar.cone_angle = simulator_config->sonar_config.sensor_angle;
+      sonar.sonar_offsets = (carmen_point_t*)calloc
+	(sonar.num_sonars, sizeof(carmen_point_t));
+      for (i = 0; i < sonar.num_sonars; ++i) {
+        sonar.sonar_offsets[i].x = simulator_config->sonar_config.offsets[i].x;
+        sonar.sonar_offsets[i].y = simulator_config->sonar_config.offsets[i].y;
+        sonar.sonar_offsets[i].theta = simulator_config->sonar_config.offsets[i].theta;
+      }
       
       sonar.range = (double *)calloc
 	(simulator_config->sonar_config.num_sonars, sizeof(double));

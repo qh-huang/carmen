@@ -225,7 +225,7 @@ char *carmen_string_to_base_odometry_message(char *string,
 {
   char *current_pos = string;
 
-  if (strncmp(current_pos, "ODOM", 4) == 0)
+  if (strncmp(current_pos, "ODOM ", 5) == 0)
     current_pos = carmen_next_word(current_pos); 
   
   odometry->x = CLF_READ_DOUBLE(&current_pos);
@@ -245,7 +245,7 @@ char *carmen_string_to_arm_state_message(char *string,
   int i;
   char *current_pos = string;
 
-  if (strncmp(current_pos, "ARM", 3) == 0)
+  if (strncmp(current_pos, "ARM ", 4) == 0)
     current_pos = carmen_next_word(current_pos); 
   
   arm->flags = CLF_READ_INT(&current_pos);
@@ -277,7 +277,7 @@ char *carmen_string_to_simulator_truepos_message(char *string,
 {
   char *current_pos = string;
 
-  if (strncmp(current_pos, "TRUEPOS", 7) == 0)
+  if (strncmp(current_pos, "TRUEPOS ", 8) == 0)
     current_pos = carmen_next_word(current_pos); 
 
  
@@ -420,8 +420,12 @@ char *carmen_string_to_laser_laser_message(char *string,
   char *current_pos = string;
   int i, num_readings, num_remissions;
 
-  if (strncmp(current_pos, "RAWLASER", 8) == 0)
-    current_pos = carmen_next_word(current_pos); 
+  if (strncmp(current_pos, "RAWLASER", 8) == 0) {
+    current_pos += 8;
+    laser->id = CLF_READ_INT(&current_pos);
+  } else {
+    laser->id = -1;
+  }
 
   laser->config.laser_type = CLF_READ_INT(&current_pos);
   laser->config.start_angle = CLF_READ_DOUBLE(&current_pos);
@@ -463,8 +467,12 @@ char *carmen_string_to_robot_laser_message(char *string,
   char *current_pos = string;
   int i, num_readings, num_remissions;
 
-  if (strncmp(current_pos, "ROBOTLASER", 10) == 0)
-    current_pos = carmen_next_word(current_pos); 
+  if (strncmp(current_pos, "ROBOTLASER", 10) == 0) {
+    current_pos += 10;
+    laser->id = CLF_READ_INT(&current_pos);
+  } else {
+    laser->id = -1;
+  }
 
   laser->config.laser_type = CLF_READ_INT(&current_pos);
   laser->config.start_angle = CLF_READ_DOUBLE(&current_pos);
@@ -529,7 +537,7 @@ char *carmen_string_to_gps_gpgga_message(char *string,
 {
   char *current_pos = string;
   
-  if (strncmp(current_pos, "NMEAGGA", 7) == 0)
+  if (strncmp(current_pos, "NMEAGGA ", 8) == 0)
     current_pos = carmen_next_word(current_pos); 
   
   gps_msg->nr               = CLF_READ_INT(&current_pos);
@@ -561,7 +569,7 @@ char *carmen_string_to_gps_gprmc_message(char *string,
 {
   char *current_pos = string;
   
-  if (strncmp(current_pos, "NMEARMC", 7) == 0)
+  if (strncmp(current_pos, "NMEARMC ", 8) == 0)
     current_pos = carmen_next_word(current_pos); 
   
   gps_msg->nr               = CLF_READ_INT(&current_pos);
@@ -583,6 +591,52 @@ char *carmen_string_to_gps_gprmc_message(char *string,
   gps_msg->date             = CLF_READ_INT(&current_pos);
   gps_msg->timestamp        = CLF_READ_DOUBLE(&current_pos);
   copy_host_string(&gps_msg->host, &current_pos);
+
+  return current_pos;
+}
+
+char* carmen_string_to_base_sonar_message(char* string, carmen_base_sonar_message* sonar_msg)
+{
+  int i;
+  char* current_pos = string;
+  if (strncmp(current_pos, "SONAR ", 6) == 0)
+    current_pos = carmen_next_word(current_pos);
+
+  sonar_msg->cone_angle = CLF_READ_DOUBLE(&current_pos);
+  sonar_msg->num_sonars = CLF_READ_INT(&current_pos);
+  sonar_msg->sonar_offsets = (carmen_point_p) realloc(sonar_msg->sonar_offsets, sizeof(carmen_point_t) * sonar_msg->num_sonars);
+  sonar_msg->range = (double*) realloc(sonar_msg->range, sizeof(double) * sonar_msg->num_sonars);
+  for (i = 0; i < sonar_msg->num_sonars; ++i)
+    sonar_msg->range[i] = CLF_READ_DOUBLE(&current_pos);
+  for (i = 0; i < sonar_msg->num_sonars; ++i) {
+    sonar_msg->sonar_offsets[i].x     = CLF_READ_DOUBLE(&current_pos);
+    sonar_msg->sonar_offsets[i].y     = CLF_READ_DOUBLE(&current_pos);
+    sonar_msg->sonar_offsets[i].theta = CLF_READ_DOUBLE(&current_pos);
+  }
+  sonar_msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&sonar_msg->host, &current_pos);
+
+  return current_pos;
+}
+
+char* carmen_string_to_base_bumper_message(char* string, carmen_base_bumper_message* bumper_msg)
+{
+  int i;
+  char* current_pos = string;
+  if (strncmp(current_pos, "BUMPER ", 7) == 0)
+    current_pos = carmen_next_word(current_pos);
+
+  bumper_msg->num_bumpers = CLF_READ_INT(&current_pos);
+  bumper_msg->state = (unsigned char*) realloc(bumper_msg->state, sizeof(unsigned char) * bumper_msg->num_bumpers);
+  bumper_msg->bumper_offsets = (carmen_position_t*) realloc(bumper_msg->bumper_offsets, sizeof(carmen_position_t) * bumper_msg->num_bumpers);
+  for (i = 0; i < bumper_msg->num_bumpers; ++i)
+    bumper_msg->state[i] = CLF_READ_INT(&current_pos);
+  for (i = 0; i < bumper_msg->num_bumpers; ++i) {
+    bumper_msg->bumper_offsets[i].x = CLF_READ_DOUBLE(&current_pos);
+    bumper_msg->bumper_offsets[i].y = CLF_READ_DOUBLE(&current_pos);
+  }
+  bumper_msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&bumper_msg->host, &current_pos);
 
   return current_pos;
 }

@@ -41,6 +41,8 @@ static int log_localize = 1;
 static int log_simulator = 1;
 static int log_params = 1;
 static int log_gps = 1;
+static int log_sonars = 1;
+static int log_bumpers = 1;
 
 void get_logger_params(int argc, char** argv) {
 
@@ -54,6 +56,8 @@ void get_logger_params(int argc, char** argv) {
     {"logger", "localize",    CARMEN_PARAM_ONOFF, &log_localize, 0, NULL},
     {"logger", "params",      CARMEN_PARAM_ONOFF, &log_params, 0, NULL},
     {"logger", "simulator",   CARMEN_PARAM_ONOFF, &log_simulator, 0, NULL},
+    {"logger", "sonar",       CARMEN_PARAM_ONOFF, &log_sonars, 0, NULL},
+    {"logger", "bumper",      CARMEN_PARAM_ONOFF, &log_bumpers, 0, NULL},
     {"logger", "gps",         CARMEN_PARAM_ONOFF, &log_gps, 0, NULL}
   };
 
@@ -112,6 +116,21 @@ void base_odometry_handler(carmen_base_odometry_message *odometry)
 {
   fprintf(stderr, "O");
   carmen_logwrite_write_odometry(odometry, outfile, 
+				 carmen_get_time() - logger_starttime);
+}
+
+void base_sonar_handler(carmen_base_sonar_message *sonar)
+{
+  fprintf(stderr, "S");
+  carmen_logwrite_write_base_sonar(sonar, outfile, 
+				 carmen_get_time() - logger_starttime);
+}
+
+
+void base_bumper_handler(carmen_base_bumper_message *bumper)
+{
+  fprintf(stderr, "B");
+  carmen_logwrite_write_base_bumper(bumper, outfile, 
 				 carmen_get_time() - logger_starttime);
 }
 
@@ -272,6 +291,15 @@ int main(int argc, char **argv)
   if (log_odometry) 
     carmen_base_subscribe_odometry_message(NULL, (carmen_handler_t)
 					   base_odometry_handler, 
+					   CARMEN_SUBSCRIBE_ALL);
+
+  if (log_sonars) 
+    carmen_base_subscribe_sonar_message(NULL, (carmen_handler_t)
+					   base_sonar_handler, 
+					   CARMEN_SUBSCRIBE_ALL);
+  if (log_bumpers) 
+    carmen_base_subscribe_bumper_message(NULL, (carmen_handler_t)
+					   base_bumper_handler, 
 					   CARMEN_SUBSCRIBE_ALL);
 
   if (log_arm) 

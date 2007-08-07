@@ -106,9 +106,9 @@ initialize_sonar_message(carmen_base_sonar_message *sonar)
   carmen_param_set_module("robot");
   carmen_param_get_double("sensor_angle", &sensor_angle, NULL);
   
-  sonar->sensor_angle = sensor_angle;
+  sonar->cone_angle = sensor_angle;
   sonar->timestamp = 0.0;
-  strncpy(sonar->host, odometry.host, 10);
+  sonar->host = carmen_get_host();
 }
 
 static void
@@ -552,7 +552,7 @@ carmen_base_run(void)
     sonar.num_sonars = num_sonar_ranges;
     for (index = 0; index < sonar.num_sonars; index++) {
       sonar.range = ranges;
-      sonar.positions = positions;
+      sonar.sonar_offsets = positions;
     }
   }
   

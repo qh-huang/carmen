@@ -48,10 +48,9 @@ static double relative_wheelsize;
 
 static int use_hardware_integrator = 1;
 static int use_sonar = 1;
+static int use_bumper = 1;
 static carmen_base_sonar_message sonar;
 static int sonar_state = 0;
-static double *ranges = NULL;
-static carmen_point_t *positions = NULL;
 static int num_sonar_ranges;
 
 static carmen_base_bumper_message bumper;
@@ -63,6 +62,8 @@ static int odometry_inverted;
 
 static char *model_name;
 static char *dev_name;
+static char* sonar_offset_string = 0;
+static char* bumper_offset_string = 0;
 
 #ifdef BASE_HAS_ARM
 static int num_arm_joints;
@@ -84,13 +85,10 @@ initialize_robot(void)
     num_sonar_ranges = carmen_base_direct_sonar_on();
     if(num_sonar_ranges < 0) 
       return -1;
-    if (ranges == NULL)
-      free(ranges);
-    ranges = (double *)calloc(num_sonar_ranges, sizeof(double));
-    carmen_test_alloc(ranges);
-    positions = (carmen_point_t *)
-      calloc(num_sonar_ranges, sizeof(carmen_point_t));
-    carmen_test_alloc(positions);
+    if (sonar.range == NULL)
+      free(sonar.range);
+    sonar.range = (double *)calloc(num_sonar_ranges, sizeof(double));
+    carmen_test_alloc(sonar.range);
     sonar_state = 1;
   } else {
     result = carmen_base_direct_sonar_off();
@@ -211,13 +209,29 @@ static void
 initialize_sonar_message(carmen_base_sonar_message *sonar)
 {
   double sensor_angle;
+  int num_sonar_ranges;
 
   carmen_param_set_module("robot");
   carmen_param_get_double("sensor_angle", &sensor_angle, NULL);
-  
-  sonar->sensor_angle = sensor_angle;
+  carmen_param_get_string("sonar_offsets", &sonar_offset_string, NULL);
+
+  do {
+    num_sonar_ranges = carmen_base_direct_sonar_on();
+    if (num_sonar_ranges < 0)
+      initialize_robot();
+  } 
+  while (num_sonar_ranges < 0);
+
+  if (sonar->range)
+    free(sonar->range);
+  sonar->range = (double *)calloc(num_sonar_ranges, sizeof(double));
+  sonar->sonar_offsets = (carmen_point_t*) realloc(sonar->sonar_offsets, sizeof(carmen_point_t)*num_sonar_ranges);
+  carmen_parse_sonar_offsets(sonar_offset_string, sonar->sonar_offsets, num_sonar_ranges);
+  sonar->cone_angle = sensor_angle;
   sonar->timestamp = 0.0;
-  strncpy(sonar->host, odometry.host, 10);
+  sonar->host = carmen_get_host();
+
+  sonar_state = 1;
 }
 
 static void
@@ -229,24 +243,7 @@ handle_sonar_change(char *module __attribute__ ((unused)),
 
   if (use_sonar && !sonar_state) {
     initialize_sonar_message(&sonar);
-    do {
-      num_sonar_ranges = carmen_base_direct_sonar_on();
-      if (num_sonar_ranges < 0)
-	initialize_robot();
-    } 
-    while (num_sonar_ranges < 0);
-
-    ranges = (double *)calloc(num_sonar_ranges, sizeof(double));
-    carmen_test_alloc(ranges);
-    positions = (carmen_point_t *)
-      calloc(num_sonar_ranges, sizeof(carmen_point_t));
-    carmen_test_alloc(positions);
-    sonar_state = 1;
   } else if (!use_sonar && sonar_state) {
-    if (ranges) 
-      free(ranges);
-    if (positions)
-      free(positions);
     do {
       err = carmen_base_direct_sonar_off();
       if (err < 0)
@@ -269,8 +266,8 @@ read_parameters(int argc, char **argv)
      &use_hardware_integrator, 0, NULL},
     {"robot", "odometry_inverted", CARMEN_PARAM_ONOFF, &odometry_inverted, 
      0, NULL},
-    {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, 
-     handle_sonar_change}, 
+    {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &use_sonar, 1, handle_sonar_change}, 
+    {"robot", "use_bumper", CARMEN_PARAM_ONOFF, &use_bumper, 0, NULL}, 
     {"robot", "acceleration", CARMEN_PARAM_DOUBLE, 
      &(robot_config.acceleration), 1, NULL},
     {"robot", "deceleration", CARMEN_PARAM_DOUBLE, 
@@ -283,13 +280,22 @@ read_parameters(int argc, char **argv)
      &relative_wheelbase, 0, NULL},
   };
 
+  carmen_param_t bumper_params[] = {
+    {"robot", "bumper_offsets", CARMEN_PARAM_STRING, 
+     &bumper_offset_string, 0, NULL},
+  };
+
   num_items = sizeof(param_list)/sizeof(param_list[0]);
   carmen_param_install_params(argc, argv, param_list, num_items);
 
-  if (use_sonar)
+  memset(&sonar, 0, sizeof(carmen_base_sonar_message));
+  if (use_sonar) {
     initialize_sonar_message(&sonar);
-  else
-    memset(&sonar, 0, sizeof(carmen_base_sonar_message));
+  }
+
+  if (use_bumper) {
+    carmen_param_install_params(argc, argv, bumper_params, sizeof(bumper_params)/sizeof(bumper_params[0]));
+  }
 
   if (!use_hardware_integrator) {
     num_items = sizeof(extra_params)/sizeof(extra_params[0]);
@@ -406,7 +412,7 @@ binary_command_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 static void 
 reset_odometry()
 {
- printf("Odometry Reset...\n");
+  printf("Odometry Reset...\n");
   odometry.x=0;
   odometry.y=0;
   odometry.theta=0;
@@ -552,7 +558,6 @@ int
 carmen_base_run(void) 
 {
   IPC_RETURN_TYPE err;
-  int index;
   static carmen_base_reset_occurred_message reset = {0, 0};  
   int base_err;
   double tv, rv;
@@ -569,6 +574,7 @@ carmen_base_run(void)
 
   if (moving && carmen_get_time() - last_motion_command > motion_timeout) {
     moving = 0;
+    carmen_warn("t");      
     do {
       base_err = carmen_base_direct_set_deceleration(deceleration);
       if (base_err < 0)
@@ -630,12 +636,8 @@ carmen_base_run(void)
   } while (base_err < 0);
 
   if (use_sonar && sonar_state) {
-    carmen_base_direct_get_sonars(ranges, positions, num_sonar_ranges);
+    carmen_base_direct_get_sonars(sonar.range, NULL, num_sonar_ranges);
     sonar.num_sonars = num_sonar_ranges;
-    for (index = 0; index < sonar.num_sonars; index++) {
-      sonar.range = ranges;
-      sonar.positions = positions;
-    }
   }
   
   err = IPC_publishData(CARMEN_BASE_ODOMETRY_NAME, &odometry);
@@ -646,25 +648,32 @@ carmen_base_run(void)
     carmen_warn("s");  
     sonar.timestamp = carmen_get_time();
     sonar.host = carmen_get_host();
-
     err = IPC_publishData(CARMEN_BASE_SONAR_NAME, &sonar);
     carmen_test_ipc_exit(err, "Could not publish", 
 			 CARMEN_BASE_SONAR_NAME);
-  }
+  } 
 
-  bumper.num_bumpers = 
-    carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
-  if (bumper.state == NULL) {
-    bumper.state = (unsigned char *)calloc(bumper.num_bumpers, sizeof(char));
-    carmen_test_alloc(bumper.state);
-  }
+  if (use_bumper) {
+    bumper.num_bumpers = 
+      carmen_base_direct_get_bumpers(bumper.state, bumper.num_bumpers);
+    if (bumper.state == NULL && bumper.num_bumpers > 0) {
+      bumper.state = (unsigned char *)calloc(bumper.num_bumpers, sizeof(char));
+      carmen_test_alloc(bumper.state);
+    }
+    if (bumper.bumper_offsets == NULL && bumper.num_bumpers > 0) {
+      bumper.bumper_offsets= (carmen_position_t*)realloc(bumper.bumper_offsets, bumper.num_bumpers*sizeof(carmen_position_t));
+      carmen_test_alloc(bumper.bumper_offsets);
+      carmen_parse_bumper_offsets(bumper_offset_string, bumper.bumper_offsets, bumper.num_bumpers);
+    }
 
-  if (bumper.num_bumpers > 0) {
-    bumper.timestamp = carmen_get_time();
-    bumper.host = carmen_get_host();
-    err = IPC_publishData(CARMEN_BASE_BUMPER_NAME, &bumper);
-    carmen_test_ipc_exit(err, "Could not publish", 
-			 CARMEN_BASE_BUMPER_NAME);
+    if (bumper.num_bumpers > 0) {
+      carmen_warn("b"); 
+      bumper.timestamp = carmen_get_time();
+      bumper.host = carmen_get_host();
+      err = IPC_publishData(CARMEN_BASE_BUMPER_NAME, &bumper);
+      carmen_test_ipc_exit(err, "Could not publish", 
+          CARMEN_BASE_BUMPER_NAME);
+    }
   }
 
 #if BASE_HAS_ARM
@@ -709,6 +718,9 @@ shutdown_base(int signo __attribute__ ((unused)))
 int 
 main(int argc, char **argv)
 {
+  carmen_erase_structure(&bumper, sizeof(bumper));
+  carmen_erase_structure(&sonar, sizeof(sonar));
+
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 

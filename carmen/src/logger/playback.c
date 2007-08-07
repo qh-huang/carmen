@@ -53,6 +53,8 @@ carmen_robot_laser_message laser1, laser2, laser3, laser4, laser5;
 carmen_laser_laser_message rawlaser1, rawlaser2, rawlaser3, rawlaser4, rawlaser5;
 carmen_localize_globalpos_message globalpos;
 carmen_arm_state_message arm;
+carmen_base_sonar_message sonar;
+carmen_base_bumper_message bumper;
 
 carmen_gps_gpgga_message gpsgga;
 carmen_gps_gprmc_message gpsrmc;
@@ -222,23 +224,6 @@ typedef struct {
 } logger_callback_t;
 
 logger_callback_t logger_callbacks[] = {
-  {"ODOM", CARMEN_BASE_ODOMETRY_NAME, 
-   (converter_func)carmen_string_to_base_odometry_message, &odometry, 0},
-  {"ARM", CARMEN_ARM_STATE_NAME, 
-   (converter_func)carmen_string_to_arm_state_message, &arm, 0},
-  {"TRUEPOS", CARMEN_SIMULATOR_TRUEPOS_NAME,
-   (converter_func)carmen_string_to_simulator_truepos_message, &odometry, 0},
-  {"FLASER", CARMEN_ROBOT_FRONTLASER_NAME, 
-   (converter_func)carmen_string_to_robot_laser_message_orig, &laser1, 0},
-  {"RLASER", CARMEN_ROBOT_REARLASER_NAME,
-   (converter_func)carmen_string_to_robot_laser_message_orig, &laser2, 0},
-  {"LASER3", CARMEN_LASER_LASER3_NAME, 
-   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser3, 0},
-  {"LASER4", CARMEN_LASER_LASER4_NAME, 
-   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
-  {"LASER5", CARMEN_LASER_LASER5_NAME, 
-   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser5, 0},
-
   {"RAWLASER1", CARMEN_LASER_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_laser_laser_message, &rawlaser1, 0},
   {"RAWLASER2", CARMEN_LASER_REARLASER_NAME, 
@@ -259,6 +244,27 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_robot_laser_message, &laser4, 0},
   {"ROBOTLASER5", CARMEN_ROBOT_FRONTLASER_NAME, 
    (converter_func)carmen_string_to_robot_laser_message, &laser5, 0},
+  {"ODOM", CARMEN_BASE_ODOMETRY_NAME, 
+   (converter_func)carmen_string_to_base_odometry_message, &odometry, 0},
+  {"SONAR", CARMEN_BASE_SONAR_NAME,
+    (converter_func) carmen_string_to_base_sonar_message, &sonar, 0},
+  {"BUMPER", CARMEN_BASE_BUMPER_NAME,
+    (converter_func) carmen_string_to_base_bumper_message, &bumper, 0},
+  {"ARM", CARMEN_ARM_STATE_NAME, 
+   (converter_func)carmen_string_to_arm_state_message, &arm, 0},
+  {"TRUEPOS", CARMEN_SIMULATOR_TRUEPOS_NAME,
+   (converter_func)carmen_string_to_simulator_truepos_message, &odometry, 0},
+  {"FLASER", CARMEN_ROBOT_FRONTLASER_NAME, 
+   (converter_func)carmen_string_to_robot_laser_message_orig, &laser1, 0},
+  {"RLASER", CARMEN_ROBOT_REARLASER_NAME,
+   (converter_func)carmen_string_to_robot_laser_message_orig, &laser2, 0},
+  {"LASER3", CARMEN_LASER_LASER3_NAME, 
+   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser3, 0},
+  {"LASER4", CARMEN_LASER_LASER4_NAME, 
+   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
+  {"LASER5", CARMEN_LASER_LASER5_NAME, 
+   (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser5, 0},
+
   {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
    (converter_func)carmen_string_to_gps_gpgga_message, &gpsgga, 0},
   {"NMEARMC", CARMEN_GPS_GPRMC_MESSAGE_NAME, 
@@ -409,6 +415,8 @@ int main(int argc, char **argv)
 {
   memset(&odometry, 0, sizeof(odometry));
   memset(&arm, 0, sizeof(arm));
+  memset(&sonar, 0, sizeof(sonar));
+  memset(&bumper, 0, sizeof(bumper));
   memset(&truepos, 0, sizeof(truepos));
   memset(&laser1, 0, sizeof(laser1));
   memset(&laser2, 0, sizeof(laser2));

@@ -670,15 +670,15 @@ static void draw_sonar_arcs(GdkPixmap *pixmap)
   for(i=0; i<sonar.num_sonars; i++)
     {
       radius=(int)(sonar.ranges[i]*scale);
-      x=width_2+scale*(sonar.positions[i].x - sonar.robot_pose.x)-
+      x=width_2+scale*(sonar.sonar_offsets[i].x - sonar.robot_pose.x)-
 	radius;
-      y=height_2-scale*(sonar.positions[i].y - sonar.robot_pose.y)-
+      y=height_2-scale*(sonar.sonar_offsets[i].y - sonar.robot_pose.y)-
 	radius;
       w=radius*2;
       h=radius*2;
       theta1=carmen_radians_to_degrees
-	(sonar.positions[i].theta-sonar.sensor_angle/2)*64;
-      theta2=carmen_radians_to_degrees(sonar.sensor_angle)*64;
+	(sonar.sonar_offsets[i].theta-sonar.cone_angle/2)*64;
+      theta2=carmen_radians_to_degrees(sonar.cone_angle)*64;
       gdk_draw_arc(pixmap,drawing_gc,FALSE,x,y,w,h,theta1,theta2);
     }
 }

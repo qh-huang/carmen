@@ -53,7 +53,7 @@ void robot_sonar_handler(carmen_robot_sonar_message *sonar_message)
 
   carmen_warn("num_sonars %i\n",sonar_message->num_sonars);
 
-  carmen_warn("sensor_angle %.3f\n",sonar_message->sensor_angle);
+  carmen_warn("cone_angle %.3f\n",sonar_message->cone_angle);
 
   carmen_warn("range ");
   for(i=0; i<sonar_message->num_sonars; i++)
@@ -65,12 +65,12 @@ void robot_sonar_handler(carmen_robot_sonar_message *sonar_message)
 	  sonar_message->robot_pose.y,
 	  sonar_message->robot_pose.theta);
 
-  carmen_warn("sonar positions ");
+  carmen_warn("sonar sonar_offsets ");
   for(i=0; i<sonar_message->num_sonars; i++)
     carmen_warn("(%.3f,%.3f,%.3f) ",
-	    sonar_message->positions[i].x,
-	    sonar_message->positions[i].y,
-	    sonar_message->positions[i].theta);
+	    sonar_message->sonar_offsets[i].x,
+	    sonar_message->sonar_offsets[i].y,
+	    sonar_message->sonar_offsets[i].theta);
   carmen_warn("\n");
 					       
   carmen_warn("timestamp %f\n", sonar_message->timestamp);
