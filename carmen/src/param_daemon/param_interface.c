@@ -1770,3 +1770,13 @@ void carmen_param_send_reread(void)
   carmen_test_ipc(err, "Could not publish", CARMEN_PARAM_REREAD_COMMAND_NAME);
 
 }
+
+void carmen_param_subscribe_started_message(carmen_param_started_message* msg,
+    carmen_handler_t handler,
+    carmen_subscribe_t subscribe_how)
+{
+  carmen_subscribe_message(CARMEN_PARAM_STARTED_NAME,
+      CARMEN_PARAM_STARTED_FMT,
+      msg, sizeof(carmen_param_started_message), handler,
+      subscribe_how);
+}

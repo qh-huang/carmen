@@ -228,6 +228,10 @@ typedef struct {
   
   void carmen_param_send_reread(void);
 
+  void carmen_param_subscribe_started_message(carmen_param_started_message* msg,
+				              carmen_handler_t handler,
+				              carmen_subscribe_t subscribe_how);
+
 #ifdef __cplusplus
 }
 #endif
