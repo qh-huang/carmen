@@ -81,6 +81,11 @@ extern "C" {
 typedef struct {
   double x;
   double y;
+} carmen_position_t, *carmen_position_p;
+
+typedef struct {
+  double x;
+  double y;
   double theta;
 } carmen_point_t, *carmen_point_p;
 
@@ -418,6 +423,8 @@ void carmen_print_version(void);
 
 int carmen_parse_sonar_offsets(char *offset_string, carmen_point_p offsets,
 			       int num_sonars);
+
+int carmen_parse_bumper_offsets(char *offset_string, carmen_position_p offsets, int num_bumpers);
 
 int carmen_parse_arm_joint_types(char *joint_string, carmen_arm_joint_t *joint_types,
 				 int num_joints);

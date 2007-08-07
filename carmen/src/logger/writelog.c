@@ -51,6 +51,8 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# ROBOTLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# NMEAGGA gpsnr utc latitude_dm lat_orient longitude_dm long_orient gps_quality num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age\n");
   carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude_dm lat_orient longitude_dm long_orient speed course variation var_dir date\n");
+  carmen_fprintf(outfile, "# SONAR cone_angle num_sonars [sonar_reading] [sonar_offsets x y theta]\n");
+  carmen_fprintf(outfile, "# BUMPER num_bumpers [bumper_reading] [bumper_offsets x y]\n");
 
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
@@ -249,4 +251,33 @@ void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg,
 		 vardir,
 		 gps_msg->date,
 		 gps_msg->timestamp, gps_msg->host, timestamp);
+}
+
+void carmen_logwrite_write_base_sonar(carmen_base_sonar_message *sonar,
+				       carmen_FILE *outfile,
+				       double timestamp)
+{
+  int i;
+
+  carmen_fprintf(outfile, "SONAR %f %d ", sonar->cone_angle, sonar->num_sonars);
+  for (i=0; i<sonar->num_sonars; i++)
+    carmen_fprintf(outfile, "%.2lf ",  sonar->range[i]);
+  for (i=0; i<sonar->num_sonars; i++)
+    carmen_fprintf(outfile, "%.3f %.3f %f ", sonar->sonar_offsets[i].x, sonar->sonar_offsets[i].y, sonar->sonar_offsets[i].theta);
+  carmen_fprintf(outfile, "%lf %s %lf\n", sonar->timestamp, sonar->host, timestamp);
+}
+
+void carmen_logwrite_write_base_bumper(carmen_base_bumper_message *bumper,
+				       carmen_FILE *outfile,
+				       double timestamp)
+{
+  int i;
+
+  carmen_fprintf(outfile, "BUMPER ");
+  carmen_fprintf(outfile, "%d ", bumper->num_bumpers);
+  for (i=0; i<bumper->num_bumpers; i++)
+    carmen_fprintf(outfile, "%d ", bumper->state[i]);
+  for (i=0; i<bumper->num_bumpers; i++)
+    carmen_fprintf(outfile, "%.3f %.3f ", bumper->bumper_offsets[i].x, bumper->bumper_offsets[i].y);
+  carmen_fprintf(outfile, "%lf %s %lf\n", bumper->timestamp, bumper->host, timestamp);
 }

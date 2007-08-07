@@ -55,19 +55,19 @@ static void check_message_data_chunk_sizes(void)
     robot_sonar.ranges = 
       (double *)calloc(robot_sonar.num_sonars, sizeof(double));
     carmen_test_alloc(robot_sonar.ranges);
-    robot_sonar.positions = 
+    robot_sonar.sonar_offsets = 
       (carmen_point_p)calloc(robot_sonar.num_sonars, sizeof(carmen_point_t));
-    carmen_test_alloc(robot_sonar.positions);
+    carmen_test_alloc(robot_sonar.sonar_offsets);
     first = 0;
   } else if(robot_sonar.num_sonars != base_sonar.num_sonars) {
     robot_sonar.num_sonars = base_sonar.num_sonars;
     robot_sonar.ranges = (double *)realloc
       (robot_sonar.ranges, sizeof(double) * robot_sonar.num_sonars);
     carmen_test_alloc(robot_sonar.ranges);
-    robot_sonar.positions = (carmen_point_p)
-      realloc(robot_sonar.positions,sizeof(carmen_point_t) * 
+    robot_sonar.sonar_offsets = (carmen_point_p)
+      realloc(robot_sonar.sonar_offsets,sizeof(carmen_point_t) * 
 	      robot_sonar.num_sonars);
-    carmen_test_alloc(robot_sonar.positions);
+    carmen_test_alloc(robot_sonar.sonar_offsets);
   }
 }
       
@@ -152,10 +152,10 @@ static void sonar_handler(void)
   
   memcpy(robot_sonar.ranges, base_sonar.range, robot_sonar.num_sonars * 
 	 sizeof(double));
-  memcpy(robot_sonar.positions, base_sonar.positions, robot_sonar.num_sonars * 
+  memcpy(robot_sonar.sonar_offsets, base_sonar.sonar_offsets, robot_sonar.num_sonars * 
 	 sizeof(carmen_point_t));
   robot_sonar.timestamp = base_sonar.timestamp;
-  robot_sonar.sensor_angle=base_sonar.sensor_angle;
+  robot_sonar.cone_angle=base_sonar.cone_angle;
 
   robot_sonar.host =  base_sonar.host;
  
@@ -177,10 +177,10 @@ static void sonar_handler(void)
     robot_posn.theta = 0;
     
     for(i=0; i<robot_sonar.num_sonars; i++) {
-      theta=robot_sonar.positions[i].theta;
-      obstacle_pt.x=robot_sonar.positions[i].x+robot_sonar.ranges[i]*
+      theta=robot_sonar.sonar_offsets[i].theta;
+      obstacle_pt.x=robot_sonar.sonar_offsets[i].x+robot_sonar.ranges[i]*
 	cos(theta);
-      obstacle_pt.y=robot_sonar.positions[i].y+robot_sonar.ranges[i]*
+      obstacle_pt.y=robot_sonar.sonar_offsets[i].y+robot_sonar.ranges[i]*
 	sin(theta);
       carmen_geometry_move_pt_to_rotating_ref_frame(&obstacle_pt, carmen_robot_latest_odometry.tv, carmen_robot_latest_odometry.rv);
       velocity=carmen_geometry_compute_velocity(robot_posn, obstacle_pt, &carmen_robot_config);

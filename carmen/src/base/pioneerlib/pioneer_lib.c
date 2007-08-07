@@ -76,7 +76,8 @@ static double range_conv_factor, diff_conv_factor, vel2_divisor;
 #define PIONEER_BATTERY_CONVERSION_FACTOR           0.1
 #define PIONEER_COMPASS_CONVERSION_FACTOR           2.0
 
-#define PIONEER_MAX_NUM_SONARS  16
+#define PIONEER_MAX_NUM_SONARS  28
+#define PIONEER_MAX_NUM_BUMPERS  14
 
 
 /* Cyrill, 14.01.2004
@@ -282,10 +283,23 @@ pioneer_send_command1(char cmd, int arg1)
 static int
 pioneer_sonar(int b) 
 {
-  if (pioneer_version == 1 && b == 0)
-    return pioneer_send_command1(PIONEER_POLLING, 0);
-  else 
-    return pioneer_send_command1(PIONEER_SONAR, b);
+  if (pioneer_version == 1 && b == 0) {
+    int result = pioneer_send_command1(PIONEER_POLLING, 0);
+    if (result >=0)
+      sonar_is_on=0;
+    return result;
+  }
+  else {
+    int result = pioneer_send_command1(PIONEER_SONAR, b);
+
+    if (result >=0) {
+      if (b == 0)
+	sonar_is_on=0;
+      else
+	sonar_is_on=1;
+    }
+    return result;
+  }
 }
 
 
@@ -375,10 +389,10 @@ int
 carmen_base_direct_sonar_on(void)
 {
   int err = 0;
-
-  if (!sonar_is_on) 
+  fprintf(stderr, "Switching sonars on\n");
+    //  if (!sonar_is_on){ 
     err = pioneer_sonar(1);
-
+    //  }
   if (err < 0)
     return -1;
 
@@ -388,10 +402,12 @@ carmen_base_direct_sonar_on(void)
 int
 carmen_base_direct_sonar_off(void)
 {
-  if (sonar_is_on) 
-    return pioneer_sonar(0);
 
-  return 0;
+  fprintf(stderr, "Switching sonars off\n");
+  //  if (sonar_is_on) 
+  return pioneer_sonar(0);
+
+  //  return 0;
 }
 
 int 
@@ -478,10 +494,15 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
 int 
 carmen_base_direct_shutdown_robot(void) 
 {
+  if (sonar_is_on) {
+    carmen_base_direct_sonar_off();
+    usleep(1000000);
+  }
+
   pioneer_send_command0(PIONEER_CLOSE);
-  usleep(10000);
+  usleep(1000000);
   close(dev_fd);
-  fprintf( stderr, "\n" );
+  fprintf( stderr, "\nClosed\n" );
   return(0);
 }
 
@@ -756,16 +777,22 @@ carmen_base_direct_get_binary_data(unsigned char **data, int *size)
   carmen_test_alloc(*data);
   *size = sizeof(struct pioneer_raw_information_packet);
   memcpy(*data, &raw_state, *size);
-
   return 0;
 }
 
-int carmen_base_direct_get_bumpers(unsigned char *state 
-				   __attribute__ ((unused)), 
-				   int num_bumpers __attribute__ ((unused)))
+int carmen_base_direct_get_bumpers(unsigned char *state, int num_bumpers)
 {
-  // carmen_warn("Send binary data not supported by RFlex.\n");
-  return 0;
+  int i;
+  if (state == NULL || num_bumpers == 0)
+    return PIONEER_MAX_NUM_BUMPERS;
+  for (i=0; i<7 && i<num_bumpers; i++){
+    state[i]=((raw_state.bumper[1])&(1<<(i+1)))!=0?1:0;
+  }
+  int j;
+  for (j=0; j<7 && i<num_bumpers; j++){
+    state[i++]=((raw_state.bumper[0])&(1<<(j+1))) != 0 ? 1 : 0;
+  }
+  return PIONEER_MAX_NUM_BUMPERS;
 }
 
 void carmen_base_direct_arm_get(double servos[] __attribute__ ((unused)), 
@@ -791,14 +818,21 @@ int carmen_base_direct_get_sonars(double *ranges,
   double range;
 
   if (ranges != NULL && sonar_is_on) {
-    if (num_sonars > raw_state.num_sonar_readings)
-      num_sonars = raw_state.num_sonar_readings;
-    for (i = 0; i < num_sonars; i++) {
-      range = pioneer_buf_to_unsigned_int(raw_state.sonar[i].range) *
-	range_conv_factor * 1000;
-      ranges[raw_state.sonar[i].n] = range;
+    //fprintf(stderr, "sonars %d, readings %d:", num_sonars, raw_state.num_sonar_readings);
+    for (i = 0; i < num_sonars; i++){
+      ranges[i]=-1.;
     }
-  }
+    for (i = 0; i < raw_state.num_sonar_readings; i++) {
+      range = pioneer_buf_to_unsigned_int(raw_state.sonar[i].range) *
+	range_conv_factor / 1000.0;
+      if (raw_state.sonar[i].n < num_sonars)
+        ranges[raw_state.sonar[i].n] = range;
+    } 
+/*     for (i = 0; i < num_sonars; i++){ */
+/*       fprintf(stderr, "%f " ,ranges[i]); */
+/*     } */
+/*     fprintf(stderr, "\n"); */
+ }
 
   return 0;
 }

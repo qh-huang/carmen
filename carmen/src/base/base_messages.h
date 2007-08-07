@@ -84,9 +84,9 @@ typedef struct {
 
 typedef struct {
   int num_sonars;
-  double sensor_angle;                    //width of sonar cone
+  double cone_angle;                    //width of sonar cone
   double *range;
-  carmen_point_p positions;
+  carmen_point_t* sonar_offsets;
   double timestamp;
   char *host;
 } carmen_base_sonar_message;
@@ -109,12 +109,13 @@ typedef struct {
 typedef struct {
   int num_bumpers;
   unsigned char *state;
+  carmen_position_t *bumper_offsets;
   double timestamp;
   char *host;
 } carmen_base_bumper_message;
 
 #define      CARMEN_BASE_BUMPER_NAME          "carmen_base_bumper"
-#define      CARMEN_BASE_BUMPER_FMT           "{int,<char:1>,double,string}"
+#define      CARMEN_BASE_BUMPER_FMT           "{int,<ubyte:1>,<{double,double}:1>,double,string}"
 
 typedef struct {
   int num_irs;

@@ -1512,3 +1512,55 @@ double carmen_global_convert_degmin_to_double(double dm_format) {
   double minutes  = (dm_format - degree*100.0) / 60.0;
   return degree + minutes;
 }
+
+int carmen_parse_bumper_offsets(char *offset_string, carmen_position_p offsets, int num_bumpers)
+{
+  int bumper_num=0;
+  char *curr_val;
+
+  if (!offset_string || !offsets)
+    {
+      carmen_warn("Bug in carmen_parse_bumper_offsets: a pointer arg was "
+		  "passed as NULL\n");
+      return -1;
+    }
+
+  curr_val = offset_string;
+  do {
+    //get X co-ordinate
+    sscanf(curr_val, "%lf", &(offsets[bumper_num].x));
+    if(curr_val==NULL){
+      carmen_warn("Too few arguments in bumper offset string.\n");
+      return -1;
+    }
+    curr_val = strchr(curr_val, ' ');
+    if(curr_val==NULL){
+      carmen_warn("Too few arguments in bumper offset string.\n");
+      return -1;
+    }
+    for(;*curr_val!='\0' && *curr_val==' ';curr_val++);
+    
+    //get Y co-ordinate
+    sscanf(curr_val, "%lf", &(offsets[bumper_num].y));
+    if(bumper_num+1==num_bumpers) {bumper_num++; break;}
+    if(curr_val==NULL){
+      carmen_warn("Too few arguments in bumper offset string.\n");
+      return -1;
+    }
+    curr_val = strchr(curr_val, ' ');
+    if(curr_val==NULL){
+      carmen_warn("Too few arguments in bumper offset string.\n");
+      return -1;
+    }
+    for(;*curr_val!='\0' && *curr_val==' ';curr_val++);
+    
+    bumper_num++;
+  } while (curr_val != NULL);
+
+  if (bumper_num < num_bumpers) {
+    carmen_warn("Too few arguments in offset string.\n");
+    return -1;
+  }
+
+  return 0;
+}

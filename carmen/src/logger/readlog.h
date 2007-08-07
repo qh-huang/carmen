@@ -192,7 +192,9 @@ double carmen_laser_guess_fov(int num_beams);
  **/
 double carmen_laser_guess_angle_increment(int num_beams);
 
+char* carmen_string_to_base_sonar_message(char* string, carmen_base_sonar_message* sonar_msg);
 
+char* carmen_string_to_base_bumper_message(char* string, carmen_base_bumper_message* bumper_msg);
 
 #ifdef __cplusplus
 }

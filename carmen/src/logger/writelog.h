@@ -133,5 +133,13 @@ void carmen_logger_write_gps_gprmc(carmen_gps_gprmc_message *gps_msg,
 				   carmen_FILE *outfile, 
 				   double timestamp);
 
+
+void carmen_logwrite_write_base_sonar(carmen_base_sonar_message *sonar,
+				       carmen_FILE *outfile,
+				       double timestamp);
+
+void carmen_logwrite_write_base_bumper(carmen_base_bumper_message *bumper,
+				       carmen_FILE *outfile,
+				       double timestamp);
 #endif
 // @}
