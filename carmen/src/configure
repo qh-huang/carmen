@@ -516,7 +516,7 @@ EOF
       $type_string eq "$max") {
     print "Very well, compiling support for all base types.\n";
 #    my (@robots) = ("rflex", "pioneer", "scout", "orc");
-    my (@robots) = ("rflex", "pioneer", "orc4", "orc5");
+    my (@robots) = ("rflex", "pioneer", "scout", "orc4", "orc5");
     push @robots, "xr4000" if ($allow_xr4000);
     push @robots, "segway" if ($allow_segway);
     return @robots;
