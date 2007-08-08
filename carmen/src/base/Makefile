@@ -5,7 +5,7 @@ include ../Makefile.conf
 SUBDIRS = 
 
 for robs in $(ROBOT_TYPES); do 	\
-	ifeq ($(robs),pioneer) 	SUBDIRS += pioneerlib ; endif ; \
+	ifeq ($$robs,pioneer) 	SUBDIRS += pioneerlib ; endif ; \
 	ifeq ($$robs,rflex)    	SUBDIRS += rflexlib ; endif ; \
 	ifeq ($$robs,scout) 	SUBDIRS += scoutlib ; endif ; \
 	ifeq ($$robs,xr4000) 	SUBDIRS += xr4000_base ; endif ; \
