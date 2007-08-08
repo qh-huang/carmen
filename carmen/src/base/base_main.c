@@ -85,7 +85,7 @@ initialize_robot(void)
     num_sonar_ranges = carmen_base_direct_sonar_on();
     if(num_sonar_ranges < 0) 
       return -1;
-    if (sonar.range == NULL)
+    if (sonar.range != NULL)
       free(sonar.range);
     sonar.range = (double *)calloc(num_sonar_ranges, sizeof(double));
     carmen_test_alloc(sonar.range);
