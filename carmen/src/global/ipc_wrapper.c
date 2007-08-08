@@ -179,7 +179,7 @@ carmen_ipc_connect(char *module_name)
   return 0;
 }
 
-void 
+int 
 carmen_ipc_connect_long(char *module_name, char *host, int port)
 {
   IPC_RETURN_TYPE err;
@@ -197,7 +197,7 @@ carmen_ipc_connect_long(char *module_name, char *host, int port)
   err = IPC_connectModule(ipc_name, central_name);
   if(err == IPC_Error) {
     carmen_warn("Could not connect to central %s.\n\n", central_name);
-    exit(-1);
+    return -1;
   }
 
   /* Set local message queue capacity */
@@ -205,6 +205,7 @@ carmen_ipc_connect_long(char *module_name, char *host, int port)
   carmen_test_ipc_exit(err, "I had problems setting the IPC capacity. This is a "
 		    "very strange error and should never happen.\n",
 		    "IPC_setCapacity");
+  return 0;
 }
 
 void carmen_write_formatter_message(char *message_name, char *message_fmt,
