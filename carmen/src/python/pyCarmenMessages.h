@@ -82,7 +82,7 @@ class robot_laser1{
   robot_laser1(MessageHandler *cb)
   {
     _robot_laser1_callback = cb;
-    carmen_robot_subscribe_laser1_message
+    carmen_robot_subscribe_frontlaser_message
       (NULL, (carmen_handler_t)robot_lazer1_msg, CARMEN_SUBSCRIBE_LATEST);
   }
 };
@@ -99,7 +99,7 @@ class robot_laser2{
   robot_laser2(MessageHandler *cb)
   {
     _robot_laser2_callback = cb;
-    carmen_robot_subscribe_laser2_message
+    carmen_robot_subscribe_rearlaser_message
       (NULL, (carmen_handler_t)robot_lazer2_msg, CARMEN_SUBSCRIBE_LATEST);
   }
 };
