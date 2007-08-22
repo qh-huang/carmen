@@ -76,7 +76,7 @@ static double range_conv_factor, diff_conv_factor, vel2_divisor;
 #define PIONEER_BATTERY_CONVERSION_FACTOR           0.1
 #define PIONEER_COMPASS_CONVERSION_FACTOR           2.0
 
-#define PIONEER_MAX_NUM_SONARS  28
+#define PIONEER_MAX_NUM_SONARS   32
 #define PIONEER_MAX_NUM_BUMPERS  14
 
 
