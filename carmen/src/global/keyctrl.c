@@ -67,6 +67,7 @@ void carmen_initialize_keyboard(void)
 
 int carmen_read_char(char *c)
 {
+#ifndef CYGWIN
   long available;
   int i;
 
@@ -79,6 +80,9 @@ int carmen_read_char(char *c)
   }
   else
     return 0;
+#else
+  return (read(0, c, 1) > 0);
+#endif
 }
 
 int carmen_keyboard_control(char c, double max_tv, double max_rv, 
