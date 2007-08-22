@@ -122,6 +122,7 @@ my $no_strict_aliasing = check_gcc_version();
 my $processor = verify_processor();
 my ($os_type, $kernel) = verify_kernel();
 
+verify_cygwin();
 my ($suse) = verify_suse();
 my $header_dir = verify_headers() unless ($header_dir);
 my ($canlib) = verify_canlib();
@@ -841,6 +842,23 @@ sub verify_kernel {
   my ($kernel) = $system =~ /\S+\s+\S+\s+(\S+)/;
   print "Found kernel $kernel.\n";
   return ($OSNAME, $kernel);
+}
+
+sub verify_cygwin {
+  if ($os_type eq "cygwin") {
+
+    open CONFIG, "> ../include/values.h" or die 
+      "Could not open ../include/values.h: $!\n";
+
+    print CONFIG<<EOF;
+
+/* fake values.h for cygwin */
+
+EOF
+
+    close CONFIG;
+
+  }
 }
 
 sub verify_processor {

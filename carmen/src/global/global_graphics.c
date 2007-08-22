@@ -26,6 +26,7 @@
  *
  ********************************************************/
 
+#include "carmen.h"
 #include <gtk/gtk.h>
 #include "global.h"
 #include <values.h>
