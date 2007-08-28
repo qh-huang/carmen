@@ -222,7 +222,6 @@
 	Py_DECREF(x);
 	Py_DECREF(y);
 	Py_DECREF(theta);
-
 	PyObject* robot_pose = PyList_New(0);
 	PyObject* x2 = PyFloat_FromDouble((double)$1->robot_pose.x);
 	PyObject* y2 = PyFloat_FromDouble((double)$1->robot_pose.y);
@@ -285,6 +284,46 @@
 	Py_DECREF(rv);
 	Py_DECREF(laser_config);
 	$result = retObj;
+}
+
+
+%typemap(out) carmen_simulator_truepos_message*{
+
+	PyObject* truepose = PyList_New(0);
+	PyObject* x = PyFloat_FromDouble((double)$1->truepose.x);
+	PyObject* y = PyFloat_FromDouble((double)$1->truepose.y);
+	PyObject* theta = PyFloat_FromDouble((double)$1->truepose.theta);
+	PyList_Append(truepose, x);
+	PyList_Append(truepose, y);
+	PyList_Append(truepose, theta);
+	Py_DECREF(x);
+	Py_DECREF(y);
+	Py_DECREF(theta);
+
+	
+	PyObject* odometrypose = PyList_New(0);
+	PyObject* x2 = PyFloat_FromDouble((double)$1->odometrypose.x);
+	PyObject* y2 = PyFloat_FromDouble((double)$1->odometrypose.y);
+	PyObject* theta2 = PyFloat_FromDouble((double)$1->odometrypose.theta);
+	PyList_Append(odometrypose, x2);
+	PyList_Append(odometrypose, y2);
+	PyList_Append(odometrypose, theta2);
+	Py_DECREF(x2);
+	Py_DECREF(y2);
+	Py_DECREF(theta2);
+
+	PyObject* timestamp = PyFloat_FromDouble((double)$1->timestamp);
+	
+	//create the dictionary
+	PyObject* sim_truepos = PyDict_New();
+	PyDict_SetItemString(sim_truepos, "truepose", truepose);
+	PyDict_SetItemString(sim_truepos, "odometrypose", odometrypose);
+	PyDict_SetItemString(sim_truepos, "timestamp", timestamp);
+	Py_DECREF(truepose);
+	Py_DECREF(odometrypose);
+	Py_DECREF(timestamp);
+
+	$result = sim_truepos;
 }
 
 
