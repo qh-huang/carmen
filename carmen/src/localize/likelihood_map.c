@@ -101,7 +101,7 @@ static void create_distance_map(carmen_map_p cmap, carmen_localize_map_p lmap,
 	  }
 }
 
-static void create_likelihood_map(carmen_localize_map_p lmap, 
+void create_likelihood_map(carmen_localize_map_p lmap, 
 				  float **prob, float std)
 {
   int x, y;
@@ -126,6 +126,32 @@ static void create_likelihood_map(carmen_localize_map_p lmap,
       if(prob[x][y] < SMALL_PROB)
 	prob[x][y] = SMALL_PROB;
       prob[x][y] = log(prob[x][y]);
+    }
+}
+
+void create_stretched_likelihood_map(carmen_localize_map_p lmap, 
+					   float **prob, float std, double min_likelihood)
+{
+  int x, y;
+  double p, max;
+
+  /* Compute the probability of each cell given the standard deviation,
+     or "fuzziness" of the likelihood map */
+  max = 0;
+  for(x = 0; x < lmap->config.x_size; x++)
+    for(y = 0; y < lmap->config.y_size; y++) {
+      p = exp(-0.5 * carmen_square(lmap->distance[x][y] * 
+				   lmap->config.resolution / std));
+      if(p > max)
+	max = p;
+      prob[x][y] = p;
+    }
+  
+  /* Correct the map so most likely reading has probability 1 */
+  for(x = 0; x < lmap->config.x_size; x++)
+    for(y = 0; y < lmap->config.y_size; y++)	{
+      prob[x][y] /= max;
+      prob[x][y] = log( min_likelihood + (1.0-min_likelihood)*prob[x][y]);
     }
 }
 
@@ -200,8 +226,12 @@ void carmen_to_localize_map(carmen_map_p cmap, carmen_localize_map_p lmap,
     lmap->y_offset[i] = lmap->complete_y_offset + i * lmap->config.y_size;
 
   create_distance_map(cmap, lmap, param);
-  create_likelihood_map(lmap, lmap->prob, param->lmap_std);
-  create_likelihood_map(lmap, lmap->gprob, param->global_lmap_std);
+/*   create_likelihood_map(lmap, lmap->prob, param->lmap_std); */
+/*   create_likelihood_map(lmap, lmap->gprob, param->global_lmap_std); */
+
+  create_stretched_likelihood_map(lmap, lmap->prob, param->lmap_std, param->tracking_beam_minlikelihood);
+  create_stretched_likelihood_map(lmap, lmap->gprob, param->global_lmap_std, param->global_beam_minlikelihood);
+
 }
 
 /* Writes a carmen map out to a ppm file */

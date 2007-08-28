@@ -373,8 +373,11 @@ int carmen_localize_initialize_particles_placename(carmen_localize_particle_filt
   for(i = 0; i < placelist->num_places; i++)
     if(strcmp(placename, placelist->places[i].name) == 0)
       break;
-  if(i == placelist->num_places || 
-     placelist->places[i].type != CARMEN_LOCALIZATION_INIT_TYPE)
+/*   if(i == placelist->num_places ||  */
+/*      placelist->places[i].type != CARMEN_LCALIZATION_INIT_TYPE) */
+/*     return -1; */
+  if(i == placelist->num_places/*  ||  */
+/*      placelist->places[i].type != CARMEN_LCALIZATION_INIT_TYPE */)
     return -1;
   mean.x = placelist->places[i].x;
   mean.y = placelist->places[i].y;
@@ -575,10 +578,15 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
 				       int backwards)
 {
   float angle, *laser_x, *laser_y, p_x, p_y, ctheta, stheta;
-  float log_small_prob = log(SMALL_PROB);
-  float global_log_small_prob = log_small_prob * 
-    filter->param->global_evidence_weight;
-  float log_min_wall_prob = log(filter->param->min_wall_prob);
+
+  float log_small_prob = log(filter->param->tracking_beam_minlikelihood);
+  float global_log_small_prob = log(filter->param->global_beam_minlikelihood);
+  float log_min_wall_prob = log(filter->param->tracking_beam_minlikelihood);
+
+/*   float log_small_prob = log(SMALL_PROB); */
+/*   float global_log_small_prob = log_small_prob *  filter->param->global_evidence_weight; */
+/*   float log_min_wall_prob = log(filter->param->min_wall_prob); */
+
   int i, j, x, y, robot_x, robot_y;
   int count[num_readings]; 
 
@@ -642,8 +650,8 @@ void carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
 		   filter->param->occupied_prob))
 	    filter->particles[i].weight += global_log_small_prob;
 	  else
-	    filter->particles[i].weight += map->gprob[x][y] * 
-	      filter->param->global_evidence_weight;
+	    filter->particles[i].weight += map->gprob[x][y];
+/* 	  *  filter->param->global_evidence_weight; */
 	}
     }
   else {
@@ -945,7 +953,7 @@ void carmen_localize_summarize(carmen_localize_particle_filter_p filter,
     y = (summary->mean_scan[i].y / map->config.resolution);
     if(x < 0 || y < 0 || x >= map->config.x_size || y >= map->config.y_size ||
        map->carmen_map.map[x][y] == -1)
-      summary->mean_scan[i].prob = SMALL_PROB;
+      summary->mean_scan[i].prob = filter->param->tracking_beam_minlikelihood; //SMALL_PROB;
     else
       summary->mean_scan[i].prob = exp(map->prob[x][y]);
   }
