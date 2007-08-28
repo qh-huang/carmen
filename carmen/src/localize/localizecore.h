@@ -48,8 +48,10 @@ extern "C" {
 #include "localize_motion.h"
 
 #define      SMALL_PROB        0.01
-
 #define      MAX_BEAMS_PER_SCAN   1024
+
+/* #define      LOCALIZECORE_TRACKING_MINLIKELIHOOD        (0.5) */
+/* #define      LOCALIZECORE_GLOBAL_MINLIKELIHOOD          (0.9) */
 
   /** localize parameter structure **/
 typedef struct {
@@ -69,6 +71,10 @@ typedef struct {
   double global_lmap_std, global_evidence_weight, global_distance_threshold;
   int global_test_samples;
   int use_sensor;
+
+  double tracking_beam_minlikelihood;
+  double global_beam_minlikelihood;
+
 #ifndef OLD_MOTION_MODEL
   carmen_localize_motion_model_t *motion_model;
 #endif  

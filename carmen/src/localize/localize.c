@@ -401,7 +401,11 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
     {"localize", "global_test_samples", CARMEN_PARAM_INT,
      &param->global_test_samples, 1, NULL},
     {"localize", "use_sensor", CARMEN_PARAM_ONOFF,
-     &param->use_sensor, 0, NULL}
+     &param->use_sensor, 0, NULL},
+    {"localize", "tracking_beam_minlikelihood", CARMEN_PARAM_DOUBLE, 
+     &param->tracking_beam_minlikelihood, 0, NULL},
+    {"localize", "global_beam_minlikelihood", CARMEN_PARAM_DOUBLE, 
+     &param->global_beam_minlikelihood, 0, NULL}
   };
 
   carmen_param_install_params(argc, argv, param_list, 
