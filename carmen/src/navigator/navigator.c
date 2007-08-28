@@ -213,6 +213,7 @@ static void
 generate_next_motion_command(void)
 {
   carmen_traj_point_t waypoint;
+  int waypoint_index;
   int waypoint_status;
   int is_goal;
   command_t command;
@@ -224,7 +225,8 @@ generate_next_motion_command(void)
   waypoint = robot_position;
 
   waypoint_status = 
-    carmen_planner_next_waypoint(&waypoint, &is_goal, &nav_config);
+    carmen_planner_next_waypoint(&waypoint, &waypoint_index, 
+				 &is_goal, &nav_config);
 
   /* goal is reached */
 
@@ -252,8 +254,13 @@ generate_next_motion_command(void)
     }
 
   carmen_planner_get_status(&status);  
-  carmen_robot_follow_trajectory(status.path.points+1, status.path.length-1, 
+  /*   carmen_robot_follow_trajectory(status.path.points+1, status.path.length-1, &robot_position); */
+
+
+  carmen_robot_follow_trajectory(status.path.points+waypoint_index, 
+				 status.path.length-1, 
 				 &robot_position);
+
   if (status.path.length > 0) 
     free(status.path.points);
 

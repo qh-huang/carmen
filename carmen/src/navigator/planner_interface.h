@@ -92,11 +92,14 @@ extern "C" {
      if the goal was specified with an orientation. 
      Returns 1 if robot reached goal, returns -1 if no path
      exists, otherwise returns 0 and fills in next destination
-     waypoint. **/
+     waypoint. waypoint_index is the index of the waypoint in the 
+     trajectory **/
   
   int carmen_planner_next_waypoint(carmen_traj_point_p waypoint, 
+				   int* waypoint_index,
 				   int *is_goal,
 				   carmen_navigator_config_t *nav_conf);
+
 
   /** Updates the planner to have a new map. **/
   

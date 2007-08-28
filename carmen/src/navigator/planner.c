@@ -503,7 +503,9 @@ carmen_planner_get_status(carmen_planner_status_p status)
 // then there is no goal
 
 int
-carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
+carmen_planner_next_waypoint(carmen_traj_point_p waypoint, 
+			     int* waypoint_index,
+			     int *is_goal,
 			     carmen_navigator_config_t *nav_conf)
 {  
   carmen_traj_point_p point;
@@ -545,6 +547,7 @@ carmen_planner_next_waypoint(carmen_traj_point_p waypoint, int *is_goal,
     *is_goal = 0;
 
   *waypoint = *point;    
+  *waypoint_index = next_point;
 
   carmen_verbose("Waypoint is: %.0f %.0f %.0f (goal %d)\n", 
 		 waypoint->x, waypoint->y,
