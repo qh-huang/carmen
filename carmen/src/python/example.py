@@ -8,7 +8,7 @@ def test1():
 	# Create callers
         # the exact syntax of these might change a bit
 	fl = pyCarmen.front_laser(robot)
-	rl = pyCarmen.rear_laser(robot)
+	#rl = pyCarmen.rear_laser(robot)
 	loc = pyCarmen.global_pose(robot)
 	odo = pyCarmen.odometry(robot)
 	son = pyCarmen.sonar(robot)
@@ -18,8 +18,9 @@ def test1():
 	nav_stop = pyCarmen.navigator_stopped(robot)
 	the_arm = pyCarmen.arm(robot)
 	
-	# Dispatch and don't return
-	robot.connect()
+	while(1):
+		pyCarmen.carmen_ipc_sleep(0.1);
+
 
 def test2():
 	robot = Robot().__disown__()
