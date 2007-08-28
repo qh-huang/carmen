@@ -631,8 +631,10 @@ static void read_parameters(int argc, char *argv[],
        config->sonar_config.num_sonars);
   }
   
+#ifndef OLD_MOTION_MODEL
   config->motion_model = carmen_localize_motion_initialize(argc, argv);
-  
+#endif
+
   fill_laser_config_data( &(config->front_laser_config) );
 
   if(config->use_rear_laser)

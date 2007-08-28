@@ -1,5 +1,7 @@
 include ../Makefile.conf
 
+CFLAGS += -DOLD_MOTION_MODEL
+
 IFLAGS += -I../robot
 LFLAGS += -lmap_interface -lparam_interface -llocalize_interface -lrobot \
 	  -lbase_interface -llaser_interface -lgeometry -llocalize_motion \
