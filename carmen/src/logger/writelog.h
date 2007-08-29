@@ -141,5 +141,11 @@ void carmen_logwrite_write_base_sonar(carmen_base_sonar_message *sonar,
 void carmen_logwrite_write_base_bumper(carmen_base_bumper_message *bumper,
 				       carmen_FILE *outfile,
 				       double timestamp);
+
+
+void carmen_logwrite_write_imu(carmen_imu_message *imu,
+			       carmen_FILE *outfile,
+			       double timestamp);
+
 #endif
 // @}
