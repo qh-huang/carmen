@@ -43,9 +43,8 @@ carmen_imu_publish_imu_message(carmen_imu_message* msg)  {
   carmen_test_ipc_exit(err, "Could not publish", CARMEN_IMU_MESSAGE_NAME);
 }
 
-
 void
-carmen_imu_subscribe_alive_message(carmen_laser_alive_message *alive,
+carmen_imu_subscribe_alive_message(carmen_imu_alive_message *alive,
 				     carmen_handler_t handler,
 				     carmen_subscribe_t subscribe_how)
 {
