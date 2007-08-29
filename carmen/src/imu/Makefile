@@ -1,7 +1,7 @@
 include ../Makefile.conf
 
 
-MODULE_NAME = imu
+MODULE_NAME = IMU
 MODULE_COMMENT = Generic IMU interface
 
 SOURCES =
