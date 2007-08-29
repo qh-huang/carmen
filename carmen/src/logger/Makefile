@@ -4,7 +4,9 @@ ifdef FOR_XAVIER
 INTERFACE_LIBS = -lxavier_interface -lparam_interface -lsimulator_interface
 else
 INTERFACE_LIBS = -lrobot_interface -llaser_interface -lbase_interface \
-	         -lsimulator_interface -lgps_nmea_interface -larm_interface
+	         -lsimulator_interface -lgps_nmea_interface -larm_interface \
+		 -limu_interface
+
 endif
 
 LFLAGS += $(INTERFACE_LIBS) -llocalize_interface -lparam_interface \

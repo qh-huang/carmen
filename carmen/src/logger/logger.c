@@ -41,6 +41,7 @@ static int log_localize = 1;
 static int log_simulator = 1;
 static int log_params = 1;
 static int log_gps = 1;
+static int log_imu = 1;
 static int log_sonars = 1;
 static int log_bumpers = 1;
 
@@ -58,7 +59,8 @@ void get_logger_params(int argc, char** argv) {
     {"logger", "simulator",   CARMEN_PARAM_ONOFF, &log_simulator, 0, NULL},
     {"logger", "sonar",       CARMEN_PARAM_ONOFF, &log_sonars, 0, NULL},
     {"logger", "bumper",      CARMEN_PARAM_ONOFF, &log_bumpers, 0, NULL},
-    {"logger", "gps",         CARMEN_PARAM_ONOFF, &log_gps, 0, NULL}
+    {"logger", "gps",         CARMEN_PARAM_ONOFF, &log_gps, 0, NULL},
+    {"logger", "imu",         CARMEN_PARAM_ONOFF, &log_imu, 0, NULL}
   };
 
   num_items = sizeof(param_list)/sizeof(param_list[0]);
@@ -220,6 +222,11 @@ void ipc_gps_gprmc_handler( carmen_gps_gprmc_message *gps_data)
 }
 
 
+void imu_handler(carmen_imu_message *msg)
+{
+  fprintf(stderr, "i");
+  carmen_logwrite_write_imu(msg, outfile, carmen_get_time() - logger_starttime);
+}
 
 
 
@@ -345,6 +352,13 @@ int main(int argc, char **argv)
     carmen_simulator_subscribe_truepos_message(NULL, (carmen_handler_t)  
 					       carmen_simulator_truepos_handler,
 					       CARMEN_SUBSCRIBE_ALL);
+  }
+
+  if (log_imu) {
+
+    carmen_imu_subscribe_imu_message(NULL, (carmen_handler_t)  
+				     imu_handler,
+				     CARMEN_SUBSCRIBE_ALL);
   }
   
   
