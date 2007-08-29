@@ -640,3 +640,25 @@ char* carmen_string_to_base_bumper_message(char* string, carmen_base_bumper_mess
 
   return current_pos;
 }
+
+
+char* carmen_string_to_imu_message(char* string, carmen_imu_message* msg)
+{
+  char* current_pos = string;
+  if (strncmp(current_pos, "IMU ", 4) == 0)
+    current_pos = carmen_next_word(current_pos);
+
+  msg->accX = CLF_READ_DOUBLE(&current_pos);
+  msg->accY = CLF_READ_DOUBLE(&current_pos);
+  msg->accZ = CLF_READ_DOUBLE(&current_pos);
+
+  msg->q0 = CLF_READ_DOUBLE(&current_pos);
+  msg->q1 = CLF_READ_DOUBLE(&current_pos);
+  msg->q2 = CLF_READ_DOUBLE(&current_pos);
+  msg->q3 = CLF_READ_DOUBLE(&current_pos);
+
+  msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&msg->host, &current_pos);
+
+  return current_pos;
+}
