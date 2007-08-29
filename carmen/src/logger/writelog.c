@@ -53,7 +53,7 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude_dm lat_orient longitude_dm long_orient speed course variation var_dir date\n");
   carmen_fprintf(outfile, "# SONAR cone_angle num_sonars [sonar_reading] [sonar_offsets x y theta]\n");
   carmen_fprintf(outfile, "# BUMPER num_bumpers [bumper_reading] [bumper_offsets x y]\n");
-  carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaterion_q0 quaterion_q1 quaterion_q2 quaterion_q3 \n");
+  carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaternion_q0 quaternion_q1 quaternion_q2 quaternion_q3 \n");
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
   carmen_fprintf(outfile, "# (old) # FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
