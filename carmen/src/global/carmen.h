@@ -131,6 +131,9 @@ extern "C" {
 #include <carmen/gps_nmea_messages.h>
 #include <carmen/gps_nmea_interface.h>
 
+#include <carmen/imu_messages.h>
+#include <carmen/imu_interface.h>
+
 #include <carmen/logger_messages.h>
 #include <carmen/logger.h>
 #include <carmen/writelog.h>
