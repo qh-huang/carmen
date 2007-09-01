@@ -76,7 +76,7 @@ class RobotLaserMessage : public AbstractMessage {
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, SideSafetyDist, side_safety_dist);
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, TurnAxis, turn_axis);
 
-  /*   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, int, ID, id); */
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, int, ID, id); 
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, char*, Host, host);
   STRUCT_PARAM_VIRTUAL_SET_GET(*m_msg, double, Timestamp, timestamp, public, public);
 

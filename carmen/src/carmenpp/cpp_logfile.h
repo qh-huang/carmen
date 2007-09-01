@@ -9,6 +9,7 @@
 #include <carmen/cpp_base.h>
 #include <carmen/cpp_robot.h>
 #include <carmen/cpp_simulator.h>
+#include <carmen/cpp_imu.h>
 #include <carmen/cpp_unknownmessage.h>
 
 typedef  std::vector<AbstractMessage*> Carmen_Cpp_LogFile_Collection;
