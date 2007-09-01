@@ -48,7 +48,7 @@ RobotLaserMessage::~RobotLaserMessage() {
   this->free();
 }
 void RobotLaserMessage::save(carmen_FILE *logfile, double logger_timestamp) {
-  carmen_logwrite_write_robot_laser(m_msg, -1 // m_msg->id
+  carmen_logwrite_write_robot_laser(m_msg,  m_msg->id
 				    , logfile, logger_timestamp);
 }
 

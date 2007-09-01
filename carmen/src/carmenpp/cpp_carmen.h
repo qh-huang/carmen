@@ -13,6 +13,7 @@
 #include <carmen/cpp_robot.h> 
 #include <carmen/cpp_simulator.h> 
 #include <carmen/cpp_base.h> 
+#include <carmen/cpp_imu.h> 
 #include <carmen/cpp_logfile.h> 
 
 #include <carmen/cpp_mapconfig.h> 
