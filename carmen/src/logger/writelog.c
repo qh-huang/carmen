@@ -53,7 +53,7 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude_dm lat_orient longitude_dm long_orient speed course variation var_dir date\n");
   carmen_fprintf(outfile, "# SONAR cone_angle num_sonars [sonar_reading] [sonar_offsets x y theta]\n");
   carmen_fprintf(outfile, "# BUMPER num_bumpers [bumper_reading] [bumper_offsets x y]\n");
-  carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaternion_q0 quaternion_q1 quaternion_q2 quaternion_q3 \n");
+  carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaternion_q0 quaternion_q1 quaternion_q2 quaternion_q3 magneticfieldX magneticfieldY magneticfieldZ gyroX gyroY gyroZ\n");
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
   carmen_fprintf(outfile, "# (old) # FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
@@ -296,6 +296,14 @@ void carmen_logwrite_write_imu(carmen_imu_message *msg,
   carmen_fprintf(outfile, "%lf ", msg->q1);
   carmen_fprintf(outfile, "%lf ", msg->q2);
   carmen_fprintf(outfile, "%lf ", msg->q3);
+
+  carmen_fprintf(outfile, "%lf ", msg->magX);
+  carmen_fprintf(outfile, "%lf ", msg->magY);
+  carmen_fprintf(outfile, "%lf ", msg->magZ);
+
+  carmen_fprintf(outfile, "%lf ", msg->gyroX);
+  carmen_fprintf(outfile, "%lf ", msg->gyroY);
+  carmen_fprintf(outfile, "%lf ", msg->gyroZ);
 
   carmen_fprintf(outfile, "%lf %s %lf\n", msg->timestamp, msg->host, timestamp);
 }
