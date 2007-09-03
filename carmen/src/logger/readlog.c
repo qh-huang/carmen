@@ -657,6 +657,14 @@ char* carmen_string_to_imu_message(char* string, carmen_imu_message* msg)
   msg->q2 = CLF_READ_DOUBLE(&current_pos);
   msg->q3 = CLF_READ_DOUBLE(&current_pos);
 
+  msg->magX = CLF_READ_DOUBLE(&current_pos);
+  msg->magY = CLF_READ_DOUBLE(&current_pos);
+  msg->magZ = CLF_READ_DOUBLE(&current_pos);
+
+  msg->gyroX = CLF_READ_DOUBLE(&current_pos);
+  msg->gyroY = CLF_READ_DOUBLE(&current_pos);
+  msg->gyroZ = CLF_READ_DOUBLE(&current_pos);
+
   msg->timestamp = CLF_READ_DOUBLE(&current_pos);
   copy_host_string(&msg->host, &current_pos);
 

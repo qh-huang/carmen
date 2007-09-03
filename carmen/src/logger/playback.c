@@ -56,6 +56,7 @@ carmen_arm_state_message arm;
 carmen_base_sonar_message sonar;
 carmen_base_bumper_message bumper;
 
+carmen_imu_message imu;
 carmen_gps_gpgga_message gpsgga;
 carmen_gps_gprmc_message gpsrmc;
 
@@ -264,7 +265,8 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
   {"LASER5", CARMEN_LASER_LASER5_NAME, 
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser5, 0},
-
+  {"IMU", CARMEN_IMU_MESSAGE_NAME,
+    (converter_func) carmen_string_to_imu_message, &imu, 0},
   {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
    (converter_func)carmen_string_to_gps_gpgga_message, &gpsgga, 0},
   {"NMEARMC", CARMEN_GPS_GPRMC_MESSAGE_NAME, 
@@ -415,6 +417,7 @@ int main(int argc, char **argv)
 {
   memset(&odometry, 0, sizeof(odometry));
   memset(&arm, 0, sizeof(arm));
+  memset(&imu, 0, sizeof(imu));
   memset(&sonar, 0, sizeof(sonar));
   memset(&bumper, 0, sizeof(bumper));
   memset(&truepos, 0, sizeof(truepos));
