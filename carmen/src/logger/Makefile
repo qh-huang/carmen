@@ -61,7 +61,7 @@ log_corrected_laser: 	log_corrected_laser.o libwritelog.a
 
 test_logfileread:	test_logfileread.o libreadlog.a
 
-logtool:	        logtool.o libreadlog.a libwrite.a
+logtool:	        logtool.o libreadlog.a 
 
 arm_dump_state:		arm_dump_state.o
 

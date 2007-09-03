@@ -27,8 +27,6 @@
  ********************************************************/
 
 #include "carmen.h"
-//#include "global.h"
-//#include <values.h>
 
 #ifndef COMPILE_WITHOUT_MAP_SUPPORT
 #include <carmen/map.h>

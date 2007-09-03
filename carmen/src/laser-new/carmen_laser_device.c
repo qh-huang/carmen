@@ -1,8 +1,15 @@
 #include <string.h>
-#include <values.h>
 #include <carmen/carmen.h>
 #include "carmen_laser_device.h"
 #include <stdio.h>
+
+#ifdef __APPLE__
+#include <limits.h>
+#include <float.h>
+#define MAXDOUBLE DBL_MAX
+#else
+#include <values.h>
+#endif 
 
 
 int carmen_laser_compare_configuration(carmen_laser_laser_config_t* c1, carmen_laser_laser_config_t* c2){

@@ -39,7 +39,7 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#ifdef CYGWIN
+#if defined(CYGWIN) || defined(__APPLE__)
 #include <sys/socket.h>
 #else
 #include <linux/serial.h>

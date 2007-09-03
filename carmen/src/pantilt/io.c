@@ -283,7 +283,7 @@ m_setparms( int fd, int baud, char par, int bits, int hwf, int swf )
     break;
   }		
   /* Set into raw, no echo mode */
-#if !defined(_DGUX_SOURCE)
+#if !defined(_DGUX_SOURCE) && !defined(__APPLE__)
   tty.c_iflag &= ~(IGNBRK | IGNCR | INLCR | ICRNL | IUCLC | 
   	IXANY | IXON | IXOFF | INPCK | ISTRIP);
   tty.c_iflag |= (BRKINT | IGNPAR);
