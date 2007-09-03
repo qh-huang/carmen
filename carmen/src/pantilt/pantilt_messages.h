@@ -83,6 +83,57 @@ typedef struct {
 #define      CARMEN_PANTILT_MOVE_TILT_MESSAGE_NAME  "pantilt_move_tilt_message"
 #define      CARMEN_PANTILT_MOVE_TILT_MESSAGE_FMT   "{double,double,string}"
 
+
+
+  /*
+   * scanmarks are sent before and after a 3D-scan is taken.
+   * This way a scan can easily be extracted from incoming data, logfiles etc.
+   *
+   * type:    0 -> begin of scan
+   *          1 -> end of scan
+   * laserid: id of laser that is used for scanning
+   *
+   */
+
+typedef struct {
+  int  type;
+  int  laserid;
+  double  timestamp;
+  char*   host;
+} carmen_pantilt_scanmark_message;
+
+#define      CARMEN_PANTILT_SCANMARK_MESSAGE_NAME  "pantilt_scanmark_message"
+#define      CARMEN_PANTILT_SCANMARK_MESSAGE_FMT   "{int, int, double, string}"
+
+
+  /*
+   * laserpos messages state the 3D-position of a laser
+   * relative to the robot's center. This is can be used for 
+   * 3D-scanning.
+   *
+   * x,y,z,phi,theta,psi: 
+   * 3D-pos. of starting point of laser beams
+   *
+   * id: id of laser
+   *
+   */
+  
+  typedef struct {
+    int id;
+    double x;
+    double y;
+    double z;
+    double phi;
+    double theta;
+    double psi;
+    double timestamp;
+    char *host;
+  } carmen_pantilt_laserpos_message;
+  
+#define      CARMEN_PANTILT_LASERPOS_MESSAGE_NAME  "pantilt_laserpos_message"
+#define      CARMEN_PANTILT_LASERPOS_MESSAGE_FMT  "{int,double,double,double,double,double,double,double,string}"
+  
+  
 #ifdef __cplusplus
 }
 #endif

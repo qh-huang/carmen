@@ -44,6 +44,7 @@ static int log_gps = 1;
 static int log_imu = 1;
 static int log_sonars = 1;
 static int log_bumpers = 1;
+static int log_pantilt = 1;
 
 void get_logger_params(int argc, char** argv) {
 
@@ -142,6 +143,21 @@ void arm_state_handler(carmen_arm_state_message *arm)
   carmen_logwrite_write_arm(arm, outfile, 
 			    carmen_get_time() - logger_starttime);
 }
+
+void pantilt_scanmark_handler(carmen_pantilt_scanmark_message *scanmark)
+{
+  fprintf(stderr, "M");
+  carmen_logwrite_write_pantilt_scanmark(scanmark, outfile, 
+			    carmen_get_time() - logger_starttime);
+}
+
+void pantilt_laserpos_handler(carmen_pantilt_laserpos_message *laserpos)
+{
+  fprintf(stderr, "P");
+  carmen_logwrite_write_pantilt_laserpos(laserpos, outfile, 
+			    carmen_get_time() - logger_starttime);
+}
+
 
 void robot_frontlaser_handler(carmen_robot_laser_message *laser)
 {
@@ -313,6 +329,16 @@ int main(int argc, char **argv)
     carmen_arm_subscribe_state_message(NULL, (carmen_handler_t)
 				       arm_state_handler, 
 				       CARMEN_SUBSCRIBE_ALL);
+
+  if (log_pantilt) {
+    carmen_pantilt_subscribe_scanmark_message (NULL, (carmen_handler_t)
+					       pantilt_scanmark_handler, 
+					       CARMEN_SUBSCRIBE_ALL);
+    
+    carmen_pantilt_subscribe_laserpos_message (NULL, (carmen_handler_t)
+					       pantilt_laserpos_handler, 
+					       CARMEN_SUBSCRIBE_ALL);
+  }
 
   if (log_robot_laser) {
     carmen_robot_subscribe_frontlaser_message(NULL, (carmen_handler_t)

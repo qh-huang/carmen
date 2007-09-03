@@ -47,12 +47,14 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# RAWLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# RAWLASER3 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# RAWLASER4 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
+  carmen_fprintf(outfile, "# POSITIONLASER laserid x y z phi(roll) theta(pitch) psi(yaw) \n");
   carmen_fprintf(outfile, "# ROBOTLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# ROBOTLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# NMEAGGA gpsnr utc latitude_dm lat_orient longitude_dm long_orient gps_quality num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age\n");
   carmen_fprintf(outfile, "# NMEARMC gpsnr validity utc latitude_dm lat_orient longitude_dm long_orient speed course variation var_dir date\n");
   carmen_fprintf(outfile, "# SONAR cone_angle num_sonars [sonar_reading] [sonar_offsets x y theta]\n");
   carmen_fprintf(outfile, "# BUMPER num_bumpers [bumper_reading] [bumper_offsets x y]\n");
+  carmen_fprintf(outfile, "# SCANMARK start_stop_indicator laserID \n");
   carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaternion_q0 quaternion_q1 quaternion_q2 quaternion_q3 magneticfieldX magneticfieldY magneticfieldZ gyroX gyroY gyroZ\n");
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
@@ -283,6 +285,31 @@ void carmen_logwrite_write_base_bumper(carmen_base_bumper_message *bumper,
 }
 
 
+void carmen_logwrite_write_pantilt_scanmark(carmen_pantilt_scanmark_message *scanmark,
+					    carmen_FILE *outfile, double timestamp) {
+
+  carmen_fprintf(outfile, "SCANMARK ");
+
+  carmen_fprintf(outfile, "%d ", scanmark->type);
+  carmen_fprintf(outfile, "%d ", scanmark->laserid);
+
+  carmen_fprintf(outfile, "%lf %s %lf\n", scanmark->timestamp, scanmark->host, timestamp);
+}
+
+
+
+void carmen_logwrite_write_pantilt_laserpos(carmen_pantilt_laserpos_message *laserpos,
+					    carmen_FILE *outfile, double timestamp){
+
+  carmen_fprintf(outfile, "POSITIONLASER %d ",laserpos->id);
+
+  carmen_fprintf(outfile, "%f %f %f ", laserpos->x, laserpos->y, laserpos->z);
+  carmen_fprintf(outfile, "%f %f %f ", laserpos->phi, laserpos->theta, laserpos->psi);
+
+  carmen_fprintf(outfile, "%lf %s %lf\n", laserpos->timestamp, laserpos->host, timestamp);
+}
+
+
 void carmen_logwrite_write_imu(carmen_imu_message *msg,
 			       carmen_FILE *outfile,
 			       double timestamp)
@@ -307,3 +334,4 @@ void carmen_logwrite_write_imu(carmen_imu_message *msg,
 
   carmen_fprintf(outfile, "%lf %s %lf\n", msg->timestamp, msg->host, timestamp);
 }
+
