@@ -29,10 +29,19 @@
 #include "carmen.h"
 #include <gtk/gtk.h>
 #include "global.h"
-#include <values.h>
 #include <carmen/map.h>
 #include "global_graphics.h"
 #include <sys/types.h>
+
+#ifdef __APPLE__
+#include <limits.h>
+#include <float.h>
+#define MAXDOUBLE DBL_MAX
+#else
+#include <values.h>
+#endif 
+
+
 
 fd_set *x_ipcGetConnections(void);
 int x_ipcGetMaxConnection(void);

@@ -28,6 +28,9 @@
 
 #include <carmen/carmen.h>
 #include <sys/ioctl.h>
+#ifdef __APPLE__
+#include <sys/termios.h>
+#endif
 #include <carmen/pantilt_messages.h>
 #include <carmen/pantilt_interface.h>
 
@@ -96,7 +99,11 @@ main( int argc, char *argv[] )
   float  tilt = 0;
   
   int           use_keyboard = 0;
+#ifdef __APPLE__
+  struct termios      cooked, raw;
+#else
   struct termio	cooked, raw;
+#endif
   unsigned char	c;
   unsigned int	i, numC, code[MAX_CODE_LENGTH];
   
@@ -129,15 +136,28 @@ main( int argc, char *argv[] )
     fprintf( stderr, "   TILT-MIN  = %d\n", SET_TMIN );
     fprintf( stderr, "   TILT-MAX  = %d\n", SET_TMAX );
     fprintf( stderr, "***********************************************\n" );
+#ifdef __APPLE__
+      for (i = SIGHUP; i <= SIGUSR2; i++) {
+#else
     for (i = SIGHUP; i <= SIGPOLL; i++) {
+#endif
       signal(c, catcher);
     }
+#ifdef __APPLE__
+      tcgetattr(KEYBOARD,&cooked);
+    memcpy(&raw, &cooked, sizeof(struct termios));
+#else
     ioctl(KEYBOARD, TCGETA, &cooked);
     memcpy(&raw, &cooked, sizeof(struct termio));
+#endif
     raw.c_lflag &=~ (ICANON | ECHO);
     raw.c_cc[VEOL] = 1;
     raw.c_cc[VEOF] = 2;
+#ifdef __APPLE__
+      tcsetattr(KEYBOARD, TCSANOW, &cooked);
+#else
     ioctl(KEYBOARD, TCSETA, &raw);
+#endif
     signalled = 0;
     numC = 0;
     fprintf( stderr, "\r                      \rpan=%3.1f tilt=%3.1f",
@@ -214,7 +234,11 @@ main( int argc, char *argv[] )
       usleep(10000);
     }
     printf("\nBye...\n");
+#ifdef __APPLE__
+      tcsetattr(0, TCSANOW, &cooked);
+#else
     ioctl(0, TCSETA, &cooked);
+#endif
   }
   exit(0);
 }

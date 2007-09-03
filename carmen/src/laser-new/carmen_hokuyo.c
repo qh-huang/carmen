@@ -4,8 +4,17 @@
 #include <carmen/carmen.h>
 #include "carmen_hokuyo.h"
 #include "hokuyourg.h"
+
+#ifdef __APPLE__
+#include <limits.h>
+#include <float.h>
+#define MAXDOUBLE DBL_MAX
+#else
 #include <values.h>
+#endif 
+
 #include "laser_messages.h"
+
 
 int carmen_hokuyo_init(carmen_laser_device_t* device){
   HokuyoURG* urg=malloc(sizeof(HokuyoURG));
