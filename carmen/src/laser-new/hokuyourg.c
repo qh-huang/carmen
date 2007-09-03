@@ -1,243 +1,268 @@
 #include "hokuyourg.h"
-#include <carmen/carmen.h>
-#include <stdio.h>
-#include <sys/select.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
-#define BUFSIZE 8192
-#define CMD_EOF       "\26\n"
-#define CMD_VERSION   "V\n"
-#define CMD_LASER_ON  "L1\n"
-#define CMD_LASER_OFF "L0\n"
-#define CMD_ACQUIRE   "G"
-#define CMD_RESPONSE_PERIOD        3000
-#define READING_ACQUIRE_PERIOD     70000
-#define READ_WAIT_USEC 300000
-#define MAX_NULLREADS 10
-
-//helper functions
-inline char* skipLine(char* s){
-  while(*s!='\n' && *s!='\0')
-    s++;
-  if (*s=='\n') 
-    s++;
-  return s;
-}
-
-inline int write_cmd(int fd, char* s){
-  //fprintf (stderr, "wfd=%d ", fd);
-  return write(fd,s,strlen(s));
-} 
-
-inline int read_cmd(int fd, char* s, int bufsize){
-  char* cbuf=s;
-  int lfcount=0;
-
-  fd_set  dSet;
-  FD_ZERO(&dSet);
-  FD_SET(fd,&dSet);
-  struct timeval tv={0,READ_WAIT_USEC};
-  int nullreads=MAX_NULLREADS;
-  //fprintf (stderr, "rfd=%d ", fd);
-
-  while (lfcount<2){
-    char* c=cbuf;
-    int available=select(fd+1, &dSet, NULL, NULL, &tv);
-    int readchars=cbuf-s;
-    int bufferspace=bufsize-readchars;
-    available=available<bufferspace-1?available:bufferspace-1;
-    // fprintf(stderr, "bufferspace=%05d \n", bufferspace);
-    int count=read(fd,cbuf,available);
-    if (count>0){
-      cbuf+=count;
-      for (;c<cbuf;c++){
-	if (*c=='\n')
-	  lfcount++;
-	else
-	  lfcount=0;
-      } 
+//parses an int of x bytes in the hokyo format
+unsigned int parseInt(int bytes, char** s){
+  char* b=*s;
+  unsigned int ret=0;
+  int j=bytes-1;
+  for (int i=0; i<bytes;){
+    if (*b==0||*b=='\n'){
+      *s=0;
+      return 0;
+    }
+    if (*(b+1)=='\n'){ //check for a wrapped line
+      b++;
     } else {
-      nullreads--;
+      unsigned char c=*b-0x30;
+      ret+=((unsigned int ) c)<<(6*j);
+      i++;
+      j--;
     }
-    if (nullreads<0){
-      fprintf (stderr, "F");
-      break;
-    }
+    b++;
   }
-  return cbuf-s;
+  *s=b;
+  return ret;
 }
 
 
-inline int nonblocking_request(int fd, char* cmd, int retries, char* answer, int bufsize){
-  int i;
-  for (i=0; i<retries; i++){
-    char* p0=answer;
-    int l=write_cmd(fd,cmd);
-    usleep(CMD_RESPONSE_PERIOD);
-    p0+=read_cmd(fd,p0,bufsize);
-    if (!strncmp(cmd,answer,l))
-      return (int) (p0-answer);
-    else{
-      write_cmd(fd,CMD_EOF);
+//skips a line
+inline char* skipLine(char* buf){
+  while (*buf!=0 && *buf!='\n')
+    buf++;
+  return (*buf=='\n')?buf+1:0;
+}
+
+//parses a reading response
+void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer){
+  char* s=buffer;
+  int expectedStatus=0;
+  if (s[0]=='M')
+    expectedStatus=99;
+  if (s[0]=='C')
+    expectedStatus=00;
+  
+  int beamBytes=0;
+  if (s[1]=='D') beamBytes=3;
+  if (s[0]=='C') beamBytes=3;
+  
+  if (! beamBytes || ! expectedStatus){
+    fprintf(stderr, "Invalid return packet, cannot parse reading\n");
+    r->status=-1;
+    return;
+  }
+  s+=2;
+  char v[5];
+  v[4]=0;
+  strncpy(v,s,4); r->startStep=atoi(v); s+=4;
+  strncpy(v,s,4); r->endStep=atoi(v);   s+=4;
+  v[2]=0; strncpy(v,s,2); r->clusterCount=atoi(v);
+  
+  s=skipLine(s);
+  if (s==0){
+    fprintf(stderr, "error, line broken when reading the range parameters\n");
+    r->status=-1;
+    return;
+  }
+
+  strncpy(v,s,2); r->status=atoi(v); s+=2;
+
+  if (r->status==expectedStatus){
+  } else {
+    fprintf(stderr,"Error, Status=%d",r->status);
+    return;
+  }
+  r->timestamp=parseInt(4,&s);
+  s=skipLine(s);
+
+  int i=0;
+  while(s!=0){
+    r->ranges[i++]=parseInt(beamBytes,&s);
+  }
+  i--;
+  r->n_ranges=i;
+}
+
+
+
+
+unsigned int hokuyo_readPacket(HokuyoURG* urg, char* buf, int bufsize, int faliures){
+  int failureCount=faliures;
+  if (urg->fd<=0){
+    fprintf(stderr, "Invalid urg->fd\n");
+    return -1;
+  }
+
+  memset(buf, 0, bufsize);
+  int wasLineFeed=0;
+  char* b=buf;
+  while (1){
+    int c=read(urg->fd, b, bufsize);
+    if (! c){
+      fprintf(stderr, "null" );
+      usleep(25000);
+      failureCount--;
+    }else {
+      for (int i=0; i<c; i++){
+	if (wasLineFeed && b[i]=='\n'){
+	  b++;
+	  return b-buf;
+	}
+	wasLineFeed=(b[i]=='\n');
+      }
+      b+=c;
+    }
+    if (failureCount<0)
+      return 0;
+  }
+}
+
+unsigned int hokuyo_readStatus(HokuyoURG* urg, char* cmd){
+  char buf[URG_BUFSIZE];
+  write (urg->fd,  cmd, strlen(cmd));
+  while (1){
+    int c=hokuyo_readPacket(urg, buf, URG_BUFSIZE,10);
+    if (c>0 && !strncmp(buf,cmd+1,strlen(cmd)-1)){
+      char*s=buf;
+      s=skipLine(s);
+      char v[3]={s[0], s[1], 0};
+      return atoi(v);
     }
   }
   return 0;
+    
 }
 
-inline int queryVersion(int fd, int retries, char* s, int bufsize){
-  return nonblocking_request(fd,CMD_VERSION,retries,s,bufsize);
+
+#define HK_QUIT  "\nQT\n"
+#define HK_SCIP  "\nSCIP2.0\n"
+#define HK_BEAM  "\nBM\n"
+#define HK_RESET "\nRS\n"
+#define wcm(cmd) write (urg->fd,  cmd, strlen(cmd))
+
+
+
+int hokuyo_open(HokuyoURG* urg, const char* filename){
+  urg->isProtocol2=0;
+  urg->isInitialized=0;
+  urg->isContinuous=0;
+  urg->fd=open(filename, O_RDWR| O_NOCTTY | O_SYNC);
+  return urg->fd;
 }
 
-inline int laserOn(int fd, int retries, char* s, int bufsize){
-  return nonblocking_request(fd,CMD_LASER_ON,retries,s,bufsize);
-}
-
-inline int laserOff(int fd, int retries, char* s, int bufsize){
-  return nonblocking_request(fd,CMD_LASER_OFF,retries,s,bufsize);
-}
-
-inline int requestReading(int fd, int retries, int min, int max, int cluster, char* s, int bufsize){
-  char cmd[bufsize];
-  sprintf(cmd,"%s%03d%03d%02d\n",CMD_ACQUIRE,min,max,cluster);
-  return nonblocking_request(fd,cmd,retries,s,bufsize);
-}
-
-inline int waitReading(int fd, struct timeval* tv, int min, int max, int cluster, int retries, int reading_retries, unsigned short* readings, int bufsize){
-  char cmd[bufsize];
-  char answer[bufsize];
-  char* s=answer;
-  int i;
-  int rcount=0;
-  int lcount=0;
-  char rhigh=0, rlow=0;
-
-  sprintf(cmd,"%s%03d%03d%02d\n",CMD_ACQUIRE,min,max,cluster);
-  for (i=0; i<reading_retries; i++){
-    if (!nonblocking_request(fd,cmd,retries,answer,bufsize))
-      return 0;
-    if (answer[10]=='0')
-      break;
+int hokuyo_init(HokuyoURG* urg){
+  if (urg->fd<=0){
+    return -1;
   }
-  if (i>=reading_retries)
-    return 0;
-  gettimeofday(tv,0);
-  s=skipLine(s); //skip the command
-  s=skipLine(s); //skip the status
-  int linefeedFound=0;
-  while (1){
-    if (linefeedFound && *s=='\n') {
-      if (rcount > (max-min)/cluster + 1) // sometimes one get strange readings
-	return 0;
-      return rcount;
-    }
-    linefeedFound=(*s=='\n');
-    if (! linefeedFound){
-      if (! (lcount&0x1)){
-	rhigh=*s-0x30;
-      } else {
-	rlow=(*s)-0x30;
-	*readings=(rhigh<<6)+rlow;
-	readings++;
-	rcount++;
-      }
-      lcount++;
-    } else
-      lcount=0;
-    s++;
+
+#ifdef HOKUYO_ALWAYS_IN_SCIP20
+  fprintf(stderr, "Assuming laser is already in SCIP2.0 mode... "); 
+  urg->isContinuous=0;  
+  urg->isProtocol2=1;
+#else
+
+  // stop the  device anyhow
+  fprintf(stderr, "Stopping the device... "); 
+  wcm(HK_QUIT);
+  wcm(HK_QUIT);
+  wcm(HK_QUIT);
+
+  urg->isContinuous=0;
+  
+  // put the urg in SCIP2.0 Mode
+  fprintf(stderr, "Switching to enhanced mode (SCIP2.0)... "); 
+  int status=hokuyo_readStatus(urg, HK_SCIP);
+  if (status==0){
+    fprintf(stderr, "Ok\n");
+    urg->isProtocol2=1;
+  } else {
+    fprintf(stderr, "Error. Unable to switch to SCIP2.0 Mode, please upgrade the firmware of your device\n");
+    return -1;
   }
+
+#endif
+
+  fprintf(stderr, "Device initialized successfully\n");
+  urg->isInitialized=1;
+  return 1;
 }
 
+int hokuyo_startContinuous(HokuyoURG* urg, int startStep, int endStep, int clusterCount){
+  if (! urg->isInitialized)
+    return -1;
+  if (urg->isContinuous)
+    return -1;
 
-void hokuyo_init(HokuyoURG *h){
-  h->startStep=0;
-  h->endStep=768;
-  h->cluster=1;
-  h->txretries=20;
-  h->dataretries=10;
-  h->fd=-1;
-  h->fov = carmen_degrees_to_radians( 270 );
+  // switch on the laser
+  fprintf(stderr, "Switching on the laser emitter...  "); 
+  int status=hokuyo_readStatus(urg, HK_BEAM);
+  if (! status){
+    fprintf(stderr, "Ok\n"); 
+  } else {
+    fprintf(stderr, "Error. Unable to control the laser, status is %d\n", status);
+    return -1;
+  }
+
+  char command[1024];
+  sprintf (command, "\nMD%04d%04d%02d000\n", startStep, endStep, clusterCount);
+
+
+  status=hokuyo_readStatus(urg, command);
+  if (status==99 || status==0){
+    fprintf(stderr, "Continuous mode started with command %s\n", command);
+    urg->isContinuous=1;
+    return 1;
+  }
+  fprintf(stderr, "Error. Unable to set the continuous mode, status=%02d\n", status);
+
+  return -1;
 }
 
+int hokuyo_stopContinuous(HokuyoURG* urg){
+  if (! urg->isInitialized)
+    return -1;
+  if (! urg->isContinuous)
+    return -1;
 
-double hokuyo_getStep(HokuyoURG* h, int c){ 
-  return (c==-1) ? (2.*M_PI/1024.)*h->cluster : (2.*M_PI/1024.)*c; 
-}
-
-double hokuyo_getStartAngle(HokuyoURG* h, int m) { 
-  m = (m==-1)?h->startStep:m; 
-  return (-135./180.)*M_PI+hokuyo_getStep(h,1)*m; 
-}
-
-
-int hokuyo_open(HokuyoURG *h, const char* filename){
-  h->fd=open(filename, O_RDWR|O_SYNC|O_NOCTTY);
-  if (h->fd<=0){
-    return 0;
+  int status=hokuyo_readStatus(urg, HK_QUIT);
+  if (status==0){
+    fprintf(stderr, "Ok\n");
+    urg->isContinuous=0;
+  } else {
+    fprintf(stderr, "Error. Unable to stop the laser\n");
+    return -1;
   }
   return 1;
 }
 
-int hokuyo_close(HokuyoURG *h){
-  if (h->fd>0){
-    close(h->fd);	
-    h->fd=-1;
-    return 1;
-  }
-  return 0;
-}
-
-int hokuyo_getVersion(HokuyoURG *h, char*  result, int r){
-  if (h->fd==-1)
+int hokuyo_reset(HokuyoURG* urg){
+  if (! urg->isInitialized)
     return -1;
-  r=(r==-1)?h->txretries:r;
-  return queryVersion(h->fd, r ,result, BUFSIZE);
-}
 
-int hokuyo_laserOn(HokuyoURG *h, int r){
-  char buf[BUFSIZE];
-  if (h->fd==-1)
-    return 0;
-  r=(r==-1)?h->txretries:r;
-  int retVal=laserOn(h->fd, r ,buf, BUFSIZE);
-  if(retVal){
-    return 1;
+  int status=hokuyo_readStatus(urg, HK_RESET);
+  if (status==0){
+    fprintf(stderr, "Ok\n");
+    urg->isContinuous=0;
   } else {
-    return 0;
-  }
-}
-
-int hokuyo_laserOff(HokuyoURG *h, int r){
-  char buf[BUFSIZE];
-  if (h->fd==-1)
-    return 0;
-  r=(r==-1)?h->txretries:r;
-  int retVal=laserOff(h->fd, r ,buf, BUFSIZE);
-  if(retVal){
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-int hokuyo_getReading(HokuyoURG *h, unsigned short* result, struct timeval* tv, int min, int max, int c, int r, int d){
-  unsigned short readings [BUFSIZE];
-  int l = -1;
-  int i;
-  if (h->fd==-1)
+    fprintf(stderr, "Error. Unable to reset laser\n");
     return -1;
-  r   = (r  ==-1) ? h->txretries   : r;
-  min = (min==-1) ? h->startStep   : min;
-  max = (max==-1) ? h->endStep     : max;
-  c   = (c == -1) ? h->cluster     : c;
-  d   = (d == -1) ? h->dataretries : d;
-  l = waitReading(h->fd, tv, min, max, c, r, d, readings, BUFSIZE);
-  for (i=0; i<l; i++)
-    result[i]=readings[i];
-  return l;
+  }
+  return 1;
 }
 
-
-
+int hokuyo_close(HokuyoURG* urg){
+  if (! urg->isInitialized)
+    return -1;
+  hokuyo_stopContinuous(urg);
+  close(urg->fd);
+  urg->isProtocol2=0;
+  urg->isInitialized=0;
+  urg->isContinuous=0;
+  urg->fd=-1;
+  return 1;
+}

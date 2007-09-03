@@ -13,10 +13,12 @@ laser_handler(carmen_laser_laser_message *laser)
 int 
 main(int argc, char **argv)
 {  
-  carmen_ipc_initialize(argc, argv);
-  carmen_param_check_version(argv[0]);
-  static carmen_laser_laser_message laser;
-  carmen_laser_subscribe_laser_message(2,&laser, (carmen_handler_t)
+    int i=atoi(argv[1]);
+    carmen_ipc_initialize(argc, argv);
+    carmen_param_check_version(argv[0]);
+    fprintf(stderr, "dumping laser %d\n", i);
+    static carmen_laser_laser_message laser;
+  carmen_laser_subscribe_laser_message(i,&laser, (carmen_handler_t)
 					      laser_handler,
 					      CARMEN_SUBSCRIBE_LATEST);
   
