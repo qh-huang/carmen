@@ -42,6 +42,10 @@
 
 #include <carmen/carmen_stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CARMEN_LOGFILE_HEADER "# CARMEN Logfile"
 
 void carmen_logwrite_write_robot_name(char *robot_name, 
@@ -142,10 +146,23 @@ void carmen_logwrite_write_base_bumper(carmen_base_bumper_message *bumper,
 				       carmen_FILE *outfile,
 				       double timestamp);
 
+void carmen_logwrite_write_pantilt_scanmark(carmen_pantilt_scanmark_message* scanmark,
+				       carmen_FILE* outfile,
+				       double timestamp);
+
+void carmen_logwrite_write_pantilt_laserpos(carmen_pantilt_laserpos_message* laserpos,
+				       carmen_FILE* outfile,
+				       double timestamp);
+
 
 void carmen_logwrite_write_imu(carmen_imu_message *imu,
 			       carmen_FILE *outfile,
 			       double timestamp);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 // @}

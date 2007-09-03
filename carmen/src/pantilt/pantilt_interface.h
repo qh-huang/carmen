@@ -52,7 +52,24 @@ carmen_pantilt_subscribe_status_message(carmen_pantilt_status_message *pantilt,
 					carmen_subscribe_t subscribe_how);
 void
 carmen_pantilt_unsubscribe_status_message(carmen_handler_t handler);
-  
+
+
+void 
+carmen_pantilt_subscribe_scanmark_message(carmen_pantilt_scanmark_message *scanmark,
+					  carmen_handler_t handler,
+					  carmen_subscribe_t subscribe_how);
+void
+carmen_pantilt_unsubscribe_scanmark_message(carmen_handler_t handler);
+
+void 
+carmen_pantilt_subscribe_laserpos_message(carmen_pantilt_scanmark_message *laserpos,
+					  carmen_handler_t handler,
+					  carmen_subscribe_t subscribe_how);
+void
+carmen_pantilt_unsubscribe_laserpos_message(carmen_handler_t handler);
+
+
+
 void 
 carmen_pantilt_move( double pan, double tilt );
 

@@ -641,6 +641,47 @@ char* carmen_string_to_base_bumper_message(char* string, carmen_base_bumper_mess
   return current_pos;
 }
 
+char* carmen_string_to_pantilt_scanmark_message(char* string, carmen_pantilt_scanmark_message* scanmark) {
+
+  char *current_pos = string;
+
+  if (strncmp(current_pos, "SCANMARK ", 9) == 0) {
+    current_pos = carmen_next_word(current_pos);
+  }
+
+  scanmark->type = CLF_READ_INT(&current_pos);
+  scanmark->laserid = CLF_READ_INT(&current_pos);
+
+  scanmark->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&scanmark->host, &current_pos);
+
+  return current_pos;
+}
+
+char* carmen_string_to_pantilt_laserpos_message(char* string, carmen_pantilt_laserpos_message* laserpos) {
+
+  char *current_pos = string;
+
+  if (strncmp(current_pos, "POSITIONLASER ", 14) == 0) {
+    current_pos = carmen_next_word(current_pos);
+  } 
+  
+  laserpos->id = CLF_READ_INT(&current_pos);
+  
+  laserpos->x = CLF_READ_DOUBLE(&current_pos);
+  laserpos->y = CLF_READ_DOUBLE(&current_pos);
+  laserpos->z = CLF_READ_DOUBLE(&current_pos);
+
+  laserpos->phi = CLF_READ_DOUBLE(&current_pos);
+  laserpos->theta = CLF_READ_DOUBLE(&current_pos);
+  laserpos->psi = CLF_READ_DOUBLE(&current_pos);
+  
+  laserpos->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&laserpos->host, &current_pos);
+  
+  return current_pos;
+}
+
 
 char* carmen_string_to_imu_message(char* string, carmen_imu_message* msg)
 {
