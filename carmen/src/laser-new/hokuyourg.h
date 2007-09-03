@@ -1,26 +1,45 @@
-#ifndef _HOKUYO_URG_H_
-#define _HOKUYO_URG_H_
-#include <math.h>
-#include <sys/time.h>
-#include "carmen_laser_device.h"
+#ifndef URG_H
+#define URG_H
 
-typedef struct {
-	int startStep, endStep, cluster, txretries, dataretries;
-	int fd;
-        double fov;
+#define HOKUYO_ALWAYS_IN_SCIP20
+
+#define URG_BUFSIZE 8192
+#define URG_ANGULAR_STEP (M_PI/512.)
+#define URG_MAX_BEAMS 768
+
+typedef struct HokuyoRangeReading{
+  int timestamp;
+  int status;
+  int n_ranges;
+  unsigned short ranges[URG_MAX_BEAMS];
+  unsigned short startStep, endStep, clusterCount;
+} HokuyoRangeReading;
+
+typedef struct HokuyoURG{
+  int fd;
+  int isProtocol2;
+  int isContinuous;
+  int isInitialized;
 } HokuyoURG;
 
+// opens the urg, returns <=0 on failure
+int hokuyo_open(HokuyoURG* urg, const char* filename);
 
-void hokuyo_init(HokuyoURG *h);
-double hokuyo_getStep(HokuyoURG* h, int cluster);
-double hokuyo_getStartAngle(HokuyoURG* h, int m);
-int  hokuyo_open(HokuyoURG *h, const char* filename);
-int  hokuyo_close(HokuyoURG *h);
-int  hokuyo_getVersion(HokuyoURG *h, char*  result, int retries);
-int  hokuyo_laserOn(HokuyoURG *h, int retries);
-int  hokuyo_laserOff(HokuyoURG *h, int retries);
-int  hokuyo_getReading(HokuyoURG *h, unsigned short* result, struct timeval* tv, 
-int min, int max, int cluster, int retries, int reading_retries );
+// initializes the urg and sets it to the new scip2.0 protocol
+// returns <=0 on failure
+int hokuyo_init(HokuyoURG* urg);
+
+// reads a packet into the buffer
+unsigned int hokuyo_readPacket(HokuyoURG* urg, char* buf, int bufsize, int faliures);
+
+// starts the continuous mode
+int hokuyo_startContinuous(HokuyoURG* urg, int startStep, int endStep, int clusterCount);
+
+// starts the continuous mode
+int hokuyo_stopContinuous(HokuyoURG* urg);
+int hokuyo_reset(HokuyoURG* urg);
+int hokuyo_close(HokuyoURG* urg);
+void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer);
+
 #endif
-
 

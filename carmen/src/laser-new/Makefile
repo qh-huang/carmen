@@ -3,7 +3,7 @@ include ../Makefile.conf
 MODULE_NAME = "LASER"
 MODULE_COMMENT = "The new laser module for SICK and Hokuyo lasers"
 
-CFLAGS += -DLASER_USE_PTHREAD  
+CFLAGS += -DLASER_USE_PTHREAD -std=gnu99  
 LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread 
 
 SOURCES = carmen_hokuyo.c  dummylaser.c hokuyourg_test.c laser_interface.c sick_laser_init_500k.c \
@@ -20,7 +20,7 @@ TARGETS =  liblaser_interface.a hokuyourg_test sick_laser_test dummylaser laserc
 TARGETS += s300_laser_test
 
 ifndef NO_TCP862_SERIAL_SUPPORT
-CFLAGS += -DUSE_TCP862
+CFLAGS += -DUSE_TCP862 
 LFLAGS += -ltcp862
 endif
 
@@ -45,7 +45,7 @@ endif
 
 liblaser_interface.a:	laser_interface.o carmen_laser_device.o
 
-liblaser.a:		carmen_laser_device.o carmen_laser_message_queue.o hokuyourg.o \
+liblaser.a:		carmen_laser_device.o carmen_laser_message_queue.o hokuyourg.o\
 			carmen_hokuyo.o carmen_laser_device_init.o  sick_laser.o carmen_sick.o \
 			s300_laser.o carmen_s300.o
 

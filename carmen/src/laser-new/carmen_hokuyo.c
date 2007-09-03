@@ -24,33 +24,22 @@ int carmen_hokuyo_init(carmen_laser_device_t* device){
   return 1;
 }
 
-#define URG_VERSION_BUFSIZE 2048
 int carmen_hokuyo_connect(carmen_laser_device_t * device, char* filename, int baudrate __attribute__((unused)) ){
   int result;
-  char buf[URG_VERSION_BUFSIZE];
   HokuyoURG* urg=(HokuyoURG*)device->device_data;
   result=hokuyo_open(urg,filename);
-  if (! result){
+  if (result<=0){
     fprintf(stderr, "error\n  Unable to opening device\n");
     return result;
   }
-  fprintf(stderr, "\nQuerying version from device:\n");
-  result = hokuyo_getVersion(urg, buf, -1);
-  if (result==-1){
-    fprintf(stderr, "  Error in querying version file\n");
-    return result;
-  }
-  printf("  Version is %s\n",buf);
   return 1;
 }
 
 int carmen_hokuyo_configure(carmen_laser_device_t * device ){
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
   //device->config.start_angle=hokuyo_getStartAngle(urg,-1);
-  device->config.angular_resolution=hokuyo_getStep(urg,-1);
-  //device->config.fov=device->config.angular_resolution*(urg->endStep-urg->startStep);
+  device->config.angular_resolution=URG_ANGULAR_STEP;
   device->config.accuracy=0.001;
-  device->config.maximum_range=4.095;	
+  device->config.maximum_range=5.600;	
   return 1;
 }
 
@@ -61,46 +50,50 @@ int carmen_hokuyo_handle_sleep(carmen_laser_device_t* device __attribute__ ((unu
 
 int carmen_hokuyo_handle(carmen_laser_device_t* device){
   HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  unsigned short readings[1024];
-  struct timeval timestamp;
-  int size=hokuyo_getReading(urg, readings, &timestamp, -1, -1, -1, -1, -1);
 
-  // figure out the amount of padding required to match fov in ini file
-  int pad_size = carmen_round( size / 2 * ( 1 - device->config.fov / urg->fov  ) );
-  pad_size = ( pad_size < 0 ) ? 0 : pad_size;
-  size = size - 2 * pad_size;
- 
-  if (size){
-    int j;
+  struct timeval timestamp;
+  char buf[URG_BUFSIZE];
+
+  int c=hokuyo_readPacket(urg, buf, URG_BUFSIZE,10);
+  HokuyoRangeReading reading;
+  hokuyo_parseReading(&reading, buf);
+  if (c>0 && (reading.status==0 || reading.status==99) ){
     carmen_laser_laser_static_message message;
     message.id=device->laser_id;
     message.config=device->config;
-    message.num_readings=size;
+    message.num_readings=reading.n_ranges;
     message.num_remissions=0;
-    message.timestamp=(double)timestamp.tv_sec+1e-6*timestamp.tv_usec;
-    for (j=0; j<size; j++){
-      message.range[j]=0.001*readings[j + pad_size];
+    gettimeofday(&timestamp, NULL);
+    message.timestamp=timestamp.tv_sec + 1e-6*timestamp.tv_usec;
+    for (int j=0; j<reading.n_ranges; j++){
+      message.range[j]=0.001*reading.ranges[j];
       if (message.range[j] <= 0.02) {
 	message.range[j] += device->config.maximum_range;
-	//	fprintf(stderr,"x");
       }
     }
     if (device->f_onreceive!=NULL)
       (*device->f_onreceive)(device, &message);
     return 1;
+  } else {
+    fprintf(stderr, "E");
   }
   return 0;
 }
 
 int carmen_hokuyo_start(carmen_laser_device_t* device){
   HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  fprintf(stderr, "Switching laser on ................ "); 	
-  int retVal=hokuyo_laserOn(urg,-1);
-  if(retVal)
-    fprintf(stderr, "success\n");
-  else {
-    fprintf(stderr, "error\n");
+  int rv=hokuyo_init(urg);
+  if (rv<=0)
     return 0;
+  int bfov=(int)(device->config.fov/URG_ANGULAR_STEP);
+  if (bfov>768)
+    bfov=768;
+  int bmin=URG_MAX_BEAMS/2-bfov/2;
+  int bmax=URG_MAX_BEAMS/2+bfov/2;
+  fprintf(stderr, "Configuring hokuyo continuous mode, bmin=%d, bmax=%d\n", bmin, bmax);
+  rv=hokuyo_startContinuous(urg, bmin, bmax, 0);
+  if (rv<=0){
+    fprintf(stderr, "Error in configuring continuous mode\n");
   }
   device->f_handle=carmen_hokuyo_handle;
   return 1;
@@ -108,13 +101,10 @@ int carmen_hokuyo_start(carmen_laser_device_t* device){
 
 int carmen_hokuyo_stop(carmen_laser_device_t* device){
   HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  fprintf(stderr, "Switching laser off ............... "); 	
-  int retVal=hokuyo_laserOff(urg,-1);
-  if(retVal)
-    fprintf(stderr, "success\n");
-  else {
-    fprintf(stderr, "error\n");
-    return 0;;
+  int rv=hokuyo_stopContinuous(urg);
+  if (rv<=0){
+    fprintf(stderr, "Error in stopping continuous mode\n");
+    return 0;
   }
   device->f_handle=carmen_hokuyo_handle_sleep;
   return 1;
