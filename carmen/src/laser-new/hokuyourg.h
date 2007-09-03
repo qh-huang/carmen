@@ -1,7 +1,7 @@
 #ifndef URG_H
 #define URG_H
 
-#define HOKUYO_ALWAYS_IN_SCIP20
+//#define HOKUYO_ALWAYS_IN_SCIP20
 
 #define URG_BUFSIZE 8192
 #define URG_ANGULAR_STEP (M_PI/512.)

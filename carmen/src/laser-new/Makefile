@@ -3,7 +3,8 @@ include ../Makefile.conf
 MODULE_NAME = "LASER"
 MODULE_COMMENT = "The new laser module for SICK and Hokuyo lasers"
 
-CFLAGS += -DLASER_USE_PTHREAD -std=gnu99  
+CFLAGS += -DLASER_USE_PTHREAD -std=gnu99 
+#-DHOKUYO_ALWAYS_IN_SCIP20
 LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread 
 
 SOURCES = carmen_hokuyo.c  dummylaser.c hokuyourg_test.c laser_interface.c sick_laser_init_500k.c \
