@@ -7,7 +7,10 @@ IMUMessage::IMUMessage()
   init();
 }
 
-IMUMessage::IMUMessage(double accX, double accY, double accZ, double quat_0, double quat_1, double quat_2, double quat_3)
+IMUMessage::IMUMessage(double accX, double accY, double accZ, 
+		       double quat_0, double quat_1, double quat_2, double quat_3,
+		       double magX, double magY, double magZ,
+		       double gyroX, double gyroY, double gyroZ)
 : AbstractMessage() {
   m_msg = NULL;
   init();
@@ -15,10 +18,21 @@ IMUMessage::IMUMessage(double accX, double accY, double accZ, double quat_0, dou
   m_msg->accX = accX;
   m_msg->accY = accY;
   m_msg->accZ = accZ;
+
   m_msg->q0 = quat_0;
   m_msg->q1 = quat_1;
   m_msg->q2 = quat_2;
   m_msg->q3 = quat_3;
+
+  m_msg->magX = magX;
+  m_msg->magY = magY;
+  m_msg->magZ = magZ;
+
+  m_msg->gyroX = gyroX;
+  m_msg->gyroY = gyroY;
+  m_msg->gyroZ = gyroZ;
+
+
 }
 
 IMUMessage::IMUMessage(const IMUMessage& x) 
@@ -97,6 +111,12 @@ void IMUMessage::clone(const carmen_imu_message& x) {
   m_msg->q1 = x.q1;
   m_msg->q2 = x.q2;
   m_msg->q3 = x.q3;
+  m_msg->magX = x.magX;
+  m_msg->magY = x.magY;
+  m_msg->magZ = x.magZ;
+  m_msg->gyroX = x.gyroX;
+  m_msg->gyroY = x.gyroY;
+  m_msg->gyroZ = x.gyroZ;
   m_msg->timestamp = x.timestamp;
   m_msg->host = x.host;
 }

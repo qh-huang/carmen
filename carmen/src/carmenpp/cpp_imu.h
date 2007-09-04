@@ -9,7 +9,10 @@
 class IMUMessage : public AbstractMessage {
  public:
   IMUMessage();
-  IMUMessage(double accX, double accY, double accZ, double quat_0, double quat_1, double quat_2, double quat_3);
+  IMUMessage(double accX, double accY, double accZ, 
+	     double quat_0, double quat_1, double quat_2, double quat_3,
+	     double magX, double magY, double magZ,
+	     double gyroX, double gyroY, double gyroZ);
   IMUMessage(const IMUMessage& x);
   IMUMessage(const carmen_imu_message& x);
   IMUMessage(carmen_imu_message* x);
@@ -31,6 +34,12 @@ class IMUMessage : public AbstractMessage {
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, Q1, q1);
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, Q2, q2);
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, Q3, q3);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, MagX, magX);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, MagY, magY);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, MagZ, magZ);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, GyroX, gyroX);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, GyroY, gyroY);
+  DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, double, GyroZ, gyroZ);
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, char*, Host, host);
   STRUCT_PARAM_VIRTUAL_SET_GET(*m_msg, double, Timestamp, timestamp, public, public);
 
