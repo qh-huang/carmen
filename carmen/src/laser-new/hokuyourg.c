@@ -161,27 +161,39 @@ int hokuyo_init(HokuyoURG* urg){
   }
 
 #ifdef HOKUYO_ALWAYS_IN_SCIP20
-  fprintf(stderr, "Assuming laser is already in SCIP2.0 mode... "); 
+  fprintf(stderr, "\nAssuming laser is already in SCIP2.0 mode!\n"); 
+  fprintf(stderr, " (if the dirver hangs, either your Hokuyo has the old\n");
+  fprintf(stderr, " firmware or you have to disable -DHOKUYO_ALWAYS_IN_SCIP20\n");
+  fprintf(stderr, " in the Makefile of the laser driver)\n");
+
   urg->isContinuous=0;  
   urg->isProtocol2=1;
 #else
 
   // stop the  device anyhow
+
   fprintf(stderr, "Stopping the device... "); 
   wcm(HK_QUIT);
   wcm(HK_QUIT);
   wcm(HK_QUIT);
-
+  fprintf(stderr, "done\n"); 
   urg->isContinuous=0;
   
   // put the urg in SCIP2.0 Mode
   fprintf(stderr, "Switching to enhanced mode (SCIP2.0)... "); 
+  fprintf(stderr, " (if the dirver hangs you probably configured your Hokuyo\n");
+  fprintf(stderr, " so that SCIP is alwas on. IN this case, enable the Option\n");
+  fprintf(stderr, " CFLAGS += -DHOKUYO_ALWAYS_IN_SCIP20\n");
+  fprintf(stderr, " in the Makefile of the laser driver)\n");
+
+
+
   int status=hokuyo_readStatus(urg, HK_SCIP);
   if (status==0){
-    fprintf(stderr, "Ok\n");
+    fprintf(stderr, "\nSwitching to SCIP 2.0 was successful!\n");
     urg->isProtocol2=1;
   } else {
-    fprintf(stderr, "Error. Unable to switch to SCIP2.0 Mode, please upgrade the firmware of your device\n");
+    fprintf(stderr, "Error. Unable to switch to SCIP2.0 Mode, please upgrade the firmware of your device.\n");
     return -1;
   }
 
