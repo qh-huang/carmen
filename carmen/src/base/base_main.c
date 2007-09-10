@@ -209,7 +209,6 @@ static void
 initialize_sonar_message(carmen_base_sonar_message *sonar)
 {
   double sensor_angle;
-  int num_sonar_ranges;
 
   carmen_param_set_module("robot");
   carmen_param_get_double("sensor_angle", &sensor_angle, NULL);
