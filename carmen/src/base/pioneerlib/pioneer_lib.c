@@ -426,14 +426,14 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
 
   pioneer_model = -1;
   for (i = 0; carmen_pioneer_models[i][0] != 0; i++) 
+  {
+    if (strlen(model) == strlen(carmen_pioneer_models[i]) &&
+        carmen_strncasecmp(model, carmen_pioneer_models[i], 
+          strlen(carmen_pioneer_models[i])) == 0)
     {
-      if (strlen(model) == strlen(carmen_pioneer_models[i]) &&
-	  carmen_strncasecmp(model, carmen_pioneer_models[i], 
-			     strlen(carmen_pioneer_models[i])) == 0)
-	{
-	  pioneer_model = i;
-	  break;
-	}
+      pioneer_model = i;
+      break;
+    }
   }
 
   if (pioneer_model == -1) 
@@ -457,7 +457,7 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
   diff_conv_factor = carmen_pioneer_params[pioneer_model][4];
   vel2_divisor = carmen_pioneer_params[pioneer_model][5];
 
-  if (pioneer_model < 16) 
+  if (pioneer_model < 17) 
     pioneer_version = 2;
   else
     pioneer_version = 1;
