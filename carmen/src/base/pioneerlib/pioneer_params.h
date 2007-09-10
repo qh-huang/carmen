@@ -35,11 +35,11 @@ extern "C" {
 
 char *carmen_pioneer_models[] = {"amigo", "p2at8", "p2at8+", "p2at", "p2ce", 
 				 "p2d8", "p2d8+", "p2de", "p2df", "p2dx", 
-				 "p2it", "p2pb", "p2pp", "perfpb", "perfpb+", 
-				 "pion1m", "pion1x", "pionat", "powerbot", 
-				 "psos1m", "psos1x", "p3at-sh", "p3at",
-				 "p3atiw-sh", "p3atiw", "p3dx-sh", "p3dx",
-				 "peoplebot-sh","powerbot-sh", 0};
+				 "p2it", "p2pb", "p2pp", "powerbot-sh", "perfpb",
+                                 "perfpb+", "pion1m", "pion1x", "pionat", "powerbot", 
+				 "psos1m", "psos1x", "p3at-sh", "p3at", "p3atiw-sh",
+                                 "p3atiw", "p3dx-sh", "p3dx", "peoplebot-sh",
+                                 0};
   
 double carmen_pioneer_params[][6] = 
   {
@@ -72,6 +72,8 @@ double carmen_pioneer_params[][6] =
     {0.001534, 0.424000, 1.000000, 0.268000, 0.005600, 20.000000},
     // p2pp
     {0.001534, 0.485000, 1.000000, 0.268000, 0.006000, 20.000000},
+    // powerbot-sh
+    {0.001534, 1.000000, 1.000000, 1.000000, 0.003730, 20.000000},
     // perfp
     {0.001534, 0.485000, 1.000000, 1.000000, 0.006000, 20.000000},
     // perfpb+
@@ -100,10 +102,9 @@ double carmen_pioneer_params[][6] =
     {0.001534, 1.000000, 1.000000, 1.000000, 0.005600, 2.0000000 },
     // p3dx
     {0.001534, 0.485000, 1.000000, 1.000000, 0.005600, 20.000000 },
-   // peoplebot-sh
+    // peoplebot-sh
     {0.001534, 1.000000, 1.000000, 1.000000, 0.006000, 20.000000 },
-    // powerbot-sh
-    {0.001534, 1.000000, 1.000000, 1.000000, 0.003730, 20.000000 }};
+  };
 
 #ifdef __cplusplus
 }
