@@ -238,7 +238,7 @@ and got this response:
 $gtk_version
 If you do not have graphics, CARMEN\'s display modules will not compile, but 
 all other modules should compile without problem. Please install gtk 2.0, 
-or re-run $PROGRAM_NAME with --nographics.
+or ${red}re-run $PROGRAM_NAME with --nographics${normal}.
 EOF
   die "\n";
   }
@@ -256,9 +256,23 @@ $min_gtk_version[0].$min_gtk_version[1]. Please install a newer version of gtk, 
 with --nographics.
 EOF
     die "\n";
-  }
+}
   print "found, version $gtk_major.$gtk_minor.$revision\n";
+  
+  print "Searching for libgdk_imlib.a...";
+  if (-e "/usr/lib/libgdk_imlib.a" or 
+      -e "/usr/local/lib/libgdk_imlib.a" or
+      -e "/opt/gnome/lib/libgdk_imlib.a") {
+      print " found\n";
+  } else {
 
+      print " ${red}not found ${normal}\n\n";
+      print "Could not find libgdk_imlib.a in /usr/lib,\n";
+      print "/usr/local/lib, nor in /opt/gnome/lib/\n";
+      print "Please install libgdk_imlib.a or\n${red}re-run $PROGRAM_NAME with --nographics${normal}\n";
+      die "\n";
+  }
+  
   return $gtk_config;
 }
 
@@ -759,7 +773,7 @@ ${red}not found${normal}.
 
 Your JAVA_HOME environment variable is set to $ENV{JAVA_HOME}, but I 
 can\'t find $ENV{JAVA_HOME}/bin/javac. Please either set your 
-JAVA_HOME environment variable correctly, or re-run configure with --nojava.
+JAVA_HOME environment variable correctly, or ${red}re-run configure with --nojava${normal}.
 EOF
 
     die "\n";
