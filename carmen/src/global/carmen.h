@@ -139,6 +139,7 @@ extern "C" {
 
 #include <carmen/logger_messages.h>
 #include <carmen/logger.h>
+#include <carmen/logger_interface.h>
 #include <carmen/writelog.h>
 #include <carmen/readlog.h>
 #include <carmen/playback_interface.h>

@@ -93,7 +93,7 @@ int carmen_logfile_read_next_line(carmen_logfile_index_p index, carmen_FILE *inf
 
 /** Converts the string to an odometry message.
  * @param string A string describing the message in the carmen logfile format.
- * @param odometru A pointer to the (allocated) structure where the message should be written to.
+ * @param odometry A pointer to the (allocated) structure where the message should be written to.
  * @returns A pointer to the character up to which the string has been parsed. 
  * In case there are no errors and the string is a line read from a carmen log
  * file, this string points to the relative timestamp (written by logger).
@@ -178,6 +178,44 @@ char *carmen_string_to_gps_gprmc_message(char *string,
 char *carmen_string_to_gps_gpgga_message(char *string,
 					 carmen_gps_gpgga_message *gps_msg);
 
+
+/** Converts the string to a robot-velocity message. 
+ * @param string A string describing the message in the carmen logfile format.
+ * @param msg A pointer to the (allocated) structure where the message should be written to.
+ * @returns A pointer to the character up to which the string has been parsed. 
+ * In case there are no errors and the string is a line read from a carmen log
+ * file, this string points to the relative timestamp (written by logger).
+ **/
+char *carmen_string_to_robot_velocity_message(char *string, carmen_robot_velocity_message *msg);
+
+
+/** Converts the string to a robot-vector-move message. 
+ * @param string A string describing the message in the carmen logfile format.
+ * @param msg A pointer to the (allocated) structure where the message should be written to.
+ * @returns A pointer to the character up to which the string has been parsed. 
+ * In case there are no errors and the string is a line read from a carmen log
+ * file, this string points to the relative timestamp (written by logger).
+ **/
+char *carmen_string_to_robot_vector_move_message(char *string, carmen_robot_vector_move_message *msg);
+
+
+/** Converts the string to a robot-follow-trajectory message. 
+ * @param string A string describing the message in the carmen logfile format.
+ * @param msg A pointer to the (allocated) structure where the message should be written to.
+ * @returns A pointer to the character up to which the string has been parsed. 
+ * In case there are no errors and the string is a line read from a carmen log
+ * file, this string points to the relative timestamp (written by logger).
+ **/
+char *carmen_string_to_robot_follow_trajectory_message(char *string, carmen_robot_follow_trajectory_message *msg);
+
+/** Converts the string to a base-velocity message. 
+ * @param string A string describing the message in the carmen logfile format.
+ * @param msg A pointer to the (allocated) structure where the message should be written to.
+ * @returns A pointer to the character up to which the string has been parsed. 
+ * In case there are no errors and the string is a line read from a carmen log
+ * file, this string points to the relative timestamp (written by logger).
+ **/
+char *carmen_string_to_base_velocity_message(char *string, carmen_base_velocity_message *msg);
 
 
 /** Guesses the field of view for a SICK in case the configuration is underspecified.

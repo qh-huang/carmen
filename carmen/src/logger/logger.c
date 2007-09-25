@@ -45,6 +45,7 @@ static int log_imu = 1;
 static int log_sonars = 1;
 static int log_bumpers = 1;
 static int log_pantilt = 1;
+static int log_motioncmds = 0; 
 
 void get_logger_params(int argc, char** argv) {
 
@@ -52,7 +53,7 @@ void get_logger_params(int argc, char** argv) {
 
   carmen_param_t param_list[] = {
     {"logger", "odometry",    CARMEN_PARAM_ONOFF, &log_odometry, 0, NULL},
-    {"logger", "arm",    CARMEN_PARAM_ONOFF, &log_arm, 0, NULL},
+    {"logger", "arm",         CARMEN_PARAM_ONOFF, &log_arm, 0, NULL},
     {"logger", "laser",       CARMEN_PARAM_ONOFF, &log_laser, 0, NULL},
     {"logger", "robot_laser", CARMEN_PARAM_ONOFF, &log_robot_laser, 0, NULL},
     {"logger", "localize",    CARMEN_PARAM_ONOFF, &log_localize, 0, NULL},
@@ -61,7 +62,8 @@ void get_logger_params(int argc, char** argv) {
     {"logger", "sonar",       CARMEN_PARAM_ONOFF, &log_sonars, 0, NULL},
     {"logger", "bumper",      CARMEN_PARAM_ONOFF, &log_bumpers, 0, NULL},
     {"logger", "gps",         CARMEN_PARAM_ONOFF, &log_gps, 0, NULL},
-    {"logger", "imu",         CARMEN_PARAM_ONOFF, &log_imu, 0, NULL}
+    {"logger", "imu",         CARMEN_PARAM_ONOFF, &log_imu, 0, NULL},
+    {"logger", "motioncmds",  CARMEN_PARAM_ONOFF, &log_motioncmds, 0, NULL}
   };
 
   num_items = sizeof(param_list)/sizeof(param_list[0]);
@@ -244,6 +246,36 @@ void imu_handler(carmen_imu_message *msg)
   carmen_logwrite_write_imu(msg, outfile, carmen_get_time() - logger_starttime);
 }
 
+void robot_follow_trajectory_handler( carmen_robot_follow_trajectory_message *msg)
+{
+	fprintf(stderr, "t");
+	carmen_logwrite_write_robot_follow_trajectory(msg, outfile, carmen_get_time() - logger_starttime);
+}
+
+void robot_vector_move_handler( carmen_robot_vector_move_message *msg )
+{
+	fprintf(stderr, "m");
+	carmen_logwrite_write_robot_vector_move(msg, outfile, carmen_get_time() - logger_starttime);
+}
+
+void robot_velocity_handler( carmen_robot_velocity_message *msg )
+{
+	fprintf(stderr, "v");
+	carmen_logwrite_write_robot_velocity(msg, outfile, carmen_get_time() - logger_starttime);
+}
+
+void base_velocity_handler( carmen_base_velocity_message *msg )
+{
+	fprintf(stderr, "b");
+	carmen_logwrite_write_base_velocity(msg, outfile, carmen_get_time() - logger_starttime);
+}
+
+void logger_comment_handler( carmen_logger_comment_message *msg )
+{
+	fprintf(stderr, "C");
+	carmen_logwrite_write_logger_comment(msg, outfile, carmen_get_time() - logger_starttime);
+}
+
 
 
 void register_ipc_messages(void)
@@ -397,6 +429,25 @@ int main(int argc, char **argv)
 					   (carmen_handler_t) ipc_gps_gprmc_handler,
 					   CARMEN_SUBSCRIBE_ALL );
   }
+  
+  if (log_motioncmds) {
+  	 carmen_robot_subscribe_vector_move_message( NULL,
+  	 					 (carmen_handler_t) robot_vector_move_handler,
+  	 					 CARMEN_SUBSCRIBE_ALL );
+  	 carmen_robot_subscribe_follow_trajectory_message( NULL,
+  	 					 (carmen_handler_t) robot_follow_trajectory_handler,
+  	 					 CARMEN_SUBSCRIBE_ALL );
+	 carmen_robot_subscribe_velocity_message( NULL,
+	 					 (carmen_handler_t) robot_velocity_handler,
+	 					 CARMEN_SUBSCRIBE_ALL );		
+	 carmen_base_subscribe_velocity_message( NULL,
+	 					 (carmen_handler_t) base_velocity_handler,
+	 					 CARMEN_SUBSCRIBE_ALL );							 			 
+  }
+
+  carmen_logger_subscribe_comment_message( NULL,
+  	 					 (carmen_handler_t) logger_comment_handler,
+  	 					 CARMEN_SUBSCRIBE_ALL );
 
   signal(SIGINT, shutdown_module);
   logger_starttime = carmen_get_time();

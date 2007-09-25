@@ -40,6 +40,7 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# message_name [message contents] ipc_timestamp ipc_hostname logger_timestamp\n");
   carmen_fprintf(outfile, "# message formats defined: PARAM SYNC ODOM RAWLASER1 RAWLASER2 RAWLASER3 RAWLASER4 ROBOTLASER1 ROBOTLASER2 FLASER RLASER LASER3 LASER4\n");
   carmen_fprintf(outfile, "# PARAM param_name param_value\n");
+  carmen_fprintf(outfile, "# COMMENT text \n");
   carmen_fprintf(outfile, "# SYNC tagname\n");
   carmen_fprintf(outfile, "# ODOM x y theta tv rv accel\n");
   carmen_fprintf(outfile, "# TRUEPOS true_x true_y true_theta odom_x odom_y odom_theta\n");
@@ -56,6 +57,10 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# BUMPER num_bumpers [bumper_reading] [bumper_offsets x y]\n");
   carmen_fprintf(outfile, "# SCANMARK start_stop_indicator laserID \n");
   carmen_fprintf(outfile, "# IMU accelerationX accelerationY accelerationZ quaternion_q0 quaternion_q1 quaternion_q2 quaternion_q3 magneticfieldX magneticfieldY magneticfieldZ gyroX gyroY gyroZ\n");
+  carmen_fprintf(outfile, "# VECTORMOVE distance theta\n"); 
+  carmen_fprintf(outfile, "# ROBOTVELOCITY tv rv \n"); 
+  carmen_fprintf(outfile, "# FOLLOWTRAJECTORY x y theta tv rv num readings [trajectory points: x y theta tv rv]\n");
+  carmen_fprintf(outfile, "# BASEVELOCITY tv rv \n");   
   carmen_fprintf(outfile, "# \n");
   carmen_fprintf(outfile, "# OLD LOG MESSAGES: \n");
   carmen_fprintf(outfile, "# (old) # FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta\n");
@@ -335,3 +340,63 @@ void carmen_logwrite_write_imu(carmen_imu_message *msg,
   carmen_fprintf(outfile, "%lf %s %lf\n", msg->timestamp, msg->host, timestamp);
 }
 
+void carmen_logwrite_write_robot_vector_move(carmen_robot_vector_move_message *msg,
+					carmen_FILE *outfile,
+					double timestamp)
+{
+	 carmen_fprintf(outfile, "VECTORMOVE %f %f %f %s %f\n", 
+		 msg->distance, msg->theta, msg->timestamp, msg->host, timestamp);
+}
+
+void carmen_logwrite_write_robot_velocity(carmen_robot_velocity_message *msg,
+					carmen_FILE *outfile,
+					double timestamp)
+{
+	 carmen_fprintf(outfile, "ROBOTVELOCITY %f %f %f %s %f\n", 
+		 msg->tv, msg->rv, msg->timestamp, msg->host, timestamp);
+	
+}
+
+void carmen_logwrite_write_robot_follow_trajectory(carmen_robot_follow_trajectory_message *msg,
+					carmen_FILE *outfile,
+					double timestamp)
+{
+	carmen_fprintf(outfile, "FOLLOWTRAJECTORY %f %f %f %f %f ",
+		msg->robot_position.x, msg->robot_position.y, msg->robot_position.theta, msg->robot_position.t_vel, msg->robot_position.r_vel);
+	
+	carmen_fprintf(outfile, "%d ", msg->trajectory_length);
+	
+	int i;
+	for (i=0; i<msg->trajectory_length; i++)
+		carmen_fprintf(outfile, "%f %f %f %f %f ",
+			msg->trajectory[i].x, msg->trajectory[i].y, msg->trajectory[i].theta, msg->trajectory[i].t_vel, msg->trajectory[i].r_vel); 	
+		
+	carmen_fprintf(outfile, "%f %s %f\n", 
+		 msg->timestamp, msg->host, timestamp);
+
+}
+
+void carmen_logwrite_write_base_velocity(carmen_base_velocity_message *msg,
+					carmen_FILE *outfile,
+					double timestamp)
+{
+	 carmen_fprintf(outfile, "BASEVELOCITY %f %f %f %s %f\n", 
+		 msg->tv, msg->rv, msg->timestamp, msg->host, timestamp);
+}
+
+
+void carmen_logwrite_write_logger_comment(carmen_logger_comment_message *msg,
+              carmen_FILE *outfile,
+              double timestamp)
+{
+	unsigned int l = strlen(msg->text);
+	char buffer[l+1];
+	strcpy( buffer, msg->text );
+	unsigned int x;
+	for (x=0; x<=l; x++) 
+	{
+		if (msg->text[x]==' ') msg->text[x]='_';
+	}
+   carmen_fprintf(outfile, "COMMENT %s %f %s %f\n", 
+		 msg->text, msg->timestamp, msg->host, timestamp);
+}
