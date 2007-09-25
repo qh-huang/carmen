@@ -53,6 +53,16 @@ typedef struct {
 #define CARMEN_LOGGER_SYNC_NAME     "carmen_logger_sync"
 #define CARMEN_LOGGER_SYNC_FMT      "{string,double,string}"
 
+typedef struct {
+  char *text;
+  double timestamp;
+  char *host;
+} carmen_logger_comment_message;
+
+
+#define CARMEN_LOGGER_COMMENT_NAME    "carmen_logger_comment"
+#define CARMEN_LOGGER_COMMENT_FMT     "{string,double,string}"
+
 #ifdef __cplusplus
 }
 #endif

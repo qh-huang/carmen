@@ -85,6 +85,39 @@ carmen_robot_subscribe_base_binary_data_message
 			   handler, subscribe_how);
 }
 
+void carmen_robot_subscribe_follow_trajectory_message
+(carmen_robot_follow_trajectory_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how)
+{
+	carmen_subscribe_message(CARMEN_ROBOT_FOLLOW_TRAJECTORY_NAME,
+				CARMEN_ROBOT_FOLLOW_TRAJECTORY_FMT,
+				msg, sizeof(carmen_robot_follow_trajectory_message),
+				handler, subscribe_how);	
+}
+ 
+void carmen_robot_subscribe_vector_move_message
+(carmen_robot_vector_move_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how)
+{
+	carmen_subscribe_message(CARMEN_ROBOT_VECTOR_MOVE_NAME,
+				CARMEN_ROBOT_VECTOR_MOVE_FMT,
+				msg, sizeof(carmen_robot_vector_move_message),
+				handler, subscribe_how);
+}
+
+void carmen_robot_subscribe_velocity_message
+(carmen_robot_velocity_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how)
+{
+	carmen_subscribe_message(CARMEN_ROBOT_VELOCITY_NAME,
+				CARMEN_ROBOT_VELOCITY_FMT,
+				msg, sizeof(carmen_robot_velocity_message),
+				handler, subscribe_how);
+}
+
+
+
+
 
 void 
 carmen_robot_velocity_command(double tv, double rv)
@@ -101,7 +134,7 @@ carmen_robot_velocity_command(double tv, double rv)
   v.rv = rv;
   v.host = carmen_get_host();
   v.timestamp = carmen_get_time();
-
+  
   err = IPC_publishData(CARMEN_ROBOT_VELOCITY_NAME, &v);
   carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_VELOCITY_NAME);
 }

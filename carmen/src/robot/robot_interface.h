@@ -66,6 +66,19 @@ void carmen_robot_subscribe_vector_status_message
 void carmen_robot_subscribe_base_binary_data_message
 (carmen_base_binary_data_message *base_data, carmen_handler_t handler,
  carmen_subscribe_t subscribe_how);
+ 
+void carmen_robot_subscribe_follow_trajectory_message
+(carmen_robot_follow_trajectory_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how);
+ 
+void carmen_robot_subscribe_vector_move_message
+(carmen_robot_vector_move_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how);
+
+void carmen_robot_subscribe_velocity_message
+(carmen_robot_velocity_message *msg, carmen_handler_t handler,
+ carmen_subscribe_t subscribe_how);
+ 
 
 void carmen_robot_velocity_command(double tv, double rv);
 void carmen_robot_move_along_vector(double distance, double theta);

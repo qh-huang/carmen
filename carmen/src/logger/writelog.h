@@ -158,8 +158,52 @@ void carmen_logwrite_write_pantilt_laserpos(carmen_pantilt_laserpos_message* las
 void carmen_logwrite_write_imu(carmen_imu_message *imu,
 			       carmen_FILE *outfile,
 			       double timestamp);
+				   
+				   
+/** Converts the corresponding message into a string in the carmen log format.
+ * @param msg The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_robot_vector_move(carmen_robot_vector_move_message *msg,
+					carmen_FILE *outfile,
+					double timestamp);
 
+/** Converts the corresponding message into a string in the carmen log format.
+ * @param msg The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_robot_velocity(carmen_robot_velocity_message *msg,
+					carmen_FILE *outfile,
+					double timestamp);
 
+/** Converts the corresponding message into a string in the carmen log format.
+ * @param msg The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_robot_follow_trajectory(carmen_robot_follow_trajectory_message *msg,
+					carmen_FILE *outfile,
+					double timestamp);
+
+/** Converts the corresponding message into a string in the carmen log format.
+ * @param msg The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_base_velocity(carmen_base_velocity_message *msg,
+					carmen_FILE *outfile,
+					double timestamp);
+
+/** Converts the corresponding message into a string in the carmen log format.
+ * @param msg The message that should be written to the log file.
+ * @param outfile A carmen file pointer.
+ * @param timestamp The relative timestamp (when was the message received). Note that this is not the timestamp within the message!
+ **/
+void carmen_logwrite_write_logger_comment(carmen_logger_comment_message *msg,
+              carmen_FILE *outfile,
+              double timestamp);
 #ifdef __cplusplus
 }
 #endif

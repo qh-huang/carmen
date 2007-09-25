@@ -77,7 +77,31 @@ vascocore_get_default_params( carmen_vascocore_param_p param, char *laser_type )
     param->local_map_min_bbox_distance = 0.025;
     param->local_map_use_last_scans = 2;
     param->local_map_object_prob = 0.99;
-    param->bounding_box_max_range = 5.00;
+    param->bounding_box_max_range = 6.00;
+    param->bounding_box_border = 1.00;
+    param->motion_model_forward = 0.0075;
+    param->motion_model_sideward = 0.0075;
+    param->motion_model_rotation = 0.000872638;
+    param->pos_corr_step_size_forward = 0.0015;
+    param->pos_corr_step_size_sideward = 0.0015;
+    param->pos_corr_step_size_rotation = 0.0872638;
+    param->pos_corr_step_size_loop = 7;
+  }
+  if (!strcmp(laser_type, "s300")) {
+    param->verbose = 0;
+    param->max_usable_laser_range = 25;
+    param->local_map_max_range = 20;
+    param->local_map_resolution = 0.025;
+    param->local_map_kernel_len = 7;
+    param->local_map_use_odometry = 1;
+    param->local_map_num_convolve = 2;
+    param->local_map_std_val = 0.00000000001;
+    param->local_map_history_length = 3000;
+    param->local_map_max_used_history = 90;
+    param->local_map_min_bbox_distance = 0.025;
+    param->local_map_use_last_scans = 2;
+    param->local_map_object_prob = 0.99;
+    param->bounding_box_max_range = 20.00;
     param->bounding_box_border = 1.00;
     param->motion_model_forward = 0.0075;
     param->motion_model_sideward = 0.0075;

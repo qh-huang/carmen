@@ -711,3 +711,86 @@ char* carmen_string_to_imu_message(char* string, carmen_imu_message* msg)
 
   return current_pos;
 }
+
+char *carmen_string_to_robot_velocity_message(char *string, carmen_robot_velocity_message *msg)
+{
+	char *current_pos = string;
+
+	if (strncmp(current_pos, "VELOCITY", 8) == 0)
+   	current_pos = carmen_next_word(current_pos); 
+  
+  	msg->tv = CLF_READ_DOUBLE(&current_pos);
+  	msg->rv = CLF_READ_DOUBLE(&current_pos);
+  	msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+   copy_host_string(&msg->host, &current_pos);
+	return current_pos;
+}
+
+
+char *carmen_string_to_robot_vector_move_message(char *string, carmen_robot_vector_move_message *msg)
+{
+	char *current_pos = string;
+
+	if (strncmp(current_pos, "VECTORMOVE", 10) == 0)
+   	current_pos = carmen_next_word(current_pos); 
+
+  	msg->distance = CLF_READ_DOUBLE(&current_pos);
+  	msg->theta = CLF_READ_DOUBLE(&current_pos);
+  	msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+   copy_host_string(&msg->host, &current_pos);
+	return current_pos;
+}
+
+
+char *carmen_string_to_robot_follow_trajectory_message(char *string, carmen_robot_follow_trajectory_message *msg)
+{
+	char *current_pos = string;
+	
+	if (strncmp(current_pos, "ROBOTVELOCITY", 13) == 0)
+   	current_pos = carmen_next_word(current_pos); 
+
+	msg->robot_position.x = CLF_READ_DOUBLE(&current_pos);
+	msg->robot_position.y = CLF_READ_DOUBLE(&current_pos);
+	msg->robot_position.theta = CLF_READ_DOUBLE(&current_pos);
+	msg->robot_position.t_vel = CLF_READ_DOUBLE(&current_pos);
+	msg->robot_position.r_vel = CLF_READ_DOUBLE(&current_pos);
+
+	int length = CLF_READ_INT(&current_pos);
+	
+   if(msg->trajectory_length != length) {
+    msg->trajectory_length = length;
+    msg->trajectory = (carmen_traj_point_t *)realloc(msg->trajectory, length * 
+				   sizeof(carmen_traj_point_t));
+    carmen_test_alloc(msg->trajectory);
+  }
+
+
+
+	int i;
+	for (i=0; i<msg->trajectory_length; i++) 
+	{
+		msg->trajectory[i].x = CLF_READ_DOUBLE(&current_pos);
+		msg->trajectory[i].y = CLF_READ_DOUBLE(&current_pos);
+		msg->trajectory[i].theta = CLF_READ_DOUBLE(&current_pos);
+		msg->trajectory[i].t_vel = CLF_READ_DOUBLE(&current_pos);
+		msg->trajectory[i].r_vel = CLF_READ_DOUBLE(&current_pos);
+	}
+
+  	msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+   copy_host_string(&msg->host, &current_pos);
+	return current_pos;
+}
+
+char *carmen_string_to_base_velocity_message(char *string, carmen_base_velocity_message *msg)
+{
+	char *current_pos = string;
+
+	if (strncmp(current_pos, "BASEVELOCITY", 12) == 0)
+   	current_pos = carmen_next_word(current_pos); 
+  
+  	msg->tv = CLF_READ_DOUBLE(&current_pos);
+  	msg->rv = CLF_READ_DOUBLE(&current_pos);
+  	msg->timestamp = CLF_READ_DOUBLE(&current_pos);
+   copy_host_string(&msg->host, &current_pos);
+	return current_pos;
+}

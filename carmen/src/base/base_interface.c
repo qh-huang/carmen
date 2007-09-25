@@ -30,6 +30,17 @@
 #include <carmen/ipc_wrapper.h>
 #include <carmen/base_messages.h>
 
+void 
+carmen_base_subscribe_velocity_message(carmen_base_velocity_message *velocity,
+				       carmen_handler_t handler,
+				       carmen_subscribe_t subscribe_how)
+{
+  carmen_subscribe_message(CARMEN_BASE_VELOCITY_NAME, 
+                           CARMEN_BASE_VELOCITY_FMT,
+                           velocity, sizeof(carmen_base_velocity_message), 
+			   handler, subscribe_how);
+}
+
 void
 carmen_base_subscribe_odometry_message(carmen_base_odometry_message *odometry,
 				       carmen_handler_t handler,
