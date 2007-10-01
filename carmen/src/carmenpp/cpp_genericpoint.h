@@ -9,6 +9,11 @@ class point2d {
   inline point2d(){};
   inline point2d(T _x, T _y):x(_x),y(_y){};
   inline virtual ~point2d(){};
+
+  inline point2d<T>& operator= (const point2d<T>&pt) { 
+    x=pt.x; y=pt.y; return *this;
+  }
+
   T x, y;
 };
 
@@ -48,6 +53,8 @@ inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
   return !(p1 == p2);
 }
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////////
 
 template <class T, class A>
@@ -69,6 +76,10 @@ class orientedpoint2d: public point2d<T>{
   
   inline point2d<T> toPoint2d() const {
     return point2d<T>(this->x,this->y);
+  }
+
+  inline orientedpoint2d<T,A>& operator= (const orientedpoint2d<T,A>&pt) { 
+    this->x=pt.x; this->y=pt.y; this->theta=pt.theta; return *this;
   }
 
 
@@ -210,5 +221,7 @@ inline orientedpoint2d<T,A> interpolate(const orientedpoint2d<T,A>& p1,
   p.theta=atan2(s,c);
   return p;
 }
+
+
 
 #endif

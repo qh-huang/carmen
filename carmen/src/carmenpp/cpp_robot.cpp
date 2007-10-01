@@ -319,6 +319,10 @@ void RobotLaserMessage::setConfig(const carmen_laser_laser_config_t& x) {
   m_msg->config = x;
 }
 
+bool RobotLaserMessage::isMaxRange(int i) const{
+  return (m_msg->range[i] >= m_msg->config.maximum_range);
+}
+
 
 Point RobotLaserMessage::endPoint(int beam) const {
 

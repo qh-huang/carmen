@@ -44,6 +44,7 @@ class RobotLaserMessage : public AbstractMessage {
   float getRange(int i) const;
   void  setRange(int i, float val);
 
+  bool isMaxRange(int i) const;
   int   getNumRemissions() const;
   float getRemission(int i) const;
   void  setRemission(int i, float val);
