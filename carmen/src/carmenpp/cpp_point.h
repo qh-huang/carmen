@@ -15,7 +15,6 @@ class Point : public point2d<double> {
 
   inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; return pt;}
   inline Point& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; return *this;}
-
 };
 
 class OrientedPoint : public orientedpoint2d<double,double> {
@@ -28,8 +27,7 @@ class OrientedPoint : public orientedpoint2d<double,double> {
 
   inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; pt.theta=theta; return pt;}
   inline OrientedPoint& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; theta=pt.theta; return *this;}
-  
-  
+ 
 };
 
 #endif
