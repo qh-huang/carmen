@@ -707,6 +707,10 @@ static int read_robot_parameters(int argc, char **argv)
     carmen_robot_add_sonar_parameters(argv[0]);
   if (use_bumper)
     carmen_robot_add_bumper_parameters(argv[0]);
+#ifndef COMPILE_WITHOUT_LASER_SUPPORT
+  if (use_laser)
+    carmen_robot_add_laser_parameters(argv[0]);
+#endif
 
   turn_before_driving_if_heading_bigger_than = 
     carmen_degrees_to_radians(turn_before_driving_if_heading_bigger_than_deg);
