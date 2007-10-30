@@ -121,6 +121,7 @@ carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
 				   carmen_handler_t handler,
 				   carmen_subscribe_t subscribe_how);
 
+void carmen_ipc_registerExitProc(void (*proc)(void));
 
 #ifdef __cplusplus
 }

@@ -817,3 +817,8 @@ carmen_subscribe_heartbeat_message(carmen_heartbeat_message *heartbeat,
                            heartbeat, sizeof(carmen_heartbeat_message), 
 			   handler, subscribe_how);
 }
+
+void x_ipcRegisterExitProc(void (*proc)(void));
+void carmen_ipc_registerExitProc(void (*proc)(void)) {
+       x_ipcRegisterExitProc(proc);
+}
