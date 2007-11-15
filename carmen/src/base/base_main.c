@@ -559,8 +559,8 @@ carmen_base_run(void)
   IPC_RETURN_TYPE err;
   static carmen_base_reset_occurred_message reset = {0, 0};  
   int base_err;
-  double tv, rv;
-  double displacement, rotation;
+  double tv=0, rv=0;
+  double displacement=0, rotation=0;
   carmen_base_binary_data_message binary_data;
 
   if (reset_time > reset.timestamp) {
