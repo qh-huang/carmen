@@ -335,7 +335,14 @@ void main_playback_loop(void)
       offset = 0;
     }
     
-    if(!paused && current_position < logfile_index->num_messages - 1) {
+    if(!paused && current_position >= logfile_index->num_messages - 1) {
+      paused = 1;
+      current_position = 0;
+      playback_starttime = 0.0;
+      playback_timestamp = 0;
+      print_playback_status();
+    }
+    else if(!paused && current_position < logfile_index->num_messages - 1) {
       read_message(current_position, 1);
       current_position++;
     }
