@@ -100,8 +100,12 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
 
   fraction = carmen_robot_get_fraction(timestamp, skew, &low, &high);
 
-  if (!carmen_robot_config.interpolate_odometry)
+  if (!carmen_robot_config.interpolate_odometry) {
+    // take the latest odometry measurement
     fraction=0;
+    high = CARMEN_ROBOT_MAX_READINGS-1;
+    low = CARMEN_ROBOT_MAX_READINGS-1;
+  }
 
 
   msg->robot_pose.x=carmen_robot_odometry[low].x + fraction *
