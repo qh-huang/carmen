@@ -28,10 +28,9 @@ PUBLIC_BINARIES = central
 TARGETS = central  libipc.a test_generate test_receive ipc-endian-test ipc-die-test
 
 PUBLIC_LIBRARIES_SO =  libipc.so
+ifndef NO_PYTHON
 TARGETS += libipc.so.1
-
-
-# rules
+endif
 
 libipc.a: ipc.o queryResponse.o marshall.o timer.o list.o behaviors.o \
 	tcModError.o datamsg.o formatters.o hash.o idtable.o key.o \
