@@ -108,7 +108,7 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
 
   rot_acceleration = acceleration/simulator_config->width;
   delta_v = simulator_config->target_rv - simulator_config->rv;
-  delta_t = fabs(delta_v / acceleration);
+  delta_t = fabs(delta_v / rot_acceleration);
   if (delta_t > simulator_config->delta_t) 
     {
       if (delta_v < 0) 
@@ -127,10 +127,10 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
     return;
 
   /* Rotating but not translating */
-  if (fabs(tv) < 1e-3 && fabs(rv) > 1e-3) 
+  if (fabs(tv) < 1e-3 && fabs(rv) >= 1e-3) 
     new_odom.theta += rv * simulator_config->delta_t;
   /* Translating but not rotating */
-  else if (fabs(tv) > 1e-3 && fabs(rv) < 1e-3) {
+  else if (fabs(tv) >= 1e-3 && fabs(rv) < 1e-3) {
     new_odom.x += tv * simulator_config->delta_t * cos(new_odom.theta);
     new_odom.y += tv * simulator_config->delta_t * sin(new_odom.theta);
   /* Translating and also rotating */
