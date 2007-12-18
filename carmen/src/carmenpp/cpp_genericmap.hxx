@@ -71,7 +71,6 @@ void GenericMap<CELL>::init(const MapConfig& cfg) {
   carmen_test_alloc(m_map);
   for (int x=0; x < cfg.m_sizeX; x++) {
     m_map[x] = &m_maplinear[x*cfg.m_sizeY];
-    carmen_test_alloc(m_map[x]);
   }
 }
 
