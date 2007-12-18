@@ -71,6 +71,8 @@ static double robot_sensor_timeout = 3.0;
 static double command_tv = 0, command_rv = 0;
 static double time_of_last_command;
 
+static int aligning;
+static carmen_traj_point_t last_goal;
 static carmen_traj_point_t start_position;
 static carmen_traj_point_t goal;
 static int goal_is_final = 1;
@@ -375,7 +377,7 @@ static void follow_vector(void)
     displacement = 0.0;
 
   if (fabs(angle_difference) < carmen_degrees_to_radians(5.0) &&
-      fabs(displacement) < carmen_robot_config.approach_dist) {
+      fabs(displacement) < carmen_robot_config.approach_dist && aligning) {
     command_tv = 0;
     command_rv = 0;
     following_vector = 0;		
@@ -539,24 +541,36 @@ follow_trajectory_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   } else {
     following_vector = 1;
     following_trajectory = 0;
-    
+
     goal = msg.trajectory[0];
+    
+    if(goal.x != last_goal.x || goal.y != last_goal.y || goal.theta != last_goal.theta) {
+      aligning = 0;
+      last_goal.x = goal.x;
+      last_goal.y = goal.y;
+      last_goal.theta = goal.theta;
+    }
+
     goal.x -= msg.robot_position.x;
     goal.y -= msg.robot_position.y;
 
     if (msg.trajectory_length == 1)
+
       goal_is_final = 1;
     else
       goal_is_final = 0;
     
     vector_distance = hypot(goal.x, goal.y);
 
-    if (vector_distance < carmen_robot_config.approach_dist) 
+    if (vector_distance < (carmen_robot_config.approach_dist / 2.0) || ((vector_distance < carmen_robot_config.approach_dist) && aligning) ) {
       vector_angle = carmen_normalize_theta(goal.theta);
-    else {
+      aligning = 1;
+    } else {
       vector_angle = carmen_normalize_theta(atan2(goal.y, goal.x));
-      vector_angle = carmen_normalize_theta(vector_angle - msg.robot_position.theta);
+      aligning = 0;
     }
+
+    vector_angle = carmen_normalize_theta(vector_angle - msg.robot_position.theta);
 
     follow_vector();      
   }
