@@ -152,7 +152,7 @@ gps_parse_rmc( char * line, int num_chars )
 
     ptr = strsep( &line, ",");
     if (ptr==NULL) return(FALSE);
-    carmen_extern_gprmc_ptr->longitude = atof(ptr);
+    carmen_extern_gprmc_ptr->longitude_dm = atof(ptr);
     carmen_extern_gprmc_ptr->longitude = carmen_global_convert_degmin_to_double(carmen_extern_gprmc_ptr->longitude_dm);
 
     ptr = strsep( &line, ",");
