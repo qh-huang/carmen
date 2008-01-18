@@ -441,7 +441,7 @@ carmen_extract_filename(char *path)
 static FILE *carmen_carp_output = NULL;
 
 void 
-carmen_perror(char* fmt, ...) {
+carmen_perror(const char* fmt, ...) {
   va_list args;
 
   if (carmen_carp_output == NULL)
@@ -455,7 +455,7 @@ carmen_perror(char* fmt, ...) {
 }
 
 void 
-carmen_die(char* fmt, ...) {
+carmen_die(const char* fmt, ...) {
   va_list args;
 
   if (carmen_carp_output == NULL)
@@ -469,7 +469,7 @@ carmen_die(char* fmt, ...) {
 }
 
 void 
-carmen_die_syserror(char* fmt, ...) {
+carmen_die_syserror(const char* fmt, ...) {
   va_list args;
 
   if (carmen_carp_output == NULL)
@@ -485,7 +485,7 @@ carmen_die_syserror(char* fmt, ...) {
 }
 
 void 
-carmen_warn(char* fmt, ...) {
+carmen_warn(const char* fmt, ...) {
   va_list args;
 
   if (carmen_carp_output == NULL)
@@ -498,7 +498,7 @@ carmen_warn(char* fmt, ...) {
 }
 
 void 
-carmen_verbose(char *fmt, ...) {
+carmen_verbose(const char *fmt, ...) {
   va_list args;
 
   if (!carmen_carp_verbose)

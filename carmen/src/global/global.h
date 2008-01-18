@@ -200,11 +200,11 @@ char *carmen_process_param_directory(char *lvalue, carmen_usage_func usage);
 
 char *carmen_extract_filename(char *path);
 
-void carmen_perror(char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void carmen_verbose(char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void carmen_warn(char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void carmen_die(char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void carmen_die_syserror(char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void carmen_perror(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void carmen_verbose(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void carmen_warn(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void carmen_die(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void carmen_die_syserror(const char* fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void carmen_carp_set_verbose(int verbosity);
 int carmen_carp_get_verbose(void);
 void carmen_carp_set_output(FILE *output);
