@@ -69,6 +69,14 @@ inline Point AbstractMap<CELL>::world2map_double(const Point& p) const {
 }
 
 template<class CELL>
+inline Point AbstractMap<CELL>::map2world_double(const Point& p) const {
+  double res = getResolution();
+  Point mp( m_cfg.m_offset.x + res * p.x, 
+	    m_cfg.m_offset.y + res * p.y);
+  return mp;
+}
+
+template<class CELL>
 inline Point AbstractMap<CELL>::map2world(const Point& p) const {
   double res = getResolution();
   Point wp( m_cfg.m_offset.x + res * p.x, 
@@ -228,6 +236,19 @@ inline CELL& AbstractMap<CELL>::cell(const Point& p) {
   return cell(world2map(p));
 }
 
+
+template<class CELL>
+void AbstractMap<CELL>::copy(const AbstractMap<CELL>& src) {
+  
+  IntPoint from_dest = src.getMin();
+  IntPoint to_dest   = src.getMax();
+  
+  for (int x=from_dest.x; x < to_dest.x; x++) {
+    for (int y=from_dest.y; y < to_dest.y; y++) {
+      cell(x,y) = src.cell(x,y);
+    }
+  }
+}
 
 template<class CELL>
 void AbstractMap<CELL>::copy(const AbstractMap<CELL>& src, const IntPoint& relative_offset) {

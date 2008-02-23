@@ -40,6 +40,7 @@ class AbstractMap {
   inline void setResolution(double res);
   inline double getResolution() const;
   
+  inline Point map2world_double(const Point& p) const;
   inline Point world2map_double(const Point& p) const;
   inline Point map2world(const Point& p) const;
   inline IntPoint world2map(const Point& p) const;
@@ -68,6 +69,7 @@ class AbstractMap {
   inline CELL& cell(const Point& p) const ;
   inline CELL& cell(const Point& p);
 
+  void copy(const AbstractMap<CELL>& src);
   void copy(const AbstractMap<CELL>& src, const IntPoint& relative_offset);
   void moveMap(int dx, int dy);
 
