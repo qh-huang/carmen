@@ -35,11 +35,11 @@ GenericMap<CELL>::~GenericMap() {
   }
 }
 template<class CELL>
-void GenericMap<CELL>::init(const MapConfig& cfg) {
+bool GenericMap<CELL>::init(const MapConfig& cfg) {
 
   // both invalid
   if (!cfg.isValid() && !(AbstractMap<CELL>::m_cfg.isValid()))
-    return;
+    return false;
 
   // already the correct size
   if (m_map != NULL && m_maplinear != NULL &&
@@ -47,7 +47,7 @@ void GenericMap<CELL>::init(const MapConfig& cfg) {
       AbstractMap<CELL>::m_cfg.isValid() && 
       AbstractMap<CELL>::m_cfg.m_sizeX == cfg.m_sizeX &&
       AbstractMap<CELL>::m_cfg.m_sizeY == cfg.m_sizeY)
-    return;
+    return true;
 
   // free the allocated memory
   if (AbstractMap<CELL>::m_cfg.isValid()) {
@@ -62,7 +62,7 @@ void GenericMap<CELL>::init(const MapConfig& cfg) {
 
   // nothing to do anyumore
   if (!cfg.isValid())
-    return;
+    return false;
 
   // all right, alloc the memory
   m_maplinear = new CELL[cfg.m_sizeX*cfg.m_sizeY];
@@ -72,6 +72,7 @@ void GenericMap<CELL>::init(const MapConfig& cfg) {
   for (int x=0; x < cfg.m_sizeX; x++) {
     m_map[x] = &m_maplinear[x*cfg.m_sizeY];
   }
+  return true;
 }
 
 template<class CELL>

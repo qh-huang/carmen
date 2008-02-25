@@ -23,7 +23,7 @@ class CarmenMap : public AbstractMap<float> {
 
   void mapConfigUpdated(const Point& offset = Point(0.0, 0.0));
 
-  virtual void init(const MapConfig& cfg);
+  virtual bool init(const MapConfig& cfg);
  
   virtual float& getCell(int x, int y) ;
   virtual float& getCell(int x, int y) const ;
