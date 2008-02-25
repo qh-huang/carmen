@@ -12,7 +12,7 @@ class GenericMap : public AbstractMap<CELL> {
   GenericMap(const GenericMap<CELL>& src);
   virtual ~GenericMap();  
 
-  virtual void init(const MapConfig& cfg);  
+  virtual bool init(const MapConfig& cfg);  
   virtual const CELL& defaultCell() const;
   
   virtual CELL& getCell(int x, int y);

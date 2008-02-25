@@ -16,29 +16,30 @@ AbstractMap<CELL>::~AbstractMap() {
 }
 
 template<class CELL>
-void AbstractMap<CELL>::init(int sizeX
+bool AbstractMap<CELL>::init(int sizeX
 			     , int sizeY
 			     , double res
 			     , Point offset
 			     ) {
    MapConfig cfg(sizeX, sizeY, res, offset);
-   init(cfg);
+   return init(cfg);
 }
 
 template<class CELL>
-void AbstractMap<CELL>::initIfSmaller(int sizeX, int sizeY, double res, Point offset) {
+bool AbstractMap<CELL>::initIfSmaller(int sizeX, int sizeY, double res, Point offset) {
   if (!m_cfg.isValid() || m_cfg.m_sizeX < sizeX || m_cfg.m_sizeY < sizeY) {
     MapConfig cfg(sizeX, sizeY, res, offset);
-    init(cfg);
+    return init(cfg);
   }
+  return false;
 }
 
 template<class CELL>
-void AbstractMap<CELL>::init(double xfrom, double xto, double yfrom, double yto, double res) {
+bool AbstractMap<CELL>::init(double xfrom, double xto, double yfrom, double yto, double res) {
   int sizeX = (int) ceilf( (xto-xfrom)/res );
   int sizeY = (int) ceilf( (yto-yfrom)/res );
   Point offset(xfrom, yfrom);
-  init(sizeX, sizeY, res, offset);
+  return init(sizeX, sizeY, res, offset);
 }
 
 template<class CELL>

@@ -19,10 +19,10 @@ CarmenMap::CarmenMap(const MapConfig& cfg) : AbstractMap<float>(cfg) {
   init(cfg);
 }
 
-void CarmenMap::init(const MapConfig& cfg) {
+bool CarmenMap::init(const MapConfig& cfg) {
   // both invalid
   if (!cfg.isValid() && !(AbstractMap<float>::m_cfg.isValid()))
-    return;
+    return false;
 
   // already the correct size
   if (m_map != NULL &&  
@@ -30,7 +30,7 @@ void CarmenMap::init(const MapConfig& cfg) {
       AbstractMap<float>::m_cfg.isValid() && 
       AbstractMap<float>::m_cfg.m_sizeX == cfg.m_sizeX &&
       AbstractMap<float>::m_cfg.m_sizeY == cfg.m_sizeY)
-    return;
+    return true;
 
   // free the allocated memory
   if (m_map != NULL && AbstractMap<float>::m_cfg.isValid()) {
@@ -46,7 +46,7 @@ void CarmenMap::init(const MapConfig& cfg) {
 
   // nothing to do anyumore
   if (!cfg.isValid())
-    return;
+    return false;
 
   // has the map structre bee initialized at all
   if (m_map == NULL) {
@@ -66,7 +66,7 @@ void CarmenMap::init(const MapConfig& cfg) {
     m_map->map[x] = &m_map->complete_map[x*cfg.m_sizeY];
     carmen_test_alloc(m_map->map[x]);
   }
-
+  return true;
 }
 
 CarmenMap::~CarmenMap() {

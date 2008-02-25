@@ -19,13 +19,13 @@ class AbstractMap {
   
 
   // Vitual function to be defined in subclass
-  virtual void init(const MapConfig& cfg) = 0;
+  virtual bool init(const MapConfig& cfg) = 0;
   virtual const CELL& defaultCell() const = 0;
 
   // non-virtual function for the map handling
-  void init(int sizeX, int sizeY, double res=1.0, Point offset = Point(0.0, 0.0) ); 
-  void init(double xfrom, double xto, double yfrom, double yto, double res);
-  void initIfSmaller(int sizeX, int sizeY, double res=1.0, Point offset = Point(0.0, 0.0) ); 
+  bool init(int sizeX, int sizeY, double res=1.0, Point offset = Point(0.0, 0.0) ); 
+  bool init(double xfrom, double xto, double yfrom, double yto, double res);
+  bool initIfSmaller(int sizeX, int sizeY, double res=1.0, Point offset = Point(0.0, 0.0) ); 
 
   const MapConfig& getConfig() const;
 
