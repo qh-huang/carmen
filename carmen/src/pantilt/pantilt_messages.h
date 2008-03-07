@@ -84,6 +84,35 @@ typedef struct {
 #define      CARMEN_PANTILT_MOVE_TILT_MESSAGE_FMT   "{double,double,string}"
 
 
+typedef struct {
+  double pan_vel;
+  double tilt_vel;
+  double timestamp;
+  char* host;
+} carmen_pantilt_set_velocity_message;
+#define CARMEN_PANTILT_SET_VEL_NAME       "pantilt_set_vel"
+#define CARMEN_PANTILT_SET_VEL_FMT        "{ double, double, double, string }"
+
+typedef struct {
+  double pan_acc;
+  double tilt_acc;
+  double timestamp;
+  char* host;
+} carmen_pantilt_set_acceleration_message;
+#define CARMEN_PANTILT_SET_ACC_NAME       "pantilt_set_acc"
+#define CARMEN_PANTILT_SET_ACC_FMT        "{ double, double, double, string }"
+
+
+
+#define CARMEN_PANTILT_RESET_NAME         "pantilt_reset"
+#define CARMEN_PANTILT_PAN_HOME_NAME   "pantilt_pan_home"
+#define CARMEN_PANTILT_TILT_HOME_NAME  "pantilt_tilt_home"
+#define CARMEN_PANTILT_HALT_NAME          "pantilt_halt"
+typedef carmen_default_message carmen_pantilt_reset_message;
+typedef carmen_default_message carmen_pantilt_pan_home_message;
+typedef carmen_default_message carmen_pantilt_tilt_home_message;
+typedef carmen_default_message carmen_pantilt_halt_message;
+
 
   /*
    * scanmarks are sent before and after a 3D-scan is taken.
@@ -95,6 +124,10 @@ typedef struct {
    *
    */
 
+#define SCANMARK_START 0
+#define SCANMARK_STOP  1
+
+
 typedef struct {
   int  type;
   int  laserid;
@@ -104,6 +137,7 @@ typedef struct {
 
 #define      CARMEN_PANTILT_SCANMARK_MESSAGE_NAME  "pantilt_scanmark_message"
 #define      CARMEN_PANTILT_SCANMARK_MESSAGE_FMT   "{int, int, double, string}"
+
 
 
   /*
