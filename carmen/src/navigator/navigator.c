@@ -258,7 +258,7 @@ generate_next_motion_command(void)
 
 
   carmen_robot_follow_trajectory(status.path.points+waypoint_index, 
-				 status.path.length-1, 
+				 status.path.length-waypoint_index, 
 				 &robot_position);
 
   if (status.path.length > 0) 
