@@ -7,10 +7,7 @@ CarmenMap::CarmenMap() : AbstractMap<float>() {
 
 CarmenMap::CarmenMap(const CarmenMap& x) : AbstractMap<float>(x) {
   m_defaultCell = -1;
-  m_map = NULL;
-  init(x.getConfig());
-  copy(x, IntPoint(0,0));
-
+  copyMap(x);
 }
 
 CarmenMap::CarmenMap(const MapConfig& cfg) : AbstractMap<float>(cfg) {
