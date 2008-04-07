@@ -227,6 +227,7 @@ carmen_simulator_recalc_pos(carmen_simulator_config_t *simulator_config)
      carmen_simulator_object_too_close(new_true.x, new_true.y, -1))
     return;
   
+  new_odom.theta = carmen_normalize_theta(new_odom.theta);
   simulator_config->odom_pose = new_odom;
   simulator_config->true_pose = new_true;
 }
