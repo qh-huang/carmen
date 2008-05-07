@@ -1045,7 +1045,7 @@ log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_log_data_t 
 					settings.usable_range );
 	    if (logtools_rpos2_distance(lastpos,
 				rec->lsens[idx].estpos)>settings.anim_step) {
-	      if (idx>=settings.from && idx<=settings.to)
+	      if ((settings.from < 0|| idx>=settings.from) && (settings.to < 0|| idx<=settings.to))
 		if (ctr++%(settings.anim_skip+1)==0) {
 		  log2pic_dump_animation_map( image, &image_info, &img,
 					      map, zsize, rec, i, idx+1, 0 );
@@ -1063,8 +1063,8 @@ log2pic_write_image_magick_map( logtools_grid_map2_t * map, logtools_log_data_t 
 	  }
 	}
       }
-      if (rec->numlaserscans>settings.from &&
-	  rec->numlaserscans<settings.to)
+      if ((settings.from < 0|| rec->numlaserscans>settings.from) &&
+	  (settings.to < 0|| rec->numlaserscans<settings.to))
 	log2pic_dump_animation_map( image, &image_info, &img, map, zsize,
 				    rec, rec->numentries, rec->numlaserscans,
 				    0 );
