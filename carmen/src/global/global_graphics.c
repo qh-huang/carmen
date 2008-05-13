@@ -297,7 +297,7 @@ unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags)
       value = *(data_ptr++);	    
       if (rotate)
 	image_ptr = image_data+y_index*x_size*3+x_index;
-      if (value < 0) {
+      if (value < 0 && value > -1.5) {
 	if (black_and_white) {
 	  *(image_ptr++) = 255;
 	  *(image_ptr++) = 255;
@@ -307,7 +307,19 @@ unsigned char *carmen_graphics_convert_to_image(carmen_map_p map, int flags)
 	  *(image_ptr++) = 0;
 	  *(image_ptr++) = 255;
 	}
-      } else if(!rescale && value > 1.0) {
+      } 
+      else if (value < -1.5) { // for offlimits
+	if (black_and_white) {
+	  *(image_ptr++) = 205;
+	  *(image_ptr++) = 205;
+	  *(image_ptr++) = 205;
+	} else {
+	  *(image_ptr++) = 255;
+	  *(image_ptr++) = 0;
+	  *(image_ptr++) = 0;
+	}
+      } 
+      else if(!rescale && value > 1.0) {
 	if (black_and_white) {
 	  *(image_ptr++) = 128;
 	  *(image_ptr++) = 128;
