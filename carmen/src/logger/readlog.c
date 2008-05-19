@@ -211,7 +211,7 @@ void copy_host_string(char **host, char **string)
   *host = (char *)calloc(1, l+1);     /* allocate one extra char for the \0 */
   carmen_test_alloc(*host);
   strncpy(*host, *string, l);
-  (*host)[l+1] = '\0';
+  (*host)[l] = '\0';
   *string += l;
 }
 
