@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
   if (argc != 2) 
     carmen_die("Usage: model_learner <logfile>\n");
 
-  RECORDING = "";
+  RECORDING =  (char*) "";
   PLAYBACK = argv[1];
 
   carmen_warn("********** World Initialization ***********\n");
