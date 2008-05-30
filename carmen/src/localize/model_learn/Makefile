@@ -2,7 +2,7 @@ include ../../Makefile.conf
 
 SUBDIRS = learn_model
 
-CC = $(CXX)
+##CC = $(CXX)
 LINK = $(CXX)
 
 CFLAGS += 
@@ -12,7 +12,7 @@ LFLAGS += -lreadlog -lglobal -lparam_interface -lipc
 MODULE_NAME = MODEL-LEARN
 MODULE_COMMENT = A program for learning motion models.
 
-SOURCES = mt-rand.c basic.c map.c lowMap.c low.c learn.c slam.cpp 
+SOURCES = mt-rand.cpp basic.cpp map.cpp lowMap.cpp low.cpp learn.cpp slam.cpp 
 PUBLIC_INCLUDES = l
 PUBLIC_LIBRARIES = 
 PUBLIC_BINARIES = model_learner
