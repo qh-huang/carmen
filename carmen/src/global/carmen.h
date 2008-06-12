@@ -31,6 +31,11 @@
 #ifndef CARMEN_H
 #define CARMEN_H
 
+/* to satisfy gcc >= 4.3 */
+#if defined(__GNUC_GNU_INLINE__) || defined(__GNUC_STDC_INLINE__)
+#define inline inline __attribute__ ((gnu_inline))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

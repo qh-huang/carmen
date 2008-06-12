@@ -1,6 +1,10 @@
 #ifndef URG_H
 #define URG_H
 
+/* needed for new inline def for gcc >= 4.3 */
+#include <carmen/carmen.h>
+
+
 //#define HOKUYO_ALWAYS_IN_SCIP20
 
 #define URG_BUFSIZE 8192

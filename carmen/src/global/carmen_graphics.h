@@ -36,8 +36,8 @@ extern "C" {
 #ifdef CARMEN_H
 #error "carmen.h has already been included. Include only one of carmen.h and carmen_graphics.h"
 #endif
-#include <carmen/global_graphics.h>
 #include <carmen/carmen.h>
+#include <carmen/global_graphics.h>
 
 #ifdef __cplusplus
 }

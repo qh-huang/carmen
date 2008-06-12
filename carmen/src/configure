@@ -119,10 +119,6 @@ print "Using \$CC as $GCC...\n";
 my @min_gcc_no_strict_aliasing_version = (3, 3);
 my $no_strict_aliasing = check_gcc_version();
 
-my @min_gcc_inline_fix = (4, 2);
-my $gcc_inline_fix = check_gcc_version_for_inline();
-
-
 my $processor = verify_processor();
 my ($os_type, $kernel) = verify_kernel();
 
@@ -199,9 +195,6 @@ print OUTPUT "USER_LIBS = ".(join ' ', @user_libs)."\n";
 if ($no_strict_aliasing) {
     print OUTPUT "NO_STRICT_ALIASING = 1\n";
 }
-if ($gcc_inline_fix) {
-    print OUTPUT "GCC_INLINE_FIX = 1\n";
-}
 print OUTPUT "CYGWIN = 1\n" if ($os_type eq "cygwin");
 print OUTPUT "NO_TCP862_SERIAL_SUPPORT = 1\n" unless (!$notcp862);
 print OUTPUT "KERNEL_HEADERS_DIR = $header_dir\n" unless (!$header_dir);
@@ -220,22 +213,6 @@ sub check_gcc_version {
     if ($gcc_major > $min_gcc_no_strict_aliasing_version[0] ||
 	($gcc_major == $min_gcc_no_strict_aliasing_version[0] &&
 	 $gcc_minor >= $min_gcc_no_strict_aliasing_version[1])) {
-	return 1;
-    }
-    return undef;
-}
-
-sub check_gcc_version_for_inline {
-
-    my $gcc_return = `$GCC --version`;
-
-    chomp $gcc_return;
-    
-    my ($gcc_major, $gcc_minor) = $gcc_return =~ /(\d+)\.(\d+)/;
-    
-    if ($gcc_major > $min_gcc_inline_fix[0] ||
-	($gcc_major == $min_gcc_inline_fix[0] &&
-	 $gcc_minor >= $min_gcc_inline_fix[1])) {
 	return 1;
     }
     return undef;
