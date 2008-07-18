@@ -153,7 +153,7 @@ void
 ImageMagickDrawPath( Image * image, ImageInfo * image_info,
 		     logtools_grid_map2_t * map, logtools_log_data_t * rec, int upto )
 {
-  logtools_vector2_t           v, vec1, vec2, vstart, vend;
+  logtools_vector2_t           v, vec1, vec2, vstart={0,0}, vend;
   int               i, idx, plot = FALSE;
   DrawContext       wand;
 #if MagickLibVersion >= 0x600
@@ -167,7 +167,7 @@ ImageMagickDrawPath( Image * image, ImageInfo * image_info,
   logtools_ll_coord_t          ll;
   logtools_ll_coord_t          llend = {0.0, 0.0};
   logtools_ll_coord_t          llstart = {0.0, 0.0};
-  logtools_utm_coord_t         utmstart, utmend, utm;
+  logtools_utm_coord_t         utmstart= {0.0, 0.0, 0, 'X'}, utmend= {0.0, 0.0, 0, 'X'}, utm= {0.0, 0.0, 0, 'X'};
   double            northingf, eastingf;
   
 #if MagickLibVersion >= 0x600
