@@ -170,15 +170,15 @@ void carmen_test_ipc(IPC_RETURN_TYPE err, const char *err_msg, const char *ipc_m
 
 #define carmen_test_ipc_exit(ERR, ERR_MSG, IPC_MSG) do {carmen_test_ipc((ERR), (ERR_MSG), (IPC_MSG)); if ((ERR) != IPC_OK) {fprintf(stderr, "This is a fatal error. Exiting.\n"); exit(-1);} } while (0)
 
-int carmen_find_param(char *lvalue);
+int carmen_find_param(const char *lvalue);
 
-int carmen_find_param_pair(char *lvalue);
+int carmen_find_param_pair(const char *lvalue);
 
 char *carmen_find_robot_name(int argc, char **argv);
 
-char *carmen_param_pair(char *lvalue);
+char *carmen_param_pair(const char *lvalue);
 
-char *carmen_param_pair_and_remove(char *lvalue);
+char *carmen_param_pair_and_remove(const char *lvalue);
 
 int carmen_num_params(void);
 
@@ -404,9 +404,9 @@ int carmen_int_random(int max);
 double carmen_uniform_random(double min, double max);
 double carmen_gaussian_random(double mean, double std);
 
-int carmen_file_exists(char *filename);
-char *carmen_file_extension(char *filename);
-char *carmen_file_find(char *filename);
+int carmen_file_exists(const char *filename);
+char *carmen_file_extension(const char *filename);
+char *carmen_file_find(const char *filename);
 char **carmen_get_search_path(int *num_paths);
 
 void carmen_global_start_progress_bar(char *label);
