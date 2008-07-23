@@ -32,7 +32,7 @@ unsigned int parseInt(int bytes, char** s){
 
 
 //skips a line
-inline char* skipLine(char* buf){
+carmen_inline char* skipLine(char* buf){
   while (*buf!=0 && *buf!='\n')
     buf++;
   return (*buf=='\n')?buf+1:0;

@@ -321,7 +321,7 @@ void carmen_rotate_gridmap(carmen_map_p map, int rotation)
     map->map[index] = map->complete_map+index*map->config.y_size;
 }
 
-static inline void rotate(int rotation, double old_x, double old_y, 
+static carmen_inline void rotate(int rotation, double old_x, double old_y, 
 			  double *new_x, double *new_y,
 			  double width, double height)
 {

@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-inline double carmen_robot_get_sonar_skew(void);
+carmen_inline double carmen_robot_get_sonar_skew(void);
 void carmen_robot_correct_sonar_and_publish(void);
 void carmen_robot_add_sonar_handler(void);
 void carmen_robot_add_sonar_parameters(char *progname);

@@ -36,10 +36,10 @@ class OdometryMessage : public AbstractMessage {
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, char*, Host, host);
   STRUCT_PARAM_VIRTUAL_SET_GET(*m_msg, double, Timestamp, timestamp, public, public);
 
-  inline carmen_base_odometry_message* toCarmenMsg() {return m_msg;}
-  inline operator carmen_base_odometry_message*() {return m_msg;}
-  inline operator const carmen_base_odometry_message&() const {return *m_msg;}
-  inline operator carmen_base_odometry_message&() {return *m_msg;}
+  carmen_inline carmen_base_odometry_message* toCarmenMsg() {return m_msg;}
+  carmen_inline operator carmen_base_odometry_message*() {return m_msg;}
+  carmen_inline operator const carmen_base_odometry_message&() const {return *m_msg;}
+  carmen_inline operator carmen_base_odometry_message&() {return *m_msg;}
 
   virtual const char* getMessageID() const {
     return "ODOM";

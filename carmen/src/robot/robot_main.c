@@ -83,7 +83,7 @@ static int following_trajectory = 0;
 
 static void publish_vector_status(double distance, double angle);
 
-static inline double get_odometry_skew(void)
+static carmen_inline double get_odometry_skew(void)
 {
   if(strcmp(robot_host, carmen_robot_latest_odometry.host) == 0)
     return 0;  

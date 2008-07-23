@@ -154,7 +154,7 @@ static GdkPixmap *generate_pixmap(unsigned char* image_data,
 
 /* converts an x position on the drawing area to an x grid
    on the map */
-inline double 
+carmen_inline double 
 pix_x_to_map(double pix_x)
 {
   return (double)(pix_x)/mult + (double)xstart;
@@ -162,35 +162,35 @@ pix_x_to_map(double pix_x)
 
 /* converts a y position on the drawing area to a y grid
    on the map */
-inline double 
+carmen_inline double 
 pix_y_to_map(double pix_y)
 {
   return (double)yend - (double)(pix_y)/mult;
 }
  
 /* converts an x grid to an x position on the drawing area */
-inline double 
+carmen_inline double 
 map_x_to_pix(int map_x)
 {
   return (double)(map_x-xstart)*mult;
 }
 
 /* converts a y grid to a y position on the drawing area */
-inline double 
+carmen_inline double 
 map_y_to_pix(int map_y)
 {
   return (double)(yend-map_y)*mult;
 }
 
 /* converts an x grid to a position on the map_pixmap */
-inline double 
+carmen_inline double 
 map_x_to_map_pix(int map_x)
 {
   return (double)(map_x)*mult;
 }
 
 /* converts an x grid to a position on the map_pixmap */
-inline double 
+carmen_inline double 
 map_y_to_map_pix(int map_y)
 {
   return (double)(map->config.y_size-map_y)*mult;

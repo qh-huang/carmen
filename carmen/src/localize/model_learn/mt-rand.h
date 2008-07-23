@@ -6,7 +6,7 @@
 
 #ifndef INLINE
 #if defined(__GNUC__) || defined(__DECC)
-#define INLINE inline
+#define INLINE carmen_inline
 #else
 #define INLINE
 #endif

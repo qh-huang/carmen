@@ -858,7 +858,7 @@ carmen_map_get_global_offset(carmen_global_offset_t *global_offset)
   return carmen_map_get_global_offset_by_name(NULL, global_offset);
 }
 
-inline int 
+carmen_inline int 
 carmen_map_to_world(carmen_map_point_p carmen_map_point, 
 		    carmen_world_point_p world_point) 
 {
@@ -873,7 +873,7 @@ carmen_map_to_world(carmen_map_point_p carmen_map_point,
   return 0;
 }
 
-inline int 
+carmen_inline int 
 carmen_world_to_map(carmen_world_point_p world_point, 
 		    carmen_map_point_p carmen_map_point) 
 {
@@ -890,7 +890,7 @@ carmen_world_to_map(carmen_world_point_p world_point,
   return 0;
 }
 
-inline int 
+carmen_inline int 
 carmen_map_to_trajectory(carmen_map_point_p carmen_map_point, 
 			 carmen_traj_point_p traj_point) 
 {
@@ -906,7 +906,7 @@ carmen_map_to_trajectory(carmen_map_point_p carmen_map_point,
   return 0;
 }
 
-inline int
+carmen_inline int
 carmen_point_to_map(carmen_point_p point, carmen_map_point_p map_point, 
 		    carmen_map_p map)
 {
@@ -920,7 +920,7 @@ carmen_point_to_map(carmen_point_p point, carmen_map_point_p map_point,
   return 0;
 }
 
-inline int 
+carmen_inline int 
 carmen_trajectory_to_map(carmen_traj_point_p traj_point, 
 			 carmen_map_point_p carmen_map_point,
 			 carmen_map_p map) 
@@ -937,19 +937,19 @@ carmen_trajectory_to_map(carmen_traj_point_p traj_point,
 }
 
 /* distance between two carmen_map_points in grid cells */
-inline double 
+carmen_inline double 
 carmen_distance_map(carmen_map_point_p p1, carmen_map_point_p p2) 
 {
   return hypot(p1->x-p2->x, p1->y-p2->y);
 }
 
-inline double 
+carmen_inline double 
 carmen_distance_world(carmen_world_point_p p1, carmen_world_point_p p2) 
 {
   return hypot(p1->pose.x-p2->pose.x, p1->pose.y-p2->pose.y);
 }
 
-inline int
+carmen_inline int
 carmen_map_cmp(carmen_map_point_p p1, carmen_map_point_p p2)
 {
   if (p1->x == p2->x && p1->y == p2->y)
@@ -958,7 +958,7 @@ carmen_map_cmp(carmen_map_point_p p1, carmen_map_point_p p2)
   return 1;
 }
 
-inline int
+carmen_inline int
 carmen_world_cmp(carmen_world_point_p p1, carmen_world_point_p p2)
 {
   if (fabs(p1->pose.x - p2->pose.x) < 1.0 &&
@@ -969,7 +969,7 @@ carmen_world_cmp(carmen_world_point_p p1, carmen_world_point_p p2)
   return 1;
 }
 
-inline carmen_map_p
+carmen_inline carmen_map_p
 carmen_map_copy(carmen_map_p map) 
 {
   carmen_map_p new_map;
@@ -994,7 +994,7 @@ carmen_map_copy(carmen_map_p map)
   return new_map;
 }
 
-inline void
+carmen_inline void
 carmen_map_destroy(carmen_map_p *map)
 {
   free((*map)->complete_map);

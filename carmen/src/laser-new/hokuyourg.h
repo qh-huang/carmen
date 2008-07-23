@@ -1,7 +1,7 @@
 #ifndef URG_H
 #define URG_H
 
-/* needed for new inline def for gcc >= 4.3 */
+/* needed for new carmen_inline def for gcc >= 4.3 */
 #include <carmen/carmen.h>
 
 

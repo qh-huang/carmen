@@ -10,8 +10,8 @@ public:
   CharCell(const CharCell& x) { *this = x; }
   void set(char v) { val = v; }
   
-  inline operator char() const { return val;}
-  inline CharCell& operator= (const char& v)  { val = v; return *this;}
+  carmen_inline operator char() const { return val;}
+  carmen_inline CharCell& operator= (const char& v)  { val = v; return *this;}
   
   char val;
 };
@@ -23,8 +23,8 @@ public:
   IntCell(const IntCell& x) { *this = x; }
   void set(int v) { val = v; }
   
-  inline operator int() const { return val;}
-  inline IntCell& operator= (const int& v)  { val = v; return *this;}
+  carmen_inline operator int() const { return val;}
+  carmen_inline IntCell& operator= (const int& v)  { val = v; return *this;}
   
   int val;
 };
@@ -35,8 +35,8 @@ public:
   FloatCell(const FloatCell& x) { *this = x; }
   void set(float v) { val = v; }
 
-  inline operator float() const { return val;}
-  inline FloatCell& operator= (const float& v)  { val = v; return *this;}
+  carmen_inline operator float() const { return val;}
+  carmen_inline FloatCell& operator= (const float& v)  { val = v; return *this;}
   
   float val;
 };
@@ -47,8 +47,8 @@ public:
   DoubleCell(const DoubleCell& x) { *this = x; }
   void set(double v) { val = v; }
 
-  inline operator double() const { return val;}
-  inline DoubleCell& operator= (const double& v)  { val = v; return *this;}
+  carmen_inline operator double() const { return val;}
+  carmen_inline DoubleCell& operator= (const double& v)  { val = v; return *this;}
   
   double val;
 };
@@ -79,14 +79,14 @@ public:
     val = ((float)hits)/((float) (hits+misses));
   }
 
-  inline operator float() {  
+  carmen_inline operator float() {  
     if (updated) {
       val = ((float)hits)/((float) (hits+misses));
       updated = false;
     }
     return val;  
   }
-  inline operator double() {      
+  carmen_inline operator double() {      
     if (updated) {
       val = ((float)hits)/((float) (hits+misses));
       updated = false;

@@ -64,10 +64,10 @@ class RobotLaserMessage : public AbstractMessage {
   void setConfig(const LaserConfig& x) ;
   void setConfig(const carmen_laser_laser_config_t& x) ;
 
-  inline carmen_robot_laser_message* toCarmenMsg()   {return m_msg;}
-  inline operator carmen_robot_laser_message*()      {return m_msg;}
-  inline operator const carmen_robot_laser_message&() const {return *m_msg;}
-  inline operator carmen_robot_laser_message&() {return *m_msg;}
+  carmen_inline carmen_robot_laser_message* toCarmenMsg()   {return m_msg;}
+  carmen_inline operator carmen_robot_laser_message*()      {return m_msg;}
+  carmen_inline operator const carmen_robot_laser_message&() const {return *m_msg;}
+  carmen_inline operator carmen_robot_laser_message&() {return *m_msg;}
 
 
 

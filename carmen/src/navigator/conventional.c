@@ -64,13 +64,13 @@ static int x_size, y_size;
 static double *costs = NULL;
 static double *utility = NULL;
 
-inline static int 
+carmen_inline static int 
 is_out_of_map(int x, int y)
 {
   return (x >= x_size || x < 0 || y >= y_size || y < 0);
 }
 
-inline static 
+carmen_inline static 
 double *utility_value(int x, int y) 
 {
   if (is_out_of_map(x, y))
@@ -79,7 +79,7 @@ double *utility_value(int x, int y)
   return (utility + x*y_size + y);
 }
 
-static inline double
+static carmen_inline double
 get_parent_value(queue the_queue, int index)
 {
   int parent_index;
@@ -92,7 +92,7 @@ get_parent_value(queue the_queue, int index)
   return *utility_value(x, y);
 }
 
-static inline queue 
+static carmen_inline queue 
 make_queue(void) 
 {
   queue new_queue;
@@ -106,7 +106,7 @@ make_queue(void)
   return new_queue;
 }
 
-static inline void
+static carmen_inline void
 swap_entries(int x1, int x2, queue the_queue)
 {
   state_ptr tmp;
@@ -116,7 +116,7 @@ swap_entries(int x1, int x2, queue the_queue)
   the_queue->data_array[x2-1] = tmp;
 }
 
-static inline void
+static carmen_inline void
 fix_priority_queue(queue the_queue)
 {
   int left, right;
@@ -149,7 +149,7 @@ fix_priority_queue(queue the_queue)
     }
 }
 
-static inline state_ptr 
+static carmen_inline state_ptr 
 pop_queue(queue the_queue) 
 {
   state_ptr return_state;
@@ -167,7 +167,7 @@ pop_queue(queue the_queue)
   return(return_state);
 }
 
-static inline void 
+static carmen_inline void 
 delete_queue(queue *queue_pointer) 
 {
   queue the_queue;
@@ -219,7 +219,7 @@ resize_queue(queue the_queue)
 	 (the_queue->queue_size - the_queue->num_elements)*sizeof(state_ptr));
 }
 
-static inline void 
+static carmen_inline void 
 insert_into_queue(state_ptr new_state, queue the_queue) 
 {
   int index;
@@ -431,7 +431,7 @@ carmen_conventional_get_costs_ptr(void)
   return costs;
 }
 
-static inline state_ptr 
+static carmen_inline state_ptr 
 carmen_conventional_create_state(int x, int y, double util) 
 {
   state_ptr new_ptr = NULL;
@@ -449,7 +449,7 @@ carmen_conventional_create_state(int x, int y, double util)
   return new_ptr;
 }
 
-static inline void 
+static carmen_inline void 
 push_state(int x, int y, double new_utility, queue state_queue)
 {
   state_ptr new_state = carmen_conventional_create_state(x, y, new_utility);
@@ -459,7 +459,7 @@ push_state(int x, int y, double new_utility, queue state_queue)
     carmen_warn("Bad utility\n");
 } 
 
-static inline void 
+static carmen_inline void 
 add_neighbours_to_queue(int x, int y, queue state_queue)
 {
   int index;

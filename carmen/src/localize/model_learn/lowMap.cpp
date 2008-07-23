@@ -17,6 +17,7 @@
 // Code for generating and maintaining maps (for the low level of the hierarchy)
 //
 
+#include <carmen/carmen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -160,7 +161,7 @@ void LowResizeArray(TMapStarter *node, int deadID)
   j = 0;
   // Run through each entry in our old array of observations.
   for (i=0; i < node->total; i++) {
-    if (node->array[i].ID == deadID) {
+    if (node->array[i].ID == deadID && deadID >=0) {
       // Denote that this has been removed already. Therefore, we won't try to remove it later.
       // We don't bother actually removing the source, since the only way that we can have a deadID is if we are in
       // the process of removing all updates that deadID has made.
@@ -345,7 +346,7 @@ static void AddToWorkingArray(int i, TMapStarter *node, short int workingArray[]
 // effectively expands the local map by one grid square, and allows any future accesses to
 // this grid square to be completed in constant time. This function itself can take O(P) time.
 //
-inline void LowBuildObservation(int x, int y, char usage)
+carmen_inline void LowBuildObservation(int x, int y, char usage)
 {
   TAncestor *lineage;
   PAncestor stack[PARTICLE_NUMBER];
@@ -642,7 +643,7 @@ void LowDeleteObservation(short int x, short int y, short int node) {
 //                  should stop here.
 // Output: returns the probability of trace of the given length through this square will be stopped by an obstacle
 //
-inline double LowComputeProbability(int x, int y, double distance, int parentID) 
+carmen_inline double LowComputeProbability(int x, int y, double distance, int parentID) 
 {
   // If there are no entries at this location in the map, we know that the observation
   // for any particle is UNKNOWN. Use the density of our prior for unknown grid squares

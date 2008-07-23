@@ -15,11 +15,11 @@ class CarmenMap : public AbstractMap<float> {
   void setMap(carmen_map_t* m);
   void copyMap(carmen_map_t* m); 
 
-  inline operator carmen_map_t()  {return *m_map;}
-  inline operator carmen_map_t() const {return *m_map;}
+  carmen_inline operator carmen_map_t()  {return *m_map;}
+  carmen_inline operator carmen_map_t() const {return *m_map;}
 
-  inline operator carmen_map_t*()  {return m_map;}
-  inline operator carmen_map_t*() const {return m_map;}
+  carmen_inline operator carmen_map_t*()  {return m_map;}
+  carmen_inline operator carmen_map_t*() const {return m_map;}
 
   void mapConfigUpdated(const Point& offset = Point(0.0, 0.0));
 

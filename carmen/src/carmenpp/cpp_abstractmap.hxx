@@ -55,7 +55,7 @@ IntPoint AbstractMap<CELL>::world2map(const Point& p) const {
 }
 
 template<class CELL>
-inline Point AbstractMap<CELL>::map2world(const IntPoint& p) const {
+carmen_inline Point AbstractMap<CELL>::map2world(const IntPoint& p) const {
   double res = getResolution();
   Point wp( m_cfg.m_offset.x + res * ((double)p.x), 
 	    m_cfg.m_offset.y + res * ((double)p.y) );
@@ -63,14 +63,14 @@ inline Point AbstractMap<CELL>::map2world(const IntPoint& p) const {
 }
 
 template<class CELL>
-inline Point AbstractMap<CELL>::world2map_double(const Point& p) const {
+carmen_inline Point AbstractMap<CELL>::world2map_double(const Point& p) const {
   double res = getResolution();
   Point ip((p.x-m_cfg.m_offset.x)/res, (p.y-m_cfg.m_offset.y)/res );
   return ip;
 }
 
 template<class CELL>
-inline Point AbstractMap<CELL>::map2world_double(const Point& p) const {
+carmen_inline Point AbstractMap<CELL>::map2world_double(const Point& p) const {
   double res = getResolution();
   Point mp( m_cfg.m_offset.x + res * p.x, 
 	    m_cfg.m_offset.y + res * p.y);
@@ -78,7 +78,7 @@ inline Point AbstractMap<CELL>::map2world_double(const Point& p) const {
 }
 
 template<class CELL>
-inline Point AbstractMap<CELL>::map2world(const Point& p) const {
+carmen_inline Point AbstractMap<CELL>::map2world(const Point& p) const {
   double res = getResolution();
   Point wp( m_cfg.m_offset.x + res * p.x, 
 	    m_cfg.m_offset.y + res * p.y);
@@ -86,85 +86,85 @@ inline Point AbstractMap<CELL>::map2world(const Point& p) const {
 }
 
 template<class CELL>
-inline Point AbstractMap<CELL>::map2world(int x, int y) const {
+carmen_inline Point AbstractMap<CELL>::map2world(int x, int y) const {
   return map2world(IntPoint(x,y));
 }
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::world2map(double x, double y) const {
+carmen_inline IntPoint AbstractMap<CELL>::world2map(double x, double y) const {
   return world2map(Point(x,y));
 }
 
 
 template<class CELL>
-inline bool AbstractMap<CELL>::isInside(const Point& p)  const {
+carmen_inline bool AbstractMap<CELL>::isInside(const Point& p)  const {
   return isInside (world2map(p));
 }
 
 
 template<class CELL>
-inline bool AbstractMap<CELL>::isInside(int x, int y)  const {
+carmen_inline bool AbstractMap<CELL>::isInside(int x, int y)  const {
   return isInside(IntPoint(x,y));
 }
 
 
 template<class CELL>
-inline bool AbstractMap<CELL>::isInside(double x, double y)  const {
+carmen_inline bool AbstractMap<CELL>::isInside(double x, double y)  const {
   return isInside(Point(x,y));
 }
 
 
 template<class CELL>
-inline bool AbstractMap<CELL>::isInside(const IntPoint& p) const {
+carmen_inline bool AbstractMap<CELL>::isInside(const IntPoint& p) const {
   if (p.x >= 0 && p.x < getMapSizeX() && p.y >= 0 && p.y < getMapSizeY())
     return true;
   return false;
 };
 
 template<class CELL>
-inline void AbstractMap<CELL>::setResolution(double res){
+carmen_inline void AbstractMap<CELL>::setResolution(double res){
   m_cfg.m_res = res;
 };
 
 template<class CELL>
-inline void AbstractMap<CELL>::setOffset(const Point& p){
+carmen_inline void AbstractMap<CELL>::setOffset(const Point& p){
   m_cfg.m_offset=p;
 };
 
 
 template<class CELL>
-inline Point AbstractMap<CELL>::getOffset() const {
+carmen_inline Point AbstractMap<CELL>::getOffset() const {
   return m_cfg.m_offset;
 };
 
 
 template<class CELL>
-inline double AbstractMap<CELL>::getResolution() const {
+carmen_inline double AbstractMap<CELL>::getResolution() const {
   return m_cfg.m_res;
 }
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::getMin() const{
+carmen_inline IntPoint AbstractMap<CELL>::getMin() const{
     return IntPoint(0,0);
 }
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::getMax() const{
+carmen_inline IntPoint AbstractMap<CELL>::getMax() const{
     return IntPoint(getMapSizeX(), getMapSizeY());
 }
 
 template<class CELL>
-inline int AbstractMap<CELL>::getMapSizeX() const {
+carmen_inline int AbstractMap<CELL>::getMapSizeX() const {
   return m_cfg.m_sizeX;
 }
 
 template<class CELL>
-inline int AbstractMap<CELL>::getMapSizeY() const {
+carmen_inline int AbstractMap<CELL>::getMapSizeY() const {
   return m_cfg.m_sizeY;
 }
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::minInside(const IntPoint& p) const {
+carmen_inline IntPoint AbstractMap<CELL>::minInside(const IntPoint& p) const {
   
   return  IntPoint( (p.x<0)?:p.x , 
 		    (p.y<0)?0:p.y );
@@ -172,14 +172,14 @@ inline IntPoint AbstractMap<CELL>::minInside(const IntPoint& p) const {
 
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::maxInside(const IntPoint& p) const {
+carmen_inline IntPoint AbstractMap<CELL>::maxInside(const IntPoint& p) const {
   return  IntPoint( (m_cfg.m_sizeX-1<p.x)?m_cfg.m_sizeX-1:p.x , 
 		    (m_cfg.m_sizeY-1<p.y)?m_cfg.m_sizeY-1:p.y );
 }
 
 
 template<class CELL>
-inline IntPoint AbstractMap<CELL>::putInside(const IntPoint& p) const {
+carmen_inline IntPoint AbstractMap<CELL>::putInside(const IntPoint& p) const {
   
   IntPoint pnew = p;
   
@@ -198,42 +198,42 @@ inline IntPoint AbstractMap<CELL>::putInside(const IntPoint& p) const {
 
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) const {
+carmen_inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) const {
   return getCell(p.x,p.y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) {
+carmen_inline CELL& AbstractMap<CELL>::cell(const IntPoint& p) {
   return getCell(p.x,p.y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(int x, int y)  {
+carmen_inline CELL& AbstractMap<CELL>::cell(int x, int y)  {
   return getCell(x,y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(int x, int y) const {
+carmen_inline CELL& AbstractMap<CELL>::cell(int x, int y) const {
   return getCell(x,y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(double x, double y)  {
+carmen_inline CELL& AbstractMap<CELL>::cell(double x, double y)  {
   return getCell(x,y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(double x, double y) const {
+carmen_inline CELL& AbstractMap<CELL>::cell(double x, double y) const {
   return getCell(x,y);
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(const Point& p) const {
+carmen_inline CELL& AbstractMap<CELL>::cell(const Point& p) const {
   return cell(world2map(p));
 }
 
 template<class CELL>
-inline CELL& AbstractMap<CELL>::cell(const Point& p) {
+carmen_inline CELL& AbstractMap<CELL>::cell(const Point& p) {
   return cell(world2map(p));
 }
 

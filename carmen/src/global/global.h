@@ -39,6 +39,16 @@
 #ifndef CARMEN_GLOBAL_H
 #define CARMEN_GLOBAL_H
 
+
+/* to satisfy gcc >= 4.3 */
+#if defined(__GNUC_GNU_INLINE__) || defined(__GNUC_STDC_INLINE__)
+#define carmen_inline inline __attribute__ ((gnu_inline))
+#else
+#define carmen_include include
+#endif
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -209,7 +219,7 @@ void carmen_carp_set_verbose(int verbosity);
 int carmen_carp_get_verbose(void);
 void carmen_carp_set_output(FILE *output);
 
-extern inline double carmen_get_time(void)
+extern carmen_inline double carmen_get_time(void)
 {
   struct timeval tv;
   double t;
@@ -238,11 +248,11 @@ void carmen_running_average_clear(carmen_running_average_t *average);
 void carmen_running_average_add(carmen_running_average_t *average, double x);
 double carmen_running_average_report(carmen_running_average_t *average);
 
-/* This weirdness of extern inline is to allow the function to be inlined
+/* This weirdness of extern carmen_inline is to allow the function to be carmen_inlined
    outside the library. Guess what! There's an exact copy of this function in
    global.c as well. <sigh> */
 
-extern inline int carmen_round(double X)
+extern carmen_inline int carmen_round(double X)
 {
   if (X >= 0)
     return (int)(X + 0.5);
@@ -250,7 +260,7 @@ extern inline int carmen_round(double X)
     return (int)(X - 0.5);
 }
 
-extern inline double carmen_clamp(double X, double Y, double Z) 
+extern carmen_inline double carmen_clamp(double X, double Y, double Z) 
 {
   if (Y < X)
     return X;
@@ -259,18 +269,18 @@ extern inline double carmen_clamp(double X, double Y, double Z)
   return Y;
 }
 
-extern inline int carmen_trunc(double X)
+extern carmen_inline int carmen_trunc(double X)
 {
   return (int)(X);
 }
 
-extern inline void carmen_erase_structure(void* ptr, int size_of_struture)
+extern carmen_inline void carmen_erase_structure(void* ptr, int size_of_struture)
 {
   memset(ptr, 0, size_of_struture);
 }
 
 
-extern inline double carmen_normalize_theta(double theta)
+extern carmen_inline double carmen_normalize_theta(double theta)
 {
   int multiplier;
   
@@ -287,75 +297,75 @@ extern inline double carmen_normalize_theta(double theta)
   return theta;
 }
 
-extern inline double carmen_knots_to_meters_per_second(double knots)
+extern carmen_inline double carmen_knots_to_meters_per_second(double knots)
 {
   /// KNOTS_TO_METERS_PER_SECOND 0.5148
   return (0.5148 * knots);
 }
 
-extern inline double carmen_radians_to_degrees(double theta)
+extern carmen_inline double carmen_radians_to_degrees(double theta)
 {
   return (theta * 180.0 / M_PI);
 }
 
-extern inline double carmen_degrees_to_radians(double theta)
+extern carmen_inline double carmen_degrees_to_radians(double theta)
 {
   return (theta * M_PI / 180.0);
 }
 
-extern inline int carmen_imin(int val1, int val2)
+extern carmen_inline int carmen_imin(int val1, int val2)
 {
   if (val2 < val1)
     return val2;
   return val1;
 }
 
-extern inline int carmen_imax(int val1, int val2)
+extern carmen_inline int carmen_imax(int val1, int val2)
 {
   if (val2 > val1)
     return val2;
   return val1;
 }
 
-extern inline double carmen_fmin(double val1, double val2)
+extern carmen_inline double carmen_fmin(double val1, double val2)
 {
   if (val2 < val1)
     return val2;
   return val1;
 }
 
-extern inline double carmen_fmax(double val1, double val2)
+extern carmen_inline double carmen_fmax(double val1, double val2)
 {
   if (val2 > val1)
     return val2;
   return val1;
 }
 
-extern inline double carmen_square(double val)
+extern carmen_inline double carmen_square(double val)
 {
 	return (val*val);
 }
 
 double carmen_global_convert_degmin_to_double(double dm_format);
 
-extern inline double carmen_distance_traj(carmen_traj_point_p p1, carmen_traj_point_p p2)
+extern carmen_inline double carmen_distance_traj(carmen_traj_point_p p1, carmen_traj_point_p p2)
 {
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
 }
 
-extern inline double carmen_angle_between(carmen_traj_point_p p1, carmen_traj_point_p p2)
+extern carmen_inline double carmen_angle_between(carmen_traj_point_p p1, carmen_traj_point_p p2)
 {
   return atan2(p2->y - p1->y, p2->x - p1->x);
 }
 
-extern inline double carmen_distance(carmen_point_p p1, carmen_point_p p2) 
+extern carmen_inline double carmen_distance(carmen_point_p p1, carmen_point_p p2) 
 {
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
 }
 
 void carmen_get_bresenham_parameters(int p1x, int p1y, int p2x, int p2y, 
 				   carmen_bresenham_param_t *params);
-extern inline void carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y)
+extern carmen_inline void carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y)
 {
   if (params->UsingYIndex) 
     {
@@ -373,7 +383,7 @@ extern inline void carmen_get_current_point(carmen_bresenham_param_t *params, in
     }
 }
 
-extern inline int carmen_get_next_point(carmen_bresenham_param_t *params)
+extern carmen_inline int carmen_get_next_point(carmen_bresenham_param_t *params)
 {
   if (params->XIndex == params->X2)
     {
@@ -447,7 +457,7 @@ void carmen_list_destroy(carmen_list_t **list);
 void carmen_eigs_to_covariance(double theta, double major, double minor,
 			       double *vx, double *vxy, double *vy);
 
-extern inline char *carmen_next_word(char *str)
+extern carmen_inline char *carmen_next_word(char *str)
 {
   char *mark = str;
 
@@ -460,7 +470,7 @@ extern inline char *carmen_next_word(char *str)
   return mark;
 }
 
-extern inline char *carmen_next_n_words(char *str, int n)
+extern carmen_inline char *carmen_next_n_words(char *str, int n)
 {
   int i;
   char *result;

@@ -38,57 +38,57 @@
 //helper functions for reading packets.
 //on X86 architectures they are not needed, but i let there for compatibility
 //BEGIN  command formatting
-inline unsigned char sick_parse_int8(unsigned char*buf){
+carmen_inline unsigned char sick_parse_int8(unsigned char*buf){
   return (unsigned char)*buf;
 }
 
-inline char sick_parse_uint8(unsigned char* buf){
+carmen_inline char sick_parse_uint8(unsigned char* buf){
   return (char) *buf;
 }
 
-inline unsigned short sick_parse_uint16(unsigned char*buf){
+carmen_inline unsigned short sick_parse_uint16(unsigned char*buf){
   unsigned char c0=*buf, c1=*(buf+1);
   return (unsigned short) c0|((unsigned short)c1<<8);
 }
 
-inline short sick_parse_int16(unsigned char* buf){
+carmen_inline short sick_parse_int16(unsigned char* buf){
   unsigned char c0=*buf, c1=*(buf+1);
   return (short) c0|((short)c1<<8);
 }
 
-inline int sick_parse_int32(unsigned char* buf){
+carmen_inline int sick_parse_int32(unsigned char* buf){
   unsigned char c0=*buf, c1=*(buf+1), c2=*(buf+2), c3=*(buf+3);
   return (unsigned int) c0|((unsigned int)c1<<8)|((unsigned int)c2<<16)|((unsigned int)c3<<24);
 }
 
-inline int sick_parse_uint32(unsigned char* buf){
+carmen_inline int sick_parse_uint32(unsigned char* buf){
   unsigned char c0=*buf, c1=*(buf+1), c2=*(buf+2), c3=*(buf+3);
   return (unsigned int) c0|((unsigned int)c1<<8)|((unsigned int)c2<<16)|((unsigned int)c3<<24);
 }
 
-inline unsigned char* sick_format_int8(unsigned char* buf, char d){
+carmen_inline unsigned char* sick_format_int8(unsigned char* buf, char d){
   *buf++=d;
   return buf;
 }
 
-inline unsigned char* sick_format_uint8(unsigned char* buf, unsigned char d){
+carmen_inline unsigned char* sick_format_uint8(unsigned char* buf, unsigned char d){
   *buf++=d;
   return buf;
 }
 
-inline unsigned char* sick_format_int16(unsigned char* buf, short d){
+carmen_inline unsigned char* sick_format_int16(unsigned char* buf, short d){
   *buf++=(unsigned char)(d&0x00ff);
   *buf++=(unsigned char)(d>>8);
   return buf;
 }
 
-inline unsigned char* sick_format_uint16(unsigned char* buf, unsigned short d){
+carmen_inline unsigned char* sick_format_uint16(unsigned char* buf, unsigned short d){
   *buf++=(unsigned char)(d&0x00ff);
   *buf++=(unsigned char)(d>>8);
   return buf;
 }
 
-inline unsigned char* sick_format_int32(unsigned char* buf, int d){
+carmen_inline unsigned char* sick_format_int32(unsigned char* buf, int d){
   int i;	
   for (i=0; i<4; i++){
     *buf++=(unsigned char)(d&0x00ff);
@@ -97,7 +97,7 @@ inline unsigned char* sick_format_int32(unsigned char* buf, int d){
   return buf;
 }
 
-inline unsigned char* sick_format_uint32(unsigned char* buf, unsigned int d){
+carmen_inline unsigned char* sick_format_uint32(unsigned char* buf, unsigned int d){
   int i;	
   for (i=0; i<4; i++){
     *buf++=(unsigned char)(d&0x00ff);

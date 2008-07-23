@@ -11,7 +11,7 @@ typedef struct TLog_struct TLog;
 FILE *outFile;
 
 
-inline void LeastSquares(double array[2][2], double out[2])
+carmen_inline void LeastSquares(double array[2][2], double out[2])
 {
   double x, y;
 

@@ -157,7 +157,7 @@ void draw_line(int x_1, int y_1, int x_2, int y_2)
   }
 }
 
-inline void ray_trace(carmen_map_p map, int x_1, int y_1, int x_2, int y_2,
+carmen_inline void ray_trace(carmen_map_p map, int x_1, int y_1, int x_2, int y_2,
 		      int *hit_x, int *hit_y, float occupied_limit)
 {
   int dx = x_2 - x_1;
@@ -329,7 +329,7 @@ inline void ray_trace(carmen_map_p map, int x_1, int y_1, int x_2, int y_2,
   } \
 }
 
-inline void ray_empty(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
+carmen_inline void ray_empty(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
 {
   int dx = x_2 - x_1;
   int dy = y_2 - y_1;
@@ -438,7 +438,7 @@ inline void ray_empty(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
   }
 }
 
-inline void ray_filled(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
+carmen_inline void ray_filled(carmen_map_p new_map, int x_1, int y_1, int x_2, int y_2)
 {
   int dx = x_2 - x_1;
   int dy = y_2 - y_1;

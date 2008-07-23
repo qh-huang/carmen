@@ -18,7 +18,7 @@ class MapConfig {
   Point m_offset;
 };
 
-inline bool operator==(const MapConfig& cfg1, const MapConfig& cfg2)  {
+carmen_inline bool operator==(const MapConfig& cfg1, const MapConfig& cfg2)  {
   if (cfg1.m_sizeX  == cfg2.m_sizeX && 
       cfg1.m_sizeY  == cfg2.m_sizeY && 
       cfg1.m_res    == cfg2.m_res && 
@@ -28,7 +28,7 @@ inline bool operator==(const MapConfig& cfg1, const MapConfig& cfg2)  {
     return false;
 };
 
-inline bool operator!=(const MapConfig& cfg1, const MapConfig& cfg2)  {
+carmen_inline bool operator!=(const MapConfig& cfg1, const MapConfig& cfg2)  {
   return !(cfg1 == cfg2);
 };
 
