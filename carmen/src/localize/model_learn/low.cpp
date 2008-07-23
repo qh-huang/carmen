@@ -151,7 +151,7 @@ void AddToWorldModel(TSense sense, int particleNum) {
 //
 // Returns the unnormalized posterior for current particle
 //
-inline double CheckScore(TSense sense, int index, int sampleNum) 
+carmen_inline double CheckScore(TSense sense, int index, int sampleNum) 
 {
   double a;
 
@@ -171,7 +171,7 @@ inline double CheckScore(TSense sense, int index, int sampleNum)
 // The evaluation area is currently set at 3.5 grid squares before the endpoint to 3 grid squares past 
 // the endpoint. There is no special reason for these specific values, if you want to change them.
 //
-inline double QuickScore(TSense sense, int index, int sampleNum) 
+carmen_inline double QuickScore(TSense sense, int index, int sampleNum) 
 {
   double distance, eval;
 

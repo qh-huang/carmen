@@ -36,7 +36,7 @@
 static void redraw (GtkMapViewer *map_view, int map_changed, 
 		    int viewport_changed);
 
-static inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
+static carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
 				   GtkMapViewer *map_view)
 {
   carmen_map_point_t mp;
@@ -52,7 +52,7 @@ static inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
   p->y -= map_view->y_scroll_adj->value;  
 }
 
-static inline void screen_to_map(carmen_point_t *p, carmen_map_point_t *mp,
+static carmen_inline void screen_to_map(carmen_point_t *p, carmen_map_point_t *mp,
 				 GtkMapViewer *map_view)
 {
   mp->x = p->x;
@@ -65,7 +65,7 @@ static inline void screen_to_map(carmen_point_t *p, carmen_map_point_t *mp,
   mp->y = map_view->internal_map->config.y_size - mp->y;
 }
 
-static inline void screen_to_world(carmen_point_t *p, carmen_world_point_t *wp,
+static carmen_inline void screen_to_world(carmen_point_t *p, carmen_world_point_t *wp,
 				   GtkMapViewer *map_view)
 {
   carmen_map_point_t mp;

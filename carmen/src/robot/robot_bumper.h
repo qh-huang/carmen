@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-inline double carmen_robot_get_bumper_skew(void);
+carmen_inline double carmen_robot_get_bumper_skew(void);
 void carmen_robot_correct_bumper_and_publish(void);
 void carmen_robot_add_bumper_handler(void);
 void carmen_robot_add_bumper_parameters(char *progname);

@@ -43,10 +43,10 @@ class IMUMessage : public AbstractMessage {
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, char*, Host, host);
   STRUCT_PARAM_VIRTUAL_SET_GET(*m_msg, double, Timestamp, timestamp, public, public);
 
-  inline carmen_imu_message* toCarmenMsg() {return m_msg;}
-  inline operator carmen_imu_message*() {return m_msg;}
-  inline operator const carmen_imu_message&() const {return *m_msg;}
-  inline operator carmen_imu_message&() {return *m_msg;}
+  carmen_inline carmen_imu_message* toCarmenMsg() {return m_msg;}
+  carmen_inline operator carmen_imu_message*() {return m_msg;}
+  carmen_inline operator const carmen_imu_message&() const {return *m_msg;}
+  carmen_inline operator carmen_imu_message&() {return *m_msg;}
 
   virtual const char* getMessageID() const {
     return "IMU";

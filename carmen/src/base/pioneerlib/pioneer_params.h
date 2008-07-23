@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-char *carmen_pioneer_models[] = {"amigo", "p2at8", "p2at8+", "p2at", "p2ce", 
+const char *carmen_pioneer_models[] = {"amigo", "p2at8", "p2at8+", "p2at", "p2ce", 
 				 "p2d8", "p2d8+", "p2de", "p2df", "p2dx", 
 				 "p2it", "p2pb", "p2pp", "powerbot-sh", "perfpb",
                                  "perfpb+", "pion1m", "pion1x", "pionat", "powerbot", 

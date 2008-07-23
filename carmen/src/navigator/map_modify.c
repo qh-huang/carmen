@@ -46,19 +46,19 @@ static int *scan_size;
 static int *max_scan_size;
 static int current_data_set = 0;
 
-inline static int 
+carmen_inline static int 
 is_empty(double value) 
 {
   return (value >= 0) && (value <= EMPTY);
 }
 
-inline static int
+carmen_inline static int
 is_filled(double value) 
 {
   return (value >= 0) && (value >= FILLED);
 }
 
-inline static int
+carmen_inline static int
 is_in_map(int x, int y, carmen_map_p map)
 {
   if (x < 0 || x >= map->config.x_size)

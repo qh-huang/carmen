@@ -6,11 +6,11 @@
 template <class T>
 class point2d {
  public:
-  inline point2d(){};
-  inline point2d(T _x, T _y):x(_x),y(_y){};
-  inline virtual ~point2d(){};
+  carmen_inline point2d(){};
+  carmen_inline point2d(T _x, T _y):x(_x),y(_y){};
+  carmen_inline virtual ~point2d(){};
 
-  inline point2d<T>& operator= (const point2d<T>&pt) { 
+  carmen_inline point2d<T>& operator= (const point2d<T>&pt) { 
     x=pt.x; y=pt.y; return *this;
   }
 
@@ -18,38 +18,38 @@ class point2d {
 };
 
 template <class T>
-inline point2d<T> operator+(const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline point2d<T> operator+(const point2d<T>& p1, const point2d<T>& p2){
   return point2d<T>(p1.x+p2.x, p1.y+p2.y);
 }
 
 template <class T>
-inline point2d<T> operator - (const point2d<T> & p1, const point2d<T> & p2){
+carmen_inline point2d<T> operator - (const point2d<T> & p1, const point2d<T> & p2){
   return point2d<T>(p1.x-p2.x, p1.y-p2.y);
 }
 
 template <class T>
-inline point2d<T> operator * (const point2d<T>& p, const T& v){
+carmen_inline point2d<T> operator * (const point2d<T>& p, const T& v){
   return point2d<T>(p.x*v, p.y*v);
 }
 
 template <class T>
-inline point2d<T> operator * (const T& v, const point2d<T>& p){
+carmen_inline point2d<T> operator * (const T& v, const point2d<T>& p){
   return point2d<T>(p.x*v, p.y*v);
 }
 
 template <class T>
-inline T operator * (const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline T operator * (const point2d<T>& p1, const point2d<T>& p2){
   return p1.x*p2.x+p1.y*p2.y;
 }
 
 
 template <class T>
-inline bool operator==(const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline bool operator==(const point2d<T>& p1, const point2d<T>& p2){
   return (p1.x == p2.x && p1.y == p2.y);
 }
 
 template <class T>
-inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
   return !(p1 == p2);
 }
 
@@ -60,12 +60,12 @@ inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
 template <class T, class A>
 class orientedpoint2d: public point2d<T>{
  public:
-  inline orientedpoint2d(){}
-  inline orientedpoint2d(const point2d<T>& p);
-  inline orientedpoint2d(T x, T y, A _theta): point2d<T>(x,y), theta(_theta){}
-  inline virtual ~orientedpoint2d(){}
+  carmen_inline orientedpoint2d(){}
+  carmen_inline orientedpoint2d(const point2d<T>& p);
+  carmen_inline orientedpoint2d(T x, T y, A _theta): point2d<T>(x,y), theta(_theta){}
+  carmen_inline virtual ~orientedpoint2d(){}
 
-  inline orientedpoint2d<T,A> rotate(A alpha){
+  carmen_inline orientedpoint2d<T,A> rotate(A alpha){
     T s=sin(alpha), c=cos(alpha);
     A a=alpha+theta;
     a=atan2(sin(a),cos(a));
@@ -74,11 +74,11 @@ class orientedpoint2d: public point2d<T>{
 			    a);
   }
   
-  inline point2d<T> toPoint2d() const {
+  carmen_inline point2d<T> toPoint2d() const {
     return point2d<T>(this->x,this->y);
   }
 
-  inline orientedpoint2d<T,A>& operator= (const orientedpoint2d<T,A>&pt) { 
+  carmen_inline orientedpoint2d<T,A>& operator= (const orientedpoint2d<T,A>&pt) { 
     this->x=pt.x; this->y=pt.y; this->theta=pt.theta; return *this;
   }
 
@@ -162,25 +162,25 @@ struct point2dradialcomparator{
 
 
 template <class T>
-inline double euclidianDist(const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline double euclidianDist(const point2d<T>& p1, const point2d<T>& p2){
   return hypot(p1.x-p2.x, p1.y-p2.y);
 }
 template <class T, class A>
-inline double euclidianDist(const orientedpoint2d<T,A>& p1, const orientedpoint2d<T,A>& p2){
+carmen_inline double euclidianDist(const orientedpoint2d<T,A>& p1, const orientedpoint2d<T,A>& p2){
   return hypot(p1.x-p2.x, p1.y-p2.y);
 }
 template <class T, class A>
-inline double euclidianDist(const orientedpoint2d<T,A>& p1, const point2d<T>& p2){
+carmen_inline double euclidianDist(const orientedpoint2d<T,A>& p1, const point2d<T>& p2){
   return hypot(p1.x-p2.x, p1.y-p2.y);
 }
 template <class T, class A>
-inline double euclidianDist(const point2d<T>& p1, const orientedpoint2d<T,A>& p2 ){
+carmen_inline double euclidianDist(const point2d<T>& p1, const orientedpoint2d<T,A>& p2 ){
   return hypot(p1.x-p2.x, p1.y-p2.y);
 }
 
 
 template <class T>
-inline point2d<T> max(const point2d<T>& p1, const point2d<T>& p2){
+carmen_inline point2d<T> max(const point2d<T>& p1, const point2d<T>& p2){
   point2d<T> p=p1;
   p.x=p.x>p2.x?p.x:p2.x;
   p.y=p.y>p2.y?p.y:p2.y;
@@ -188,7 +188,7 @@ inline point2d<T> max(const point2d<T>& p1, const point2d<T>& p2){
 }
 
 template <class T, class A>
-inline point2d<T> min(const point2d<T>& p1, const orientedpoint2d<T,A>& p2){
+carmen_inline point2d<T> min(const point2d<T>& p1, const orientedpoint2d<T,A>& p2){
   point2d<T> p=p1;
   p.x=p.x<p2.x?p.x:p2.x;
   p.y=p.y<p2.y?p.y:p2.y;
@@ -196,7 +196,7 @@ inline point2d<T> min(const point2d<T>& p1, const orientedpoint2d<T,A>& p2){
 }
 
 template <class T, class F>
-inline point2d<T> interpolate(const point2d<T>& p1,  
+carmen_inline point2d<T> interpolate(const point2d<T>& p1,  
 			      const F& t1, 
 			      const point2d<T>& p2, 
 			      const F& t2, 
@@ -207,7 +207,7 @@ inline point2d<T> interpolate(const point2d<T>& p1,
 }
 
 template <class T, class A, class F>
-inline orientedpoint2d<T,A> interpolate(const orientedpoint2d<T,A>& p1,  
+carmen_inline orientedpoint2d<T,A> interpolate(const orientedpoint2d<T,A>& p1,  
 					const F& t1, 
 					const orientedpoint2d<T,A>& p2, 
 					const F& t2, 

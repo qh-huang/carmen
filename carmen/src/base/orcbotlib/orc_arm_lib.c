@@ -142,7 +142,7 @@ static double d_sign( double v );
 static void d_bound_value( double *vPtr, double min, double max );
 int i_sign( int v );
 static void i_bound_value( int *vPtr, int min, int max );
-static inline double gripper_radians_to_pwm(double theta);
+static carmen_inline double gripper_radians_to_pwm(double theta);
 
 //static void command_angular_velocity( double desired_angular_velocity, 
 void command_angular_velocity( double desired_angular_velocity, 
@@ -554,7 +554,7 @@ static void i_bound_value( int *vPtr, int min, int max ) {
     *vPtr = max;
 }
 
-static inline double gripper_radians_to_pwm(double theta) {
+static carmen_inline double gripper_radians_to_pwm(double theta) {
 
   return (theta/M_PI)*0.09 + 0.025;
 }

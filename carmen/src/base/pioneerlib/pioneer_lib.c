@@ -450,12 +450,15 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
 	}
     }
 
-  angle_conv_factor = carmen_pioneer_params[pioneer_model][0];
-  dist_conv_factor = carmen_pioneer_params[pioneer_model][1];
-  vel_conv_factor = carmen_pioneer_params[pioneer_model][2];
-  range_conv_factor = carmen_pioneer_params[pioneer_model][3];
-  diff_conv_factor = carmen_pioneer_params[pioneer_model][4];
-  vel2_divisor = carmen_pioneer_params[pioneer_model][5];
+  // if needed to make gcc 4.3.1 happy
+  if (pioneer_model != -1) {
+    angle_conv_factor = carmen_pioneer_params[pioneer_model][0];
+    dist_conv_factor = carmen_pioneer_params[pioneer_model][1];
+    vel_conv_factor = carmen_pioneer_params[pioneer_model][2];
+    range_conv_factor = carmen_pioneer_params[pioneer_model][3];
+    diff_conv_factor = carmen_pioneer_params[pioneer_model][4];
+    vel2_divisor = carmen_pioneer_params[pioneer_model][5];
+  }
 
   if (pioneer_model < 17) 
     pioneer_version = 2;

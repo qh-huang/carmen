@@ -2,7 +2,7 @@
 #define __SICK_LASER_H__
 #include <sys/select.h>
 
-/* needed for new inline def for gcc >= 4.3 */
+/* needed for new carmen_inline def for gcc >= 4.3 */
 #include <carmen/carmen.h>
 
 typedef struct sick_laser_t{

@@ -559,7 +559,7 @@ double carmen_running_average_report(carmen_running_average_t *average)
   return (average->sum / (double)average->count);
 }
 
-inline int
+carmen_inline int
 carmen_round(double X) 
 {
   if (X >= 0)
@@ -568,7 +568,7 @@ carmen_round(double X)
     return (int)(X - 0.5);
 }
 
-inline double
+carmen_inline double
 carmen_clamp(double X, double Y, double Z) 
 {
   if (Y < X)
@@ -578,13 +578,13 @@ carmen_clamp(double X, double Y, double Z)
   return Y;
 }
 
-inline int
+carmen_inline int
 carmen_trunc(double X) 
 {
   return (int)(X);
 }
 
-inline int
+carmen_inline int
 carmen_imin(int val1, int val2) 
 {
   if (val2 < val1)
@@ -592,7 +592,7 @@ carmen_imin(int val1, int val2)
   return val1;
 }
 
-inline int 
+carmen_inline int 
 carmen_imax(int val1, int val2) 
 {
   if (val2 > val1)
@@ -600,7 +600,7 @@ carmen_imax(int val1, int val2)
   return val1;
 }
 
-inline double 
+carmen_inline double 
 carmen_fmin(double val1, double val2) 
 {
   if (val2 < val1)
@@ -608,7 +608,7 @@ carmen_fmin(double val1, double val2)
   return val1;
 }
 
-inline double 
+carmen_inline double 
 carmen_fmax(double val1, double val2) 
 {
   if (val2 > val1)
@@ -616,13 +616,13 @@ carmen_fmax(double val1, double val2)
   return val1;
 }
 
-inline double 
+carmen_inline double 
 carmen_square(double val)
 {
   return (val*val);
 }
 
-inline double
+carmen_inline double
 carmen_normalize_theta(double theta) 
 {
   double multiplier;
@@ -640,13 +640,13 @@ carmen_normalize_theta(double theta)
   return theta;
 } 
 
-inline void carmen_erase_structure(void* ptr, int size_of_struture)
+carmen_inline void carmen_erase_structure(void* ptr, int size_of_struture)
 {
   memset(ptr, 0, size_of_struture);
 }
 
 
-inline double 
+carmen_inline double 
 carmen_knots_to_meters_per_second(double knots)
 {
   /// KNOTS_TO_METERS_PER_SECOND 0.5148
@@ -654,31 +654,31 @@ carmen_knots_to_meters_per_second(double knots)
 }
 
 
-inline double 
+carmen_inline double 
 carmen_radians_to_degrees(double theta) 
 {
   return (theta * 180.0 / M_PI);
 }
 
-inline double
+carmen_inline double
 carmen_degrees_to_radians(double theta) 
 {
   return (theta * M_PI / 180.0);
 }
 
-inline double
+carmen_inline double
 carmen_distance_traj(carmen_traj_point_p p1, carmen_traj_point_p p2) 
 {
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
 }
 
-inline double
+carmen_inline double
 carmen_distance(carmen_point_p p1, carmen_point_p p2) 
 {
   return sqrt((p1->x-p2->x)*(p1->x-p2->x) + (p1->y-p2->y)*(p1->y-p2->y));
 }
 
-inline double
+carmen_inline double
 carmen_angle_between(carmen_traj_point_p p1, carmen_traj_point_p p2) 
 {
   return atan2(p2->y - p1->y, p2->x - p1->x);
@@ -732,7 +732,7 @@ carmen_get_bresenham_parameters(int p1x, int p1y, int p2x, int p2y, carmen_brese
   params->YIndex = params->Y1;
 }
 
-inline void 
+carmen_inline void 
 carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y) 
 { 
   if (params->UsingYIndex) 
@@ -751,7 +751,7 @@ carmen_get_current_point(carmen_bresenham_param_t *params, int *x, int *y)
     }
 }
 
-inline int 
+carmen_inline int 
 carmen_get_next_point(carmen_bresenham_param_t *params) 
 {
   if (params->XIndex == params->X2)
@@ -1484,7 +1484,7 @@ void carmen_eigs_to_covariance(double theta, double major, double minor,
   *vxy = -major*sin_theta*cos_theta + minor*sin_theta*cos_theta;
 }
 
-inline char *carmen_next_word(char *str)
+carmen_inline char *carmen_next_word(char *str)
 {
   char *mark = str;
 
@@ -1497,7 +1497,7 @@ inline char *carmen_next_word(char *str)
   return mark;
 }
 
-inline char *carmen_next_n_words(char *str, int n)
+carmen_inline char *carmen_next_n_words(char *str, int n)
 {
   int i;
   char *result;

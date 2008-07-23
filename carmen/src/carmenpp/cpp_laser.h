@@ -14,7 +14,7 @@ class LaserConfig {
 
   void setLaserConfig(const carmen_laser_laser_config_t& x);
 
-  inline operator carmen_laser_laser_config_t() const {return m_Config;}
+  carmen_inline operator carmen_laser_laser_config_t() const {return m_Config;}
 
   DEFAULT_PARAM_SET_GET(carmen_laser_laser_config_t, Config);
 
@@ -68,10 +68,10 @@ class LaserMessage : public AbstractMessage {
   void setConfig(const LaserConfig& x) ;
   void setConfig(const carmen_laser_laser_config_t& x) ;
 
-  inline carmen_laser_laser_message* toCarmenMsg() {return m_msg;}
-  inline operator carmen_laser_laser_message*() {return m_msg;}
-  inline operator const carmen_laser_laser_message&() const {return *m_msg;}
-  inline operator carmen_laser_laser_message&() {return *m_msg;}
+  carmen_inline carmen_laser_laser_message* toCarmenMsg() {return m_msg;}
+  carmen_inline operator carmen_laser_laser_message*() {return m_msg;}
+  carmen_inline operator const carmen_laser_laser_message&() const {return *m_msg;}
+  carmen_inline operator carmen_laser_laser_message&() {return *m_msg;}
 
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, int, ID, id);
   DEFAULT_STRUCT_PARAM_SET_GET(*m_msg, char*, Host, host);

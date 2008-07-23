@@ -36,7 +36,7 @@
 #include "objects.h"
 
 /* updates x without inaccuracies */
-static inline double 
+static carmen_inline double 
 updatex(carmen_simulator_config_t *simulator_config)
 {
   double tvx;
@@ -46,7 +46,7 @@ updatex(carmen_simulator_config_t *simulator_config)
 }
 
 /* updates y withou inaccuracies */
-static inline double 
+static carmen_inline double 
 updatey(carmen_simulator_config_t *simulator_config)
 {
   double tvy;
@@ -56,7 +56,7 @@ updatey(carmen_simulator_config_t *simulator_config)
 }
 
 /* updates theta without inaccuracies */
-static inline double 
+static carmen_inline double 
 updatetheta(carmen_simulator_config_t *simulator_config)
 {
   return simulator_config->delta_t * (double)(simulator_config->rv);

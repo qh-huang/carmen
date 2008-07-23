@@ -60,7 +60,7 @@ static int rflex_model = 0;
 static double angle_conversion;
 static double distance_conversion;
 
-static inline int
+static carmen_inline int
 sgn(long val)
 {
   if (val < 0) 

@@ -34,42 +34,42 @@
 
 template <class T>
 struct point{
-	inline point(){}
-	inline point(T _x, T _y):x(_x),y(_y){}
+	carmen_inline point(){}
+	carmen_inline point(T _x, T _y):x(_x),y(_y){}
 	T x, y;
 };
 
 template <class T>
-inline point<T> operator+(const point<T>& p1, const point<T>& p2){
+carmen_inline point<T> operator+(const point<T>& p1, const point<T>& p2){
 	return point<T>(p1.x+p2.x, p1.y+p2.y);
 }
 
 template <class T>
-inline point<T> operator - (const point<T> & p1, const point<T> & p2){
+carmen_inline point<T> operator - (const point<T> & p1, const point<T> & p2){
 	return point<T>(p1.x-p2.x, p1.y-p2.y);
 }
 
 template <class T>
-inline point<T> operator * (const point<T>& p, const T& v){
+carmen_inline point<T> operator * (const point<T>& p, const T& v){
 	return point<T>(p.x*v, p.y*v);
 }
 
 template <class T>
-inline point<T> operator * (const T& v, const point<T>& p){
+carmen_inline point<T> operator * (const T& v, const point<T>& p){
 	return point<T>(p.x*v, p.y*v);
 }
 
 template <class T>
-inline T operator * (const point<T>& p1, const point<T>& p2){
+carmen_inline T operator * (const point<T>& p1, const point<T>& p2){
 	return p1.x*p2.x+p1.y*p2.y;
 }
 
 
 template <class T, class A>
 struct orientedpoint: public point<T>{
-	inline orientedpoint(){}
-	inline orientedpoint(const point<T>& p);
-	inline orientedpoint(T x, T y, A _theta): point<T>(x,y), theta(_theta){}
+	carmen_inline orientedpoint(){}
+	carmen_inline orientedpoint(const point<T>& p);
+	carmen_inline orientedpoint(T x, T y, A _theta): point<T>(x,y), theta(_theta){}
 	A theta;
 };
 

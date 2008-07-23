@@ -13,8 +13,8 @@ class Point : public point2d<double> {
   Point(const carmen_point_t& p) : point2d<double>(p.x, p.y) {};
   virtual ~Point() {};
 
-  inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; return pt;}
-  inline Point& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; return *this;}
+  carmen_inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; return pt;}
+  carmen_inline Point& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; return *this;}
 };
 
 class OrientedPoint : public orientedpoint2d<double,double> {
@@ -25,8 +25,8 @@ class OrientedPoint : public orientedpoint2d<double,double> {
   OrientedPoint(const carmen_point_t& p) : orientedpoint2d<double,double>(p.x, p.y, p.theta) {};
   virtual ~OrientedPoint() {};
 
-  inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; pt.theta=theta; return pt;}
-  inline OrientedPoint& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; theta=pt.theta; return *this;}
+  carmen_inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; pt.theta=theta; return pt;}
+  carmen_inline OrientedPoint& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; theta=pt.theta; return *this;}
  
 };
 

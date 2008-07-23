@@ -29,45 +29,45 @@ class AbstractMap {
 
   const MapConfig& getConfig() const;
 
-  inline IntPoint getMin() const;
-  inline IntPoint getMax() const;
-  inline int getMapSizeX() const;
-  inline int getMapSizeY() const;
+  carmen_inline IntPoint getMin() const;
+  carmen_inline IntPoint getMax() const;
+  carmen_inline int getMapSizeX() const;
+  carmen_inline int getMapSizeY() const;
 
-  inline void setOffset(const Point& p);
-  inline Point getOffset() const;
+  carmen_inline void setOffset(const Point& p);
+  carmen_inline Point getOffset() const;
 
-  inline void setResolution(double res);
-  inline double getResolution() const;
+  carmen_inline void setResolution(double res);
+  carmen_inline double getResolution() const;
   
-  inline Point map2world_double(const Point& p) const;
-  inline Point world2map_double(const Point& p) const;
-  inline Point map2world(const Point& p) const;
-  inline IntPoint world2map(const Point& p) const;
-  inline Point map2world(const IntPoint& p) const;
-  inline Point map2world(int x, int y) const;
-  inline IntPoint world2map(double x, double y) const;
+  carmen_inline Point map2world_double(const Point& p) const;
+  carmen_inline Point world2map_double(const Point& p) const;
+  carmen_inline Point map2world(const Point& p) const;
+  carmen_inline IntPoint world2map(const Point& p) const;
+  carmen_inline Point map2world(const IntPoint& p) const;
+  carmen_inline Point map2world(int x, int y) const;
+  carmen_inline IntPoint world2map(double x, double y) const;
   
-  inline bool isInside(const Point& p) const;
-  inline bool isInside(const IntPoint& p) const;
-  inline bool isInside(int x, int y) const;
-  inline bool isInside(double x, double y) const;
+  carmen_inline bool isInside(const Point& p) const;
+  carmen_inline bool isInside(const IntPoint& p) const;
+  carmen_inline bool isInside(int x, int y) const;
+  carmen_inline bool isInside(double x, double y) const;
   
-  inline IntPoint minInside(const IntPoint& p) const;
-  inline IntPoint maxInside(const IntPoint& p) const;
-  inline IntPoint putInside(const IntPoint& p) const;
+  carmen_inline IntPoint minInside(const IntPoint& p) const;
+  carmen_inline IntPoint maxInside(const IntPoint& p) const;
+  carmen_inline IntPoint putInside(const IntPoint& p) const;
 
-  inline CELL& cell(const IntPoint& p);  
-  inline CELL& cell(const IntPoint& p) const;
+  carmen_inline CELL& cell(const IntPoint& p);  
+  carmen_inline CELL& cell(const IntPoint& p) const;
 
-  inline CELL& cell(int x, int y);
-  inline CELL& cell(int x, int y) const;
+  carmen_inline CELL& cell(int x, int y);
+  carmen_inline CELL& cell(int x, int y) const;
 
-  inline CELL& cell(double x, double y);
-  inline CELL& cell(double x, double y) const;
+  carmen_inline CELL& cell(double x, double y);
+  carmen_inline CELL& cell(double x, double y) const;
   
-  inline CELL& cell(const Point& p) const ;
-  inline CELL& cell(const Point& p);
+  carmen_inline CELL& cell(const Point& p) const ;
+  carmen_inline CELL& cell(const Point& p);
 
   void copy(const AbstractMap<CELL>& src);
   void copy(const AbstractMap<CELL>& src, const IntPoint& relative_offset);
