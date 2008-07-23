@@ -16,6 +16,9 @@
  * REVISION HISTORY
  *
  * $Log$
+ * Revision 1.3  2008/07/23 08:39:56  kuemmerl
+ * - fixed memleak regarding IPC queries
+ *
  * Revision 1.2  2006/01/15 21:22:33  nickr
  * Added support for Mac
  *
@@ -1530,6 +1533,7 @@ X_IPC_RETURN_VALUE_TYPE x_ipc_queryNotifySend (MSG_PTR msg, const char *name,
     x_ipc_listDeleteItem((void *)queryNotif,
 			 GET_C_GLOBAL(queryNotificationList));
     UNLOCK_CM_MUTEX;
+    x_ipcRefFree(queryNotif->ref);
     x_ipcFree((char *)queryNotif);
   }
   return returnValue;

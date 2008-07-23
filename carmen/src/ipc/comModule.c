@@ -16,6 +16,9 @@
  * REVISION HISTORY 
  *
  * $Log$
+ * Revision 1.4  2008/07/23 08:39:56  kuemmerl
+ * - fixed memleak regarding IPC queries
+ *
  * Revision 1.3  2006/02/26 03:35:25  nickr
  * Changes to address 64 bit warnings
  *
@@ -1826,6 +1829,8 @@ static BOOLEAN x_ipc_handleQueryNotification (DATA_MSG_PTR dataMsg)
     /* For IPC, need to use the message that was responded to, not the
        original message that was queried */
     queryNotif->ref->msg = getResponseMsg(dataMsg);
+    if (queryNotif->ref->name)
+      x_ipcFree((char*)queryNotif->ref->name);
     queryNotif->ref->name = strdup(queryNotif->ref->msg->msgData->name);
     decodeFormat = queryNotif->ref->msg->msgData->msgFormat;
 #else
