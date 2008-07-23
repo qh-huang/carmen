@@ -102,7 +102,7 @@ typedef struct {
       currently dealing with.  
   */
 
-  void carmen_param_set_module(char *new_module_name);
+  void carmen_param_set_module(const char *new_module_name);
 
   /** libparam_interface.a will keep a persistent module name, for
       getting/setting multiple variables of the same module. Probably should
@@ -123,14 +123,14 @@ typedef struct {
       module. 
   */ 
 
-  int carmen_param_get_all(char *module, char ***variables, char ***values, 
+  int carmen_param_get_all(const char *module, char ***variables, char ***values, 
 			   int **expert, int *list_length);
 
-  int carmen_param_get_int(char *variable, int *return_value, int *expert);
-  int carmen_param_get_double(char *variable, double *return_value, 
+  int carmen_param_get_int(const char *variable, int *return_value, int *expert);
+  int carmen_param_get_double(const char *variable, double *return_value, 
 			      int *expert);
-  int carmen_param_get_onoff(char *variable, int *return_value, int *expert);
-  int carmen_param_get_string(char *variable, char **return_value, 
+  int carmen_param_get_onoff(const char *variable, int *return_value, int *expert);
+  int carmen_param_get_string(const char *variable, char **return_value, 
 			      int *expert);
 
   /** Does much the same thing s carmen_param_set_string, but checks to see if
@@ -138,22 +138,22 @@ typedef struct {
       deprecated. 
   */
 
-  int carmen_param_get_filename(char *variable, char  **return_value, 
+  int carmen_param_get_filename(const char *variable, char  **return_value, 
 				int *expert);
   
-  int carmen_param_set_variable(char *variable, char *new_value, 
+  int carmen_param_set_variable(const char *variable, const char *new_value, 
 			      char **return_value);
-  int carmen_param_set_int(char *variable, int new_value, int *return_value);
-  int carmen_param_set_double(char *variable, double  new_value, 
+  int carmen_param_set_int(const char *variable, int new_value, int *return_value);
+  int carmen_param_set_double(const char *variable, double  new_value, 
 			      double *return_value);
-  int carmen_param_set_onoff(char *variable, int new_value, int *return_value);
-  int carmen_param_set_string(char *variable, char *new_value, 
+  int carmen_param_set_onoff(const char *variable, int new_value, int *return_value);
+  int carmen_param_set_string(const char *variable, const char *new_value, 
 			      char **return_value);
 
   /** Basically a wrapper around carmen_param_set_variable. 
    */
 
-  int carmen_param_set_filename(char *variable, char *new_value,
+  int carmen_param_set_filename(const char *variable, const char *new_value,
 				char **return_value);
   
   /** If an interface function recently returned an error, returns a
@@ -170,7 +170,7 @@ typedef struct {
   void carmen_param_allow_unfound_variables(int new_value);
   int carmen_param_are_unfound_variables_allowed(void);
   
-  void carmen_param_set_usage_line(char *fmt, ...);
+  void carmen_param_set_usage_line(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
   /** Allows a set of parameters to be loaded at once from a carmen_param_t
       structure. 
@@ -191,9 +191,9 @@ typedef struct {
    */
 
   void carmen_param_usage(char *progname, carmen_param_p param_list, 
-			  int num_items, char *fmt, ...);
+			  int num_items, char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
   
-  void carmen_param_load_paramfile(char *filename, char *param_set);
+  void carmen_param_load_paramfile(const char *filename, const char *param_set);
   
   void carmen_param_check_unhandled_commandline_args(int argc, char *argv[]);
   

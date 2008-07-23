@@ -461,8 +461,10 @@ static int contains_binary_chars(char *filename)
   if (fp == NULL)
     return -1;
   while ((c=fgetc(fp)) != EOF) {
-    if (!isascii(c))
+    if (!isascii(c)) {
+      fclose(fp);
       return 1;
+    }
   } 
   fclose(fp);
   return 0;
@@ -759,8 +761,8 @@ get_robot(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ROBOT_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ROBOT_NAME);
 
-  free(query.module_name);
-  free(query.variable_name);  
+  IPC_freeDataElements(formatter, &query);
+  free(response.robot);
 }
 
 static void
@@ -796,11 +798,12 @@ get_modules(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   response.status = CARMEN_PARAM_OK;
 
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_MODULES_NAME, &response);
-  carmen_test_ipc(err, "Could not respond", 
-		  CARMEN_PARAM_RESPONSE_MODULES_NAME);
+  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_MODULES_NAME);
 
-  free(query.module_name);
-  free(query.variable_name);  
+  for (m = 0; m < num_modules; m++)
+    free(response.modules[m]);
+  free(response.modules);
+  IPC_freeDataElements(formatter, &query);
 }
 
 static int strqcmp(const void *A, const void *B)
@@ -886,8 +889,15 @@ get_param_all(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ALL_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ALL_NAME);
 
-  free(query.module_name);
-  free(query.variable_name);
+  // clean up
+  for (variable_count = 0; variable_count < num_variables; variable_count++) {
+    free(response.variables[variable_count]);
+    free(response.values[variable_count]);
+  }
+  free(response.variables);
+  free(response.values);
+  free(response.expert);
+  IPC_freeDataElements(formatter, &query);
 }
 
 
@@ -924,6 +934,7 @@ get_param_int(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_INT_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_INT_NAME);
 
+  free(query.host);
   free(query.module_name);
   free(query.variable_name);
 }
@@ -962,6 +973,7 @@ get_param_double(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_DOUBLE_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_DOUBLE_NAME);
 
+  free(query.host);
   free(query.module_name);
   free(query.variable_name);
 }
@@ -1009,6 +1021,7 @@ get_param_onoff(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_ONOFF_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_ONOFF_NAME);
 
+  free(query.host);
   free(query.module_name);
   free(query.variable_name);
 }
@@ -1046,6 +1059,7 @@ get_param_string(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);
 
+  free(query.host);
   free(query.module_name);
   free(query.variable_name);
 }
@@ -1100,9 +1114,7 @@ static void set_param_ipc(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   err = IPC_respondData(msgRef, CARMEN_PARAM_RESPONSE_STRING_NAME, &response);
   carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_RESPONSE_STRING_NAME);
 
-  free(query.module_name);
-  free(query.variable_name);
-  free(query.value);
+  IPC_freeDataElements(formatter, &query);
 }
 
 static void
@@ -1131,10 +1143,12 @@ publish_new_param(int index)
 }
 
 static void
-get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData __attribute__ ((unused)),
+get_version(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	    void *clientData __attribute__ ((unused)))
 {
   IPC_RETURN_TYPE err;
+
+  IPC_freeByteArray(callData);
   carmen_param_version_message response;
 
   response.major = CARMEN_MAJOR_VERSION;
@@ -1157,14 +1171,15 @@ publish_started_message()
   msg.timestamp = carmen_get_time();
   msg.host      = carmen_get_host();
   err = IPC_publishData(CARMEN_PARAM_STARTED_NAME, &msg);
-  carmen_test_ipc(err, "Could not respond", CARMEN_PARAM_VARIABLE_CHANGE_NAME);
+  carmen_test_ipc(err, "Could not publish", CARMEN_PARAM_STARTED_NAME);
 }
 
 static void
 reread_command(MSG_INSTANCE msgRef  __attribute__ ((unused)), 
-	       BYTE_ARRAY callData __attribute__ ((unused)) __attribute__ ((unused)),
+	       BYTE_ARRAY callData,
 	       void *clientData __attribute__ ((unused)))
 {
+  IPC_freeByteArray(callData);
   read_parameters_from_file();
 }
 
