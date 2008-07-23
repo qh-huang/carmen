@@ -11,6 +11,9 @@
  * REVISION HISTORY
  *
  * $Log$
+ * Revision 1.4  2008/07/23 08:40:51  kuemmerl
+ * - const char* for ipc functions
+ *
  * Revision 1.3  2006/02/26 03:35:25  nickr
  * Changes to address 64 bit warnings
  *
@@ -582,7 +585,7 @@ IPC_RETURN_TYPE IPC_setCapacity (int capacity)
   }
 }
 
-IPC_RETURN_TYPE IPC_setMsgQueueLength (char *msgName, int queueLength)
+IPC_RETURN_TYPE IPC_setMsgQueueLength (const char *msgName, int queueLength)
 {
   MSG_PTR msg;
 
@@ -601,7 +604,7 @@ IPC_RETURN_TYPE IPC_setMsgQueueLength (char *msgName, int queueLength)
   }
 }
 
-IPC_RETURN_TYPE IPC_setMsgPriority (char *msgName, int priority)
+IPC_RETURN_TYPE IPC_setMsgPriority (const char *msgName, int priority)
 {
   SET_MSG_PRIORITY_TYPE setMsgData;
   MSG_PTR msg;
@@ -614,7 +617,7 @@ IPC_RETURN_TYPE IPC_setMsgPriority (char *msgName, int priority)
     msg = x_ipc_findOrRegisterMessage(msgName);
     msg->priority = priority;
 
-    setMsgData.msgName = msgName;
+    setMsgData.msgName = (char*)msgName;
     setMsgData.priority = priority;
 
     return ipcReturnValue(x_ipcInform(IPC_SET_MSG_PRIORITY_INFORM,

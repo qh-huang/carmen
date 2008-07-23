@@ -12,6 +12,9 @@
  * REVISION HISTORY
  *
  * $Log$
+ * Revision 1.3  2008/07/23 08:40:51  kuemmerl
+ * - const char* for ipc functions
+ *
  * Revision 1.2  2005/12/12 23:51:36  nickr
  * Added support for PID access. Needed for java
  *
@@ -316,10 +319,10 @@ IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setCapacity,
 		     (int capacity));
 
 IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setMsgQueueLength,
-		     (char *msgName, int queueLength));
+		     (const char *msgName, int queueLength));
 
 IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setMsgPriority,
-		     (char *msgName, int priority));
+		     (const char *msgName, int priority));
 
 IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setVerbosity,
 		     (IPC_VERBOSITY_TYPE verbosity));
