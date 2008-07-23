@@ -44,7 +44,7 @@
 #if defined(__GNUC_GNU_INLINE__) || defined(__GNUC_STDC_INLINE__)
 #define carmen_inline inline __attribute__ ((gnu_inline))
 #else
-#define carmen_include include
+#define carmen_inline inline
 #endif
 
 
