@@ -249,7 +249,6 @@ int sick_dump_output(sick_laser_t* sick, int max_retries){
 
 
 int sick_send_packet_noanswer(sick_laser_t* sick, const unsigned char* command, unsigned short size){
-  int j;	
   //Here we build up the packet
   unsigned char buf[1024];
   unsigned char* b=buf+2;
@@ -260,19 +259,12 @@ int sick_send_packet_noanswer(sick_laser_t* sick, const unsigned char* command, 
   b+=size;
   checksum=sick_compute_checksum(buf, b-buf);
   b=sick_format_uint16(b, checksum);
-  //serial_writen(sick->fd, b, b-buf);
   serial_writen(sick->fd, buf, b-buf);
-  ; //printf("packet: ");
-  for (j=0; j<b-buf; j++){
-    ; //printf("%02x ", (unsigned int)buf[j]);
-  }
-  ; //printf("\n");
   return 1;
 }
 
 		        
 int sick_send_packet(sick_laser_t* sick, unsigned char* reply, const unsigned char* command, unsigned short size){
-  int j;	
   //Here we build up the packet
   unsigned char buf[1024];
   unsigned char* b=buf+2;
@@ -283,13 +275,7 @@ int sick_send_packet(sick_laser_t* sick, unsigned char* reply, const unsigned ch
   b+=size;
   checksum=sick_compute_checksum(buf, b-buf);
   b=sick_format_uint16(b, checksum);
-  //serial_writen(sick->fd, b, b-buf);
   serial_writen(sick->fd, buf, b-buf);
-  ; //printf("packet: ");
-  for (j=0; j<b-buf; j++){
-    ; //printf("%02x ", (unsigned int)buf[j]);
-  }
-  ; //printf("\n");
   if (! sick_wait_ack(sick,1))
     return 0;
   return sick_wait_packet(sick, reply);
@@ -333,6 +319,11 @@ unsigned short cmd_start_continuous_mode_size=2;
 
 unsigned char  cmd_start_continuous_interlaced_mode[]={0x20,0x2A};
 unsigned short cmd_start_continuous_interlaced_mode_size=2;
+
+unsigned char  cmd_start_continuous_remission_mode[]={0x20, 0x2b, 0x01, 0x00, 0x01, 0x00, 0xB5, 0x00 };
+unsigned short cmd_start_continuous_remission_mode_size=8;
+
+
 
 unsigned char  cmd_stop_continuous_mode[]={0x20,0x25};
 unsigned short cmd_stop_continuous_mode_size=2;
@@ -509,7 +500,7 @@ int sick_set_range_reflectivity(sick_laser_t* sick, unsigned char * reply, int u
   assert(  range!=160 || unit==0);
   assert(  range!=320 || unit==0);
   if (remission) {
-    command[6]=(remission==1)?13:14;
+    command[6]=13;
   } else {
     unsigned char r=0;
     switch(range){
@@ -555,14 +546,22 @@ int sick_switch_variant(sick_laser_t* sick, int angular_range, int angular_resol
   unsigned char *c=command;
   memcpy(c,cmd_switch_variant,cmd_switch_variant_size);
   c+=1;
-  c=sick_format_int16(c, (short) angular_range);
+
+  //HACK: for correctly setting te sick in interlaced mode at 0.25 degrees, one has to first enable the
+  //100 deg fov and 0.25 deg resolution. So I do :-)
+  int fake_range=angular_range;
+  if (angular_resolution == 25) {
+    fake_range=100;
+  }
+
+  c=sick_format_int16(c, (short) fake_range);
   c=sick_format_int16(c, (short) angular_resolution);
   if (sick_send_packet(sick, reply, command, c-command)){
     fprintf(stderr, "accepted\n");
     sick->angular_resolution=angular_resolution;
     if (angular_range==180 && angular_resolution==25){
       sick->angular_resolution=0;
-      //			fprintf(stderr, " interlaced mode\n");
+      //fprintf(stderr, " interlaced mode\n");
     }
     return 1;
   }
@@ -580,6 +579,10 @@ int sick_start_continuous_mode(sick_laser_t* sick){
     fprintf(stderr, "I");
     command=cmd_start_continuous_interlaced_mode;
     cmd_size=cmd_start_continuous_interlaced_mode_size;
+  } else if (sick->remission_mode){
+    fprintf(stderr, "R");
+    command=cmd_start_continuous_remission_mode;
+    cmd_size=cmd_start_continuous_remission_mode_size;
   } else {
     fprintf(stderr, "N");
   }
@@ -606,32 +609,34 @@ unsigned char sick_parse_measurement(
   int numMeasurements;
   int conversion=1;
   int i = 0, LoB = 0, HiB = 0, bit14, bit15;
+  int parts, offs, mstart, mend;
 
   packet+=4;
   //	fprintf(stderr, "%02x ", *packet);
-  if (*packet!=0xb0 && *packet!=0xf5)
+  if (*packet!=0xb0 && *packet!=0xf5){
+    fprintf(stderr, "Error, no measurement packet receiver. Header=%02x ", *packet);
     return 0;
-	
-  numMeasurements = ((packet[2] << 8) + packet[1]) & 0x01FF;
-  //fprintf(stderr, "(%d,%d)", numMeasurements, off);
-  off=(packet[2] & 0x18)>>3;
-  if (offset)
-    *offset = off;
-
-  bit14 = packet[2] & 0x40;
-  bit15 = packet[2] & 0x80;
-	
-  if(!bit15)
-    if(!bit14)
-      conversion = 10;
-    else
-      conversion = 1;
-  else
-    conversion = 100;
+  }
 	
 
   switch(*packet){
   case 0xb0:
+    numMeasurements = ((int)packet[1] + ((int)packet[2] << 8)) & 0x000001FF;
+    off=(packet[2] >>3) & 0x03;
+    if (offset)
+      *offset = off;
+    
+    bit14 = packet[2] & 0x40;
+    bit15 = packet[2] & 0x80;
+    
+    if(!bit15)
+      if(!bit14)
+	conversion = 10;
+      else
+	conversion = 1;
+    else
+      conversion = 100;
+
     if (n_ranges)
       *n_ranges=numMeasurements;
     for (i = 0; i < numMeasurements; i++) {
@@ -651,8 +656,31 @@ unsigned char sick_parse_measurement(
     //fprintf(stderr, "l(%d,%d)", off, numMeasurements);
     return 0xb0;
   case 0Xf5:
+      if (offset)
+	  *offset=0;
+    parts = packet[1] & 0x7;
+    offs = 0;
+    mstart = ((packet[offs + 4] << 8) + packet[offs + 3]);
+    mend   = ((packet[offs + 6] << 8) + packet[offs + 5]);
+    //fprintf(stderr, "mstart, mend = %d, %d\n", mstart, mend);
+    numMeasurements = ((packet[offs + 8] << 8) + packet[offs + 7]) & 0x3FFF;
+    //fprintf(stderr, "num_measurem. = %d\n",numMeasurements);
+
     if (n_ranges)
       *n_ranges=numMeasurements;
+    if (n_remissions)
+      *n_remissions=numMeasurements;
+
+    bit14 = packet[offs + 8] & 0x40;
+    bit15 = packet[offs + 8] & 0x80;
+    if(!bit15)
+      if(!bit14)
+	conversion = 10;
+      else
+	conversion = 1;
+    else
+      conversion = 100;
+
     for (i = 0; i < numMeasurements; i++) {
       LoB = packet[i * 4 + 9]; 
       HiB = packet[i * 4 + 10];
