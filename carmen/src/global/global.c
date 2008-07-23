@@ -57,7 +57,7 @@ static int param_num = 0;
 static int carmen_carp_verbose;
 
 int 
-carmen_find_param(char *lvalue)
+carmen_find_param(const char *lvalue)
 {
   int i;
   
@@ -68,7 +68,7 @@ carmen_find_param(char *lvalue)
 }
 
 char *
-carmen_param_pair(char *lvalue)
+carmen_param_pair(const char *lvalue)
 {
   int i;
 
@@ -86,7 +86,7 @@ carmen_param_pair(char *lvalue)
 }
 
 char *
-carmen_param_pair_and_remove(char *lvalue)
+carmen_param_pair_and_remove(const char *lvalue)
 {
   int i, j;
   char *value;
@@ -118,7 +118,7 @@ carmen_param_pair_and_remove(char *lvalue)
 }
 
 int 
-carmen_find_param_pair(char *lvalue)
+carmen_find_param_pair(const char *lvalue)
 {
   if(carmen_find_param(lvalue) && 
      carmen_param_pair(lvalue) != NULL)
@@ -410,6 +410,7 @@ char *carmen_get_host(void)
 		   "\tPlease set one of these environment variables properly.\n\n");      
       fscanf(bin_host, "%s", hostname);
       setenv("HOST", hostname, 1);
+      pclose(bin_host);
     }
   }
 
@@ -906,7 +907,7 @@ carmen_gaussian_random(double mean, double std)
 } 
 
 int
-carmen_file_exists(char *filename)
+carmen_file_exists(const char *filename)
 {
   FILE *fp;
 
@@ -920,7 +921,7 @@ carmen_file_exists(char *filename)
 }
 
 char 
-*carmen_file_extension(char *filename)
+*carmen_file_extension(const char *filename)
 {
   return strrchr(filename, '.');
 }
@@ -988,7 +989,7 @@ char
 }
 
 char
-*carmen_file_find(char *filename)
+*carmen_file_find(const char *filename)
 {
   char *path, buf[256];
   int i;
