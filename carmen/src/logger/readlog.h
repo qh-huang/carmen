@@ -52,7 +52,7 @@ extern "C" {
 typedef struct {
   int num_messages;     /**< Number of message in the file. **/
   int current_position; /**< Iterator to move through the file. **/
-  long int *offset;     /**< Array of indices to the messages. **/
+  off_t *offset;     /**< Array of indices to the messages. **/
 } carmen_logfile_index_t, *carmen_logfile_index_p;
 
 /** Builds the index structure used for parsing a carmen log file. 

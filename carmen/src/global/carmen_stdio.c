@@ -99,27 +99,27 @@ int carmen_feof(carmen_FILE *fp)
 #endif
 }
 
-int carmen_fseek(carmen_FILE *fp, long offset, int whence)
+int carmen_fseek(carmen_FILE *fp, off_t offset, int whence)
 {
 #ifndef NO_ZLIB
   if(!fp->compressed)
-    return fseek(fp->fp, offset, whence);
+    return fseeko(fp->fp, offset, whence);
   else
     return gzseek(fp->comp_fp, offset, whence);
 #else
-  return fseek(fp->fp, offset, whence);
+  return fseeko(fp->fp, offset, whence);
 #endif
 }
 
-long carmen_ftell(carmen_FILE *fp)
+off_t carmen_ftell(carmen_FILE *fp)
 {
 #ifndef NO_ZLIB
   if(!fp->compressed)
-    return ftell(fp->fp);
+    return ftello(fp->fp);
   else
     return gztell(fp->comp_fp);
 #else
-  return ftell(fp->fp);
+  return ftello(fp->fp);
 #endif
 }
 

@@ -61,9 +61,9 @@ int carmen_fgetc(carmen_FILE *fp);
 
 int carmen_feof(carmen_FILE *fp);
 
-int carmen_fseek(carmen_FILE *fp, long offset, int whence);
+int carmen_fseek(carmen_FILE *fp, off_t offset, int whence);
 
-long carmen_ftell(carmen_FILE *fp);
+off_t carmen_ftell(carmen_FILE *fp);
 
 int carmen_fclose(carmen_FILE *fp);
 

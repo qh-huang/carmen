@@ -30,7 +30,7 @@
 #include <carmen/carmen_stdio.h>
 #include <carmen/readlog.h>
 
-long int carmen_logfile_uncompressed_length(carmen_FILE *infile)
+off_t carmen_logfile_uncompressed_length(carmen_FILE *infile)
 {
   unsigned char buffer[10000];
   long int log_bytes = 0;
@@ -61,8 +61,9 @@ long int carmen_logfile_uncompressed_length(carmen_FILE *infile)
 carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
 {
   carmen_logfile_index_p index;
-  int i, found_linebreak = 1, nread, total_bytes, max_messages, read_count = 0;
-  int file_length = 0, file_position = 0;
+  int i, found_linebreak = 1, nread, max_messages;
+  off_t file_length = 0, file_position = 0, total_bytes, read_count = 0;
+
   unsigned char buffer[10000];
 
   /* allocate and initialize an index */
@@ -76,7 +77,7 @@ carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
   /* mark the start of all messages */
   index->num_messages = 0;
   max_messages = 10000;
-  index->offset = (long int *)calloc(max_messages, sizeof(long int));
+  index->offset = (off_t*)calloc(max_messages, sizeof(off_t));
   carmen_test_alloc(index->offset);
 
   carmen_fseek(infile, 0L, SEEK_SET);
@@ -100,8 +101,8 @@ carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
           found_linebreak = 0;
 	  if(index->num_messages == max_messages) {
 	    max_messages += 10000;
-	    index->offset = (long int *)realloc(index->offset, max_messages *
-						sizeof(long int));
+	    index->offset = (off_t*)realloc(index->offset, max_messages *
+						sizeof(off_t));
 	    carmen_test_alloc(index->offset);
 	  }
 	  index->offset[index->num_messages] = total_bytes + i;
@@ -113,6 +114,17 @@ carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
       total_bytes += nread;
     }
   } while(nread > 0);
+
+  // set file size as last offset
+  // offset array now contains one element more than messages
+  // required by carmen_logfile_read_line to read the last line
+  if(index->num_messages == max_messages) {
+    max_messages += 1;
+    index->offset = (off_t*)realloc(index->offset, max_messages * sizeof(off_t));
+    carmen_test_alloc(index->offset);
+  }
+  index->offset[index->num_messages] = total_bytes;
+
   fprintf(stderr, "\rIndexing messages (100%%) - %d messages found.      \n",
 	  index->num_messages);
   carmen_fseek(infile, 0L, SEEK_SET);
@@ -150,7 +162,7 @@ float carmen_logfile_percent_read(carmen_logfile_index_p index)
 int carmen_logfile_read_line(carmen_logfile_index_p index, carmen_FILE *infile,
 			     int message_num, int max_line_length, char *line)
 {
-  int nread;
+  size_t nread;
   
   /* are we moving sequentially through the logfile?  If not, fseek */
   if(message_num != index->current_position) {
