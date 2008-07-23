@@ -4,9 +4,13 @@ include Makefile.conf
 
 
 PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
-	   maptools mapeditor logger logtools hmap \
+	   maptools  logger logtools hmap \
 	   localize navigator vasco proccontrol \
-           joystick pantilt gps imu camera
+	   joystick pantilt gps imu carmenpp
+
+ifndef FOUND_SUSE
+PACKAGES += camera
+endif
 
 TAR_PACKAGE_LIST = $(filter-out laser, $(PACKAGES)) laser-new laser-old
 
