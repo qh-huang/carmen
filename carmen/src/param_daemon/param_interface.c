@@ -31,12 +31,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define FREE_RESPONSE_STRING(msg) \
+  free(msg->module_name); \
+  free(msg->variable_name); \
+  free(msg->value); \
+  free(msg->host); \
+  free(msg);
+
+#define FREE_RESPONSE_DOUBLE(msg) \
+  free(msg->module_name); \
+  free(msg->variable_name); \
+  free(msg->host); \
+  free(msg);
+
+#define FREE_RESPONSE_INT(msg) FREE_RESPONSE_DOUBLE(msg)
+#define FREE_RESPONSE_ONOFF(msg) FREE_RESPONSE_DOUBLE(msg)
+
+/*
 typedef struct {
   char *module_name;
   char *variable_name;
   void *variable_address;
   void (*handler)(void);
 } carmen_param_subscription_t, *carmen_param_subscription_p; 
+*/
 
 static char *module_name = NULL;
 static unsigned int timeout = 5000;
@@ -58,7 +76,7 @@ static void change_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 			   void *clientData __attribute__ ((unused)));
 
 static int 
-param_check_commandline_int(char *lvalue, int *return_value) 
+param_check_commandline_int(const char *lvalue, int *return_value) 
 {
   char *endptr;
   char *arg;
@@ -85,7 +103,7 @@ param_check_commandline_int(char *lvalue, int *return_value)
 }
 
 static int 
-param_check_commandline_double(char *lvalue, double *return_value) 
+param_check_commandline_double(const char *lvalue, double *return_value) 
 {
   char *endptr;
   char *arg;
@@ -110,7 +128,7 @@ param_check_commandline_double(char *lvalue, double *return_value)
 }
 
 static int 
-param_check_commandline_onoff(char *lvalue, int *return_value) 
+param_check_commandline_onoff(const char *lvalue, int *return_value) 
 {
   char *arg;
 
@@ -137,7 +155,7 @@ param_check_commandline_onoff(char *lvalue, int *return_value)
 }
 
 static int
-param_check_commandline_string(char *lvalue, char **string) 
+param_check_commandline_string(const char *lvalue, char **string) 
 {
   char *arg;
 
@@ -156,7 +174,7 @@ param_check_commandline_string(char *lvalue, char **string)
 }
 
 static int 
-param_check_commandline_filename(char *lvalue, char **filename) 
+param_check_commandline_filename(const char *lvalue, char **filename) 
 {
   char *arg;
   struct stat buf;
@@ -257,6 +275,7 @@ carmen_param_get_robot(void)
     strcpy(robot_name, response->robot);
   }
 
+  free(response->host);
   free(response->robot);
   free(response);
 
@@ -320,6 +339,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
   
   for (m = 0; m < *num_modules; m++)
     free(response->modules[m]);
+  free(response->host);
   free(response->modules);
   free(response);
 
@@ -330,7 +350,7 @@ carmen_param_get_modules(char ***modules, int *num_modules)
 }
 
 int
-carmen_param_get_all(char *module, char ***variables, char ***values,
+carmen_param_get_all(const char *module, char ***variables, char ***values,
 		     int **expert, int *list_length)
 {
   IPC_RETURN_TYPE err;
@@ -357,7 +377,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
   
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
-  query.module_name = module;
+  query.module_name = (char*)module;
   query.variable_name = "*";
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_ALL_NAME, &query, 
@@ -423,7 +443,7 @@ carmen_param_get_all(char *module, char ***variables, char ***values,
 
 
 int
-carmen_param_get_int(char *variable, int *return_value, int *expert)
+carmen_param_get_int(const char *variable, int *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -463,7 +483,7 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
+  query.variable_name = (char*)variable;
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_INT_NAME, &query, 
 			      (void **)&response, timeout);
@@ -490,15 +510,16 @@ carmen_param_get_int(char *variable, int *return_value, int *expert)
     *return_value = response->value;
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_INT(response);
     return 1;
   }
   
+  FREE_RESPONSE_INT(response);
   return 0;
 }
 
 int
-carmen_param_get_double(char *variable, double *return_value, int *expert)
+carmen_param_get_double(const char *variable, double *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -536,7 +557,7 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
+  query.variable_name = (char*)variable;
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_DOUBLE_NAME, &query, 
 			      (void **)&response, timeout);
@@ -563,16 +584,16 @@ carmen_param_get_double(char *variable, double *return_value, int *expert)
     *return_value = response->value;
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_DOUBLE(response);
     return 1;
   }
   
-  free(response);
+  FREE_RESPONSE_DOUBLE(response);
   return 0;
 }
 
 int
-carmen_param_get_onoff(char *variable, int *return_value, int *expert)
+carmen_param_get_onoff(const char *variable, int *return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -611,7 +632,7 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
+  query.variable_name = (char*)variable;
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_ONOFF_NAME, &query, 
 			      (void **)&response, timeout);
@@ -639,16 +660,16 @@ carmen_param_get_onoff(char *variable, int *return_value, int *expert)
     *return_value = response->value;  
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_ONOFF(response);
     return 1;
   }
   
-  free(response);
+  FREE_RESPONSE_ONOFF(response);
   return 0;
 }
 
 int
-carmen_param_get_string(char *variable, char **return_value, int *expert)
+carmen_param_get_string(const char *variable, char **return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -686,7 +707,7 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
+  query.variable_name = (char*)variable;
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_STRING_NAME, &query, 
 			      (void **)&response, timeout);
@@ -715,17 +736,17 @@ carmen_param_get_string(char *variable, char **return_value, int *expert)
     strcpy(*return_value, response->value);
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_STRING(response);
     return 1;
   }
   
-  free(response);
+  FREE_RESPONSE_STRING(response);
 
   return 0;
 }
 
 int
-carmen_param_get_filename(char *variable, char **return_value, int *expert)
+carmen_param_get_filename(const char *variable, char **return_value, int *expert)
 {
   IPC_RETURN_TYPE err;
   int commandline_return;
@@ -765,7 +786,7 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
+  query.variable_name = (char*)variable;
   
   err = IPC_queryResponseData(CARMEN_PARAM_QUERY_STRING_NAME, &query, 
 			      (void **)&response, timeout);
@@ -795,11 +816,11 @@ carmen_param_get_filename(char *variable, char **return_value, int *expert)
     strcpy(*return_value, response->value);
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_STRING(response);
     return 1;
   }
   
-  free(response);
+  FREE_RESPONSE_STRING(response);
   return 0;
 }
 
@@ -874,16 +895,16 @@ carmen_param_get_directory(char *variable, char **return_value, int *expert)
     strcpy(*return_value, response->value);
     if (expert)
       *expert = response->expert;
-    free(response);
+    FREE_RESPONSE_STRING(response);
     return 1;
   }
   
-  free(response);
+  FREE_RESPONSE_STRING(response);
   return 0;
 }
 
 void
-carmen_param_set_module(char *new_module_name)
+carmen_param_set_module(const char *new_module_name)
 {
   if (module_name) {
     free(module_name);
@@ -917,7 +938,7 @@ carmen_param_are_unfound_variables_allowed(void)
 }
 
 int
-carmen_param_set_variable(char *variable, char *new_value, char **return_value)
+carmen_param_set_variable(const char *variable, const char *new_value, char **return_value)
 {
   IPC_RETURN_TYPE err;
 
@@ -941,8 +962,8 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
   query.timestamp = carmen_get_time();
   query.host = carmen_get_host();
   query.module_name = module_name;
-  query.variable_name = variable;
-  query.value = new_value;
+  query.variable_name = (char*)variable;
+  query.value = (char*)new_value;
   
   err = IPC_queryResponseData(CARMEN_PARAM_SET_NAME, &query, 
 			      (void **)&response, timeout);
@@ -961,13 +982,13 @@ carmen_param_set_variable(char *variable, char *new_value, char **return_value)
       carmen_test_alloc(*return_value);
       strcpy(*return_value, response->value);
     }
-    free(response);
+    FREE_RESPONSE_STRING(response);
     return 0;
   }
   else
     carmen_warn("Error: %d\n", response->status);
   
-  free(response);
+  FREE_RESPONSE_STRING(response);
   return -1;
 }
 
@@ -978,7 +999,7 @@ carmen_param_get_error(void)
 }
 
 void
-carmen_param_set_usage_line(char *fmt, ...)
+carmen_param_set_usage_line(const char *fmt, ...)
 {
   va_list args;
 
@@ -991,7 +1012,7 @@ carmen_param_set_usage_line(char *fmt, ...)
   /* This may be a bug -- should we be checking at every 
      point how many chars have been written?*/
   vsnprintf(usage_line, 1024, fmt, args);
-  va_end(args);  
+  va_end(args);
 }
 
 void 
@@ -1282,6 +1303,7 @@ change_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   formatter = IPC_msgInstanceFormatter(msgRef);
   err = IPC_unmarshallData(formatter, callData, &msg, 
 			   sizeof(carmen_param_variable_change_message));
+  IPC_freeByteArray(callData);
   carmen_test_ipc(err, "Could not unmarshall", IPC_msgInstanceName(msgRef));
 
   carmen_verbose("Received parameter update : %s_%s = %s\n",
@@ -1367,9 +1389,7 @@ change_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
       (*handler)(msg.module_name, msg.variable_name, msg.value);
   }
 
-  free(msg.module_name);
-  free(msg.variable_name);
-  free(msg.value);
+  IPC_freeDataElements(formatter, &msg);
 }
 
 void
@@ -1510,12 +1530,15 @@ carmen_param_check_version(char *prog_name)
 	       "param_daemon is Carmen version %d.%d\n", prog_name, 
 	       CARMEN_MAJOR_VERSION, CARMEN_MINOR_VERSION, response->major, 
 	       response->minor);
+
+  free(response->host);
+  free(response);
   
   return 0;
 }
 
 int 
-carmen_param_set_int(char *variable, int new_value, int *return_value)
+carmen_param_set_int(const char *variable, int new_value, int *return_value)
 {
   char buffer[255];
   char *return_string = NULL;
@@ -1524,8 +1547,10 @@ carmen_param_set_int(char *variable, int new_value, int *return_value)
   sprintf(buffer, "%d", new_value);
   if (return_value) {
     err = carmen_param_set_variable(variable, buffer, &return_string);
-    if (return_string)
+    if (return_string) {
       sscanf(return_string, "%d", return_value);
+      free(return_string);
+    }
   }
   else
     err = carmen_param_set_variable(variable, buffer, NULL);
@@ -1534,7 +1559,7 @@ carmen_param_set_int(char *variable, int new_value, int *return_value)
 }
 
 int 
-carmen_param_set_double(char *variable, double new_value, double *return_value)
+carmen_param_set_double(const char *variable, double new_value, double *return_value)
 {
   char buffer[255];
   char *return_string = NULL;
@@ -1543,8 +1568,10 @@ carmen_param_set_double(char *variable, double new_value, double *return_value)
   sprintf(buffer, "%f", new_value);
   if (return_value) {
     err = carmen_param_set_variable(variable, buffer, &return_string);
-    if (return_string)
+    if (return_string) {
       sscanf(return_string, "%lf", return_value);
+      free(return_string);
+    }
   }
   else
     err = carmen_param_set_variable(variable, buffer, NULL);
@@ -1553,7 +1580,7 @@ carmen_param_set_double(char *variable, double new_value, double *return_value)
 }
 
 int 
-carmen_param_set_onoff(char *variable, int new_value, int *return_value)
+carmen_param_set_onoff(const char *variable, int new_value, int *return_value)
 {
   char buffer[255];
   char *return_string = NULL;
@@ -1562,8 +1589,10 @@ carmen_param_set_onoff(char *variable, int new_value, int *return_value)
   sprintf(buffer, "%s", (new_value ? "on" : "off"));
   if (return_value) {
     err = carmen_param_set_variable(variable, buffer, &return_string);
-    if (return_string)
+    if (return_string) {
       sscanf(return_string, "%d", return_value);
+      free(return_string);
+    }
   }
   else
     err = carmen_param_set_variable(variable, buffer, NULL);
@@ -1572,14 +1601,14 @@ carmen_param_set_onoff(char *variable, int new_value, int *return_value)
 
 }
 
-int carmen_param_set_string(char *variable, char *new_value, 
+int carmen_param_set_string(const char *variable, const char *new_value, 
 			    char **return_value)
 {
   return carmen_param_set_variable(variable, new_value, return_value);
 }
 
 int 
-carmen_param_set_filename(char *variable, char *new_value, char **return_value)
+carmen_param_set_filename(const char *variable, const char *new_value, char **return_value)
 {
   return carmen_param_set_variable(variable, new_value, return_value);
 }
@@ -1615,7 +1644,7 @@ carmen_param_get_paramserver_host(char **hostname)
 }
 
 void
-carmen_param_load_paramfile(char *filename, char *param_set)
+carmen_param_load_paramfile(const char *filename, const char *param_set)
 {
   FILE *fp;
   char line[2000], *err, param[1024], value[1024];
@@ -1735,7 +1764,7 @@ carmen_param_load_paramfile(char *filename, char *param_set)
       param_err = carmen_param_get_string(param, &dummy, NULL);
       if (param_err >= 0)
 	carmen_warn("Overwriting parameter %s from %s: new value = %s.\n",
-		    param, carmen_extract_filename(filename), value);	  
+		    param, carmen_extract_filename((char*)filename), value);	  
       param_err = carmen_param_set_variable(param, value, NULL);
       if (param_err < 0)
 	carmen_warn("Couldn't set parameter %s\n", param);
