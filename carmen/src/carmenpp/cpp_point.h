@@ -11,7 +11,7 @@ class Point : public point2d<double> {
   Point(double _x, double _y) : point2d<double>(_x, _y) {};
   Point(const Point& p) : point2d<double>(p.x, p.y) {};
   Point(const carmen_point_t& p) : point2d<double>(p.x, p.y) {};
-  virtual ~Point() {};
+  virtual ~Point()  {};
 
   carmen_inline operator carmen_point_t() const { carmen_point_t pt; pt.x = x; pt.y = y; return pt;}
   carmen_inline Point& operator= (const carmen_point_t& pt) { x=pt.x; y=pt.y; return *this;}

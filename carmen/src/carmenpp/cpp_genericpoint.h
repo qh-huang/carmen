@@ -8,7 +8,7 @@ class point2d {
  public:
   carmen_inline point2d(){};
   carmen_inline point2d(T _x, T _y):x(_x),y(_y){};
-  carmen_inline virtual ~point2d(){};
+  virtual ~point2d(){};
 
   carmen_inline point2d<T>& operator= (const point2d<T>&pt) { 
     x=pt.x; y=pt.y; return *this;
@@ -63,7 +63,7 @@ class orientedpoint2d: public point2d<T>{
   carmen_inline orientedpoint2d(){}
   carmen_inline orientedpoint2d(const point2d<T>& p);
   carmen_inline orientedpoint2d(T x, T y, A _theta): point2d<T>(x,y), theta(_theta){}
-  carmen_inline virtual ~orientedpoint2d(){}
+  virtual ~orientedpoint2d(){};
 
   carmen_inline orientedpoint2d<T,A> rotate(A alpha){
     T s=sin(alpha), c=cos(alpha);
