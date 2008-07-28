@@ -1,4 +1,4 @@
-#ifndef CARMEN_CPP_ABSTRACT_MAP_H
+ #ifndef CARMEN_CPP_ABSTRACT_MAP_H
 #define CARMEN_CPP_ABSTRACT_MAP_H
 
 #include <carmen/carmen.h>

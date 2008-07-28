@@ -8,7 +8,7 @@ CFLAGS += -O3
 CXXFLAGS += -O3
 
 MODULE_NAME = CARMENPP
-MODULE_COMMENT = Cyrills CPP Wrapper for Carmen
+MODULE_COMMENT = CPP wrapper tools for CARMEN
 
 SOURCES =  *.cpp 
 
