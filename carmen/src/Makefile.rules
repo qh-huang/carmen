@@ -355,7 +355,7 @@ tar-clean:
 	$(SILENT) $(DOXYGEN) $<
 
 %:	
-	$(ECHO) "    ---- Linking $^ to $@ (C)"
+	$(ECHO) "    ---- Linking $^ to $@ ("$(LINK)")"
 	$(SILENT) $(LINK) $(CFLAGS) $(IFLAGS) $(filter %.o, $^) $(filter %.a, $^) -o $@ -L. $(patsubst lib%.a,-l%,$(filter %.a, $^)) $(LFLAGS) $(LFLAGS_POST)
 
 
