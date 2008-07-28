@@ -102,8 +102,10 @@ extern "C" {
 #include <carmen/robot_messages.h>
 #include <carmen/robot_interface.h>
 
+#ifndef COMPILE_WITHOUT_CAMERA_SUPPORT
 #include <carmen/camera_messages.h>
 #include <carmen/camera_interface.h>
+#endif
 
 #ifndef COMPILE_WITHOUT_LASER_SUPPORT
 #include <carmen/keyctrl.h>
