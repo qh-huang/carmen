@@ -6,7 +6,11 @@ include Makefile.conf
 PACKAGES = ipc global param_daemon base laser robot simulator robotgui \
 	   maptools  logger logtools hmap \
 	   localize navigator vasco proccontrol \
-	   joystick pantilt gps imu carmenpp
+	   joystick pantilt gps imu 
+
+ifndef NO_CPP
+PACKAGES += carmenpp
+endif
 
 ifndef FOUND_SUSE
 PACKAGES += camera

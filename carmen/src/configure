@@ -20,6 +20,7 @@ temporary file names.
 EOF
 }
 
+
 my $oldlaser=0;
 
 my ($red, $normal) = ("[31;1m", "[0m");
@@ -30,7 +31,11 @@ my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $nodoxygen, $notcpd, $nojpeg, $nozlib,
     $nolibart, $nowand, $nojava, $install_path, $nopython, $arg_oldlaser, 
-    $notcp862);
+    $notcp862, $nocpp);
+
+$nocpp=0;
+
+$oldlaser=0;
 
 $nolibart = 1;
 
@@ -53,9 +58,10 @@ Options: [--nographics]     : compile without graphics
 	 [--nomagick]       : compile without ImageMagick support
 	 [--nojava]         : compile without java support
          [--nopython]       : compile without python support 
+         [--nocpp]          : compile without C++ tools for CARMEN
+	 [--nodoxygen]      : no doxygen support for creating the documentation
          [--oldlaser]       : use the old (original) laser server
          [--tcp862]         : use tcp862 support if using the new laser server
-	 [--nodoxygen]      : no doxygen support for creating the documentation
          [--headers <path>] : path to linux headers include directory 
 	 [-L<libpath>]      : compile with additional library paths
                               (can have multiple -L option switchs)
@@ -107,6 +113,9 @@ EOF
   if (/tcp862/) {
     $notcp862 = 0;
   }
+  if (/nocpp/) {
+    $nocpp = 1;
+  }
 
 
 }
@@ -141,8 +150,10 @@ my $java = verify_java() unless ($nojava);
 my $doxygen = verify_doxygen() unless ($nodoxygen);
 my $swig = verify_swig() unless ($nopython);
 my $python = undef;
+$nocpp = ask_nocpp() unless($nocpp);
 $python = ask_python() unless ($nopython or !$swig);
 $nopython = !$python;
+
 
 $oldlaser = ask_oldlaser() unless ($arg_oldlaser);
 set_laser_link();
@@ -196,6 +207,7 @@ if ($no_strict_aliasing) {
     print OUTPUT "NO_STRICT_ALIASING = 1\n";
 }
 print OUTPUT "CYGWIN = 1\n" if ($os_type eq "cygwin");
+print OUTPUT "NO_CPP = 1\n" unless (!$nocpp);
 print OUTPUT "NO_TCP862_SERIAL_SUPPORT = 1\n" unless (!$notcp862);
 print OUTPUT "KERNEL_HEADERS_DIR = $header_dir\n" unless (!$header_dir);
 close OUTPUT;
@@ -410,6 +422,20 @@ sub ask_oldlaser{
   chomp $oldlaser_install;
 
   if($oldlaser_install eq "Y" or $oldlaser_install eq "y"){
+      return 1;
+  }
+
+  return 0;
+}
+
+sub ask_nocpp{
+
+  print "Should the C++ tools be installed for CARMEN: [Y/n] ";
+
+  my $cpp_install = <STDIN>;
+  chomp $cpp_install;
+
+  if($cpp_install eq "N" or $cpp_install eq "n"){
       return 1;
   }
 
