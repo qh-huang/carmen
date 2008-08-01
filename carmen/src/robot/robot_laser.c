@@ -34,6 +34,15 @@
 
 static double frontlaser_offset;
 static double rearlaser_offset;
+static double frontlaser_side_offset=0.;
+static double rearlaser_side_offset=0.;
+static double frontlaser_angular_offset=0.;
+static double rearlaser_angular_offset=0.;
+
+static int frontlaser_id = 1;
+static int rearlaser_id = 2;
+static int frontlaser_use = 1;
+static int rearlaser_use = 1;
 
 static carmen_running_average_t frontlaser_average;
 static carmen_running_average_t rearlaser_average;
@@ -55,7 +64,7 @@ publish_frontlaser_message(carmen_robot_laser_message laser_msg)
 {
   IPC_RETURN_TYPE err;
   err = IPC_publishData(CARMEN_ROBOT_FRONTLASER_NAME, &laser_msg);
-  carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_FRONTLASER_NAME);
+  carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_FRONTLASER_NAME);
   if(robot_front_laser.host!=NULL){
     free(robot_front_laser.host);
   }
@@ -67,13 +76,12 @@ publish_rearlaser_message(carmen_robot_laser_message laser_msg)
   IPC_RETURN_TYPE err;
 
   err = IPC_publishData(CARMEN_ROBOT_REARLASER_NAME, &laser_msg);
-  carmen_test_ipc_exit(err, "Could not publish", CARMEN_ROBOT_REARLASER_NAME);
+  carmen_test_ipc(err, "Could not publish", CARMEN_ROBOT_REARLASER_NAME);
 }
 
 /** returns 0 if time estimate is not ready, otherwise 1 **/
 static int
-construct_laser_message(carmen_robot_laser_message *msg, double offset, 
-			int rear, double timestamp)
+construct_laser_message(carmen_robot_laser_message *msg, int rear, double timestamp)
 {
   int low;
   int high;
@@ -124,16 +132,19 @@ construct_laser_message(carmen_robot_laser_message *msg, double offset,
     fraction*(carmen_robot_odometry[high].rv - 
 	      carmen_robot_odometry[low].rv);
 
-  if(rear)
-    msg->laser_pose.theta = msg->robot_pose.theta + M_PI;
-  else
-    msg->laser_pose.theta = msg->robot_pose.theta;
+  if (! rear){
+    double s=sin(msg->robot_pose.theta), c=cos(msg->robot_pose.theta);
+    msg->laser_pose.x=msg->robot_pose.x+c*frontlaser_offset-s*frontlaser_side_offset;
+    msg->laser_pose.y=msg->robot_pose.y+s*frontlaser_offset+c*frontlaser_side_offset;
+    msg->laser_pose.theta=msg->robot_pose.theta + frontlaser_angular_offset;
+  } else {
+    double s=sin(msg->robot_pose.theta), c=cos(msg->robot_pose.theta);
+    msg->laser_pose.x=msg->robot_pose.x+c*rearlaser_offset-s*rearlaser_side_offset;
+    msg->laser_pose.y=msg->robot_pose.y+s*rearlaser_offset+c*rearlaser_side_offset;
+    msg->laser_pose.theta=msg->robot_pose.theta + rearlaser_angular_offset;
+  }
   msg->laser_pose.theta = 
     carmen_normalize_theta(msg->laser_pose.theta);
-  msg->laser_pose.x = msg->robot_pose.x + offset * 
-    cos(msg->laser_pose.theta);
-  msg->laser_pose.y = msg->robot_pose.y + offset * 
-    sin(msg->laser_pose.theta);
   return 1;
 }
 
@@ -144,8 +155,7 @@ carmen_robot_correct_laser_and_publish(void)
     return;
 
   if (front_laser_ready) {
-    if (construct_laser_message(&robot_front_laser, frontlaser_offset, 
-				0, front_laser.timestamp)) {
+    if (construct_laser_message(&robot_front_laser, 0, front_laser.timestamp)) {
       fprintf(stderr, "f");
       publish_frontlaser_message(robot_front_laser);
     }
@@ -153,8 +163,7 @@ carmen_robot_correct_laser_and_publish(void)
   }
 
   if (rear_laser_ready) {
-    if (construct_laser_message(&robot_rear_laser, rearlaser_offset, 
-				1, rear_laser.timestamp) ) {
+    if (construct_laser_message(&robot_rear_laser, 1, rear_laser.timestamp) ) {
       fprintf(stderr, "r");
       publish_rearlaser_message(robot_rear_laser);
     }
@@ -203,13 +212,23 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
     first = 0;
   } else if(robot_laser.num_readings != laser.num_readings) {
     robot_laser.num_readings = laser.num_readings;
-    robot_laser.range = 
-      (float *)realloc(robot_laser.range, 
-		       sizeof(float) * robot_laser.num_readings);
-    carmen_test_alloc(robot_laser.range);
-    robot_laser.tooclose = (char *)realloc
-      (robot_laser.tooclose, sizeof(char) * robot_laser.num_readings);
-    carmen_test_alloc(robot_laser.tooclose);
+    if (robot_laser.num_readings <= 0) {
+      free(robot_laser.range);
+      robot_laser.range = NULL;
+      free(robot_laser.tooclose);
+      robot_laser.tooclose = NULL;
+      robot_laser.num_readings = 0;
+    } 
+    else {
+      
+      robot_laser.range = 
+	(float *)realloc(robot_laser.range, 
+			 sizeof(float) * robot_laser.num_readings);
+      carmen_test_alloc(robot_laser.range);
+      robot_laser.tooclose = (char *)realloc
+	(robot_laser.tooclose, sizeof(char) * robot_laser.num_readings);
+      carmen_test_alloc(robot_laser.tooclose);
+    }
 
     robot_laser.num_remissions = laser.num_remissions;
     if (robot_laser.num_remissions>0) {
@@ -218,8 +237,10 @@ check_message_data_chunk_sizes(carmen_laser_laser_message *laser_ptr)
 			 sizeof(float) * robot_laser.num_remissions);
       carmen_test_alloc(robot_laser.remission);
     }
-    else
+    else {
+      robot_laser.num_remissions = 0;
       robot_laser.remission = NULL;
+    }
 
   }
 
@@ -251,9 +272,6 @@ laser_frontlaser_handler(void)
 
   static double time_since_last_process = 0;
   double skip_sum = 0;
-
-
-
 
 
 
@@ -307,7 +325,7 @@ laser_frontlaser_handler(void)
 
   carmen_carp_set_verbose(0);
   
-  theta = front_laser.config.start_angle;
+  theta = front_laser.config.start_angle + frontlaser_angular_offset;
   delta_theta = front_laser.config.angular_resolution;
 
   skip_sum = 0.0;
@@ -319,9 +337,8 @@ laser_frontlaser_handler(void)
       continue;
     }
     
-    obstacle_pt.x = frontlaser_offset + 
-      robot_front_laser.range[i] * cos(theta);
-    obstacle_pt.y = robot_front_laser.range[i] * sin(theta);
+    obstacle_pt.x = frontlaser_offset     +  robot_front_laser.range[i] * cos(theta);
+    obstacle_pt.y = frontlaser_side_offset + robot_front_laser.range[i] * sin(theta);
     carmen_geometry_move_pt_to_rotating_ref_frame
       (&obstacle_pt, carmen_robot_latest_odometry.tv,
        carmen_robot_latest_odometry.rv);    
@@ -435,7 +452,7 @@ laser_rearlaser_handler(void)
 /*   theta = -M_PI/2;  */
 /*   delta_theta = M_PI/(robot_rear_laser.num_readings-1); */
 
-  theta = rear_laser.config.start_angle;
+  theta = rearlaser_angular_offset + rear_laser.config.start_angle;
   delta_theta = rear_laser.config.angular_resolution;
 
   skip_sum = 0.0;
@@ -448,7 +465,7 @@ laser_rearlaser_handler(void)
     }
     
     obstacle_pt.x = rearlaser_offset + robot_rear_laser.range[i] * cos(theta);
-    obstacle_pt.y = robot_rear_laser.range[i] * sin(theta);
+    obstacle_pt.y = rearlaser_side_offset + robot_rear_laser.range[i] * sin(theta);
     carmen_geometry_move_pt_to_rotating_ref_frame
       (&obstacle_pt, carmen_robot_latest_odometry.tv,
        carmen_robot_latest_odometry.rv);    
@@ -496,26 +513,42 @@ carmen_robot_add_laser_handlers(void)
                       CARMEN_ROBOT_REARLASER_FMT);
   carmen_test_ipc_exit(err, "Could not define", CARMEN_ROBOT_REARLASER_NAME);
 
-  carmen_laser_subscribe_frontlaser_message
-    (&front_laser, (carmen_handler_t)laser_frontlaser_handler,
-     CARMEN_SUBSCRIBE_LATEST);
-  carmen_laser_subscribe_rearlaser_message
-    (&rear_laser, (carmen_handler_t)laser_rearlaser_handler,
-     CARMEN_SUBSCRIBE_LATEST);
+
+  if (frontlaser_use) {
+    fprintf(stderr, "Subscribing front laser to RAWLASER%d\n", frontlaser_id);
+    carmen_laser_subscribe_laser_message(frontlaser_id, &front_laser,
+        (carmen_handler_t)laser_frontlaser_handler,
+        CARMEN_SUBSCRIBE_LATEST);
+  }
+  if (rearlaser_use) {
+    fprintf(stderr, "Subscribing rear laser to RAWLASER%d\n", rearlaser_id);
+    carmen_laser_subscribe_laser_message(rearlaser_id, &rear_laser,
+        (carmen_handler_t)laser_rearlaser_handler,
+        CARMEN_SUBSCRIBE_LATEST);
+  }
+
   carmen_running_average_clear(&frontlaser_average);
   carmen_running_average_clear(&rearlaser_average);
 }
 
 void 
-carmen_robot_add_laser_parameters(char *progname) 
+carmen_robot_add_laser_parameters(int argc, char** argv) 
 {
-  int error;
+  int num_items;
 
-  error = carmen_param_get_double("frontlaser_offset",&frontlaser_offset, NULL);
-  carmen_param_handle_error(error, carmen_robot_usage, progname);
-  error = carmen_param_get_double("rearlaser_offset", &rearlaser_offset, NULL);
-  carmen_param_handle_error(error, carmen_robot_usage, progname);
-  carmen_param_get_double("laser_bearing_skip_rate",
-			  &carmen_robot_laser_bearing_skip_rate, NULL);
+  carmen_param_t param_list[] = {
+    {"robot", "frontlaser_offset",       CARMEN_PARAM_DOUBLE, &frontlaser_offset, 1, NULL},
+    {"robot", "frontlaser_side_offset",  CARMEN_PARAM_DOUBLE, &frontlaser_side_offset, 1, NULL},
+    {"robot", "frontlaser_angular_offset",  CARMEN_PARAM_DOUBLE, &frontlaser_angular_offset, 1, NULL},
+    {"robot", "frontlaser_use",          CARMEN_PARAM_ONOFF, &frontlaser_use, 0, NULL},
+    {"robot", "frontlaser_id",           CARMEN_PARAM_INT, &frontlaser_id, 0, NULL},
+    {"robot", "rearlaser_offset",        CARMEN_PARAM_DOUBLE, &rearlaser_offset, 1, NULL},
+    {"robot", "rearlaser_side_offset",  CARMEN_PARAM_DOUBLE, &rearlaser_side_offset, 1, NULL},
+    {"robot", "rearlaser_angular_offset",  CARMEN_PARAM_DOUBLE, &rearlaser_angular_offset, 1, NULL},
+    {"robot", "rearlaser_use",           CARMEN_PARAM_ONOFF, &rearlaser_use, 0, NULL},
+    {"robot", "rearlaser_id",            CARMEN_PARAM_INT, &rearlaser_id, 0, NULL},
+    //{"robot", "laser_bearing_skip_rate", CARMEN_PARAM_DOUBLE, &carmen_robot_laser_bearing_skip_rate, 1, NULL},
+  };
+  num_items = sizeof(param_list)/sizeof(param_list[0]);
+  carmen_param_install_params(argc, argv, param_list, num_items);
 }
-

@@ -35,7 +35,7 @@ extern "C" {
 
 void carmen_robot_correct_laser_and_publish(void);
 void carmen_robot_add_laser_handlers(void);
-void carmen_robot_add_laser_parameters(char *progname);
+void carmen_robot_add_laser_parameters(int argc, char** argv);
 double carmen_robot_laser_max_front_velocity(void);
 double carmen_robot_laser_min_rear_velocity(void);
 
