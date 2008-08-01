@@ -447,6 +447,7 @@ static gint load_scan(gpointer p)
       scan_list[num_scans].num_readings = front_laser.num_readings;
       scan_list[num_scans].range = front_laser.range;
       scan_list[num_scans].config = front_laser.config;
+      scan_list[num_scans].timestamp = front_laser.timestamp;
       num_scans++;
       carmen_erase_structure(&front_laser, sizeof(carmen_robot_laser_message));
     }
