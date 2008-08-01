@@ -321,33 +321,33 @@ tar-clean:
 .PHONY:	   all clean dep debug
 
 %.o:	%.c
-	$(ECHO) "    ---- Compiling $< to $@ (C)"
+	$(ECHO) "    ---- Compiling $< to $@ ("$(CC)")"
 	$(SILENT) $(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
 
 %.a:	
-	$(ECHO) "    ---- Archiving $^ into $@ (C)"
+	$(ECHO) "    ---- Archiving $^ into $@ ("$(AR)")"
 	$(SILENT) $(AR) $@ $^
 	$(SILENT) $(RANLIB) $@
 
 %.o:	%.C
-	$(ECHO) "    ---- Compiling $< to $@ (C++)"
+	$(ECHO) "    ---- Compiling $< to $@ ("$(CXX)")"
 	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
 
 %.o:	%.cpp
-	$(ECHO) "    ---- Compiling $< to $@ (C++)"
+	$(ECHO) "    ---- Compiling $< to $@ ("$(CXX)")"
 	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
 
 
 %.o:	%.cc
-	$(ECHO) "    ---- Compiling $< to $@ (C++)"
+	$(ECHO) "    ---- Compiling $< to $@ ("$(CXX)")"
 	$(SILENT) $(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
 
 %.so.1:	
-	$(ECHO) "    ---- Archiving $^ into $@ (C)"
+	$(ECHO) "    ---- Archiving $^ into $@ ("$(CXX)")"
 	$(SILENT) $(CXX) -shared -o $@ $^
 
 %.so:	
-	$(ECHO) "    ---- Archiving $^ into $@ (C)"
+	$(ECHO) "    ---- Archiving $^ into $@ ("$(CXX)")"
 	$(SILENT) $(CXX) -shared -o $@ $^
 
 %.doxygen:	
