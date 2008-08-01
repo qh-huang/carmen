@@ -525,23 +525,46 @@ static void read_parameters(int argc, char *argv[],
 #endif
     {"base", "motion_timeout", CARMEN_PARAM_DOUBLE, &(config->motion_timeout),
      1, NULL},
-    {"robot", "use_laser", CARMEN_PARAM_ONOFF, &(config->use_front_laser), 
+    {"robot", "frontlaser_use", CARMEN_PARAM_ONOFF, &(config->use_front_laser), 
      1, NULL},
-    {"simulator", "use_rear_laser", CARMEN_PARAM_ONOFF, 
-     &(config->use_rear_laser), 0, NULL},
+    {"robot", "frontlaser_id", CARMEN_PARAM_INT,
+     &(config->front_laser_config.id), 0, NULL}, 
+    {"robot", "rearlaser_use", CARMEN_PARAM_ONOFF, &(config->use_rear_laser), 
+     1, NULL},
+    {"robot", "rearlaser_id", CARMEN_PARAM_INT,
+     &(config->rear_laser_config.id), 0, NULL}, 
     {"robot", "use_sonar", CARMEN_PARAM_ONOFF, &(config->use_sonar), 1, NULL},
     {"robot", "width", CARMEN_PARAM_DOUBLE, &(config->width), 1,NULL},
     {"robot", "acceleration", CARMEN_PARAM_DOUBLE, &(config->acceleration),
      1,NULL} };
 
+  num_items = sizeof(param_list)/sizeof(param_list[0]);
+  carmen_param_install_params(argc, argv, param_list, num_items);
+
+
+  static char frontlaser_fov_string[256];
+  static char frontlaser_res_string[256];
+  static char rearlaser_fov_string[256];
+  static char rearlaser_res_string[256];
+
+  sprintf(frontlaser_fov_string, "laser%d_fov", config->front_laser_config.id);
+  sprintf(frontlaser_res_string, "laser%d_resolution", config->front_laser_config.id);
+
+  sprintf(rearlaser_fov_string, "laser%d_fov", config->rear_laser_config.id);
+  sprintf(rearlaser_res_string, "laser%d_resolution", config->rear_laser_config.id);
+  
   carmen_param_t param_list_front_laser[] = {
-    {"simulator", "laser1_maxrange", CARMEN_PARAM_DOUBLE, 
+    {"simulator", "frontlaser_maxrange", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.max_range), 1, NULL},
     {"robot", "frontlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->front_laser_config.offset), 1, NULL},
-    {"laser", "laser1_fov", CARMEN_PARAM_DOUBLE,
+    {"robot", "frontlaser_side_offset", CARMEN_PARAM_DOUBLE, 
+     &(config->front_laser_config.side_offset), 1, NULL},
+    {"robot", "frontlaser_angular_offset", CARMEN_PARAM_DOUBLE, 
+     &(config->front_laser_config.angular_offset), 1, NULL},
+    {"laser", frontlaser_fov_string, CARMEN_PARAM_DOUBLE,
      &(config->front_laser_config.fov), 0, NULL}, 
-    {"laser", "laser1_resolution", CARMEN_PARAM_DOUBLE,
+    {"laser", frontlaser_res_string, CARMEN_PARAM_DOUBLE,
      &(config->front_laser_config.angular_resolution), 0, NULL}, 
     {"simulator", "laser_probability_of_random_max",
      CARMEN_PARAM_DOUBLE, 
@@ -553,13 +576,17 @@ static void read_parameters(int argc, char *argv[],
      &(config->front_laser_config.variance), 1, NULL}};
 
   carmen_param_t param_list_rear_laser[] = {
-    {"simulator", "laser2_maxrange", CARMEN_PARAM_DOUBLE, 
+    {"simulator", "rearlaser_maxrange", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.max_range), 1, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
      &(config->rear_laser_config.offset), 1, NULL},
-    {"laser", "laser2_fov", CARMEN_PARAM_DOUBLE,
+    {"robot", "rearlaser_side_offset", CARMEN_PARAM_DOUBLE, 
+     &(config->rear_laser_config.side_offset), 1, NULL},
+    {"robot", "rearlaser_angular_offset", CARMEN_PARAM_DOUBLE, 
+     &(config->rear_laser_config.angular_offset), 1, NULL},
+    {"laser", rearlaser_fov_string, CARMEN_PARAM_DOUBLE,
      &(config->rear_laser_config.fov), 0, NULL}, 
-    {"laser", "laser2_resolution", CARMEN_PARAM_DOUBLE,
+    {"laser", rearlaser_res_string, CARMEN_PARAM_DOUBLE,
      &(config->rear_laser_config.angular_resolution), 0, NULL}, 
     {"simulator", "laser_probability_of_random_max",
      CARMEN_PARAM_DOUBLE, 
@@ -588,8 +615,6 @@ static void read_parameters(int argc, char *argv[],
     {"simulator", "sonar_sensor_variance", CARMEN_PARAM_DOUBLE, 
      &(config->sonar_config.variance), 1, NULL} };
   
-  num_items = sizeof(param_list)/sizeof(param_list[0]);
-  carmen_param_install_params(argc, argv, param_list, num_items);
 
   if(config->use_front_laser) {
     num_items = sizeof(param_list_front_laser)/

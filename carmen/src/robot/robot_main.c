@@ -351,6 +351,7 @@ static void velocity_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   following_vector = following_trajectory = 0;
   carmen_robot_send_base_velocity_command();
   publish_vector_status(0, 0);
+  IPC_freeDataElements(formatter, &v);
 }
 
 static void follow_vector(void)
@@ -504,6 +505,7 @@ vector_move_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   vector_distance = msg.distance;
   
   follow_vector();
+  IPC_freeDataElements(formatter, &msg);
 }
 
 static void 
@@ -574,7 +576,7 @@ follow_trajectory_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 
     follow_vector();      
   }
-  free(msg.trajectory);
+  IPC_freeDataElements(formatter, &msg);
 }
 
 static int initialize_robot_ipc(void)
@@ -723,7 +725,7 @@ static int read_robot_parameters(int argc, char **argv)
     carmen_robot_add_bumper_parameters(argv[0]);
 #ifndef COMPILE_WITHOUT_LASER_SUPPORT
   if (use_laser)
-    carmen_robot_add_laser_parameters(argv[0]);
+    carmen_robot_add_laser_parameters(argc, argv);
 #endif
 
   turn_before_driving_if_heading_bigger_than = 
@@ -753,8 +755,10 @@ int carmen_robot_start(int argc, char **argv)
      CARMEN_SUBSCRIBE_LATEST);
 
 #ifndef COMPILE_WITHOUT_LASER_SUPPORT
-  if (use_laser)
+  if (use_laser) {
+    carmen_robot_add_laser_parameters(argc, argv);
     carmen_robot_add_laser_handlers();
+  }
 #endif
   if (use_sonar)
     carmen_robot_add_sonar_handler();

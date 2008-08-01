@@ -338,23 +338,31 @@ add_object_to_laser(double object_x, double object_y, double width,
   carmen_simulator_laser_config_t *laser_config;
 
   robot = simulator_config->true_pose;
-  if (is_rear) 
-    {
-      laser_config = &(simulator_config->rear_laser_config);
-      robot.theta = carmen_normalize_theta(robot.theta - M_PI);
-    }
-  else 
-    {
-      laser_config = &(simulator_config->front_laser_config);
-    }
 
-  robot.x = robot.x + laser_config->offset * cos(robot.theta);
-  robot.y = robot.y + laser_config->offset * sin(robot.theta);
+
+  if (is_rear) {
+    laser_config = &(simulator_config->rear_laser_config);
+  } 
+  else  {
+    laser_config = &(simulator_config->front_laser_config);
+  }
+
+  robot.x = simulator_config->true_pose.x 
+    + laser_config->offset *  cos(simulator_config->true_pose.theta) 
+    - laser_config->side_offset *  sin(simulator_config->true_pose.theta) ;
+
+  robot.y = simulator_config->true_pose.y 
+    + laser_config->offset * sin(simulator_config->true_pose.theta)
+    + laser_config->side_offset * cos(simulator_config->true_pose.theta);
+
+  robot.theta = carmen_normalize_theta(simulator_config->true_pose.theta +
+				       laser_config->angular_offset);
+
 
   phi = atan2(object_y - robot.y, object_x - robot.x);
   angle_diff = carmen_normalize_theta(phi - robot.theta);
 
-  if (fabs(angle_diff) >=M_PI/2)
+  if (fabs(angle_diff) >=  0.5*laser_config->fov)
     return;
 
   index = carmen_normalize_theta(angle_diff+M_PI/2) / separation;

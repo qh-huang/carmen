@@ -307,25 +307,29 @@ carmen_simulator_calc_laser_msg(carmen_laser_laser_message *laser,
 {
   carmen_traj_point_t point;
   carmen_simulator_laser_config_t *laser_config = NULL;
-  
-  if (is_rear) 
-    {
-      laser->id = 2;
-      laser_config = &(simulator_config->rear_laser_config);
-      point.theta = carmen_normalize_theta
-	(simulator_config->true_pose.theta - M_PI);
-    } 
-  else 
-    {
-      laser->id = 1;
-      laser_config = &(simulator_config->front_laser_config);
-      point.theta = simulator_config->true_pose.theta;
-    }
 
-  point.x = simulator_config->true_pose.x + laser_config->offset * 
-    cos(simulator_config->true_pose.theta);
-  point.y = simulator_config->true_pose.y + laser_config->offset * 
-    sin(simulator_config->true_pose.theta);
+ 
+  if (is_rear) {
+    laser_config = &(simulator_config->rear_laser_config);
+  } 
+  else  {
+    laser_config = &(simulator_config->front_laser_config);
+  }
+
+  laser->id = laser_config->id; 
+
+  point.x = simulator_config->true_pose.x 
+    + laser_config->offset *  cos(simulator_config->true_pose.theta) 
+    - laser_config->side_offset *  sin(simulator_config->true_pose.theta) ;
+
+  point.y = simulator_config->true_pose.y 
+    + laser_config->offset * sin(simulator_config->true_pose.theta)
+    + laser_config->side_offset * cos(simulator_config->true_pose.theta);
+
+  point.theta = carmen_normalize_theta(simulator_config->true_pose.theta +
+				       laser_config->angular_offset);
+				       
+
   point.t_vel = simulator_config->tv;
   point.r_vel = simulator_config->rv;
 
