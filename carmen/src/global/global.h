@@ -41,12 +41,13 @@
 
 
 /* to satisfy gcc >= 4.3 */
-#if defined(__GNUC_GNU_INLINE__) || defined(__GNUC_STDC_INLINE__)
+
+
+#if (!defined(__cplusplus)) && (defined(__GNUC_GNU_INLINE__) || defined(__GNUC_STDC_INLINE__))
 #define carmen_inline inline __attribute__ ((gnu_inline))
 #else
 #define carmen_inline inline
 #endif
-
 
 
 #ifdef __cplusplus
