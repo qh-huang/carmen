@@ -331,7 +331,8 @@ add_object_to_laser(double object_x, double object_y, double width,
 {
   double phi, angle_diff;
   int index, i;
-  double separation = M_PI/laser->num_readings;
+  //double separation = M_PI/laser->num_readings;
+  double separation;
   double lwidth;
   double dist;
   carmen_point_t robot;
@@ -359,19 +360,22 @@ add_object_to_laser(double object_x, double object_y, double width,
 				       laser_config->angular_offset);
 
 
+  separation = laser_config->fov/laser->num_readings;
   phi = atan2(object_y - robot.y, object_x - robot.x);
   angle_diff = carmen_normalize_theta(phi - robot.theta);
 
   if (fabs(angle_diff) >=  0.5*laser_config->fov)
     return;
 
-  index = carmen_normalize_theta(angle_diff+M_PI/2) / separation;
+  //index = carmen_normalize_theta(angle_diff+M_PI/2) / separation;
+  index = carmen_normalize_theta(angle_diff+laser_config->fov/2) / separation;
   dist = hypot(object_x - robot.x, object_y - robot.y);
 			
   if (dist >= laser_config->max_range)
     return;	
 
-  lwidth = width / (double)(dist) / M_PI * laser->num_readings/2;
+  //lwidth = width / (double)(dist) / M_PI * laser->num_readings/2;
+  lwidth = width / (double)(dist) / laser_config->fov * laser->num_readings/2;
   i = carmen_fmax(index - lwidth, 0);
 
   for(; i < index + lwidth && i < laser->num_readings; i++)
