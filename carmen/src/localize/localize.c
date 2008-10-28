@@ -85,23 +85,30 @@ void publish_sensor(carmen_localize_particle_filter_p filter,
 {
   static carmen_localize_sensor_message sensor;
   IPC_RETURN_TYPE err;
+  double cost, sint;
 
   sensor.timestamp = carmen_get_time();
   sensor.host = carmen_get_host();
   if(front) {
-    sensor.pose.x = summary->mean.x + filter->param->front_laser_offset *
-      cos(summary->mean.theta);
-    sensor.pose.y = summary->mean.y + filter->param->front_laser_offset *
-      sin(summary->mean.theta);
-    sensor.pose.theta = summary->mean.theta;
+    cost = cos(summary->mean.theta);
+    sint = sin(summary->mean.theta);
+    sensor.pose.x = summary->mean.x + cost * filter->param->front_laser_offset 
+      - sint * filter->param->front_laser_side_offset;
+    sensor.pose.y = summary->mean.y + sint * filter->param->front_laser_offset 
+      + cost * filter->param->front_laser_side_offset;
+    sensor.pose.theta = carmen_normalize_theta(summary->mean.theta + 
+					       filter->param->front_laser_angle_offset);
     sensor.num_laser = 1;
   }
   else {
-    sensor.pose.x = summary->mean.x + filter->param->rear_laser_offset *
-      cos(summary->mean.theta + M_PI);
-    sensor.pose.y = summary->mean.y + filter->param->rear_laser_offset *
-      sin(summary->mean.theta + M_PI);
-    sensor.pose.theta = summary->mean.theta + M_PI;
+    cost = cos(summary->mean.theta);
+    sint = sin(summary->mean.theta);
+    sensor.pose.x = summary->mean.x + cost * filter->param->rear_laser_offset 
+      - sint * filter->param->rear_laser_side_offset;
+    sensor.pose.y = summary->mean.y + sint * filter->param->rear_laser_offset 
+      + cost * filter->param->rear_laser_side_offset;
+    sensor.pose.theta = carmen_normalize_theta(summary->mean.theta + 
+					       filter->param->rear_laser_angle_offset);
     sensor.num_laser = 2;
   }
   sensor.num_readings = laser->num_readings;
@@ -155,7 +162,15 @@ void robot_frontlaser_handler(carmen_robot_laser_message *flaser)
 
 void robot_rearlaser_handler(carmen_robot_laser_message *rlaser)
 {
-  rlaser = rlaser;
+  fprintf(stderr, "R");
+  if(filter->initialized) {
+    carmen_localize_summarize(filter, &summary, &map, rlaser->num_readings, 
+			      rlaser->range, filter->param->rear_laser_offset,
+			      rlaser->config.angular_resolution,
+			      rlaser->config.start_angle, 0);
+    publish_sensor(filter, &summary, rlaser, 0);
+  }
+  //rlaser = rlaser;
 }
 
 void 
@@ -365,6 +380,14 @@ void read_parameters(int argc, char **argv, carmen_localize_param_p param)
      &param->front_laser_offset, 0, NULL},
     {"robot", "rearlaser_offset", CARMEN_PARAM_DOUBLE, 
      &param->rear_laser_offset, 0, NULL},
+    {"robot", "frontlaser_side_offset", CARMEN_PARAM_DOUBLE, 
+     &param->front_laser_side_offset, 0, NULL},
+    {"robot", "rearlaser_side_offset", CARMEN_PARAM_DOUBLE, 
+     &param->rear_laser_side_offset, 0, NULL},
+    {"robot", "frontlaser_angular_offset", CARMEN_PARAM_DOUBLE, 
+     &param->front_laser_angle_offset, 0, NULL},
+    {"robot", "rearlaser_angular_offset", CARMEN_PARAM_DOUBLE, 
+     &param->rear_laser_angle_offset, 0, NULL},
     {"localize", "use_rear_laser", CARMEN_PARAM_ONOFF, 
      &param->use_rear_laser, 0, NULL},
     {"localize", "num_particles", CARMEN_PARAM_INT, 
