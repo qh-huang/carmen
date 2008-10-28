@@ -56,6 +56,8 @@ extern "C" {
   /** localize parameter structure **/
 typedef struct {
   double front_laser_offset, rear_laser_offset;
+  double front_laser_side_offset, rear_laser_side_offset;
+  double front_laser_angle_offset, rear_laser_angle_offset;
   int num_particles;
   double max_range, min_wall_prob, outlier_fraction;
   double update_distance;
