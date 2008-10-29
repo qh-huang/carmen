@@ -23,7 +23,7 @@ endif
 
 SOURCES = utils.c color.c strings.c mdalloc.c read-script.c read-rec.c \
 	  write-file.c parse-lines.c correction.c graphics.c \
-	  ll2utm.c utm2ll.c log2log.c clfconvert.c
+	  ll2utm.c utm2ll.c l3d2log.c clfconvert.c
 
 ifdef QT3
 SOURCES += 	display-laserdata.cpp display-laserdata-moc.cpp
@@ -33,9 +33,9 @@ PUBLIC_INCLUDES = logtools.h logtools_graphics.h clfconvert.h
 
 PUBLIC_LIBRARIES = liblogtools.a libclfconvert.a
 
-PUBLIC_BINARIES = log2pic log2log
+PUBLIC_BINARIES = log2pic l3d2log
 
-TARGETS = liblogtools.a libclfconvert.a log2log clf-read-example clf-get-oldlaser
+TARGETS = liblogtools.a libclfconvert.a l3d2log clf-read-example clf-get-oldlaser
 
 ifdef QT3
 TARGETS +=		display-laserdata
@@ -55,7 +55,7 @@ liblogtools.a:	utils.o color.o strings.o mdalloc.o read-script.o \
 	read-rec.o write-file.o parse-lines.o correction.o \
 	graphics.o ll2utm.o utm2ll.o
 
-log2log:	log2log.o
+l3d2log:	l3d2log.o
 
 libclfconvert.a: clfconvert.o
 
