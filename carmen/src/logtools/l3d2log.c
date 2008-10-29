@@ -32,7 +32,7 @@
 void
 print_usage( void )
 {
-  fprintf( stderr, "\nusage: log2log <LOG-FILE> <LOG-FILE>\n");
+  fprintf( stderr, "\nusage: l3d2log <LOG-FILE> <LOG-FILE>\n  Converte for Log3D log files of Dirk Haehnel into CARMEN log files.\n"  );
 }
 
 /**************************************************************************
