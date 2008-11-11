@@ -16,16 +16,16 @@ MODULE_COMMENT = Modules for logging, displaying, and playing back data.
 
 SOURCES = logger.c playback_interface.c playback.c laserint_to_carmenlog.c \
 	  writelog.c readlog.c log_timestamp_repair.c log_corrected_laser.c \
-	  test_logfileread.c arm_dump_state.c logger_interface.c
+	  test_logfileread.c arm_dump_state.c logger_interface.c logger_comment.c
 
 PUBLIC_INCLUDES = logger.h logger_messages.h playback_messages.h \
 		  playback_interface.h writelog.h readlog.h logger_interface.h
 PUBLIC_LIBRARIES = libplayback_interface.a  libwritelog.a libreadlog.a liblogger_interface.a
-PUBLIC_BINARIES = logger playback playback_control logtool
+PUBLIC_BINARIES = logger playback playback_control logtool logger_comment
 
 TARGETS = liblogger_interface.a  libwritelog.a libreadlog.a logger libplayback_interface.a  playback \
 	  laserint_to_carmenlog log_timestamp_repair log_corrected_laser \
-	  test_logfileread arm_dump_state logtool
+	  test_logfileread arm_dump_state logtool logger_comment
 
 ifndef NO_GRAPHICS
 SOURCES += playback_control.c
@@ -64,6 +64,8 @@ log_corrected_laser: 	log_corrected_laser.o libwritelog.a
 test_logfileread:	test_logfileread.o libreadlog.a
 
 logtool:	        logtool.o libreadlog.a
+
+logger_comment:		logger_comment.o liblogger_interface.a
 
 arm_dump_state:		arm_dump_state.o
 
