@@ -651,6 +651,23 @@ void carmen_ipc_sleep(double timeout)
   }
 }
 
+void carmen_ipc_listen_clear(double timeout)
+{
+  double current_time, timestamp;
+
+  current_time = carmen_get_time();
+  if(infile == NULL)
+    IPC_listenClear(timeout * 1000);
+  else {
+    /* That's more a listen than a listenClear but its
+       the best we can do to emulate it */
+    do {
+      timestamp = carmen_blogfile_handle_one_message();
+    } while(!carmen_feof(infile) && timestamp != -1 && 
+	    timestamp - current_time < timeout);
+  }
+}
+
 void carmen_ipc_disconnect(void)
 {
   carmen_close_output_blogfile();
