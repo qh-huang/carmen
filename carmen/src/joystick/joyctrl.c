@@ -29,9 +29,9 @@
 #include <carmen/global.h>
 #include "joyctrl.h"
 
-int carmen_initialize_joystick(carmen_joystick_type *joystick)
+int carmen_initialize_joystick(carmen_joystick_type *joystick, char* joy_device)
 {
-  if ((joystick->fd = open(CARMEN_JOYSTICK_DEVICE, 
+  if ((joystick->fd = open(joy_device, 
 			   O_RDONLY | O_NONBLOCK)) < 0) {
     carmen_warn("Warning: could not initialize joystick.\n");
     joystick->initialized = 0;

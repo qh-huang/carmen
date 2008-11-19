@@ -38,6 +38,9 @@ static carmen_joystick_type joystick;
 static int joystick_activated=0;
 static int throttle_mode=0;
 
+static char* joy_device = NULL;
+
+
 void send_base_velocity_command(double tv, double rv)
 {
   IPC_RETURN_TYPE err;
@@ -80,8 +83,9 @@ void sig_handler(int x)
 void read_parameters(int argc, char **argv)
 {
   int num_items;
-
+  
   carmen_param_t param_list[] = {
+    {"joystick", "dev",    CARMEN_PARAM_STRING, &(joy_device), 0, NULL},
     {"robot", "max_t_vel", CARMEN_PARAM_DOUBLE, &max_max_tv, 1, NULL},
     {"robot", "max_r_vel", CARMEN_PARAM_DOUBLE, &max_max_rv, 1, NULL}
   };
@@ -95,19 +99,22 @@ int main(int argc, char **argv)
   double command_tv = 0, command_rv = 0;
   double max_tv = 0, max_rv = 0;
   double f_timestamp;
+  joy_device = (char*) calloc(256,sizeof(char));
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
-  if (carmen_initialize_joystick(&joystick) < 0)
-    carmen_die("Erorr: could not find joystick.\n");
+  read_parameters(argc, argv);
+  signal(SIGINT, sig_handler);
+
+  fprintf(stderr,"Looking for joystick at device: %s\n", joy_device);
+
+
+  if (carmen_initialize_joystick(&joystick, joy_device) < 0)
+    carmen_die("Erorr: could not find joystick at device: %s\n", joy_device);
 
   if (joystick.nb_axes != 9 || joystick.nb_buttons != 12)
     fprintf(stderr,"This seems to be *NOT* a \"Logitech WingMan Cordless Rumble Pad\",\nbut I will start anyway (be careful!).\n\n");
-  
-  read_parameters(argc, argv);
-  
-  signal(SIGINT, sig_handler);
-  
+ 
   fprintf(stderr,"1. Set the \"throttle control\" to zero (to the left)\n2. Press \"START\" button to activate the joystick.\n");
 
   if (throttle_mode)

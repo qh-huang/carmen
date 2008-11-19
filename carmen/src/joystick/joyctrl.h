@@ -51,7 +51,7 @@ extern "C" {
 #include <stdlib.h>
 #include <linux/joystick.h>
 
-#define         CARMEN_JOYSTICK_DEVICE         "/dev/js0"
+  ///#define         CARMEN_JOYSTICK_DEVICE         "/dev/js0"
 #define         CARMEN_JOYSTICK_DEADSPOT       1
 #define         CARMEN_JOYSTICK_DEADSPOT_SIZE  0.2
 
@@ -84,7 +84,7 @@ void carmen_set_deadspot(carmen_joystick_type *joystick, int on_off, double size
 
 /* Initialize joystick; has to be called before any other function; *
  * returns 0 on success, else -1                                    */
-int carmen_initialize_joystick(carmen_joystick_type *joystick);
+  int carmen_initialize_joystick(carmen_joystick_type *joystick, char* joy_device);
 
 /* Request joystick state; returns number of bytes read on success, *
  * else -1;                                                         */
