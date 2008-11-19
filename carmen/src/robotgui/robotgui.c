@@ -78,6 +78,7 @@ static double max_plot_range;
 
 
 #ifndef NO_JOYSTICK
+static char* joy_device=NULL;
 static carmen_joystick_type joystick;
 #endif
 static void 
@@ -1149,6 +1150,7 @@ read_robotgraph_parameters(int argc, char **argv)
   int num_items;
 
   carmen_param_t param_list[] = {
+    {"joystick", "dev", CARMEN_PARAM_STRING, &joy_device, 0, NULL},
     {"robot", "rectangular", CARMEN_PARAM_INT, &rectangular, 0, NULL},
     {"robot", "length", CARMEN_PARAM_DOUBLE, &length, 0, NULL},
     {"robot", "width", CARMEN_PARAM_DOUBLE, &width, 0, NULL},
@@ -1176,18 +1178,20 @@ main(int argc, char **argv)
 {  
 #ifndef NO_JOYSTICK
   int err;
+  joy_device = (char*) calloc(256,sizeof(char));
 #endif
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);
 
+  read_robotgraph_parameters(argc, argv);
+
 #ifndef NO_JOYSTICK
   /* initialize joystick */
-  err = carmen_initialize_joystick(&joystick);
+  err = carmen_initialize_joystick(&joystick, joy_device);
   if (err < 0)
     joystick.initialized = 0;
 #endif
-  read_robotgraph_parameters(argc, argv);
 
   if(initialize_robotgraph_ipc() < 0) 
     carmen_die("Error: could not connect to IPC Server\n");
