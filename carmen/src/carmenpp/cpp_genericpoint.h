@@ -60,7 +60,7 @@ carmen_inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
 template <class T, class A>
 class orientedpoint2d: public point2d<T>{
  public:
-  carmen_inline orientedpoint2d(){}
+  carmen_inline orientedpoint2d();
   carmen_inline orientedpoint2d(const point2d<T>& p);
   carmen_inline orientedpoint2d(T x, T y, A _theta): point2d<T>(x,y), theta(_theta){}
   virtual ~orientedpoint2d(){};
@@ -86,6 +86,10 @@ class orientedpoint2d: public point2d<T>{
   A theta;
 };
 
+
+
+template <class T, class A>
+orientedpoint2d<T,A>::orientedpoint2d(){}
 
 template <class T, class A>
 orientedpoint2d<T,A>::orientedpoint2d(const point2d<T>& p){
