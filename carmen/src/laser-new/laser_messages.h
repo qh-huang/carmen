@@ -49,7 +49,7 @@ typedef enum {
 	HOKUYO_URG                = 2, 
 	SIMULATED_LASER           = 3, 
 	SICK_S300                 = 4, 
-	UMKNOWN_PROXIMITY_SENSOR  = 99
+	UNKNOWN_PROXIMITY_SENSOR  = 99
 } carmen_laser_laser_type_t;
 
 /** Possible remission values **/
