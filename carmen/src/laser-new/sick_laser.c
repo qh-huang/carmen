@@ -500,7 +500,7 @@ int sick_set_range_reflectivity(sick_laser_t* sick, unsigned char * reply, int u
   assert(  range!=160 || unit==0);
   assert(  range!=320 || unit==0);
   if (remission) {
-    command[6]=13;
+    command[6]=14;
   } else {
     unsigned char r=0;
     switch(range){
