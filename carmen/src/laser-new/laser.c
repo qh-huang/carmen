@@ -412,20 +412,21 @@ int carmen_laser_read_parameters(int argc, char **argv)
 					sizeof(laser_params[0]));
 	}
 	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
-	
-		carmen_param_t laser_params[] = {
-		  {"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL},
-		  {"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL}};
-		carmen_param_install_params(argc, argv, laser_params,
-					sizeof(laser_params) / 
-					sizeof(laser_params[0]));
-		
+
 		remission_mode_string[i] = "none";
 		resolution[i] = 0;
 		baud[i] = 0;
 		carmen_laser_flipped[i] = 0;
 		/* 	range_mode[i] = 0; */
 		maxrange[i] = 0;
+	
+		carmen_param_t laser_params[] = {
+		  {"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL},
+		  {"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL}};
+
+		carmen_param_install_params(argc, argv, laser_params,
+					    sizeof(laser_params) / 
+					    sizeof(laser_params[0]));
 	}
 	else {
 		carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, S300 or hokuyourg", laser_type[i]);
