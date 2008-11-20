@@ -1,7 +1,7 @@
 #include "cpp_laser.h"
 
 LaserConfig::LaserConfig()  {
-  setLaserType(UMKNOWN_PROXIMITY_SENSOR);
+  setLaserType(UNKNOWN_PROXIMITY_SENSOR);
   setStartAngle(-0.5*M_PI);
   setFOV(M_PI);
   setAngularResolution(carmen_degrees_to_radians(1.0));
