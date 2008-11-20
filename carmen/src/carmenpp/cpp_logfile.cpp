@@ -4,7 +4,7 @@
 LogFile::LogFile() : Collection() {
 }
 
-LogFile::LogFile(char* filename) : Collection() {
+LogFile::LogFile(const char* filename) : Collection() {
   load(filename);
 }
 
@@ -18,7 +18,7 @@ LogFile::LogFile(const LogFile& x) : Collection() {
 LogFile::~LogFile() {
 }
 
-bool LogFile::load(char* filename, bool verbose) {
+bool LogFile::load(const char* filename, bool verbose) {
   char line[100000];
 
   carmen_FILE *logfile = NULL;
@@ -61,6 +61,12 @@ bool LogFile::load(char* filename, bool verbose) {
     else if(strncmp(line, "IMU ", 4) == 0) {
       push_back(new IMUMessage(line));
     }
+    else if(strncmp(line, "SCANMARK ", 9) == 0) {
+      push_back(new ScanmarkMessage(line));
+    }
+    else if(strncmp(line, "POSITIONLASER ", 14) == 0) {
+      push_back(new LaserposMessage(line));
+    }
     else if(strlen(line) > 1) {
       push_back(new UnknownMessage(line));
     }
@@ -69,7 +75,7 @@ bool LogFile::load(char* filename, bool verbose) {
   return true;
 }
 
-bool LogFile::save(char* filename, bool verbose) const {
+bool LogFile::save(const char* filename, bool verbose) const {
   
   carmen_FILE *logfile = NULL;
   
