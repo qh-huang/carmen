@@ -48,7 +48,7 @@
 #define READ_TIMEOUT          250000      /* less than 1e6 */
 #define _POSIX
 
-int carmen_serial_connect(int *dev_fd, char *dev_name)
+int carmen_serial_connect(int *dev_fd, const char *dev_name)
 {
   int BAUDRATE = B9600;
   struct termios newtio;
@@ -91,7 +91,7 @@ void carmen_serial_setrts(int fd  __attribute__ ((unused)))
 #endif
 }
 
-void carmen_serial_setparms(int fd, char *baudr, char *par, char *bits, 
+void carmen_serial_setparms(int fd, const char *baudr, const char *par, const char *bits, 
 		     int hwf, int swf)
 {
   int spd = -1;
@@ -266,7 +266,7 @@ void carmen_serial_setparms(int fd, char *baudr, char *par, char *bits,
 #endif
 }
 
-void carmen_serial_configure(int dev_fd, int baudrate, char *parity)
+void carmen_serial_configure(int dev_fd, int baudrate, const char *parity)
 {
   switch(baudrate) {
   case 9600: 
@@ -321,7 +321,7 @@ int carmen_serial_ClearInputBuffer(int dev_fd)
   return(val_total);
 }
 
-int carmen_serial_writen(int dev_fd, unsigned char *buf, int nChars)
+int carmen_serial_writen(int dev_fd, const unsigned char *buf, int nChars)
 {
   int amountWritten = 0;
   
