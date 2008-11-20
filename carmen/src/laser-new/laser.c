@@ -451,7 +451,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
       carmen_warn("\n--------------------------------------------------\n");
 
       carmen_laser_laser_config_t config;
-      config.laser_type = UMKNOWN_PROXIMITY_SENSOR;
+      config.laser_type = UNKNOWN_PROXIMITY_SENSOR;
       config.remission_mode = REMISSION_NONE;
 
 	if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS")) {

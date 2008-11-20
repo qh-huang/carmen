@@ -63,7 +63,7 @@ int carmen_laser_laser_message_check_configuration(carmen_laser_laser_config_t* 
   else if (config->laser_type == SIMULATED_LASER)
     strcpy(type_string,"SIMULATED_LASER");
   else
-    strcpy(type_string,"UMKNOWN_PROXIMITY_SENSOR");
+    strcpy(type_string,"UNKNOWN_PROXIMITY_SENSOR");
   
   int i;
   carmen_warn("Requested laser configuration:\n");

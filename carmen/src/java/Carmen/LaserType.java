@@ -6,5 +6,5 @@ public class LaserType
   public static final int SICK_PLS = 1;
   public static final int HOKUYO_URG = 2;
   public static final int SIMULATED_LASER = 3;
-  public static final int UMKNOWN_PROXIMITY_SENSOR = 4;
+  public static final int UNKNOWN_PROXIMITY_SENSOR = 4;
 }

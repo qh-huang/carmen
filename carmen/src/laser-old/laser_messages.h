@@ -48,7 +48,7 @@ extern "C" {
 		SICK_PLS = 1, 
 		HOKUYO_URG = 2, 
 		SIMULATED_LASER = 3, 
-		UMKNOWN_PROXIMITY_SENSOR = 99}
+		UNKNOWN_PROXIMITY_SENSOR = 99}
   carmen_laser_laser_type_t;
   
   /** Possible remission values **/
