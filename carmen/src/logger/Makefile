@@ -21,17 +21,17 @@ SOURCES = logger.c playback_interface.c playback.c laserint_to_carmenlog.c \
 PUBLIC_INCLUDES = logger.h logger_messages.h playback_messages.h \
 		  playback_interface.h writelog.h readlog.h logger_interface.h
 PUBLIC_LIBRARIES = libplayback_interface.a  libwritelog.a libreadlog.a liblogger_interface.a
-PUBLIC_BINARIES = logger playback playback_control logtool logger_comment
+PUBLIC_BINARIES = log_carmen play_carmen play_carmen_control logtool_carmen log_carmen_comment
 
-TARGETS = liblogger_interface.a  libwritelog.a libreadlog.a logger libplayback_interface.a  playback \
+TARGETS = liblogger_interface.a  libwritelog.a libreadlog.a log_carmen libplayback_interface.a  play_carmen \
 	  laserint_to_carmenlog log_timestamp_repair log_corrected_laser \
-	  test_logfileread arm_dump_state logtool logger_comment
+	  test_logfileread arm_dump_state logtool_carmen log_carmen_comment
 
 ifndef NO_GRAPHICS
 SOURCES += playback_control.c
 IFLAGS += `$(GTK_CONFIG) --cflags`
 LFLAGS += -lglobal_graphics `$(GTK_CONFIG) --libs`
-TARGETS += playback_control
+TARGETS += play_carmen_control
 endif
 
 PUBLIC_LIBRARIES_SO = libplayback_interface.so
@@ -39,7 +39,7 @@ ifndef NO_PYTHON
 TARGETS += libplayback_interface.so.1
 endif
 
-logger:			logger.o  liblogger_interface.a libwritelog.a
+log_carmen:			logger.o  liblogger_interface.a libwritelog.a
 
 libwritelog.a : 	writelog.o
 
@@ -51,9 +51,9 @@ libplayback_interface.a:playback_interface.o
 
 libplayback_interface.so.1:playback_interface.o
 
-playback:		playback.o libreadlog.a
+play_carmen:		playback.o libreadlog.a
 
-playback_control: 	playback_control.o playback_interface.o
+play_carmen_control: 	playback_control.o playback_interface.o
 
 laserint_to_carmenlog:	laserint_to_carmenlog.o libwritelog.a
 
@@ -63,9 +63,9 @@ log_corrected_laser: 	log_corrected_laser.o libwritelog.a
 
 test_logfileread:	test_logfileread.o libreadlog.a
 
-logtool:	        logtool.o libreadlog.a
+logtool_carmen:	        logtool.o libreadlog.a
 
-logger_comment:		logger_comment.o liblogger_interface.a
+log_carmen_comment:	logger_comment.o liblogger_interface.a
 
 arm_dump_state:		arm_dump_state.o
 
