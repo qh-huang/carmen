@@ -39,7 +39,7 @@ RECURSE = $(SILENT) \
 INSTALL_RECURSE = $(SILENT) \
 	for i in $(PACKAGES) xxxx ; do \
 		if [ -d $$i ] ; then \
-			if ! $(MAKE) install -C $$i $@ ; then \
+			if ! $(MAKE) carmen-install -C $$i $@ ; then \
                                 exit -1; \
                         fi; \
 		fi \
@@ -116,13 +116,22 @@ endif
 
 install:
 	$(ECHO)
+	$(ECHO) "CARMEN is prototype software. Doing a global install only"
+	$(ECHO) "makes sense if you are sure you want to do this. You can use"
+	$(ECHO) " 'make carmen-install' to install carmen in $(INSTALL_PATH),"
+	$(ECHO) "but proceed with caution. This option is not recommended"
+	$(ECHO) "for novice users."
+	$(ECHO)
+
+carmen-install:
+	$(ECHO)
 	$(ECHO) "	*************"
 	$(ECHO) "	I N S T A L L"
 	$(ECHO) "	*************"
 	$(ECHO)
 	$(SILENT) $(MKDIR) $(GLOBAL_INC_DIR)/carmen
 	$(SILENT) $(MKDIR) $(GLOBAL_BIN_DIR)
-	$(SILENT) $(MKDIR) $(GLOBAL_LIB_DIR)
+	$(SILENT) $(MKDIR) $(GLOBAL_LIB_DIR)/carmen
 	$(SILENT) $(MKDIR) $(GLOBAL_MAN_DIR)
 	$(INSTALL_RECURSE)
 

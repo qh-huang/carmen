@@ -80,21 +80,21 @@ global_install_includes = $(SILENT) \
 
 global_install_libraries = $(SILENT) \
 	for i in $(PUBLIC_LIBRARIES) xxxx ; do \
-		if test -f $$i && ! $(NEWER) $(GLOBAL_LIB_DIR)/$$i $$i ; then \
-			echo "    ---- Copying $$i to $(GLOBAL_LIB_DIR)" ; \
+		if test -f $$i && ! $(NEWER) $(GLOBAL_LIB_DIR)/carmen/$$i $$i ; then \
+			echo "    ---- Copying $$i to $(GLOBAL_LIB_DIR)/carmen" ; \
 			export dir=`pwd` ; \
-			$(RM) -f $(GLOBAL_LIB_DIR)/$$i ; \
-			$(CP) $$dir/$$i $(GLOBAL_LIB_DIR)/$$i ; \
+			$(RM) -f $(GLOBAL_LIB_DIR)/carmen/$$i ; \
+			$(CP) $$dir/$$i $(GLOBAL_LIB_DIR)/carmen/$$i ; \
 		fi; \
 	done 
 
 global_install_libraries_so = $(SILENT) \
 	for i in $(PUBLIC_LIBRARIES_SO) xxxx ; do \
-		if test -f $$i && ! $(NEWER) $(GLOBAL_SHARED_DIR)/$$i $$i ; then \
-			echo "    ---- Copying $$i to $(GLOBAL_SHARED_DIR)" ; \
+		if test -f $$i && ! $(NEWER) $(GLOBAL_SHARED_DIR)/carmen/$$i $$i ; then \
+			echo "    ---- Copying $$i to $(GLOBAL_SHARED_DIR)/carmen" ; \
 			export dir=`pwd` ; \
-			$(RM) -f $(GLOBAL_SHARED_DIR)/$$i ; \
-			$(CP) $$dir/$$i $(GLOBAL_SHARED_DIR)/$$i ; \
+			$(RM) -f $(GLOBAL_SHARED_DIR)/carmen/$$i ; \
+			$(CP) $$dir/$$i $(GLOBAL_SHARED_DIR)/carmen/$$i ; \
 		fi; \
 	done 
 
@@ -169,8 +169,8 @@ global_remove_includes = $(SILENT) \
 global_remove_libraries = $(SILENT) \
 	for i in $(PUBLIC_LIBRARIES) xxxx ; do \
 		if test ! "$$i" = "xxxx" ; then \
-			echo "    ---- Removing $$i from $(GLOBAL_LIB_DIR)" ; \
-			$(RM) -f $(GLOBAL_LIB_DIR)/$$i ; \
+			echo "    ---- Removing $$i from $(GLOBAL_LIB_DIR)/carmen" ; \
+			$(RM) -f $(GLOBAL_LIB_DIR)/carmen/$$i ; \
 		fi ; \
 	done 
 
@@ -251,7 +251,7 @@ endif
 	$(install_binaries)
 	$(ECHO) "  <-- Make done"
 
-install:
+carmen-install:
 	$(banner)
 	$(global_install_libraries)
 	$(global_install_binaries)
