@@ -493,7 +493,11 @@ void globalSInit(void)
   // Sets -u as default 
   // Note by Boris Lau, June 11, 2007:
   // -u now activates user input, no -u is default.
+#ifdef DEFAULT_OPTIONS
+  GET_S_GLOBAL(listenToStdin) = TRUE;
+#else
   GET_S_GLOBAL(listenToStdin) = FALSE;
+#endif
 #endif
   
   GET_S_GLOBAL(terminalLog).theFile = stdout;
@@ -506,7 +510,11 @@ void globalSInit(void)
   GET_S_GLOBAL(terminalLog).parentId = 0;
   // Changed by Nick Roy
   // Sets -s as default 
+#ifdef DEFAULT_OPTIONS
+  GET_S_GLOBAL(terminalLog).quiet = FALSE;
+#else
   GET_S_GLOBAL(terminalLog).quiet = TRUE;
+#endif
   GET_S_GLOBAL(terminalLog).flush = TRUE;
   GET_S_GLOBAL(terminalLog).ignore = TRUE;
   GET_S_GLOBAL(terminalLog).ignoreNow = FALSE;

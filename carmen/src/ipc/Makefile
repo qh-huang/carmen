@@ -2,6 +2,10 @@ include ../Makefile.conf
 
 CFLAGS = -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes -Wmissing-declarations -O3 -DREDHAT_52 -DREDHAT_6 -DREDHAT_71 -g
 
+ifdef LOUD_IPC
+CFLAGS += -DDEFAULT_OPTIONS
+endif
+
 ifeq ($(PROCESSOR),x86_64)
 CFLAGS += -fPIC
 endif
