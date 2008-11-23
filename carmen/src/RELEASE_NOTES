@@ -1,3 +1,11 @@
+RELEASE NOTES CARMEN V 0.8 Beta
+
+Moved from CVS to SVN (the main reason for the major version increment.)
+Changed logger program names.
+Modified make install to now warn, and require make carmen-install.
+make install now installs in INSTALL_PATH/lib/carmen, not INSTALL_PATH/lib
+Can configure central to have default semantics of -s, -u.
+
 RELEASE NOTES CARMEN V 0.6 Beta
 
 General changes
