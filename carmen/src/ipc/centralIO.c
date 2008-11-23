@@ -444,7 +444,11 @@ void parseOption(char *option, BOOLEAN started)
   case 'u':
     // Changed by Boris Lau, June 11 2007
     // -u now activates the interactive user interface.
+#ifdef DEFAULT_OPTIONS
+    GET_S_GLOBAL(listenToStdin) = FALSE;
+#else
     GET_S_GLOBAL(listenToStdin) = TRUE;
+#endif
     break;
   case 'c':
     GET_S_GLOBAL(directDefault) = TRUE;

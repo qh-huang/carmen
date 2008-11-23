@@ -575,7 +575,9 @@ int main(int argc, char **argv)
       printPrompt();
 #endif
 
+#ifndef DEFAULT_OPTIONS
     fprintf(stderr, "central running...\n");
+#endif
 
     listenLoop();
   }
