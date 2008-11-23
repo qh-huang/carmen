@@ -1,9 +1,0 @@
-Makefile.depend
-perllibs
-central
-test_generate
-test_receive
-ipc-endian-test
-ipc-die-test
-*.so.1
-*.a

@@ -1,6 +1,0 @@
-watchdog
-proccontrol
-proccontrol_setmodule
-proccontrol_setgroup
-proccontrol_viewoutput
-Makefile.depend
