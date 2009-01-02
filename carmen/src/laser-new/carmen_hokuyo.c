@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <carmen/carmen.h>
 #include "carmen_hokuyo.h"
-#include "hokuyourg.h"
+#include "hokuyolaser.h"
 
 #ifdef __APPLE__
 #include <limits.h>
@@ -11,23 +11,23 @@
 #define MAXDOUBLE DBL_MAX
 #else
 #include <values.h>
-#endif 
+#endif
 
 #include "laser_messages.h"
 
 
 int carmen_hokuyo_init(carmen_laser_device_t* device){
-  HokuyoURG* urg=malloc(sizeof(HokuyoURG));
-  carmen_test_alloc(urg);
-  device->device_data=urg;
-  hokuyo_init(urg);
+  HokuyoLaser* hokuyoLaser=malloc(sizeof(HokuyoLaser));
+  carmen_test_alloc(hokuyoLaser);
+  device->device_data=hokuyoLaser;
+  hokuyo_init(hokuyoLaser);
   return 1;
 }
 
 int carmen_hokuyo_connect(carmen_laser_device_t * device, char* filename, int baudrate __attribute__((unused)) ){
   int result;
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  result=hokuyo_open(urg,filename);
+  HokuyoLaser* hokuyoLaser=(HokuyoLaser*)device->device_data;
+  result=hokuyo_open(hokuyoLaser,filename);
   if (result<=0){
     fprintf(stderr, "error\n  Unable to opening device\n");
     return result;
@@ -35,11 +35,29 @@ int carmen_hokuyo_connect(carmen_laser_device_t * device, char* filename, int ba
   return 1;
 }
 
-int carmen_hokuyo_configure(carmen_laser_device_t * device ){
-  //device->config.start_angle=hokuyo_getStartAngle(urg,-1);
-  device->config.angular_resolution=URG_ANGULAR_STEP;
-  device->config.accuracy=0.001;
-  device->config.maximum_range=5.600;	
+int carmen_hokuyo_configure(carmen_laser_device_t * device)
+{
+  if (device->config.laser_type == HOKUYO_URG) {
+    //device->config.start_angle=hokuyo_getStartAngle(hokuyoLaser,-1);
+
+    //Abe: not sure why FOV and start_angle were read from param file before... but I think this is better
+    device->config.fov=URG_FOV;
+    device->config.start_angle=URG_START_ANGLE;
+    device->config.angular_resolution = URG_ANGULAR_STEP;
+    device->config.accuracy = URG_ACCURACY;
+    device->config.maximum_range = URG_MAX_RANGE;
+  }
+  else if (device->config.laser_type == HOKUYO_UTM) {
+    //device->config.start_angle=hokuyo_getStartAngle(hokuyoLaser,-1);
+    device->config.fov=UTM_FOV;
+    device->config.start_angle=UTM_START_ANGLE;
+    device->config.angular_resolution = UTM_ANGULAR_STEP;
+    device->config.accuracy = UTM_ACCURACY;
+    device->config.maximum_range = UTM_MAX_RANGE;
+  }
+  else {
+    carmen_die("UNKNOWN HOKUYO TYPE\n");
+  }
   return 1;
 }
 
@@ -49,12 +67,12 @@ int carmen_hokuyo_handle_sleep(carmen_laser_device_t* device __attribute__ ((unu
 }
 
 int carmen_hokuyo_handle(carmen_laser_device_t* device){
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
+  HokuyoLaser* hokuyoLaser=(HokuyoLaser*)device->device_data;
 
   struct timeval timestamp;
-  char buf[URG_BUFSIZE];
+  char buf[HOKUYO_BUFSIZE];
 
-  int c=hokuyo_readPacket(urg, buf, URG_BUFSIZE,10);
+  int c=hokuyo_readPacket(hokuyoLaser, buf, HOKUYO_BUFSIZE,10);
   HokuyoRangeReading reading;
   hokuyo_parseReading(&reading, buf);
   if (c>0 && (reading.status==0 || reading.status==99) ){
@@ -81,17 +99,31 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
 }
 
 int carmen_hokuyo_start(carmen_laser_device_t* device){
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  int rv=hokuyo_init(urg);
+  HokuyoLaser* hokuyoLaser=(HokuyoLaser*)device->device_data;
+  int rv=hokuyo_init(hokuyoLaser);
   if (rv<=0)
     return 0;
-  int bfov=(int)(device->config.fov/URG_ANGULAR_STEP);
-  if (bfov>768)
-    bfov=768;
-  int bmin=URG_MAX_BEAMS/2-bfov/2;
-  int bmax=URG_MAX_BEAMS/2+bfov/2;
+
+
+  double _bfov = (device->config.fov/device->config.angular_resolution);
+  int bfov=(int)_bfov;
+  int max_beams=0;
+  if (device->config.laser_type == HOKUYO_URG) {
+    max_beams = URG_MAX_BEAMS;
+  }
+  else if (device->config.laser_type == HOKUYO_UTM) {
+    max_beams = UTM_MAX_BEAMS;
+  }
+  else {
+    carmen_die("UNKNOWN HOKUYO TYPE\n");
+  }
+
+  if (bfov>max_beams)
+    bfov=max_beams;
+  int bmin=max_beams/2-bfov/2;
+  int bmax=max_beams/2+bfov/2;
   fprintf(stderr, "Configuring hokuyo continuous mode, bmin=%d, bmax=%d\n", bmin, bmax);
-  rv=hokuyo_startContinuous(urg, bmin, bmax, 0);
+  rv=hokuyo_startContinuous(hokuyoLaser, bmin, bmax, 0);
   if (rv<=0){
     fprintf(stderr, "Error in configuring continuous mode\n");
   }
@@ -100,8 +132,8 @@ int carmen_hokuyo_start(carmen_laser_device_t* device){
 }
 
 int carmen_hokuyo_stop(carmen_laser_device_t* device){
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  int rv=hokuyo_stopContinuous(urg);
+  HokuyoLaser* hokuyoLaser=(HokuyoLaser*)device->device_data;
+  int rv=hokuyo_stopContinuous(hokuyoLaser);
   if (rv<=0){
     fprintf(stderr, "Error in stopping continuous mode\n");
     return 0;
@@ -115,8 +147,8 @@ int carmen_hokuyo_stop(carmen_laser_device_t* device){
 //FIXME I do not want  to malloc the ranges!
 
 int carmen_hokuyo_close(struct carmen_laser_device_t* device){
-  HokuyoURG* urg=(HokuyoURG*)device->device_data;
-  return hokuyo_close(urg);
+  HokuyoLaser* hokuyoLaser=(HokuyoLaser*)device->device_data;
+  return hokuyo_close(hokuyoLaser);
 }
 
 carmen_laser_device_t* carmen_create_hokuyo_instance(carmen_laser_laser_config_t* config, int laser_id){
@@ -136,11 +168,13 @@ carmen_laser_device_t* carmen_create_hokuyo_instance(carmen_laser_laser_config_t
   return device;
 }
 
-
 carmen_laser_laser_config_t carmen_hokuyo_valid_configs[]=
-  {{HOKUYO_URG,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,REMISSION_NONE}};
+  {{HOKUYO_URG,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,REMISSION_NONE},
+    {HOKUYO_UTM,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,MAXDOUBLE,REMISSION_NONE}};
 
-int carmen_hokuyo_valid_configs_size=1;
+
+
+int carmen_hokuyo_valid_configs_size=2;
 
 int carmen_init_hokuyo_configs(void){
   int i;

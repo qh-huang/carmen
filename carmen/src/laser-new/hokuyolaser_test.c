@@ -1,4 +1,4 @@
-#include "hokuyourg.h"
+#include "hokuyolaser.h"
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -11,8 +11,8 @@ int main (int argc, const char** argv){
     printf( "Usage: urg_test <device> ");
     return 0;
   }
-  char buf[URG_BUFSIZE];
-  HokuyoURG urg;
+  char buf[HOKUYO_BUFSIZE];
+  HokuyoLaser urg;
   int o=hokuyo_open(&urg,argv[1]);
   if (o<=0)
     return -1;
@@ -26,7 +26,7 @@ int main (int argc, const char** argv){
   //double astep=2*M_PI/1024;
   int k=0;
   while (k<20){
-    hokuyo_readPacket(&urg, buf, URG_BUFSIZE,10);
+    hokuyo_readPacket(&urg, buf, HOKUYO_BUFSIZE,10);
     HokuyoRangeReading reading;
     hokuyo_parseReading(&reading, buf);
 
@@ -37,12 +37,12 @@ int main (int argc, const char** argv){
 	validBeamsCount++;
     }
 
-    fprintf(stderr, "ts=%d, ss=%d, es=%d, cc=%d, nr=%d, st=%d vbc=%d\n", 
-	    reading.timestamp, 
-	    reading.startStep, 
-	    reading.endStep, 
-	    reading.clusterCount, 
-	    reading.n_ranges, 
+    fprintf(stderr, "ts=%d, ss=%d, es=%d, cc=%d, nr=%d, st=%d vbc=%d\n",
+	    reading.timestamp,
+	    reading.startStep,
+	    reading.endStep,
+	    reading.clusterCount,
+	    reading.n_ranges,
 	    reading.status,
 	    validBeamsCount);
 
@@ -50,7 +50,7 @@ int main (int argc, const char** argv){
 //     cout << "plot [-5600:5600][-5600:5600]'-' w l" << endl;
 //     for (int i=0; i<reading.n_ranges; i++){
 //       double alpha=(-135./180.)*M_PI+astep*i;
-//       cout << reading.ranges[i] * cos(alpha) << " " << reading.ranges[i] * sin (alpha) << endl; 
+//       cout << reading.ranges[i] * cos(alpha) << " " << reading.ranges[i] * sin (alpha) << endl;
 //     }
 //     cout << "e" << endl << endl;
     k++;

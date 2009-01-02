@@ -20,7 +20,7 @@ carmen_laser_device_t* carmen_create_laser_instance(carmen_laser_laser_config_t*
   if (config->laser_type==SICK_S300){
     device=carmen_create_s300_instance(config, laser_id);
   }
-  if (config->laser_type==HOKUYO_URG){
+  if (config->laser_type==HOKUYO_URG || config->laser_type==HOKUYO_UTM){
     device=carmen_create_hokuyo_instance(config, laser_id);
   }
   if (config->laser_type==SICK_LMS){

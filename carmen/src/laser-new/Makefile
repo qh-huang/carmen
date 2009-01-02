@@ -7,9 +7,9 @@ CFLAGS += -DLASER_USE_PTHREAD -std=gnu99
 #-DHOKUYO_ALWAYS_IN_SCIP20
 LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread 
 
-SOURCES = carmen_hokuyo.c  dummylaser.c hokuyourg_test.c laser_interface.c sick_laser_init_500k.c \
+SOURCES = carmen_hokuyo.c  dummylaser.c hokuyolaser_test.c laser_interface.c sick_laser_init_500k.c \
           carmen_laser_device.c carmen_laser_message_queue.c laser.c sick_laser_test.c \
-          carmen_laser_device_init.c carmen_sick.c hokuyourg.c laserclient.c sick_laser.c
+          carmen_laser_device_init.c carmen_sick.c hokuyolaser.c laserclient.c sick_laser.c
 
 SOURCES += s300_laser.c carmen_s300.c
 
@@ -17,7 +17,7 @@ PUBLIC_INCLUDES = laser_messages.h laser_interface.h
 PUBLIC_LIBRARIES = liblaser_interface.a liblaser.a
 PUBLIC_BINARIES = laser sick_laser_init_500k
 
-TARGETS =  liblaser_interface.a hokuyourg_test sick_laser_test dummylaser laserclient laser  sick_laser_init_500k
+TARGETS =  liblaser_interface.a hokuyolaser_test sick_laser_test dummylaser laserclient laser  sick_laser_init_500k
 TARGETS += s300_laser_test
 
 ifndef NO_TCP862_SERIAL_SUPPORT
@@ -46,11 +46,11 @@ endif
 
 liblaser_interface.a:	laser_interface.o carmen_laser_device.o
 
-liblaser.a:		carmen_laser_device.o carmen_laser_message_queue.o hokuyourg.o\
+liblaser.a:		carmen_laser_device.o carmen_laser_message_queue.o hokuyolaser.o\
 			carmen_hokuyo.o carmen_laser_device_init.o  sick_laser.o carmen_sick.o \
 			s300_laser.o carmen_s300.o
 
-hokuyourg_test:		hokuyourg_test.o liblaser.a
+hokuyolaser_test:		hokuyolaser_test.o liblaser.a
 
 sick_laser_test:	sick_laser_test.o liblaser.a
 

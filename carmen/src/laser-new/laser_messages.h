@@ -6,21 +6,21 @@
  * CARMEN Copyright (c) 2002 Michael Montemerlo, Nicholas
  * Roy, and Sebastian Thrun
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
@@ -44,18 +44,19 @@ extern "C" {
 
 /** supported laser types     **/
 typedef enum {
-	SICK_LMS                  = 0, 
-	SICK_PLS                  = 1, 
-	HOKUYO_URG                = 2, 
-	SIMULATED_LASER           = 3, 
-	SICK_S300                 = 4, 
+	SICK_LMS                  = 0,
+	SICK_PLS                  = 1,
+	HOKUYO_URG                = 2,
+	SIMULATED_LASER           = 3,
+	SICK_S300                 = 4,
+	HOKUYO_UTM                = 5,
 	UNKNOWN_PROXIMITY_SENSOR  = 99
 } carmen_laser_laser_type_t;
 
 /** Possible remission values **/
 typedef enum {
-	REMISSION_NONE       = 0, 
-	REMISSION_DIRECT     = 1, 
+	REMISSION_NONE       = 0,
+	REMISSION_DIRECT     = 1,
 	REMISSION_NORMALIZED = 2
 } carmen_laser_remission_type_t;
 
@@ -110,11 +111,11 @@ typedef struct {
   int laser3_stalled;
   int laser4_stalled;
 } carmen_laser_alive_message;
-  
+
 #define      CARMEN_LASER_ALIVE_NAME            "carmen_laser_alive"
 #define      CARMEN_LASER_ALIVE_FMT             "{int,int,int,int}"
 
-  
+
 #ifdef __cplusplus
 }
 #endif

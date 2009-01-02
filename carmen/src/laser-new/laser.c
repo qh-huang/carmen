@@ -132,9 +132,9 @@ int carmen_laser_create_device(int laser_id,
 			       carmen_laser_device_t** pdevice,
 			       carmen_laser_laser_config_t config,
 			       char* devicename, int baud){
-  
+
   int result=0;
-  
+
   //check whether the configuration is valid
   fprintf(stderr, "Checking requested configuration ... see below\n");
   int config_valid=carmen_laser_laser_message_check_configuration(&config);
@@ -160,12 +160,12 @@ int carmen_laser_create_device(int laser_id,
       generate_lock_filename(buf, devicename);
       carmen_warn("  Check for a running laser instance and delete the file\n  \"%s\" and restart laser.\n", buf);
       return -2;
-    } 
+    }
     else
       fprintf(stderr, "lock created\n");
   }
 
-  
+
   //attempts to create a laser instance
   //  fprintf(stderr, "Creating internatal device ........... ");
   (*pdevice)=carmen_create_laser_instance(&config, laser_id , devicename);
@@ -174,11 +174,11 @@ int carmen_laser_create_device(int laser_id,
     fprintf(stderr, "Error while creating interal device structure.\n");
     return -3;
   }
-  
+
   //install the enqueuing handler
   (*pdevice)->f_onreceive=carmen_laser_enqueue;
   (*pdevice)->config=config;
-  
+
   //attempt initializing the device
   fprintf(stderr, "Initialization device .............. ");
   result=(*((*pdevice)->f_init))((*pdevice));
@@ -186,10 +186,10 @@ int carmen_laser_create_device(int laser_id,
     fprintf(stderr, "error\n");
     return -4;
   }
-  else 
+  else
     fprintf(stderr, "done\n");
-  
-  fprintf(stderr, "\n");  
+
+  fprintf(stderr, "\n");
   fprintf(stderr, "Connecting device .................. ");
 
   result=(*((*pdevice)->f_connect))((*pdevice), devicename, baud);
@@ -199,8 +199,8 @@ int carmen_laser_create_device(int laser_id,
   }
   else
     fprintf(stderr, "Connection to laser device succeded\n");
-  
-  fprintf(stderr, "\n");  
+
+  fprintf(stderr, "\n");
   //configure the device
   fprintf(stderr, "Configuring laser device ........... see below\n");
   result=(*((*pdevice)->f_configure))((*pdevice));
@@ -210,7 +210,7 @@ int carmen_laser_create_device(int laser_id,
   }
   else
     fprintf(stderr, "Configuration of laser device succeded\n");
-  
+
   return 0;
 }
 
@@ -244,9 +244,9 @@ int carmen_laser_read_parameters(int argc, char **argv)
     {"laser", "num_laser_devices", CARMEN_PARAM_INT, &num_laser_devices, 0, NULL},
     {"laser", "use_device_locks", CARMEN_PARAM_ONOFF, &carmen_laser_use_device_locks, 0, NULL} };
 
-  carmen_param_install_params(argc, argv, laser_num_devs, 
+  carmen_param_install_params(argc, argv, laser_num_devs,
 			      sizeof(laser_num_devs) / sizeof(laser_num_devs[0]));
-  
+
   carmen_laser_pdevice        =  calloc(  num_laser_devices, sizeof(carmen_laser_device_t*) );
   carmen_test_alloc(carmen_laser_pdevice);
 
@@ -260,7 +260,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
   int cmdline_laser_cnt=0;
 
   int c=1;
-  while (c<argc && strcmp(argv[c],"-id")) 
+  while (c<argc && strcmp(argv[c],"-id"))
     c++;
   c++;
   if (c < argc){
@@ -286,7 +286,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
     }
   }
 
-  if (cmdline_laser_cnt==0) 
+  if (cmdline_laser_cnt==0)
     carmen_die("Error: You cannot run the module without a single laser device.\n");
 
   fprintf(stderr, "This instance of laser will use the lasers with the ids: [");
@@ -302,9 +302,9 @@ int carmen_laser_read_parameters(int argc, char **argv)
     }
   }
   fprintf(stderr, "]\n");
-  
 
-  for (i=0; i< num_laser_devices; i++)  
+
+  for (i=0; i< num_laser_devices; i++)
     carmen_laser_pdevice[i] = NULL;
 
   device         = calloc( num_laser_devices, sizeof(char*) );
@@ -325,7 +325,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
   carmen_test_alloc(carmen_laser_flipped);
   maxrange       = calloc( num_laser_devices, sizeof(double) );
   carmen_test_alloc(maxrange);
-/*   range_mode     = calloc( num_laser_devices, sizeof(char*) ); 
+/*   range_mode     = calloc( num_laser_devices, sizeof(char*) );
   carmen_test_alloc(range_mode);
 */
 
@@ -335,7 +335,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
     int id_of_laser_i = index_to_id(i);
 
     sprintf(var_name,"laser%d", id_of_laser_i);
-    
+
     strcpy(var_dev,var_name);
     strcat(var_dev, "_dev");
     strcpy(var_type,var_name);
@@ -359,7 +359,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
     carmen_param_t laser_dev[] = {
       {"laser", var_dev, CARMEN_PARAM_STRING, &(device[i]), 0, NULL},
     };
-    carmen_param_install_params(argc, argv, laser_dev, 
+    carmen_param_install_params(argc, argv, laser_dev,
 				sizeof(laser_dev) / sizeof(laser_dev[0]));
 
     if(strncmp(device[i], "none", 4) != 0) {
@@ -368,7 +368,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
       carmen_param_t param_laser_type[] = {
 	{"laser", var_type, CARMEN_PARAM_STRING, &(laser_type[i]), 0, NULL},
       };
-      carmen_param_install_params(argc, argv, param_laser_type, 
+      carmen_param_install_params(argc, argv, param_laser_type,
 				  sizeof(param_laser_type) / sizeof(param_laser_type[0]));
 
 	if ( !strcmp(laser_type[i], "pls") || !strcmp(laser_type[i], "PLS") ) {
@@ -378,9 +378,9 @@ int carmen_laser_read_parameters(int argc, char **argv)
 		carmen_die("Laser aborted.\n");
 	}
 	else if ( !strcmp(laser_type[i], "lms") || !strcmp(laser_type[i], "LMS") ) {
-	
+
 		maxrange[i] = 81.9;
-		
+
 		carmen_param_t laser_params[] = {
 		{"laser", var_res, CARMEN_PARAM_DOUBLE,              &(resolution[i]),     0, NULL},
 		{"laser", var_remission_mode, CARMEN_PARAM_STRING,   &(remission_mode_string[i]), 0, NULL},
@@ -389,15 +389,15 @@ int carmen_laser_read_parameters(int argc, char **argv)
 		/* 	  {"laser", var_range_mode, CARMEN_PARAM_STRING,       &(range_mode[i]),     0, NULL}, */
 		/* 	  {"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL}, */
 		{"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
-		
+
 		carmen_param_install_params(argc, argv, laser_params,
-					sizeof(laser_params) / 
+					sizeof(laser_params) /
 					sizeof(laser_params[0]));
 	}
 	else if ( !strcmp(laser_type[i], "s300") || !strcmp(laser_type[i], "S300") ) {
-	
+
 		maxrange[i] = 30.0;
-		
+
 		carmen_param_t laser_params[] = {
 		{"laser", var_res, CARMEN_PARAM_DOUBLE,              &(resolution[i]),     0, NULL},
 		{"laser", var_remission_mode, CARMEN_PARAM_STRING,   &(remission_mode_string[i]), 0, NULL},
@@ -406,12 +406,13 @@ int carmen_laser_read_parameters(int argc, char **argv)
 		/* 	  {"laser", var_range_mode, CARMEN_PARAM_STRING,       &(range_mode[i]),     0, NULL}, */
 		/* 	  {"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL}, */
 		{"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL}};
-		
+
 		carmen_param_install_params(argc, argv, laser_params,
-					sizeof(laser_params) / 
+					sizeof(laser_params) /
 					sizeof(laser_params[0]));
 	}
-	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
+	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG") ||
+                     !strcmp(laser_type[i], "hokuyoutm") || !strcmp(laser_type[i], "HOKUYOUTM")) {
 
 		remission_mode_string[i] = "none";
 		resolution[i] = 0;
@@ -419,17 +420,19 @@ int carmen_laser_read_parameters(int argc, char **argv)
 		carmen_laser_flipped[i] = 0;
 		/* 	range_mode[i] = 0; */
 		maxrange[i] = 0;
-	
+
 		carmen_param_t laser_params[] = {
 		  {"laser", var_flipped, CARMEN_PARAM_INT,             &(carmen_laser_flipped[i]),        0, NULL},
-		  {"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL}};
+		  /*{"laser", var_fov, CARMEN_PARAM_DOUBLE,              &(fov[i]),            0, NULL},   */  //hardcoded now
+		  /*{"laser", var_maxrange, CARMEN_PARAM_DOUBLE,         &(maxrange[i]),       0, NULL},   */  //hardcoded now
+		};
 
 		carmen_param_install_params(argc, argv, laser_params,
-					    sizeof(laser_params) / 
+					    sizeof(laser_params) /
 					    sizeof(laser_params[0]));
 	}
-	else {
-		carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, S300 or hokuyourg", laser_type[i]);
+     	else {
+		carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, pls, S300, hokuyourg, or hokuyoutm", laser_type[i]);
 	}
 
     }
@@ -467,6 +470,9 @@ int carmen_laser_read_parameters(int argc, char **argv)
 	else if ( !strcmp(laser_type[i], "hokuyourg") || !strcmp(laser_type[i], "HOKUYOURG")) {
 		config.laser_type = HOKUYO_URG;
 	}
+        else if ( !strcmp(laser_type[i], "hokuyoutm") || !strcmp(laser_type[i], "HOKUYOUTM")) {
+                config.laser_type = HOKUYO_UTM;
+        }
 	else {
 	  carmen_die("ERROR: the parameter laser_type does not allow the value %s.\nUse lms, s300, pls, or hokuyourg", laser_type[i]);
 	}
@@ -486,21 +492,21 @@ int carmen_laser_read_parameters(int argc, char **argv)
       config.fov = carmen_degrees_to_radians(fov[i]);
       config.start_angle = -0.5 * config.fov;
       config.angular_resolution = carmen_degrees_to_radians(resolution[i]);
-      config.maximum_range = maxrange[i]; 
+      config.maximum_range = maxrange[i];
       config.accuracy = 0.01;
-      
+
       carmen_warn("Laser id ........................... %d\n", index_to_id(i));
-	
+
       if (baud[i]>0)
 	carmen_warn("Requested baud rate ................ %d kbps\n", baud[i]);
       else
 	carmen_warn("Requested baud rate ................ not required\n");
       int result = carmen_laser_create_device(index_to_id(i),
-					      &(carmen_laser_pdevice[i]), 
+					      &(carmen_laser_pdevice[i]),
 					      config,
-					      device[i], 
+					      device[i],
 					      baud[i]);
-      
+
       carmen_warn("\n");
 
       if (result != 0){
@@ -516,7 +522,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 	      carmen_warn("  freeing lock of laser %d .......... ", index_to_id(j));
 	      delete_lock(device[j]);
 	      carmen_warn("done\n");
-	      
+
 	    }
 	  }
 	}
@@ -542,7 +548,7 @@ int carmen_laser_read_parameters(int argc, char **argv)
 
 
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 
   int num_laser_devices;
@@ -565,17 +571,17 @@ int main(int argc, char **argv)
 /*  do not allow ctrl-c while setting baud rate */
 /*   signal(SIGINT, sigquit_handler); */
 
-  
+
   //this initializes the driver stuctures
   carmen_laser_register_devices();
 
   num_laser_devices = carmen_laser_read_parameters(argc, argv);
-  
+
   carmen_laser_define_alive_message();
   for(i=1; i<=num_laser_devices;i++)
     carmen_laser_define_laser_message(i);
-    
-  
+
+
   laser_thread = calloc(num_laser_devices, sizeof(laser_thread));
   carmen_test_alloc(laser_thread);
 
@@ -590,7 +596,7 @@ int main(int argc, char **argv)
     }
   }
   carmen_warn("\n--------------------------------------------------\n");
-  
+
   signal(SIGINT, sigquit_handler);
 
 
@@ -607,9 +613,9 @@ int main(int argc, char **argv)
     msg.num_remissions = m.num_remissions;
     msg.config = m.config;
     msg.id = m.id;
-  
+
     //    fprintf(stderr, "r=%d\n", m.num_readings);
-    if (m.num_readings){ 
+    if (m.num_readings){
       msg.range=ranges;
       memcpy(msg.range,m.range, m.num_readings*sizeof(float));
     } else {
@@ -648,22 +654,22 @@ int main(int argc, char **argv)
 
     msg.timestamp = m.timestamp;
     msg.host = hostname;
-    
+
     if (msg.id>0)
       carmen_laser_publish_laser_message(msg.id, &msg);
-    
+
     if (c>0 && !(c%10)){
       double time=carmen_get_time();
       if (time-lastTime > 3.0) {
-	
-	fprintf(stderr, "status:   send-queue: %d msg(s),   laser-msg freqency: %.3f Hz (globally)\n", 
+
+	fprintf(stderr, "status:   send-queue: %d msg(s),   laser-msg freqency: %.3f Hz (globally)\n",
 		carmen_laser_queue.size, ((double)c)/(time-lastTime));
 	c=0;
 	lastTime=time;
       }
     }
   }
-  
+
   for(i=0; i<num_laser_devices;i++) {
     if (carmen_laser_pdevice[i]) {
       //join the pending thread
@@ -673,7 +679,7 @@ int main(int argc, char **argv)
 
   for(i=0; i<num_laser_devices;i++) {
     if (carmen_laser_pdevice[i]) {
-      
+
       //cleanup phase
       fprintf(stderr, "Cleaning up structures from laser %d ...... ", index_to_id(i));
       result=(*(carmen_laser_pdevice[i]->f_close))(carmen_laser_pdevice[i]);
@@ -688,9 +694,9 @@ int main(int argc, char **argv)
       else
 	fprintf(stderr, "done\n");
     }
-  }    
+  }
 
   if (carmen_laser_flipped)
-    free(carmen_laser_flipped);  
+    free(carmen_laser_flipped);
   return 0;
 }
