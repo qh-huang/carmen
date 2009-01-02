@@ -7,10 +7,6 @@
 //#define HOKUYO_ALWAYS_IN_SCIP20
 
 #define HOKUYO_BUFSIZE 8192
-typedef enum {
-  HOKUYO_TYPE_URG,
-  HOKUYO_TYPE_UTM
-  } hokuyo_type_t;
 //UTM parameters
 #define UTM_ANGULAR_STEP (M_PI/720.0)
 #define UTM_MAX_BEAMS 1081
@@ -35,7 +31,6 @@ typedef struct HokuyoRangeReading{
   int n_ranges;
   unsigned short ranges[UTM_MAX_BEAMS];  //use the UTM size, which wastes a bit of space for URG, but whatever...
   unsigned short startStep, endStep, clusterCount;
-  hokuyo_type_t type;
 } HokuyoRangeReading;
 
 typedef struct HokuyoLaser{
@@ -62,7 +57,7 @@ int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep,
 int hokuyo_stopContinuous(HokuyoLaser* hokuyoLaser);
 int hokuyo_reset(HokuyoLaser* hokuyoLaser);
 int hokuyo_close(HokuyoLaser* hokuyoLaser);
-void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer);
+void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer,carmen_laser_laser_type_t laser_type);
 
 #endif
 

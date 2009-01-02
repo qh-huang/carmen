@@ -28,7 +28,7 @@ int main (int argc, const char** argv){
   while (k<20){
     hokuyo_readPacket(&urg, buf, HOKUYO_BUFSIZE,10);
     HokuyoRangeReading reading;
-    hokuyo_parseReading(&reading, buf);
+    hokuyo_parseReading(&reading, buf, HOKUYO_URG);
 
     //if we  get too much maxranges, restart the laser
     int validBeamsCount=0;

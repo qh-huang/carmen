@@ -74,7 +74,7 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
 
   int c=hokuyo_readPacket(hokuyoLaser, buf, HOKUYO_BUFSIZE,10);
   HokuyoRangeReading reading;
-  hokuyo_parseReading(&reading, buf);
+  hokuyo_parseReading(&reading, buf,device->config.laser_type);
   if (c>0 && (reading.status==0 || reading.status==99) ){
     carmen_laser_laser_static_message message;
     message.id=device->laser_id;

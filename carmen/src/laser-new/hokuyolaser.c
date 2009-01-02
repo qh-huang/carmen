@@ -68,7 +68,7 @@ carmen_inline char* skipLine(char* buf){
 }
 
 //parses a reading response
-void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer){
+void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer, carmen_laser_laser_type_t laser_type){
   char* s=buffer;
   int expectedStatus=0;
 
@@ -118,11 +118,11 @@ void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer){
 
   // The remaining lines begin with a 64B data block, followed by a sum and LF
   int i=0;
-  int max_beams;
-  if (r->type==HOKUYO_TYPE_URG)
+  int max_beams =0;
+  if (laser_type==HOKUYO_URG)
     max_beams=URG_MAX_BEAMS;
-  else if (r->type==HOKUYO_TYPE_UTM)
-    max_beams=URG_MAX_BEAMS;
+  else if (laser_type==HOKUYO_UTM)
+    max_beams=UTM_MAX_BEAMS;
   else{
     carmen_die("UNKNOWN hokuyo type!\n");
   }
