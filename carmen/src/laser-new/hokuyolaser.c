@@ -32,8 +32,8 @@ unsigned int parseInt(int bytes, char** s){
   for (int i=0; i<bytes;){
     k++;
     //printf("k = %i\n",k);
-    if (*b==0||*b=='\n'){
-      *s=0;
+    if (*b=='\0'||*b=='\n'){
+      *s='\0';
       return 0;
     }
     if (*(b+1)=='\n'){ //check for a wrapped line (? and checksum ?)
@@ -62,7 +62,7 @@ unsigned int parseInt(int bytes, char** s){
 
 //skips a line
 carmen_inline char* skipLine(char* buf){
-  while (*buf!=0 && *buf!='\n')
+  while (*buf!='\0' && *buf!='\n')
     buf++;
   return (*buf=='\n')?buf+1:0;
 }
@@ -78,10 +78,17 @@ void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer, carmen_laser_laser
     expectedStatus=00;
 
   int beamBytes=0;
-  if (s[1]=='D') beamBytes=3;
-  if (s[0]=='C') beamBytes=3;
-  if (s[1]=='S') beamBytes=2;
-  //printf("s[0] = %c s[1] = %c\n",s[0],s[1]);
+  if (s[1]=='D')
+    beamBytes=3;
+  if (s[0]=='C') {
+    beamBytes = 3;
+    //printf("got C\n");
+  }
+  if (s[1] == 'S') {
+    beamBytes = 2;
+   // printf("got C\n");
+  }
+//  printf("s[0] = %c s[1] = %c\n",s[0],s[1]);
 
   if (! beamBytes || ! expectedStatus){
     fprintf(stderr, "Invalid return packet, cannot parse reading\n");
@@ -90,10 +97,10 @@ void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer, carmen_laser_laser
   }
   s+=2; // jump to "Starting Step"
   char v[5];
-  v[4]=0;
+  v[4]='\0';
   strncpy(v,s,4); r->startStep=atoi(v); s+=4; // grab StartStep and jump to EndStep
   strncpy(v,s,4); r->endStep=atoi(v);   s+=4; // grab EndStep and jump to ClusterCount
-  v[2]=0; strncpy(v,s,2); r->clusterCount=atoi(v);
+  v[2]='\0'; strncpy(v,s,2); r->clusterCount=atoi(v);
 
   //printf("startStep = %i, endStep = %i\n",r->startStep, r->endStep);
 
@@ -126,12 +133,16 @@ void hokuyo_parseReading(HokuyoRangeReading* r, char* buffer, carmen_laser_laser
   else{
     carmen_die("UNKNOWN hokuyo type!\n");
   }
-  while(s!=0 && i<(max_beams+1)){
+  while(s!='\0'){
+    if ( i>(max_beams)){
+      printf("broke because of max_beams!\n"); //shouldn't happen
+      break;
+    }
     //r->ranges[i++]=parseInt(beamBytes,&s);
     r->ranges[i]=parseInt(beamBytes,&s);
     i++;
   }
-  //i--;
+  i--; //i is 1 more than the number we've actually read
   r->n_ranges=i;
 }
 
@@ -149,9 +160,9 @@ unsigned int hokuyo_readPacket(HokuyoLaser* hokuyoLaser, char* buf, int bufsize,
     int wasLineFeed=0;
     char* b=buf;
     int k=0;
-
+    int bufLeft = bufsize;
     while (1){
-        int c=read(hokuyoLaser->fd, b, bufsize);
+        int c=read(hokuyoLaser->fd, b, bufLeft);
         if (! c){
             fprintf(stderr, "null" );
             usleep(25000);
@@ -166,9 +177,18 @@ unsigned int hokuyo_readPacket(HokuyoLaser* hokuyoLaser, char* buf, int bufsize,
                 wasLineFeed=(b[i]=='\n');
             }
             b+=c;
+            bufLeft -=c;
         }
-        if (failureCount<0)
-            return 0;
+
+        if (bufLeft<=0){
+          fprintf(stderr,"no space left in buffer\n");
+          usleep(25000);
+          failureCount--;
+        }
+        if (failureCount<0){
+          printf("failurCount<0\n");
+          return 0;
+        }
     }
 }
 

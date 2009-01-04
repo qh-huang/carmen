@@ -75,7 +75,15 @@ int carmen_hokuyo_handle(carmen_laser_device_t* device){
   int c=hokuyo_readPacket(hokuyoLaser, buf, HOKUYO_BUFSIZE,10);
   HokuyoRangeReading reading;
   hokuyo_parseReading(&reading, buf,device->config.laser_type);
-  if (c>0 && (reading.status==0 || reading.status==99) ){
+
+  if (c>0 && (reading.status==0 || reading.status==99)){
+    static int normal_n_ranges =-1;
+    if (normal_n_ranges<0)
+      normal_n_ranges = reading.n_ranges;
+    if (reading.n_ranges != normal_n_ranges){
+      fprintf(stderr,"num ranages =%d, there should be %d... something weird is going on\n",reading.n_ranges, normal_n_ranges);
+      return 0;
+    }
     carmen_laser_laser_static_message message;
     message.id=device->laser_id;
     message.config=device->config;
@@ -104,24 +112,22 @@ int carmen_hokuyo_start(carmen_laser_device_t* device){
   if (rv<=0)
     return 0;
 
+  //lets just hardcode these because they're not entirely intuitive
+  int bmin=0;
+  int bmax=0;
+   if (device->config.laser_type == HOKUYO_URG) {
+     bmin = URG_DETECTION_RANGE_START;
+     bmax = URG_DETECTION_RANGE_END;
+   }
+   else if (device->config.laser_type == HOKUYO_UTM) {
+     bmin = UTM_DETECTION_RANGE_START;
+     bmax = UTM_DETECTION_RANGE_END;
+   }
+   else {
+     carmen_die("UNKNOWN HOKUYO TYPE\n");
+   }
 
-  double _bfov = (device->config.fov/device->config.angular_resolution);
-  int bfov=(int)_bfov;
-  int max_beams=0;
-  if (device->config.laser_type == HOKUYO_URG) {
-    max_beams = URG_MAX_BEAMS;
-  }
-  else if (device->config.laser_type == HOKUYO_UTM) {
-    max_beams = UTM_MAX_BEAMS;
-  }
-  else {
-    carmen_die("UNKNOWN HOKUYO TYPE\n");
-  }
 
-  if (bfov>max_beams)
-    bfov=max_beams;
-  int bmin=max_beams/2-bfov/2;
-  int bmax=max_beams/2+bfov/2;
   fprintf(stderr, "Configuring hokuyo continuous mode, bmin=%d, bmax=%d\n", bmin, bmax);
   rv=hokuyo_startContinuous(hokuyoLaser, bmin, bmax, 0);
   if (rv<=0){
