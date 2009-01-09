@@ -2,6 +2,7 @@
 #define CARMEN_CPP_GENERICPOINT_H
 
 #include <math.h>
+#include <carmen/global.h>
 
 template <class T>
 class point2d {
