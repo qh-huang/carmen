@@ -75,15 +75,35 @@ bool GenericMap<CELL>::init(const MapConfig& cfg) {
   return true;
 }
 
+
 template<class CELL>
 CELL& GenericMap<CELL>::getCell(int x, int y) {
-  return m_map[x][y];
+
+  if ((x >= 0) && (x < AbstractMap<CELL>::m_cfg.m_sizeX) && (y >= 0) && (y < AbstractMap<CELL>::m_cfg.m_sizeY)) {
+    return m_map[x][y];
+  }
+  else {
+    printf ("ERROR GenericMap::getCell (%d, %d) - out of bounds.\n", x, y);
+    return m_map[0][0]; 
+  }
 }
 
 
 template<class CELL>
+CELL& GenericMap<CELL>::getCell(double x, double y) {
+  IntPoint map_coord = AbstractMap<CELL>::world2map(x, y);
+  return getCell(map_coord.x, map_coord.y);
+}
+
+
+template<class CELL>
+CELL& GenericMap<CELL>::getCell(double x, double y) const {
+  return getCell(x,y);
+}
+
+template<class CELL>
 CELL& GenericMap<CELL>::getCell(int x, int y) const {
-  return m_map[x][y];
+  return getCell(x,y);
 }
 
 
