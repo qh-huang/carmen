@@ -15,6 +15,8 @@ class GenericMap : public AbstractMap<CELL> {
   virtual bool init(const MapConfig& cfg);  
   virtual const CELL& defaultCell() const;
   
+  virtual CELL& getCell(double x, double y);
+  virtual CELL& getCell(double x, double y) const;
   virtual CELL& getCell(int x, int y);
   virtual CELL& getCell(int x, int y) const;
 
