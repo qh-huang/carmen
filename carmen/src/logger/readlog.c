@@ -251,6 +251,34 @@ char *carmen_string_to_base_odometry_message(char *string,
   return current_pos;
 }
 
+char *carmen_string_to_localize_globalpos_message(char *string, carmen_localize_globalpos_message *globalpos)
+{
+  char *current_pos = string;
+
+  if (strncmp(current_pos, "GLOBALPOS ", 10) == 0)
+    current_pos = carmen_next_word(current_pos);
+
+  globalpos->globalpos.x = CLF_READ_DOUBLE(&current_pos);
+  globalpos->globalpos.y = CLF_READ_DOUBLE(&current_pos);
+  globalpos->globalpos.theta = CLF_READ_DOUBLE(&current_pos);
+  globalpos->globalpos_std.x = 0;
+  globalpos->globalpos_std.y = 0;
+  globalpos->globalpos_std.theta = 0;
+  globalpos->odometrypos.x = CLF_READ_DOUBLE(&current_pos);
+  globalpos->odometrypos.y = CLF_READ_DOUBLE(&current_pos);
+  globalpos->odometrypos.theta = CLF_READ_DOUBLE(&current_pos);
+
+  globalpos->globalpos_xy_cov = 0;
+  globalpos->converged = 1;
+
+  globalpos->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&globalpos->host, &current_pos);
+  return current_pos;
+}
+
+
+
+
 char *carmen_string_to_arm_state_message(char *string,
 					 carmen_arm_state_message *arm)
 {
