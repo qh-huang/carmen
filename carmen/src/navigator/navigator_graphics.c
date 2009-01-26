@@ -1176,10 +1176,14 @@ button_release_handler(GtkMapViewer *the_map_view,
 
   if (placement_status == PLACING_GOAL || 
       (placement_status == NO_PLACEMENT && event->button == 1)) {
-    placement_status = NO_PLACEMENT;
     
-    if (GTK_TOGGLE_BUTTON (autonomous_button)->active) 
+    if (GTK_TOGGLE_BUTTON (autonomous_button)->active && placement_status!=PLACING_GOAL) {
+      placement_status = NO_PLACEMENT;
       return TRUE;
+    }
+     
+
+    placement_status = NO_PLACEMENT;
     
     navigator_set_goal(world_point->pose.x, world_point->pose.y);
     cursor = gdk_cursor_new(GDK_LEFT_PTR);
