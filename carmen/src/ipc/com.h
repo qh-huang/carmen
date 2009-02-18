@@ -1,19 +1,19 @@
 /******************************************************************************
  *
  * PROJECT: Carnegie Mellon Planetary Rover Project
- *          Task Control Architecture 
- * 
+ *          Task Control Architecture
+ *
  * (c) Copyright 1991 Christopher Fedor and Reid Simmons.  All rights reserved.
- * 
+ *
  * MODULE: communications
  *
  * FILE: comModule.c
  *
  * ABSTRACT:
- * 
+ *
  * Module Communications
  *
- * $Source$ 
+ * $Source$
  * $Revision$
  * $Date$
  * $Author$
@@ -120,8 +120,13 @@
 #define PROTOCOL_NAME "tcp"
 #define HOST_NAME_SIZE   32
 
+#ifndef BIG_IPC_BUFFERS
 #define TCP_SOCKET_BUFFER (16*1024)
 #define UNIX_SOCKET_BUFFER (32*1024)
+#else
+#define TCP_SOCKET_BUFFER (16*1024*1024)
+#define UNIX_SOCKET_BUFFER (32*1024*1024)
+#endif
 
 /* The full name must be less than 14 characters. */
 #ifdef macintosh
@@ -170,7 +175,7 @@ void x_ipc_closeSocket(int32 port);
 	     : (1000*(0x1FFFFF&(timeval).tv_sec) + (timeval).tv_usec/1000))
 
 #if defined(VXWORKS) | defined(_WINSOCK_)
-/* Not defined in many environments */ 
+/* Not defined in many environments */
 extern struct timeval *gettimeofday(struct timeval *, void *);
 #endif
 extern unsigned long x_ipc_timeInMsecs (void);
