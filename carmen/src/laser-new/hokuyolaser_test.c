@@ -19,7 +19,7 @@ int main (int argc, const char** argv){
   o=hokuyo_init(&urg);
   if (o<=0)
     return -1;
-  o=hokuyo_startContinuous(&urg, 0, 768, 0);
+  o=hokuyo_startContinuous(&urg, 0, 768, 0,0);
   if (o<=0){
     return -1;
   }

@@ -55,7 +55,7 @@ int hokuyo_init(HokuyoLaser* hokuyoLaser);
 unsigned int hokuyo_readPacket(HokuyoLaser* hokuyoLaser, char* buf, int bufsize, int faliures);
 
 // starts the continuous mode
-int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep, int clusterCount);
+int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep, int clusterCount,int scanInterval);
 
 // starts the continuous mode
 int hokuyo_stopContinuous(HokuyoLaser* hokuyoLaser);
