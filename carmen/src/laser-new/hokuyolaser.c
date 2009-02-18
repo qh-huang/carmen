@@ -275,7 +275,7 @@ int hokuyo_init(HokuyoLaser* hokuyoLaser){
   return 1;
 }
 
-int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep, int clusterCount){
+int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep, int clusterCount, int scanInterval){
     if (! hokuyoLaser->isInitialized)
         return -1;
     if (hokuyoLaser->isContinuous)
@@ -292,7 +292,7 @@ int hokuyo_startContinuous(HokuyoLaser* hokuyoLaser, int startStep, int endStep,
     }
 
     char command[1024];
-    sprintf (command, "\nMD%04d%04d%02d000\n", startStep, endStep, clusterCount);
+    sprintf (command, "\nMD%04d%04d%02d%01d00\n", startStep, endStep, clusterCount,scanInterval);
 
 
     status=hokuyo_readStatus(hokuyoLaser, command, 0);

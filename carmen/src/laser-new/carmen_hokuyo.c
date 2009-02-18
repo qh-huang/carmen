@@ -129,7 +129,7 @@ int carmen_hokuyo_start(carmen_laser_device_t* device){
 
 
   fprintf(stderr, "Configuring hokuyo continuous mode, bmin=%d, bmax=%d\n", bmin, bmax);
-  rv=hokuyo_startContinuous(hokuyoLaser, bmin, bmax, 0);
+  rv=hokuyo_startContinuous(hokuyoLaser, bmin, bmax, 0, 0);
   if (rv<=0){
     fprintf(stderr, "Error in configuring continuous mode\n");
   }
