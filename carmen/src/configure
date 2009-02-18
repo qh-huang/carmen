@@ -31,7 +31,7 @@ my @min_gtk_version = (1, 2);
 
 my ($nographics, $nojoystick, $nodoxygen, $notcpd, $nojpeg, $nozlib,
     $nolibart, $nowand, $nojava, $install_path, $nopython, $arg_oldlaser, 
-    $notcp862, $nocpp, $loud_ipc, $nolfs, $nowerror);
+    $notcp862, $nocpp, $loud_ipc, $nolfs, $nowerror, $bigipcbuffers);
 
 $nocpp=0;
 
@@ -46,6 +46,8 @@ $notcp862=1;
 $nolfs =0;
 
 $nowerror=0;
+
+$bigipcbuffers=0;
 
 my (@user_libs, $header_dir);
 
@@ -65,6 +67,7 @@ Options: [--nographics]     : compile without graphics
          [--nocpp]          : compile without C++ tools for CARMEN
 	 [--noLFS]          : compile without Large File Support
 	 [--noWerror]       : compile without -Werror flag (Needed with newer versions of gcc)
+	 [--bigipcbuffers]  : use big IPC buffers so that it can handle large messages (ie: images)
 	 [--nodoxygen]      : no doxygen support for creating the documentation
          [--oldlaser]       : use the old (original) laser server
          [--tcp862]         : use tcp862 support if using the new laser server
@@ -128,6 +131,9 @@ EOF
   }
    if ((/nowerror/) || (/noWerror/)) {
     $nowerror = 1;
+  }
+  if ((/bigipcbuffers/) || (/bigipcbuffers/)) {
+    $bigipcbuffers = 1;
   }
   if (/ipc-default/) {
     $loud_ipc = 1;
@@ -225,6 +231,7 @@ print OUTPUT "CYGWIN = 1\n" if ($os_type eq "cygwin");
 print OUTPUT "NO_CPP = 1\n" unless (!$nocpp);
 print OUTPUT "NO_LFS = 1\n" unless (!$nolfs);
 print OUTPUT "NO_WERROR = 1\n" unless (!$nowerror);
+print OUTPUT "BIG_IPC_BUFFERS = 1\n" unless (!$bigipcbuffers);
 print OUTPUT "NO_TCP862_SERIAL_SUPPORT = 1\n" unless (!$notcp862);
 print OUTPUT "LOUD_IPC=1\n" if ($loud_ipc);
 print OUTPUT "KERNEL_HEADERS_DIR = $header_dir\n" unless (!$header_dir);
