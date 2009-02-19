@@ -15,6 +15,10 @@ CFLAGS += -DACCESS_CONTROL
 LFLAGS = -lnsl -lwrap
 endif
 
+ifdef BIG_IPC_BUFFERS
+CFLAGS += -DBIG_IPC_BUFFERS
+endif
+
 MODULE_NAME = IPC
 MODULE_COMMENT = Flexible communications package written by Reid Simmons
 
