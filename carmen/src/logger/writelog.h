@@ -150,6 +150,10 @@ void carmen_logwrite_write_pantilt_scanmark(carmen_pantilt_scanmark_message* sca
 				       carmen_FILE* outfile,
 				       double timestamp);
 
+void carmen_logwrite_write_pantilt_status(carmen_pantilt_status_message* ptstat,
+				       carmen_FILE* outfile,
+				       double timestamp);
+
 void carmen_logwrite_write_pantilt_laserpos(carmen_pantilt_laserpos_message* laserpos,
 				       carmen_FILE* outfile,
 				       double timestamp);
