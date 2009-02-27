@@ -241,6 +241,8 @@ char* carmen_string_to_base_bumper_message(char* string, carmen_base_bumper_mess
 
 char* carmen_string_to_pantilt_scanmark_message(char* string, carmen_pantilt_scanmark_message* scanmark);
 
+char* carmen_string_to_pantilt_status_message(char* string, carmen_pantilt_status_message* ptstat);
+
 char* carmen_string_to_pantilt_laserpos_message(char* string, carmen_pantilt_laserpos_message* laserpos);
 
 char* carmen_string_to_imu_message(char* string, carmen_imu_message* msg);

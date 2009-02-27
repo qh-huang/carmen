@@ -463,7 +463,8 @@ char *carmen_string_to_laser_laser_message(char *string,
   if (strncmp(current_pos, "RAWLASER", 8) == 0) {
     current_pos += 8;
     laser->id = CLF_READ_INT(&current_pos);
-  } else {
+  } 
+  else { // truncated string given -> cannot read id
     laser->id = -1;
   }
 
@@ -694,6 +695,23 @@ char* carmen_string_to_pantilt_scanmark_message(char* string, carmen_pantilt_sca
 
   scanmark->timestamp = CLF_READ_DOUBLE(&current_pos);
   copy_host_string(&scanmark->host, &current_pos);
+
+  return current_pos;
+}
+
+char* carmen_string_to_pantilt_status_message(char* string, carmen_pantilt_status_message* ptstat) {
+
+  char *current_pos = string;
+  
+  if (strncmp(current_pos, "PANTILT ", 8) == 0) {
+    current_pos = carmen_next_word(current_pos);
+  }
+  
+  ptstat->pan = CLF_READ_DOUBLE(&current_pos);
+  ptstat->tilt = CLF_READ_DOUBLE(&current_pos);
+
+  ptstat->timestamp = CLF_READ_DOUBLE(&current_pos);
+  copy_host_string(&ptstat->host, &current_pos);
 
   return current_pos;
 }

@@ -153,6 +153,13 @@ void pantilt_scanmark_handler(carmen_pantilt_scanmark_message *scanmark)
 			    carmen_get_time() - logger_starttime);
 }
 
+void pantilt_status_handler(carmen_pantilt_status_message *ptstat)
+{
+  //  fprintf(stderr, "P");
+  carmen_logwrite_write_pantilt_status(ptstat, outfile, 
+				       carmen_get_time() - logger_starttime);
+}
+
 void pantilt_laserpos_handler(carmen_pantilt_laserpos_message *laserpos)
 {
   fprintf(stderr, "P");

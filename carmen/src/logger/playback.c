@@ -60,6 +60,11 @@ carmen_imu_message imu;
 carmen_gps_gpgga_message gpsgga;
 carmen_gps_gprmc_message gpsrmc;
 
+// pantilt
+carmen_pantilt_scanmark_message pt_scanmark;
+carmen_pantilt_laserpos_message pt_laserpos;
+carmen_pantilt_status_message pt_status;
+
 void print_playback_status(void)
 {
   char str[100];
@@ -188,7 +193,23 @@ void register_ipc_messages(void)
   carmen_test_ipc_exit(err, "Could not define", 
 		       CARMEN_GPS_GPRMC_MESSAGE_NAME);
   
+  // define pantilt messages
+  err = IPC_defineMsg(CARMEN_PANTILT_STATUS_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_PANTILT_STATUS_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_PANTILT_STATUS_MESSAGE_NAME);
+
+  err = IPC_defineMsg(CARMEN_PANTILT_SCANMARK_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_PANTILT_SCANMARK_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_PANTILT_SCANMARK_MESSAGE_NAME);
   
+  err = IPC_defineMsg(CARMEN_PANTILT_LASERPOS_MESSAGE_NAME, IPC_VARIABLE_LENGTH,
+                      CARMEN_PANTILT_LASERPOS_MESSAGE_FMT);
+  carmen_test_ipc_exit(err, "Could not define", 
+		       CARMEN_PANTILT_LASERPOS_MESSAGE_NAME);
+
+
   carmen_subscribe_message(CARMEN_PLAYBACK_COMMAND_NAME, 
                            CARMEN_PLAYBACK_COMMAND_FMT,
                            NULL, sizeof(carmen_playback_command_message),
@@ -265,6 +286,12 @@ logger_callback_t logger_callbacks[] = {
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser4, 0},
   {"LASER5", CARMEN_LASER_LASER5_NAME, 
    (converter_func)carmen_string_to_laser_laser_message_orig, &rawlaser5, 0},
+  {"SCANMARK", CARMEN_PANTILT_SCANMARK_MESSAGE_NAME,
+    (converter_func) carmen_string_to_pantilt_scanmark_message, &pt_scanmark, 0},
+  {"POSITIONLASER", CARMEN_PANTILT_LASERPOS_MESSAGE_NAME,
+    (converter_func) carmen_string_to_pantilt_laserpos_message, &pt_laserpos, 0},
+  {"PANTILT", CARMEN_PANTILT_STATUS_MESSAGE_NAME,
+    (converter_func) carmen_string_to_pantilt_status_message, &pt_status, 0},
   {"IMU", CARMEN_IMU_MESSAGE_NAME,
     (converter_func) carmen_string_to_imu_message, &imu, 0},
   {"NMEAGGA", CARMEN_GPS_GPGGA_MESSAGE_NAME, 
@@ -284,17 +311,29 @@ int read_message(int message_num, int publish)
 
   carmen_logfile_read_line(logfile_index, logfile, message_num, 
 			   MAX_LINE_LENGTH, line);
-  current_pos = carmen_next_word(line);
+  //carmen_next_word(line);  
+  current_pos = line;
+ 
+ 
+  // KMW: give whole line to reader, else laser 
+  //      ids cannot be read
+ 
 
+  // KMW: moved this outside the loop
+
+  // copy the command
+  j = 0;
+  while(line[j] != ' ') {
+    command[j] = line[j];
+    j++;
+  }
+  command[j] = '\0';
+
+
+  // find correct handler
   for(i = 0; i < (int)(sizeof(logger_callbacks) / 
 		       sizeof(logger_callback_t)); i++) {
-    /* copy the command over */
-    j = 0;
-    while(line[j] != ' ') {
-      command[j] = line[j];
-      j++;
-    }
-    command[j] = '\0';
+
     if(strncmp(command, logger_callbacks[i].logger_message_name, j) == 0) {
       if(!basic_messages || !logger_callbacks[i].interpreted) {
 	current_pos = 
@@ -440,6 +479,9 @@ int main(int argc, char **argv)
   memset(&rawlaser5, 0, sizeof(rawlaser5));
   memset(&gpsgga, 0, sizeof(gpsgga));
   memset(&gpsrmc, 0, sizeof(gpsrmc));
+  memset(&pt_scanmark, 0, sizeof(pt_scanmark));
+  memset(&pt_status, 0, sizeof(pt_status));
+  memset(&pt_laserpos, 0, sizeof(pt_laserpos));
 
 
   carmen_ipc_initialize(argc, argv);

@@ -49,6 +49,7 @@ void carmen_logwrite_write_header(carmen_FILE *outfile)
   carmen_fprintf(outfile, "# RAWLASER3 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# RAWLASER4 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values]\n");
   carmen_fprintf(outfile, "# POSITIONLASER laserid x y z phi(roll) theta(pitch) psi(yaw) \n");
+  carmen_fprintf(outfile, "# PANTILT pan tilt \n");
   carmen_fprintf(outfile, "# ROBOTLASER1 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# ROBOTLASER2 laser_type start_angle field_of_view angular_resolution maximum_range accuracy remission_mode num_readings [range_readings] num_remissions [remission values] laser_pose_x laser_pose_y laser_pose_theta robot_pose_x robot_pose_y robot_pose_theta laser_tv laser_rv forward_safety_dist side_safty_dist turn_axis\n");
   carmen_fprintf(outfile, "# NMEAGGA gpsnr utc latitude_dm lat_orient longitude_dm long_orient gps_quality num_satellites hdop sea_level alititude geo_sea_level geo_sep data_age\n");
@@ -301,6 +302,17 @@ void carmen_logwrite_write_pantilt_scanmark(carmen_pantilt_scanmark_message *sca
   carmen_fprintf(outfile, "%lf %s %lf\n", scanmark->timestamp, scanmark->host, timestamp);
 }
 
+void carmen_logwrite_write_pantilt_status(carmen_pantilt_status_message* ptstat,
+					  carmen_FILE* outfile, double timestamp) {
+
+  carmen_fprintf(outfile, "PANTILT ");
+
+  carmen_fprintf(outfile, "%f ", ptstat->pan);
+  carmen_fprintf(outfile, "%f ", ptstat->tilt);
+
+  carmen_fprintf(outfile, "%lf %s %lf\n", ptstat->timestamp, ptstat->host, timestamp);
+  
+}
 
 
 void carmen_logwrite_write_pantilt_laserpos(carmen_pantilt_laserpos_message *laserpos,
