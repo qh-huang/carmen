@@ -287,6 +287,9 @@ void carmen_serial_configure(int dev_fd, int baudrate, const char *parity)
   case 500000:
     carmen_serial_setparms(dev_fd, "500000", parity, "8", 0, 0);
     break;
+  default:
+    fprintf(stderr, "unknown baudrate %d!\n", baudrate);
+    break;
   }
 }
 
