@@ -734,7 +734,9 @@ main(int argc, char **argv)
   while(1) {
     if (carmen_base_run() == 1)
       fprintf(stderr, ".");
-    carmen_ipc_sleep(0.1);
+	carmen_ipc_sleep(0.1);
+ 	// if you want to use a higher baud-rate:
+    // carmen_ipc_sleep(0.02);
   }
 
   return 0;
