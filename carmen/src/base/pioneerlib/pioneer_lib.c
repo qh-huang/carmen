@@ -460,13 +460,16 @@ carmen_base_direct_initialize_robot(char *model, char *dev)
     vel2_divisor = carmen_pioneer_params[pioneer_model][5];
   }
 
-  if (pioneer_model < 17) 
+  if (pioneer_model < 17 || pioneer_model >= 22) 
     pioneer_version = 2;
   else
     pioneer_version = 1;
 
   if (carmen_serial_connect(&dev_fd, dev) < 0) 
     return -1;
+  
+  // if you want to use a higher baud-rate:
+  //carmen_serial_configure(dev_fd, 38400, "8N1");
 
   count = 0;
   do 
