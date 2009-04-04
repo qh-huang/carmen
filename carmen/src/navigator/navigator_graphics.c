@@ -1251,8 +1251,8 @@ button_release_handler(GtkMapViewer *the_map_view,
   
   if (placement_status == ORIENTING_SIMULATOR) {
     placement_status = NO_PLACEMENT;
-    angle = atan2(world_point->pose.y - new_person.pose.y, 
-		  world_point->pose.x - new_person.pose.x);    
+    angle = atan2(world_point->pose.y - new_simulator.pose.y, 
+		  world_point->pose.x - new_simulator.pose.x);
     new_simulator.pose.theta = angle;
     carmen_simulator_set_truepose(&(new_simulator.pose));
     cursor = gdk_cursor_new(GDK_LEFT_PTR);
