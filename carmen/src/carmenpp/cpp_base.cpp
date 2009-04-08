@@ -39,6 +39,15 @@ OdometryMessage::~OdometryMessage() {
   this->free();
 }
 
+OdometryMessage& OdometryMessage::operator=(const OdometryMessage &x) {
+  clone(x);
+  return *this;
+}
+
+OdometryMessage& OdometryMessage::operator=(const carmen_base_odometry_message &x) {
+  clone(x);
+  return *this;
+}
 
 void OdometryMessage::save(carmen_FILE *logfile, double logger_timestamp) {
   carmen_logwrite_write_odometry(m_msg, logfile, logger_timestamp);
@@ -62,10 +71,7 @@ AbstractMessage* OdometryMessage::clone() const {
 
 
 void OdometryMessage::init() {
-
-  if (m_msg != NULL) {
-    this->free();
-  }
+  free();
   m_msg = new carmen_base_odometry_message;
   carmen_test_alloc(m_msg);
   carmen_erase_structure(m_msg, sizeof(carmen_base_odometry_message));
@@ -73,6 +79,7 @@ void OdometryMessage::init() {
 
 void OdometryMessage::free() {
   if (m_msg != NULL) {
+    delete m_msg->host;
     delete m_msg;
     m_msg = NULL;
   }
@@ -88,6 +95,7 @@ void OdometryMessage::clone(const OdometryMessage& x) {
 }
 
 void OdometryMessage::clone(const carmen_base_odometry_message& x) {
+  init();
   m_msg->x = x.x;
   m_msg->y = x.y;
   m_msg->theta = x.theta;
@@ -95,7 +103,10 @@ void OdometryMessage::clone(const carmen_base_odometry_message& x) {
   m_msg->rv = x.rv;
   m_msg->acceleration = x.acceleration;
   m_msg->timestamp = x.timestamp;
-  m_msg->host = x.host;
+  if (x.host)
+    m_msg->host = strdup(x.host);
+  else
+    m_msg->host = NULL;
 }
 
 OrientedPoint OdometryMessage::getRobotPose() const {

@@ -83,7 +83,7 @@ CELL& GenericMap<CELL>::getCell(int x, int y) {
     return m_map[x][y];
   }
   else {
-    printf ("ERROR GenericMap::getCell (%d, %d) - out of bounds.\n", x, y);
+    printf ("ERROR GenericMap::getCell (%d, %d) - out of bounds. You may want to use getCellWorld.\n", x, y);
     return m_map[0][0]; 
   }
 }
@@ -94,7 +94,7 @@ CELL& GenericMap<CELL>::getCell(int x, int y) const {
     return m_map[x][y];
   }
   else {
-    printf ("ERROR GenericMap::getCell (%d, %d) - out of bounds.\n", x, y);
+    printf ("ERROR GenericMap::getCell (%d, %d) - out of bounds. You may want to use getCellWorld.\n", x, y);
     return m_map[0][0]; 
   }
 }

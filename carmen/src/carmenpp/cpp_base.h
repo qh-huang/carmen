@@ -6,21 +6,26 @@
 #include <carmen/cpp_point.h>
 
 
-
-
 class OdometryMessage : public AbstractMessage {
  public:
   OdometryMessage();
   OdometryMessage(const OrientedPoint& robotPose, double vTrans=0.0, double vRot=0.0, double acc=0.0);
   OdometryMessage(const OdometryMessage& x);
   OdometryMessage(const carmen_base_odometry_message& x);
+  //! attention: this constructor does NOT copy x,
+  //! but it is deleted when this OdometryMessage is deleted
   OdometryMessage(carmen_base_odometry_message* x);
   OdometryMessage(char* s);
   virtual ~OdometryMessage();
 
+  OdometryMessage& operator=(const OdometryMessage &x);
+  OdometryMessage& operator=(const carmen_base_odometry_message &x);
+
   void init();
   void clone(const OdometryMessage& x);
   void clone(const carmen_base_odometry_message& x);
+  //! attention: this function does NOT copy x
+  //! but it is deleted when this OdometryMessage is deleted
   void setOdometryMessage(carmen_base_odometry_message* x);
   void free();
 
