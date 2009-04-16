@@ -10,6 +10,7 @@ class Point : public point2d<double> {
   Point() : point2d<double>() {};
   Point(double _x, double _y) : point2d<double>(_x, _y) {};
   Point(const Point& p) : point2d<double>(p.x, p.y) {};
+  Point(const point2d<double>& p) : point2d<double>(p.x, p.y) {};
   Point(const carmen_point_t& p) : point2d<double>(p.x, p.y) {};
   virtual ~Point()  {};
 
@@ -22,6 +23,7 @@ class OrientedPoint : public orientedpoint2d<double,double> {
   OrientedPoint() : orientedpoint2d<double,double>() {};
   OrientedPoint(double _x, double _y, double _t) : orientedpoint2d<double,double>(_x, _y, _t) {};
   OrientedPoint(const OrientedPoint& p) : orientedpoint2d<double,double>(p.x, p.y, p.theta) {};
+  OrientedPoint(const orientedpoint2d<double,double>& p) : orientedpoint2d<double,double>(p.x, p.y, p.theta) {};
   OrientedPoint(const carmen_point_t& p) : orientedpoint2d<double,double>(p.x, p.y, p.theta) {};
   virtual ~OrientedPoint() {};
 
