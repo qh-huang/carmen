@@ -100,10 +100,60 @@ public:
   bool updated;
 };
 
+class DoubleRefProbCell {
+public:
+  DoubleRefProbCell(double hits=0, double misses=0) { set(hits, misses); }
+  DoubleRefProbCell(const DoubleRefProbCell& x) {  *this = x;  }
+  
+  void set(double hits, double misses) { 
+    this->hits = hits;  
+    this->misses = misses; 
+    this->val = -1; 
+    if (hits+misses > 0) {
+      val = hits/(hits+misses);
+    }
+    updated = false;
+  }
+	   
+  void hit(double amount = 1.0) { 
+    hits += amount;
+    if (amount != 0)
+      updated = true;
+  }
+
+  void miss(double amount = 1.0) { 
+    misses += amount;
+    if (amount != 0)
+      updated = true;
+  }
+
+  inline operator float() {  
+    if (updated) {
+      val = hits/(hits+misses);
+      updated = false;
+    }
+    return val;  
+  }
+  inline operator double() {      
+    if (updated) {
+      val = hits/(hits+misses);
+      updated = false;
+    }
+    return val;  
+  }
+  
+  double hits;
+  double misses;
+  double val;
+  bool updated;
+};
+
+
 typedef GenericMap<CharCell>     CharMap;
 typedef GenericMap<IntCell>      IntMap;
 typedef GenericMap<FloatCell>    FloatMap;
 typedef GenericMap<DoubleCell>   DoubleMap;
 typedef GenericMap<RefProbCell>  RefProbMap;
+typedef GenericMap<DoubleRefProbCell>  DoubleRefProbMap;
 
 #endif
