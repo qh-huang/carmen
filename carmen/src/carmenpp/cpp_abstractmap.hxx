@@ -116,9 +116,7 @@ carmen_inline bool AbstractMap<CELL>::isInside(double x, double y)  const {
 
 template<class CELL>
 carmen_inline bool AbstractMap<CELL>::isInside(const IntPoint& p) const {
-  if (p.x >= 0 && p.x < getMapSizeX() && p.y >= 0 && p.y < getMapSizeY())
-    return true;
-  return false;
+  return (p.x >= 0 && p.x < getMapSizeX() && p.y >= 0 && p.y < getMapSizeY());
 };
 
 template<class CELL>
