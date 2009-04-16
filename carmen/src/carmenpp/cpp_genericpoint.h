@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <carmen/global.h>
+#include <iostream>
 
 template <class T>
 class point2d {
@@ -54,6 +55,11 @@ carmen_inline bool operator!=(const point2d<T>& p1, const point2d<T>& p2){
   return !(p1 == p2);
 }
 
+template <class T>
+carmen_inline std::ostream& operator<<(std::ostream &s, const point2d<T>& p){
+  s << p.x << " " << p.y;
+  return s;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -69,10 +75,20 @@ class orientedpoint2d: public point2d<T>{
   carmen_inline orientedpoint2d<T,A> rotate(A alpha){
     T s=sin(alpha), c=cos(alpha);
     A a=alpha+theta;
-    a=atan2(sin(a),cos(a));
+    a=atan2(sin(a),cos(a)); //normalize angle
     return orientedpoint2d( c*this->x-s*this->y,
 			    s*this->x+c*this->y, 
 			    a);
+  }
+
+  //! adds the movement of p to <this> orientedpoint
+  carmen_inline orientedpoint2d<T,A> add(const orientedpoint2d<T,A> &p) {
+    T s=sin(theta), c=cos(theta);
+    A a=theta+p.theta;
+    a=atan2(sin(a),cos(a)); //normalize angle
+    return orientedpoint2d(this->x + c*p.x-s*p.y,
+			   this->y + s*p.x+c*p.y,
+			   a);
   }
   
   carmen_inline point2d<T> toPoint2d() const {
@@ -90,7 +106,11 @@ class orientedpoint2d: public point2d<T>{
 
 
 template <class T, class A>
-orientedpoint2d<T,A>::orientedpoint2d(){}
+orientedpoint2d<T,A>::orientedpoint2d(){
+  this->x=0;
+  this->y=0;
+  this->theta=0;
+}
 
 template <class T, class A>
 orientedpoint2d<T,A>::orientedpoint2d(const point2d<T>& p){
@@ -182,6 +202,10 @@ template <class T, class A>
 carmen_inline double euclidianDist(const point2d<T>& p1, const orientedpoint2d<T,A>& p2 ){
   return hypot(p1.x-p2.x, p1.y-p2.y);
 }
+template <class T, class A>
+carmen_inline double angularDist(const orientedpoint2d<T,A>& p1, const orientedpoint2d<T,A>& p2){
+  return fabs(carmen_normalize_theta(p1.theta-p2.theta));
+}
 
 
 template <class T>
@@ -192,8 +216,8 @@ carmen_inline point2d<T> max(const point2d<T>& p1, const point2d<T>& p2){
   return p;
 }
 
-template <class T, class A>
-carmen_inline point2d<T> min(const point2d<T>& p1, const orientedpoint2d<T,A>& p2){
+template <class T>
+carmen_inline point2d<T> min(const point2d<T>& p1, const point2d<T>& p2){
   point2d<T> p=p1;
   p.x=p.x<p2.x?p.x:p2.x;
   p.y=p.y<p2.y?p.y:p2.y;
@@ -225,6 +249,12 @@ carmen_inline orientedpoint2d<T,A> interpolate(const orientedpoint2d<T,A>& p1,
     c=cos(p1.theta)+cos(p2.theta)*gain;
   p.theta=atan2(s,c);
   return p;
+}
+
+template <class T, class A>
+carmen_inline std::ostream& operator<<(std::ostream &s, const orientedpoint2d<T,A>& p){
+  s << p.x << " " << p.y << " " << p.theta;
+  return s;
 }
 
 

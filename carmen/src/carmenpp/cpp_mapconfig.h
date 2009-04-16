@@ -18,6 +18,10 @@ class MapConfig {
   Point m_offset;
 };
 
+// KMW: make sure that your offset is not causing rounding issues, e.g.:
+//      Point offset ( floor( min_x ), floor( min_y ) );
+
+
 carmen_inline bool operator==(const MapConfig& cfg1, const MapConfig& cfg2)  {
   if (cfg1.m_sizeX  == cfg2.m_sizeX && 
       cfg1.m_sizeY  == cfg2.m_sizeY && 
