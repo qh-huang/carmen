@@ -135,7 +135,7 @@ static void sonar_handler(void)
   double theta;
   carmen_traj_point_t robot_posn;
   carmen_traj_point_t obstacle_pt;
-  double max_velocity;
+  double max_velocity = carmen_robot_config.max_t_vel;
   double velocity;
 
   int tooclose = -1;
@@ -210,6 +210,8 @@ static void sonar_handler(void)
       carmen_robot_stop_robot(CARMEN_ROBOT_ALLOW_ROTATE);
   }
 
+  max_front_velocity = max_velocity;
+  min_rear_velocity = -0.0;
   sonar_ready=1;
 }
 
