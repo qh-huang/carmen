@@ -1560,8 +1560,8 @@ navigator_graphics_change_map(carmen_map_p new_map)
     people->length = 0;
   initialize_position(&last_robot);
 
-  sprintf(buffer, "Map: %s", 
-	  carmen_extract_filename(new_map->config.map_name));
+  //  sprintf(buffer, "Map: %s", 
+  //	  carmen_extract_filename(new_map->config.map_name));
   gtk_label_set_text(GTK_LABEL(map_status_label), buffer);
 }
 
