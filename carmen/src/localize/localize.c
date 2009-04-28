@@ -197,8 +197,9 @@ map_update_handler(carmen_map_t *new_map)
   free(map.distance);
   free(map.prob);
   free(map.gprob);
-
+  
   filter = carmen_localize_particle_filter_new(param);
+  carmen_to_localize_map(new_map, &map, param);	
 
   if (placelist.num_places > 0)
     free(placelist.places);
@@ -208,8 +209,8 @@ map_update_handler(carmen_map_t *new_map)
 
   /* create a localize map */
   carmen_warn("Creating likelihood maps... ");
-  carmen_to_localize_map(new_map, &map, param);
   carmen_warn("done.\n");
+
 }
 
 static void
