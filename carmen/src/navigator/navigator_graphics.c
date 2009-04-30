@@ -605,8 +605,8 @@ static void switch_display(GtkAction *action, gpointer user_data
   
   new_display = gtk_radio_action_get_current_value(GTK_RADIO_ACTION(action));
 
-  if (display == new_display)
-    return;
+  //  if (display == new_display)
+  //    return;
   
   navigator_get_map(new_display);
 }
@@ -1333,10 +1333,12 @@ save_image(gpointer data __attribute__ ((unused)),
 		       map_view->port_size_x);
   y_size = carmen_fmin(gdk_pixbuf_get_height(map_view->current_pixbuf), 
 		       map_view->port_size_y);
-
+  
+  
   sprintf(filename, "%s%02d.png", 
 	  carmen_extract_filename(map_view->internal_map->config.map_name), 
 	  counter++);
+  
 
   if (display == CARMEN_NAVIGATOR_ENTROPY_v)
     carmen_graphics_write_pixmap_as_png(map_view->drawing_pixmap, filename, 
@@ -1560,8 +1562,8 @@ navigator_graphics_change_map(carmen_map_p new_map)
     people->length = 0;
   initialize_position(&last_robot);
 
-  //  sprintf(buffer, "Map: %s", 
-  //	  carmen_extract_filename(new_map->config.map_name));
+  sprintf(buffer, "Map: %s", 
+  carmen_extract_filename(new_map->config.map_name));
   gtk_label_set_text(GTK_LABEL(map_status_label), buffer);
 }
 
