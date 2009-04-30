@@ -98,12 +98,14 @@ void navigator_get_map(carmen_navigator_map_t type)
     
   }
 
+  /*
   if (map && strcmp(map->config.map_name, new_map.config.map_name) == 0) {
     if (is_graphics_up)
       navigator_graphics_display_map(new_map.complete_map, type);
     return;
   }
-
+  */
+  
   if (map) 
     carmen_map_destroy(&map);
   
