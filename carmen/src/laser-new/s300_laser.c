@@ -12,7 +12,7 @@
 #define	IS_REFLECT_MASK  0x2000;
 #define SICK_S300_NUM_SCAN_POINTS 541
 
-const unsigned char header_bytes[10] = {0,0,0,0,0,0,0,0,255,7};
+const unsigned char header_bytes[11] = {0,0,0,0,0,0,0,0,255,7,8};
 unsigned char serial_buf[8192];
 unsigned int header_state = 0;	
 
@@ -127,7 +127,7 @@ unsigned int s300_find_header(unsigned char input, struct timeval *timestamp){
 		else header_state = 0;
     	break;
 	case 9:
-		if (input == header_bytes[9]) return 1;
+		if (input == header_bytes[9] || input == header_bytes[10]) return 1;
 		else {
 			header_state = 0;
 	    	break;
