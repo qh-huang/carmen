@@ -24,7 +24,7 @@ NO_GRAPHICS = 1
 ifndef NO_GRAPHICS
 CFLAGS +=
 IFLAGS 	+=	`$(GTK_CONFIG) --cflags`
-LFLAGS 	+= 	-lmap_graphics -lglobal_graphics -lgdk_imlib `$(GTK_CONFIG) --libs gthread`
+LFLAGS 	+= 	-lmap_graphics -lglobal_graphics `$(GTK_CONFIG) --libs gthread`
 SOURCES +=	hmap_editor.c
 PUBLIC_BINARIES +=	hmap_editor
 TARGETS +=	hmap_editor
