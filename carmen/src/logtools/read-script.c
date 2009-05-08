@@ -83,6 +83,7 @@ read_script( char *filename, logtools_log_data_t *script, int verbose ) {
   int lastRScan         = -1;
 
   int FileEnd = FALSE;
+  char *ret_val;
 
   lprop[0].fov.start     =   -M_PI_2;
   lprop[0].fov.end       =    M_PI_2;
@@ -132,21 +133,21 @@ read_script( char *filename, logtools_log_data_t *script, int verbose ) {
 	if (fscanf(fp, "%d:", &numValues1) == EOF)
 	  FileEnd = TRUE;
 	else {
-	  fgets( line, MAX_LINE_LENGTH,fp );
+	  ret_val = fgets( line, MAX_LINE_LENGTH,fp );
 	}
       } else if (!strcmp( command, "#LASER") ){
 	numLaserScans++;
 	if (fscanf(fp, "%d %d:", &numValues1, &numValues2) == EOF)
 	    FileEnd = TRUE;
 	else {
-	  fgets( line, MAX_LINE_LENGTH,fp );
+	  ret_val = fgets( line, MAX_LINE_LENGTH,fp );
 	}
 	if (numValues1>0)
 	  numRLaserScans++;
 	if (numValues2>0)
 	  numRLaserScans++;
       } else {
-	fgets(command,sizeof(command),fp);
+	ret_val = fgets(command,sizeof(command),fp);
       }
     }
   } while (!FileEnd);
@@ -382,7 +383,7 @@ read_script( char *filename, logtools_log_data_t *script, int verbose ) {
 	    exit(0);
 	  */
 	} else {
-	  fgets(command,sizeof(command),fp);
+	  ret_val = fgets(command,sizeof(command),fp);
 	}
       }
     }

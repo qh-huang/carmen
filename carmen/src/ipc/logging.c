@@ -601,12 +601,13 @@ static void add_comments_to_log_file(void)
   static char comments[] =  "*                                   Comments                                   *";
   static char spacer[] =    "*                                                                              *";
   int last_line_p, has_comments_p = FALSE;
-  
+  char *ret_val;
+
   printf("Enter any comments in the log file (end with blank line)\n");
   fflush(stdout);
   
   do {
-    fgets(comment_string, COMMENT_LENGTH, stdin);
+    ret_val = fgets(comment_string, COMMENT_LENGTH, stdin);
     last_line_p = (comment_string[0] == '\n'); /* the "newline" character */
     if (last_line_p) {
       if (has_comments_p)

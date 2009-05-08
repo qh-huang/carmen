@@ -2175,7 +2175,8 @@ int tk(char *talk_string)
 {
   unsigned char outbuf[BUFSIZE], *byte_ptr;
   int tkfd, i, length;
-  
+  int num_written; 
+
   if (model == MODEL_N200)
   {
     length = 3 + strlen(talk_string);
@@ -2193,8 +2194,8 @@ int tk(char *talk_string)
     tkfd = open("/dev/dbtk", O_RDWR);
     if (tkfd >= 0)
     {
-      write(tkfd, talk_string, strlen(talk_string));
-      write(tkfd, "\n", 1);
+      num_written = write(tkfd, talk_string, strlen(talk_string));
+      num_written = write(tkfd, "\n", 1);
       close(tkfd);
       
       return TRUE;

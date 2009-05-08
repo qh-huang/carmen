@@ -71,6 +71,8 @@ _revprintf:
 
 void clog_log_message(const char *source, int level, const char *file, int line, const char *msg, int freemsg)
 {
+  int num_written;
+
 	if (level >= clog_log_level)
 		return;
 
@@ -88,10 +90,10 @@ void clog_log_message(const char *source, int level, const char *file, int line,
 	int len = strlen(msgf);
 
 	if (clog_stdout_flag)
-		write(STDOUT_FILENO, msgf, len);
+	  num_written = write(STDOUT_FILENO, msgf, len);
 
 	if (clog_logfile_fd >= 0)
-		write(clog_logfile_fd, msgf, len);
+	  num_written = write(clog_logfile_fd, msgf, len);
 
 	free(msgf);
 

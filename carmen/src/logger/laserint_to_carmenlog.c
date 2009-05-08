@@ -91,6 +91,8 @@ int main(int argc, char **argv)
   double last_front_laser_timestamp, last_odometry_timestamp;
   int first = 1;
   char key;
+  int num_scanned;
+  char *ret_val;
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);	
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
 	outfile = carmen_fopen(argv[2], "r");
 	if (outfile != NULL) {
 		fprintf(stderr, "Overwrite %s? ", argv[2]);
-		scanf("%c", &key);
+		num_scanned = scanf("%c", &key);
 		if (toupper(key) != 'Y')
 			exit(-1);
 		carmen_fclose(outfile);
@@ -132,19 +134,19 @@ int main(int argc, char **argv)
   get_all_params(outfile);
 
   while(!feof(fp)) {
-    fgets(line, LINE_SIZE, fp);
+    ret_val = fgets(line, LINE_SIZE, fp);
     if(strncmp(line, "@SENS", 5) == 0) {
 
-      fgets(line2, 7, fp);
+      ret_val = fgets(line2, 7, fp);
 
       if(strncmp(line2, "#LASER", 6) == 0) {
 				last_front_laser_timestamp = front_laser_timestamp;
 	
 				sscanf(line, "@SENS %d-%d-%d %d:%d:%f\n", &m, &d, &y, &h, &min, &s);
 				timestamp = h * 3600.0 + min * 60.0 + s;
-				fscanf(fp, " %d %d: ", &temp1, &temp2);
+				num_scanned = fscanf(fp, " %d %d: ", &temp1, &temp2);
 				for(i = 0; i < 180; i++) {
-					fscanf(fp, "%d", &temp1);
+					num_scanned = fscanf(fp, "%d", &temp1);
 					front_laser.range[i] = temp1/100.0;
 				}
 				front_laser.laser_pose.x = odometry.x;
@@ -180,7 +182,7 @@ int main(int argc, char **argv)
 	
 				sscanf(line, "@SENS %d-%d-%d %d:%d:%f\n", &m, &d, &y, &h, &min, &s);
 				timestamp = h * 3600.0 + min * 60.0 + s;
-				fscanf(fp, " %lf %lf %lf", &odometry.x, &odometry.y, 
+				num_scanned = fscanf(fp, " %lf %lf %lf", &odometry.x, &odometry.y, 
 							 &odometry.theta);
 				odometry.x /= 100.0;
 				odometry.y /= 100.0;
@@ -201,7 +203,7 @@ int main(int argc, char **argv)
 
 				current_odometry++;
       }
-      fgets(line2, LINE_SIZE, fp);
+      ret_val = fgets(line2, LINE_SIZE, fp);
     }
   }
 
