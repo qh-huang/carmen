@@ -328,7 +328,8 @@ read_parameters_from_file(void)
 
   count = 0;
   while (!feof(fp)) {
-    fgets(line, MAX_VARIABLE_LENGTH-1, fp);
+    if (fgets(line, MAX_VARIABLE_LENGTH-1, fp) == NULL)
+      continue;
     line[MAX_VARIABLE_LENGTH-1] = '\0';
     if (strlen(line) == MAX_VARIABLE_LENGTH-1) 
       carmen_die("Line %d of file %s is too long.\n"

@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 {
   char filename[1024];
   char key;
+  int num_scanned;
 
   carmen_ipc_initialize(argc, argv);
   carmen_param_check_version(argv[0]);	
@@ -71,12 +72,12 @@ int main(int argc, char **argv)
   if(argc < 2) 
     carmen_die("usage: %s <logfile>\n", argv[0]);
 
-  sprintf(filename, argv[1]);
+  sprintf(filename, "%s", argv[1]);
 
   outfile = carmen_fopen(filename, "r");
   if (outfile != NULL) {
     fprintf(stderr, "Overwrite %s? ", filename);
-    scanf("%c", &key);
+    num_scanned = scanf("%c", &key);
     if (toupper(key) != 'Y')
       exit(-1);
     carmen_fclose(outfile);

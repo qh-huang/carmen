@@ -2696,9 +2696,10 @@ static void displayMessages(void)
 static void stdinHnd(void)
 {
   char inputLine[81];
-  
+  char *ret_val;
+
   bzero(inputLine,sizeof(inputLine));
-  fgets(inputLine,80,stdin);
+  ret_val = fgets(inputLine,80,stdin);
   
   /* Kill the \n at the end of the line */
   inputLine[strlen(inputLine)-1] = '\0';

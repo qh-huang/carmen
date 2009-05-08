@@ -873,6 +873,7 @@ void PrintMap(char *name, TAncestor *parent, int particles, double overlayX, dou
   int startx, starty, lastx, lasty;
   char sysCall[128];
   double hit, theta;
+  int ret_val;
 
   width = MAP_WIDTH;
   height = MAP_HEIGHT;
@@ -968,11 +969,11 @@ void PrintMap(char *name, TAncestor *parent, int particles, double overlayX, dou
   // We're finished making the ppm file, and now convert it to png, for compressed storage and easy viewing.
   fclose(printFile);
   sprintf(sysCall, "convert %s.ppm %s.png", name, name);
-  system(sysCall);
+  ret_val = system(sysCall);
   sprintf(sysCall, "chmod 666 %s.ppm", name);
-  system(sysCall);
+  ret_val = system(sysCall);
   sprintf(sysCall, "chmod 666 %s.png", name);
-  system(sysCall);
+  ret_val = system(sysCall);
   fprintf(stderr, "Map dumped to file\n");
 }
 
@@ -1017,6 +1018,7 @@ void LowSlam(TPath **path, TSenseLog **obs)
   TPath *tempPath;
   TSenseLog *tempObs;
   TAncestor *lineage;
+  int ret_val;
 
   // Initialize the worldMap
   LowInitializeWorldMap();
@@ -1171,7 +1173,7 @@ void LowSlam(TPath **path, TSenseLog **obs)
       j = i;
   PrintMap(name, l_particle[j].ancestryNode, FALSE, -1, -1, -1);
   sprintf(name, "rm map.ppm");
-  system(name);
+  ret_val = system(name);
 
   // Clean up the memory being used.
   DisposeAncestry(l_particleID);

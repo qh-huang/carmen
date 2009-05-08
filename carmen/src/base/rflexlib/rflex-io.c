@@ -257,6 +257,7 @@ int
 waitForETX( int fd, unsigned char *buf, int  *len )
 {
   static int pos, loop, val, dlen;
+  int num_read;
 #ifdef IO_DEBUG
   int i;
 #endif
@@ -264,7 +265,7 @@ waitForETX( int fd, unsigned char *buf, int  *len )
   while( loop<MAX_NUM_LOOPS ) {
     val = bytesWaiting( fd );
     if (val>0) {
-      read( fd, &(buf[pos]), 1 );
+      num_read = read( fd, &(buf[pos]), 1 );
       pos++;
       if (pos>5) {
 	dlen = buf[5] + 9; /* std length (9 char) + data length - end chars (2)*/
@@ -313,10 +314,12 @@ int
 waitForAnswer( int fd, unsigned char *buf, int *len )
 {
   int loop = 0;
+  int num_read;
+
   *len = 0;
   while( loop<MAX_NUM_LOOPS ) {
     if (bytesWaiting( fd )) {
-      read( fd, &(buf[*len]), 1 );
+      num_read = read( fd, &(buf[*len]), 1 );
       *len = *len+1;
       if (*len>=2 && buf[*len-2]==B_ESC && buf[*len-1]==B_STX ) {
 	buf[0] = B_ESC;

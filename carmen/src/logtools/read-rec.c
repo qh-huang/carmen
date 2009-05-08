@@ -180,6 +180,7 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
   int       numEntries = 0;
   int       markerctr = 0;
   int       wifictr = 0;
+  char      *ret_val;
 
   fprintf( stderr, "# read file %s ...\n", filename );
   if ((iop = fopen( filename, "r")) == 0){
@@ -216,7 +217,7 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	} else if ( !strcmp( command, "WIFI") ||
 		    !strcmp( command, "WIFI-DIST") ) {
 	  wifictr++;
-	  fgets(command,sizeof(command),iop);
+	  ret_val = fgets(command,sizeof(command),iop);
 	}
       }
     } while (!FEnd);
@@ -243,7 +244,7 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	} else if (!strcmp( command, "MARKER")) {
 	  markerctr++;
 	}
-	fgets(command,sizeof(command),iop);
+	ret_val = fgets(command,sizeof(command),iop);
       }
     } while (!FEnd);
     break;
@@ -259,7 +260,7 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	} else if (!strcmp( command, "LASER_RANGE") ){
 	  laserctr++;
 	}
-	fgets(command,sizeof(command),iop);
+	ret_val = fgets(command,sizeof(command),iop);
       }
     } while (!FEnd);
     break;
@@ -290,7 +291,7 @@ load_rec2d_file( char *filename, logtools_log_data_t *rec,
 	} else if (!strcmp( command, "sick1:") ){
 	  laserctr++;
 	}
-	fgets(command,sizeof(command),iop);
+	ret_val = fgets(command,sizeof(command),iop);
       }
     } while (!FEnd);
     break;

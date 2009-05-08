@@ -70,12 +70,15 @@ int carmen_read_char(char *c)
 #ifndef CYGWIN
   long available;
   int i;
+  int num_read;
 
   ioctl(0, FIONREAD, &available);
 
   if(available > 0) {
-    for(i = 0; i < available; i++)
-      read(0, c, 1);
+    for(i = 0; i < available; i++) {
+      // Bad: should handle return value
+      num_read = read(0, c, 1);
+    }
     return 1;
   }
   else

@@ -56,6 +56,7 @@ void start_process(process_info_p process)
 {
   char *arg[4];
   int spawned_pid;
+  int ret_val;
 
   /* First argument will be "sh" plus one byte for the terminating null. */
   arg[0] = (char *)malloc((strlen("sh") + 1) * sizeof(char));
@@ -76,7 +77,7 @@ void start_process(process_info_p process)
   /* Fourth argument will be NULL as required by the function. */
   arg[3] = NULL;
 
-  pipe(process->pipefd);
+  ret_val = pipe(process->pipefd);
   
   /* fork! */
   if((spawned_pid = fork()) == 0) {

@@ -408,7 +408,10 @@ char *carmen_get_host(void)
       if (bin_host == NULL)
 	carmen_die("\n\tCan't get machine name from $HOST, $host, $hostname or /bin/hostname.\n"
 		   "\tPlease set one of these environment variables properly.\n\n");      
-      fscanf(bin_host, "%s", hostname);
+      if (fscanf(bin_host, "%s", hostname) != 1) {
+	carmen_die("\n\tCan't get machine name from $HOST, $host, $hostname or /bin/hostname.\n"
+		   "\tPlease set one of these environment variables properly.\n\n");      
+      }
       setenv("HOST", hostname, 1);
       pclose(bin_host);
     }

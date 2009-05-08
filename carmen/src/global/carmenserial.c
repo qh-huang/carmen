@@ -309,18 +309,22 @@ int carmen_serial_ClearInputBuffer(int dev_fd)
   unsigned char buffer[max_serial_buffer_size]; 
   int val = 0;
   int val_total = 0;
-  
+  int num_read;
+
   val_total = carmen_serial_numChars(dev_fd);
   val = val_total;
   
   while (val > max_serial_buffer_size) {
-    read(dev_fd, &buffer, max_serial_buffer_size);
+    // Bad: should handle errors;
+    num_read = read(dev_fd, &buffer, max_serial_buffer_size);
     val -= max_serial_buffer_size;
   }
   
-  if(val > 0) 
-    read(dev_fd, &buffer, val);
-  
+  if(val > 0) {
+    // Bad: should handle errors;
+    num_read = read(dev_fd, &buffer, val);
+  }
+
   return(val_total);
 }
 
