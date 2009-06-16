@@ -29,6 +29,7 @@
 #include <carmen/carmen.h>
 #include <carmen/carmen_stdio.h>
 #include <carmen/readlog.h>
+#include <locale.h>
 
 off_t carmen_logfile_uncompressed_length(carmen_FILE *infile)
 {
@@ -65,6 +66,11 @@ carmen_logfile_index_p carmen_logfile_index_messages(carmen_FILE *infile)
   off_t file_length = 0, file_position = 0, total_bytes, read_count = 0;
 
   unsigned char buffer[10000];
+
+  // KMW: set numeric locale to C, so we can correctly read decimal numbers.
+  //      This fixes problems if your locale is set to, lets say, de_DE.utf8
+  setlocale (LC_NUMERIC,"C");
+
 
   /* allocate and initialize an index */
   index = (carmen_logfile_index_p)calloc(1, sizeof(carmen_logfile_index_t));
