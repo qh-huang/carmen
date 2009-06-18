@@ -5,6 +5,12 @@
 
 <table>
 <tr>
+<td valign=top>10/2008<td>
+<td width=20>&nbsp;</td>
+<td>New carmen release <a href="http://sourceforge.net/project/showfiles.php?group_id=121727">0.7.4-beta</a> has been released.</td>
+</tr>
+<!-- ---- -->
+<tr>
 <td valign=top>11/2007<td>
 <td width=20>&nbsp;</td>
 <td>New carmen release <a href="http://sourceforge.net/project/showfiles.php?group_id=121727">0.7-beta</a> fixes several small problems (including a bug on the laser-odometry-sync).</td>
