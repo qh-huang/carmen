@@ -1,2 +1,2 @@
 #!/bin/tcsh
-scp -rp www/* shell.sf.net:/home/groups/c/ca/carmen/htdocs/
+scp -rp www/* web.sourceforge.net:/home/groups/c/ca/carmen/htdocs/

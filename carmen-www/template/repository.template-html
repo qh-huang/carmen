@@ -5,19 +5,9 @@
 <li>How to get the latest development version of carmen?</li>
 
 <ul>
-	<li> cvs -z3 -d:pserver:anonymous@carmen.cvs.sourceforge.net:/cvsroot/carmen co -P carmen</li>
+	<li> svn co https://carmen.svn.sourceforge.net/svnroot/carmen --username anonymous</li>
 </ul>
 
-<!---
-
-<li>To browse the repository using your www-browser, use the <a href="http://carmen.cvs.sourceforge.net/viewcvs.py/carmen/carmen/">repository viewer</a>.</li>
-
-
-<br>
-<li>The CVS History will be added soon</li>
-
-
---->
 
 <!--AUTO_INSERT_FOOTER-->
 
