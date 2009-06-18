@@ -53,6 +53,7 @@ extern int drawing_offlimits;
 extern int show_offlimits;
 extern int show_place_names;
 extern int deleting_placename;
+extern int editing_placename;
 extern int adding_placename;
 extern int adding_door;
 extern int current_door_num;

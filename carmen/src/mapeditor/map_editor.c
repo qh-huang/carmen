@@ -46,6 +46,7 @@ int show_place_names = 1;
 carmen_map_placelist_p place_list = NULL;
 int places_capacity = 0;
 int deleting_placename;
+int editing_placename;
 int adding_placename;
 int adding_door;
 int current_door_num;

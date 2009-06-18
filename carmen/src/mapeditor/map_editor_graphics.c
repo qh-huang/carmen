@@ -36,6 +36,7 @@
 #include <carmen/carmen_graphics.h>
 #include <carmen/ipc_wrapper.h>
 #include <carmen/map_interface.h>
+#include <math.h>
 
 #include "cursors.h"              /* cursor bitmaps */
 
@@ -245,6 +246,13 @@ draw_place_name(int i, GdkPixmap *pixmap, GdkColor *draw_color)
   gdk_draw_arc(pixmap, drawing_gc, 0, pix_x1-5, pix_y1-5,
 	       10, 10, 0, 360*64); 
 
+  if (place_list->places[i].type==CARMEN_NAMED_POSE_TYPE) {
+    gdk_draw_line(pixmap, drawing_gc, pix_x1, pix_y1, 
+		  pix_x1+7*cos(place_list->places[i].theta), 
+		  pix_y1-7*sin(place_list->places[i].theta));
+  }
+		      
+
   gdk_gc_set_foreground (drawing_gc, &carmen_black);
   gdk_draw_string(pixmap, place_font, drawing_gc, pix_x1, pix_y1-5,
 		  place_list->places[i].name);
@@ -345,6 +353,9 @@ button_press_event( GtkWidget *widget, GdkEventButton *event )
   if (deleting_placename)
     return TRUE;
 
+  if (editing_placename)
+    return TRUE;
+
   if (adding_placename)
     return TRUE;
 
@@ -420,6 +431,9 @@ button_release_event(GtkWidget *widget, GdkEventButton *event )
   if (deleting_placename) {
     do_delete_placename(current_place);
     return TRUE;
+  }
+  if (editing_placename) {
+    start_edit_placename(current_place);
   }
   if (adding_placename) {
     x = pix_x_to_map(event->x)*map->config.resolution;
@@ -533,7 +547,7 @@ motion_notify_event( GtkWidget *widget, GdkEventMotion *event )
   if (tmp_pixmap == NULL)
     return TRUE;
 
-  if (deleting_placename) 
+  if (deleting_placename || editing_placename) 
     {
       handle_deleting_placename_move(map_point.x, map_point.y);
     }
@@ -748,7 +762,8 @@ static GtkActionEntry action_entries[] = {
   {"Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", NULL, G_CALLBACK(quit_menu)},
   {"EditMenu", NULL, "_Edit", NULL, NULL, NULL},
   {"Undo", NULL, "_Undo", "<control>Z", NULL, G_CALLBACK(undo_menu)},
-  {"AddPlacename", NULL, "_Add Placename", NULL, NULL, G_CALLBACK(add_placename)},
+  {"AddPlacename", NULL, "_Add Placename", "<control>A", NULL, G_CALLBACK(add_placename)},
+  {"EditPlacename", NULL, "_Edit Placename", "<control>E", NULL, G_CALLBACK(edit_placename)},
   {"DeletePlacename", NULL, "_Delete Placename", NULL, NULL, G_CALLBACK(delete_placename)},
   {"AddDoor", NULL, "Add Doo_r", NULL, NULL, G_CALLBACK(add_door)},
   {"ViewMenu", NULL, "_View", NULL, NULL, NULL},
@@ -775,6 +790,7 @@ const char *ui_description =
   "      <menuitem action='Undo'/>"
   "      <separator/>"
   "      <menuitem action='AddPlacename'/>"
+  "      <menuitem action='EditPlacename'/>"
   "      <menuitem action='DeletePlacename'/>"
   "      <separator/>"
   "      <menuitem action='AddDoor'/>"

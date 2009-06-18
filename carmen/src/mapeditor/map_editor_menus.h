@@ -46,6 +46,7 @@ void save_map_as_menu(GtkAction *action, gpointer user_data __attribute__ ((unus
 void quit_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 void undo_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 void add_placename(GtkAction *action, gpointer user_data __attribute__ ((unused)));
+void edit_placename(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 void delete_placename(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 void add_door(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 void toggle_view(GtkAction *action, gpointer user_data __attribute__ ((unused)));
@@ -53,6 +54,7 @@ void help_menu(GtkAction *action, gpointer user_data __attribute__ ((unused)));
 
 int map_open(char *filename, int have_graphics);
 void do_delete_placename(int i);
+void start_edit_placename(int i);
 void start_add_placename(double x, double y);
 void start_add_door(double x, double y);
 void finish_add_door(double x, double y);
