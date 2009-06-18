@@ -33,6 +33,7 @@
 
 #include <gtk/gtk.h>
 #include <carmen/carmen.h>
+#include <assert.h>
 
 extern GdkColor carmen_red, carmen_blue, carmen_white, carmen_yellow, 
   carmen_green, carmen_light_blue, carmen_black, carmen_orange, 
@@ -47,6 +48,8 @@ static GtkWidget *placename_dialog;
 static GtkWidget *name_label, *x_label, *y_label, *theta_label;
 static GtkWidget *name_entry, *x_entry, *y_entry, *theta_entry, *x_std_entry, 
   *y_std_entry, *theta_std_entry;
+
+int edit_place_id;
 
 /********************************************************
  *  Menu functions                                      *
@@ -77,6 +80,12 @@ void add_placename(GtkAction *action  __attribute__ ((unused)),
 		   gpointer user_data __attribute__ ((unused)))
 {
   adding_placename = 1;
+}
+
+void edit_placename(GtkAction *action  __attribute__ ((unused)), 
+		   gpointer user_data __attribute__ ((unused)))
+{
+  editing_placename = 1;
 }
 
 void delete_placename(GtkAction *action __attribute__ ((unused)), 
@@ -149,15 +158,26 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
   char *errs;
 
   if (place_list == NULL) {
+    assert(edit_place_id == -1);
     place_list = (carmen_map_placelist_p) calloc(1, sizeof(carmen_map_placelist_t));
     carmen_test_alloc(place_list);
+    place_list->num_places = 0;
   }
 
+  assert(edit_place_id<place_list->num_places);
+
   num_places = place_list->num_places;
-  place_list->places = realloc(place_list->places, 
-			       sizeof(carmen_place_t)*(num_places+1));
-  carmen_test_alloc(place_list->places);
-  place_list->places[num_places].type = CARMEN_NAMED_POSITION_TYPE;
+
+  int current_id = -1;
+  if (edit_place_id<0) {
+    place_list->places = realloc(place_list->places, 
+				 sizeof(carmen_place_t)*(num_places+1));
+    carmen_test_alloc(place_list->places);
+    place_list->places[num_places].type = CARMEN_NAMED_POSITION_TYPE;
+    current_id = place_list->num_places;
+    place_list->num_places++;
+  }
+  else current_id = edit_place_id;
 
   if (strlen(gtk_entry_get_text(GTK_ENTRY(name_entry))) == 0 ||
       strcspn(gtk_entry_get_text(GTK_ENTRY(name_entry)), " \t\r\n") == 0)
@@ -167,7 +187,7 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
     }
   else {
     restore(name_label, name_entry);
-    strcpy(place_list->places[num_places].name, 
+    strcpy(place_list->places[current_id].name, 
 	   gtk_entry_get_text(GTK_ENTRY(name_entry)));
   }
   
@@ -181,7 +201,7 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
   else
     {
       restore(x_label, x_entry);
-      place_list->places[num_places].x = x;
+      place_list->places[current_id].x = x;
     }
 
   y = strtod(gtk_entry_get_text(GTK_ENTRY(y_entry)), &errs);
@@ -194,7 +214,7 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
   else
     {
       restore(y_label, y_entry);
-      place_list->places[num_places].y = y;
+      place_list->places[current_id].y = y;
     }
 
   if (strlen(gtk_entry_get_text(GTK_ENTRY(theta_entry))) > 0)
@@ -208,30 +228,36 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
       else
 	{
 	  restore(theta_label, theta_entry);
-	  place_list->places[num_places].theta = 
+	  place_list->places[current_id].theta = 
 	    carmen_degrees_to_radians(theta);
+	  place_list->places[current_id].type = CARMEN_NAMED_POSE_TYPE;
 	}
     }
+  else {
+    place_list->places[current_id].theta = 0;
+    place_list->places[current_id].type = CARMEN_NAMED_POSITION_TYPE;
+    
+  }
 
   if (strlen(gtk_entry_get_text(GTK_ENTRY(x_std_entry))) > 0 &&
       strlen(gtk_entry_get_text(GTK_ENTRY(y_std_entry))) > 0 &&
       strlen(gtk_entry_get_text(GTK_ENTRY(theta_std_entry))) > 0)
     {
-      place_list->places[num_places].x_std = 
+      place_list->places[current_id].x_std = 
 	strtod(gtk_entry_get_text(GTK_ENTRY(x_std_entry)), NULL);
-      place_list->places[num_places].y_std = 
+      place_list->places[current_id].y_std = 
 	strtod(gtk_entry_get_text(GTK_ENTRY(y_std_entry)), NULL);
-      place_list->places[num_places].theta_std = 
+      place_list->places[current_id].theta_std = 
 	strtod(gtk_entry_get_text(GTK_ENTRY(theta_std_entry)), NULL);
-      place_list->places[num_places].theta_std =      
-	carmen_degrees_to_radians(place_list->places[num_places].theta_std);
-      place_list->places[num_places].type = CARMEN_LOCALIZATION_INIT_TYPE;
+      place_list->places[current_id].theta_std =      
+	carmen_degrees_to_radians(place_list->places[current_id].theta_std);
+      place_list->places[current_id].type = CARMEN_LOCALIZATION_INIT_TYPE;
     }
 
   if (errors)
     return;
   
-  place_list->num_places++;
+
 
   gdk_pixmap_unref(tmp_pixmap);
   tmp_pixmap = NULL;
@@ -239,7 +265,113 @@ void add_place_button(GtkWidget *button __attribute__ ((unused)),
 
   modified++;
   adding_placename = 0;
+  editing_placename = 0;
   gtk_widget_destroy(placename_dialog);
+}
+
+void start_edit_placename(int i)
+{
+  GtkWidget *hbox, *label, *button;
+  char buffer[10];
+  char bigbuffer[22];
+
+  assert(i<place_list->num_places);
+  assert(i>=0);
+
+  placename_dialog = gtk_dialog_new();
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (placename_dialog)->vbox),
+		      hbox, TRUE, TRUE, 0);
+  name_label = gtk_label_new("Place name: ");
+  gtk_box_pack_start (GTK_BOX (hbox), name_label, TRUE, TRUE, 0);
+  name_entry = gtk_entry_new_with_max_length(21);
+  printf("bigbuffer %s", place_list->places[i].name);
+
+  sprintf(bigbuffer, "%s", place_list->places[i].name);
+  gtk_entry_set_text(GTK_ENTRY(name_entry), bigbuffer);
+
+  gtk_widget_set_usize(name_entry, 90, 20);
+  gtk_box_pack_start (GTK_BOX(hbox), name_entry, TRUE, TRUE, 0);
+  
+  hbox = gtk_hbox_new(FALSE, 3);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (placename_dialog)->vbox),
+		      hbox, TRUE, TRUE, 0);
+  
+  x_label = gtk_label_new("X: ");
+  gtk_box_pack_start (GTK_BOX (hbox), x_label, TRUE, TRUE, 0);
+  x_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(x_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), x_entry, TRUE, TRUE, 0);
+  sprintf(buffer, "%.2f", place_list->places[i].x);
+  gtk_entry_set_text(GTK_ENTRY(x_entry), buffer);
+
+  y_label = gtk_label_new("Y: ");
+  gtk_box_pack_start (GTK_BOX (hbox), y_label, TRUE, TRUE, 0);
+  y_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(y_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), y_entry, TRUE, TRUE, 0);
+  sprintf(buffer, "%.2f", place_list->places[i].y);
+  gtk_entry_set_text(GTK_ENTRY(y_entry), buffer);
+  
+  theta_label = gtk_label_new("Theta (deg): ");
+  gtk_box_pack_start (GTK_BOX (hbox), theta_label, TRUE, TRUE, 0);
+  theta_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(theta_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), theta_entry, TRUE, TRUE, 0);
+  if (place_list->places[i].type == CARMEN_NAMED_POSE_TYPE) {
+    sprintf(buffer, "%.2f", carmen_radians_to_degrees(place_list->places[i].theta));
+    gtk_entry_set_text(GTK_ENTRY(theta_entry), buffer);
+  }
+
+  
+  hbox = gtk_hbox_new(FALSE, 3);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (placename_dialog)->vbox),
+		      hbox, TRUE, TRUE, 0);
+  
+  label = gtk_label_new("Std X: ");
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
+  x_std_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(x_std_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), x_std_entry, TRUE, TRUE, 0);
+
+  label = gtk_label_new("Std Y: ");
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
+  y_std_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(y_std_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), y_std_entry, TRUE, TRUE, 0);
+  
+  label = gtk_label_new("Std Theta: ");
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
+  theta_std_entry = gtk_entry_new_with_max_length(5);
+  gtk_widget_set_usize(theta_std_entry, 45, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), theta_std_entry, TRUE, TRUE, 0);
+
+  if (place_list->places[i].type == CARMEN_LOCALIZATION_INIT_TYPE) {
+    sprintf(buffer, "%.2f", place_list->places[i].x_std);
+    gtk_entry_set_text(GTK_ENTRY(x_std_entry), buffer);
+    sprintf(buffer, "%.2f", place_list->places[i].y_std);
+    gtk_entry_set_text(GTK_ENTRY(y_std_entry), buffer);
+    sprintf(buffer, "%.2f", place_list->places[i].theta_std);
+    gtk_entry_set_text(GTK_ENTRY(theta_std_entry), buffer);
+  }
+
+  hbox = GTK_DIALOG(placename_dialog)->action_area;
+  
+  button = gtk_button_new_with_label("OK");
+  gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 5);
+  
+  gtk_signal_connect(GTK_OBJECT(button), "clicked", 
+			 (GtkSignalFunc)add_place_button, NULL);
+  
+  button = gtk_button_new_with_label("Cancel");
+  gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 5);		
+  
+  gtk_signal_connect_object(GTK_OBJECT(button),
+			    "clicked", (GtkSignalFunc)gtk_widget_destroy, 
+			    (gpointer)placename_dialog);	
+
+  edit_place_id = i;
+  gtk_widget_show_all(placename_dialog);
 }
 
 void start_add_placename(double x, double y)
@@ -277,7 +409,7 @@ void start_add_placename(double x, double y)
   sprintf(buffer, "%.2f", y);
   gtk_entry_set_text(GTK_ENTRY(y_entry), buffer);
   
-  theta_label = gtk_label_new("Theta: ");
+  theta_label = gtk_label_new("Theta (deg): ");
   gtk_box_pack_start (GTK_BOX (hbox), theta_label, TRUE, TRUE, 0);
   theta_entry = gtk_entry_new_with_max_length(5);
   gtk_widget_set_usize(theta_entry, 45, 20);
@@ -320,6 +452,7 @@ void start_add_placename(double x, double y)
 			    "clicked", (GtkSignalFunc)gtk_widget_destroy, 
 			    (gpointer)placename_dialog);	
 
+  edit_place_id = -1;
   gtk_widget_show_all(placename_dialog);
 }
 
