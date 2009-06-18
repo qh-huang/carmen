@@ -969,15 +969,15 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
     if (path->map == NULL)
       break;
       
-    carmen_map_graphics_draw_line(the_map_view, &path_colour, path+index-1, 
+    carmen_map_graphics_draw_line_cell_center(the_map_view, &path_colour, path+index-1, 
 				  path+index);
       
     if (nav_panel_config->draw_waypoints) {
       path_x_1 = *(path+index);
       path_x_2 = *(path+index);
       
-      path_x_1.pose.x -= path->map->config.resolution;
-      path_x_1.pose.y -= path->map->config.resolution;
+//      path_x_1.pose.x -= path->map->config.resolution;
+//      path_x_1.pose.y -= path->map->config.resolution;
       path_x_2.pose.x += path->map->config.resolution;
       path_x_2.pose.y += path->map->config.resolution;
       carmen_map_graphics_draw_line(the_map_view, &path_colour, &path_x_1, 
@@ -1333,12 +1333,10 @@ save_image(gpointer data __attribute__ ((unused)),
 		       map_view->port_size_x);
   y_size = carmen_fmin(gdk_pixbuf_get_height(map_view->current_pixbuf), 
 		       map_view->port_size_y);
-  
-  
+
   sprintf(filename, "%s%02d.png", 
 	  carmen_extract_filename(map_view->internal_map->config.map_name), 
 	  counter++);
-  
 
   if (display == CARMEN_NAVIGATOR_ENTROPY_v)
     carmen_graphics_write_pixmap_as_png(map_view->drawing_pixmap, filename, 
@@ -1562,8 +1560,8 @@ navigator_graphics_change_map(carmen_map_p new_map)
     people->length = 0;
   initialize_position(&last_robot);
 
-  sprintf(buffer, "Map: %s", 
-  carmen_extract_filename(new_map->config.map_name));
+    sprintf(buffer, "Map: %s", 
+  	  carmen_extract_filename(new_map->config.map_name));
   gtk_label_set_text(GTK_LABEL(map_status_label), buffer);
 }
 
@@ -1831,7 +1829,7 @@ navigator_graphics_update_plan(carmen_traj_point_p new_plan, int plan_length)
 	  path[index].pose.y = new_plan[index].y;
 	  path[index].pose.theta = new_plan[index].theta;
 	  path[index].map = map_view->internal_map;
-	  carmen_verbose("%.1f %.1f\n", path[index].pose.x, 
+	  carmen_verbose("%.2f %.2f\n", path[index].pose.x, 
 			 path[index].pose.y);
 	}
     } 
