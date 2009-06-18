@@ -780,7 +780,7 @@ char *carmen_string_to_robot_velocity_message(char *string, carmen_robot_velocit
 {
 	char *current_pos = string;
 
-	if (strncmp(current_pos, "VELOCITY", 8) == 0)
+	if (strncmp(current_pos, "VELOCITY ", 9) == 0)
    	current_pos = carmen_next_word(current_pos); 
   
   	msg->tv = CLF_READ_DOUBLE(&current_pos);
@@ -795,7 +795,7 @@ char *carmen_string_to_robot_vector_move_message(char *string, carmen_robot_vect
 {
 	char *current_pos = string;
 
-	if (strncmp(current_pos, "VECTORMOVE", 10) == 0)
+	if (strncmp(current_pos, "VECTORMOVE ", 11) == 0)
    	current_pos = carmen_next_word(current_pos); 
 
   	msg->distance = CLF_READ_DOUBLE(&current_pos);
@@ -810,7 +810,7 @@ char *carmen_string_to_robot_follow_trajectory_message(char *string, carmen_robo
 {
 	char *current_pos = string;
 	
-	if (strncmp(current_pos, "ROBOTVELOCITY", 13) == 0)
+	if (strncmp(current_pos, "ROBOTVELOCITY ", 14) == 0)
    	current_pos = carmen_next_word(current_pos); 
 
 	msg->robot_position.x = CLF_READ_DOUBLE(&current_pos);
@@ -849,7 +849,7 @@ char *carmen_string_to_base_velocity_message(char *string, carmen_base_velocity_
 {
 	char *current_pos = string;
 
-	if (strncmp(current_pos, "BASEVELOCITY", 12) == 0)
+	if (strncmp(current_pos, "BASEVELOCITY ", 13) == 0)
    	current_pos = carmen_next_word(current_pos); 
   
   	msg->tv = CLF_READ_DOUBLE(&current_pos);
