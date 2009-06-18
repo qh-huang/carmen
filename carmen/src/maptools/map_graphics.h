@@ -100,6 +100,11 @@ void carmen_map_graphics_draw_point(GtkMapViewer *map_view, GdkColor *colour,
 void carmen_map_graphics_draw_line(GtkMapViewer *map_view, GdkColor *colour, 
 				   carmen_world_point_p start, 
 				   carmen_world_point_p end);
+
+void carmen_map_graphics_draw_line_cell_center(GtkMapViewer *map_view, GdkColor *colour, 
+				   carmen_world_point_p start, 
+				   carmen_world_point_p end);
+
 void carmen_map_graphics_draw_polygon(GtkMapViewer *map_view, GdkColor *colour,
 				      carmen_world_point_t *points, 
 				      int num_points, int filled);

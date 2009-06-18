@@ -698,6 +698,31 @@ void carmen_map_graphics_draw_line(GtkMapViewer *map_view, GdkColor *colour,
                 p1.y, p2.x, p2.y);
 }
 
+
+void carmen_map_graphics_draw_line_cell_center(GtkMapViewer *map_view, GdkColor *colour, 
+				   carmen_world_point_p start, 
+				   carmen_world_point_p end)
+{
+  carmen_point_t p1, p2;
+
+  if (start->map == NULL || end->map == NULL)
+    return;
+
+  world_to_screen(start, &p1, map_view);
+  world_to_screen(end, &p2, map_view);
+  
+  p1.x += 0.5*map_view->rescale_size;
+  p1.y -= 0.5*map_view->rescale_size;;
+  p2.x += 0.5*map_view->rescale_size;;
+  p2.y -= 0.5*map_view->rescale_size;;
+     
+  gdk_gc_set_foreground(map_view->drawing_gc, colour);
+  
+  gdk_draw_line(map_view->drawing_pixmap, map_view->drawing_gc, p1.x, 
+                p1.y, p2.x, p2.y);
+}
+
+
 void carmen_map_graphics_draw_polygon(GtkMapViewer *map_view, GdkColor *colour,
 				      carmen_world_point_t *points, 
 				      int num_points, int filled)
