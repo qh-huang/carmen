@@ -1166,10 +1166,13 @@ sample(double pix_x, double pix_y)
   
   ink = map->map[map_x][map_y];
 
-  if(ink < 0)
+  if(ink == -2)
     {
-      color = blue;
-      gtk_label_set_text(GTK_LABEL(ink_label), "unknown");
+      set_offlimits();
+    }
+  else if (ink<0)
+    {
+      set_unknown();
     }
   else
     {
