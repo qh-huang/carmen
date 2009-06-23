@@ -668,7 +668,7 @@ static void draw_sonar_arcs(GdkPixmap *pixmap)
   int i;
   int x,y,w,h,theta1,theta2,radius;
   gdk_gc_set_foreground(drawing_gc, &carmen_green);  
-  printf("pose: %f %f %f   offset: %f %f %f\n", sonar.robot_pose.x, sonar.robot_pose.y, sonar.robot_pose.theta, sonar.sonar_offsets[0].x, sonar.sonar_offsets[0].y, sonar.sonar_offsets[0].theta);
+  //  printf("pose: %f %f %f   offset: %f %f %f\n", sonar.robot_pose.x, sonar.robot_pose.y, sonar.robot_pose.theta, sonar.sonar_offsets[0].x, sonar.sonar_offsets[0].y, sonar.sonar_offsets[0].theta);
   for(i=0; i<sonar.num_sonars; i++)
     {
       radius=(int)(sonar.ranges[i]*scale);
