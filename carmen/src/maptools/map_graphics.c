@@ -36,7 +36,7 @@
 static void redraw (GtkMapViewer *map_view, int map_changed, 
 		    int viewport_changed);
 
-static carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
+void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
 				   GtkMapViewer *map_view)
 {
   carmen_map_point_t mp;

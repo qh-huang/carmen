@@ -76,6 +76,10 @@ typedef void (*carmen_graphics_mapview_callback_t)(GtkMapViewer *map_view,
 						   carmen_world_point_p point,
 						   GdkEvent *event);
 
+carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
+					  GtkMapViewer *map_view);
+
+
 GtkMapViewer *carmen_map_graphics_new_viewer(int x_size, int y_size,
 					     double initial_zoom);
 
