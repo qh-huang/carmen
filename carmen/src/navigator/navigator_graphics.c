@@ -756,7 +756,7 @@ static void draw_places(GtkMapViewer *the_map_view, double pixel_size)
   carmen_world_point_t endpoint;
   point.map = the_map_view->internal_map;
   endpoint.map = the_map_view->internal_map;
-  carmen_point_t labelpoint;
+  carmen_world_point_t labelpoint;
 
   
 
@@ -773,11 +773,10 @@ static void draw_places(GtkMapViewer *the_map_view, double pixel_size)
     carmen_map_graphics_draw_circle(the_map_view, &carmen_black, FALSE, 
 				    &point, 5*pixel_size);
 
-    world_to_screen(&point, &labelpoint, the_map_view);
-    labelpoint.x += 8;
-    labelpoint.y += 4;
+    labelpoint = point;
+    labelpoint.pose.x += 8*pixel_size;
 
-    carmen_map_graphics_draw_string(the_map_view, &carmen_black, font, labelpoint.x, labelpoint.y, placelist->places[index].name);
+    carmen_map_graphics_draw_string_world(the_map_view, &carmen_black, font, &labelpoint, placelist->places[index].name);
 
     if (placelist->places[index].type==CARMEN_NAMED_POSE_TYPE) {
       double theta = placelist->places[index].theta;
