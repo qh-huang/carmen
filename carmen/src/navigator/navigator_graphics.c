@@ -69,6 +69,7 @@ Cursor gdk_x11_cursor_get_xcursor (GdkCursor *cursor);
 #define DEFAULT_SHOW_GAUSSIANS 0
 #define DEFAULT_SHOW_LASER 0
 #define DEFAULT_SHOW_SIMULATOR 0
+#define DEFAULT_SHOW_PLACES 0
 
 #define DEFAULT_SHOW_TRACKED_OBJECTS 1
 
@@ -96,6 +97,8 @@ static carmen_world_point_t new_person;
 static carmen_world_point_t new_simulator;
 
 static GdkColor robot_colour, goal_colour, people_colour, path_colour;
+
+static GdkFont *font = NULL; 
 
 static int black_and_white = 0;
 static int is_filming = 0;
@@ -145,6 +148,8 @@ static carmen_list_t *people = NULL;
 static carmen_robot_config_t *robot_config;
 static carmen_navigator_config_t *nav_config;
 static carmen_navigator_panel_config_t *nav_panel_config;
+
+static void do_redraw(void);
 
 static void switch_display(GtkAction *action, gpointer user_data
 			   __attribute__ ((unused)));
@@ -317,6 +322,8 @@ static GtkToggleActionEntry toggle_entries[] = {
    G_CALLBACK(switch_localize_display), FALSE},
   {"ShowLaserData", NULL, "Show Laser Data", NULL, NULL, 
    G_CALLBACK(switch_localize_display), FALSE},
+  {"ShowPlaces", NULL, "Show Places", NULL, NULL, 
+   G_CALLBACK(switch_localize_display), FALSE},
   {"BlackWhite", NULL, "Black&White", NULL, NULL, 
    G_CALLBACK(switch_localize_display), FALSE},
   {"SimShowTruePosition", NULL, "Show True Position", NULL, NULL, 
@@ -358,6 +365,7 @@ const char *ui_description =
     "      <menuitem action='ShowParticles'/>"
     "      <menuitem action='ShowGaussians'/>"
     "      <menuitem action='ShowLaserData'/>"
+    "      <menuitem action='ShowPlaces'/>"
     "      <separator/>"
     "      <menuitem action='BlackWhite'/>"
     "    </menu>"
@@ -411,6 +419,9 @@ switch_localize_display(GtkAction *action,
   } else if (strcmp(name, "ShowGaussians") == 0) {
     toggle = GTK_TOGGLE_ACTION(action);
     nav_panel_config->show_gaussians = gtk_toggle_action_get_active(toggle);
+  } else if (strcmp(name, "ShowPlaces") == 0) {
+    toggle = GTK_TOGGLE_ACTION(action);
+    nav_panel_config->show_places = gtk_toggle_action_get_active(toggle);
   } else if (strcmp(name, "ShowLaserData") == 0) {
     toggle = GTK_TOGGLE_ACTION(action);
     nav_panel_config->show_lasers = gtk_toggle_action_get_active(toggle);
@@ -543,6 +554,8 @@ navigator_graphics_reset(void)
 		  DEFAULT_SHOW_GAUSSIANS);
   assign_variable("/ui/MainMenu/DisplayMenu/ShowLaserData", -1, 
 		  DEFAULT_SHOW_LASER);
+  assign_variable("/ui/MainMenu/DisplayMenu/ShowPlaces", -1, 
+		  DEFAULT_SHOW_PLACES);
   assign_variable("/ui/MainMenu/SimulatorMenu/SimShowTruePosition", -1, 
 		  DEFAULT_SHOW_SIMULATOR);
   assign_variable("/ui/MainMenu/SimulatorMenu/SimShowObjects", -1, 
@@ -588,6 +601,9 @@ navigator_graphics_display_config
   else if (strncmp(attribute, "show laser", 10) == 0)
     assign_variable("/ui/MainMenu/DisplayMenu/ShowLaserData", 
 		    value, DEFAULT_SHOW_LASER);
+  else if (strncmp(attribute, "show places", 11) == 0)
+    assign_variable("/ui/MainMenu/DisplayMenu/ShowPlaces", 
+		    value, DEFAULT_SHOW_PLACES);
   else if (strncmp(attribute, "show simulator", 14) == 0)
     assign_variable("/ui/MainMenu/SimulatorMenu/SimShowTruePosition", 
 		    value, DEFAULT_SHOW_SIMULATOR);
@@ -666,6 +682,10 @@ static GtkWidget *get_main_menu(void)
   gtk_toggle_action_set_active
     (GTK_TOGGLE_ACTION(action), nav_panel_config->show_lasers);
 
+  action = gtk_action_group_get_action(action_group, "ShowPlaces");
+  gtk_toggle_action_set_active
+    (GTK_TOGGLE_ACTION(action), nav_panel_config->show_places);
+
   action = gtk_action_group_get_action(action_group, "SimShowTruePosition");
   gtk_toggle_action_set_active
     (GTK_TOGGLE_ACTION(action), nav_panel_config->show_true_pos);
@@ -728,6 +748,47 @@ static int received_robot_pose(void)
   return (robot.pose.x > 0 && robot.pose.y > 0 && robot.map != NULL);
 }
 
+
+static void draw_places(GtkMapViewer *the_map_view, double pixel_size)
+{
+  int index;
+  carmen_world_point_t point;
+  carmen_world_point_t endpoint;
+  point.map = the_map_view->internal_map;
+  endpoint.map = the_map_view->internal_map;
+  carmen_point_t labelpoint;
+
+  
+
+  if (!nav_panel_config->show_places || !placelist || placelist->num_places == 0)
+    return;
+
+  for (index = 0; index < placelist->num_places; index++) {
+    double x = placelist->places[index].x;
+    double y = placelist->places[index].y;
+    point.pose.x = x;
+    point.pose.y = y;
+    carmen_map_graphics_draw_circle(the_map_view, &carmen_orange, TRUE, 
+				    &point, 5*pixel_size);
+    carmen_map_graphics_draw_circle(the_map_view, &carmen_black, FALSE, 
+				    &point, 5*pixel_size);
+
+    world_to_screen(&point, &labelpoint, the_map_view);
+    labelpoint.x += 8;
+    labelpoint.y += 4;
+
+    carmen_map_graphics_draw_string(the_map_view, &carmen_black, font, labelpoint.x, labelpoint.y, placelist->places[index].name);
+
+    if (placelist->places[index].type==CARMEN_NAMED_POSE_TYPE) {
+      double theta = placelist->places[index].theta;
+      endpoint.pose.x = x + 6*pixel_size*cos(theta);
+      endpoint.pose.y = y + 6*pixel_size*sin(theta);
+      carmen_map_graphics_draw_line_cell_center(the_map_view, &carmen_black, &point, &endpoint);  
+    }
+  }
+}
+
+
 static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
 {
   int index;
@@ -737,7 +798,7 @@ static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
   if (!nav_panel_config->show_particles || particle_msg.particles == NULL)
     return;
 
-  map_particle.map = the_map_view->internal_map;
+    map_particle.map = the_map_view->internal_map;
   
   for(index = 0; index < particle_msg.num_particles; index++) {
     particle.pose.x = particle_msg.particles[index].x;
@@ -942,6 +1003,8 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
 
   pixel_size = 1/map_view->rescale_size*
     map_view->internal_map->config.resolution;
+
+  draw_places(the_map_view, pixel_size);
 
   // carmen_fmax
   //    (map_view->internal_map->config.x_size/(double)map_view->port_size_x,
@@ -1373,6 +1436,8 @@ navigator_graphics_init(int argc, char *argv[],
   int sync_mode_var = 0;
 
   gtk_init (&argc, &argv);
+
+  font = gdk_font_load ("fixed");
 
   carmen_graphics_setup_colors();
   robot_colour = DEFAULT_ROBOT_COLOUR;

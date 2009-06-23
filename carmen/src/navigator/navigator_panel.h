@@ -46,6 +46,7 @@ extern "C" {
     int show_simulator_objects;
     int show_true_pos;
     int show_tracked_objects;
+    int show_places;
   } carmen_navigator_panel_config_t;
 
   void navigator_update_robot(carmen_world_point_p robot);
