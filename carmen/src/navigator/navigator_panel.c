@@ -299,7 +299,9 @@ static void read_parameters(int argc, char *argv[],
     {"navigator_panel", "show_true_pos", CARMEN_PARAM_ONOFF,
      &(navigator_panel_config->show_true_pos), 1, NULL},
     {"navigator_panel", "show_tracked_objects", CARMEN_PARAM_ONOFF,
-     &(navigator_panel_config->show_tracked_objects), 1, NULL}
+     &(navigator_panel_config->show_tracked_objects), 1, NULL},
+    {"navigator_panel", "show_places", CARMEN_PARAM_ONOFF,
+     &(navigator_panel_config->show_places), 1, NULL}
   };
   
   num_items = sizeof(param_list)/sizeof(param_list[0]);
@@ -367,12 +369,11 @@ int main(int argc, char **argv)
   if (map->map == NULL) 
     exit(0);
 
+  carmen_map_get_placelist(&placelist);
+  navigator_graphics_add_placelist(&placelist);
+
   if (is_graphics_up)
     navigator_graphics_change_map(map);
-  
-  carmen_map_get_placelist(&placelist);
-
-  navigator_graphics_add_placelist(&placelist);
 
   carmen_navigator_query_plan(&plan);
 
