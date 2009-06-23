@@ -36,7 +36,7 @@
 static void redraw (GtkMapViewer *map_view, int map_changed, 
 		    int viewport_changed);
 
-void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
+static carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
 				   GtkMapViewer *map_view)
 {
   carmen_map_point_t mp;
@@ -780,6 +780,19 @@ carmen_map_graphics_draw_rectangle(GtkMapViewer *map_view, GdkColor *colour,
   gdk_draw_rectangle(map_view->drawing_pixmap, map_view->drawing_gc, filled, 
                      x, y, width, height);
 
+}
+
+void 
+carmen_map_graphics_draw_string_world(GtkMapViewer *map_view, GdkColor *colour, 
+				GdkFont *font, carmen_world_point_p start, 
+				const char *string __attribute__ ((unused)))
+{
+  carmen_point_t p1;
+  world_to_screen(start, &p1, map_view);
+  gdk_gc_set_foreground (map_view->drawing_gc, colour);
+  gdk_draw_string (map_view->drawing_pixmap, font, map_view->drawing_gc,
+                   p1.x, p1.y, string);
+  return;
 }
 
 void 
