@@ -76,10 +76,6 @@ typedef void (*carmen_graphics_mapview_callback_t)(GtkMapViewer *map_view,
 						   carmen_world_point_p point,
 						   GdkEvent *event);
 
-carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
-					  GtkMapViewer *map_view);
-
-
 GtkMapViewer *carmen_map_graphics_new_viewer(int x_size, int y_size,
 					     double initial_zoom);
 
@@ -127,6 +123,10 @@ void carmen_map_graphics_draw_rectangle(GtkMapViewer *map_view,
 					GdkColor *colour, 
 					int filled, carmen_world_point_p start,
 					carmen_world_point_p end);
+
+void carmen_map_graphics_draw_string_world(GtkMapViewer *map_view, GdkColor *colour, 
+				GdkFont *font, carmen_world_point_p start, 
+				const char *string);
 
 void carmen_map_graphics_draw_string(GtkMapViewer *map_view, GdkColor *colour, 
 				     GdkFont *font, int x, int y, 
