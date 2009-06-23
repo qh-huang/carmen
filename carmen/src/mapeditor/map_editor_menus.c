@@ -285,7 +285,6 @@ void start_edit_placename(int i)
   name_label = gtk_label_new("Place name: ");
   gtk_box_pack_start (GTK_BOX (hbox), name_label, TRUE, TRUE, 0);
   name_entry = gtk_entry_new_with_max_length(21);
-  printf("bigbuffer %s", place_list->places[i].name);
 
   sprintf(bigbuffer, "%s", place_list->places[i].name);
   gtk_entry_set_text(GTK_ENTRY(name_entry), bigbuffer);
