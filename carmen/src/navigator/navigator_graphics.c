@@ -807,8 +807,6 @@ static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
   double offset = the_map_view->internal_map->config.resolution;
   if (5*pixel_size > offset) offset = 5*pixel_size;
  
-  printf("pixelsize: %f\n", pixel_size);
-
   for(index = 0; index < particle_msg.num_particles; index++) {
     /*    particle.pose.x = particle_msg.particles[index].x;
         particle.pose.y = particle_msg.particles[index].y;
