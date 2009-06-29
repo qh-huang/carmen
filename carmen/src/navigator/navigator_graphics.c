@@ -91,6 +91,7 @@ static int num_path_points;
 static carmen_world_point_t *path = NULL;
 static carmen_world_point_t goal;
 static carmen_world_point_t robot;
+static carmen_world_point_t old_robot;
 static carmen_traj_point_t  robot_traj;
 static carmen_world_point_t last_robot;
 static carmen_world_point_t new_person;
@@ -737,6 +738,7 @@ static void do_redraw(void)
   if (display_needs_updating &&
       (carmen_get_time() - time_of_last_redraw > 0.3 || ALWAYS_REDRAW))
     {
+
       carmen_map_graphics_redraw(map_view);
       time_of_last_redraw = carmen_get_time();
       display_needs_updating = 0;
@@ -782,7 +784,7 @@ static void draw_places(GtkMapViewer *the_map_view, double pixel_size)
       double theta = placelist->places[index].theta;
       endpoint.pose.x = x + 6*pixel_size*cos(theta);
       endpoint.pose.y = y + 6*pixel_size*sin(theta);
-      carmen_map_graphics_draw_line_cell_center(the_map_view, &carmen_black, &point, &endpoint);  
+      carmen_map_graphics_draw_line(the_map_view, &carmen_black, &point, &endpoint);  
     }
   }
 }
@@ -791,20 +793,42 @@ static void draw_places(GtkMapViewer *the_map_view, double pixel_size)
 static void draw_particles(GtkMapViewer *the_map_view, double pixel_size)
 {
   int index;
-  carmen_map_point_t map_particle;
-  carmen_world_point_t particle;
 
   if (!nav_panel_config->show_particles || particle_msg.particles == NULL)
     return;
 
-    map_particle.map = the_map_view->internal_map;
-  
+   
+  carmen_world_point_t particle[3];
+
+  particle[0].map = the_map_view->internal_map;
+  particle[1].map = the_map_view->internal_map;
+  particle[2].map = the_map_view->internal_map;
+    
+  double offset = the_map_view->internal_map->config.resolution;
+  if (5*pixel_size > offset) offset = 5*pixel_size;
+ 
+  printf("pixelsize: %f\n", pixel_size);
+
   for(index = 0; index < particle_msg.num_particles; index++) {
-    particle.pose.x = particle_msg.particles[index].x;
-    particle.pose.y = particle_msg.particles[index].y;
-    particle.map = the_map_view->internal_map;
-    carmen_map_graphics_draw_circle(the_map_view, &robot_colour, TRUE, 
-				    &particle, pixel_size);
+    /*    particle.pose.x = particle_msg.particles[index].x;
+        particle.pose.y = particle_msg.particles[index].y;
+        particle.map = the_map_view->internal_map;
+        carmen_map_graphics_draw_circle(the_map_view, &robot_colour, TRUE, &particle, pixel_size); */
+
+    double x = particle_msg.particles[index].x;
+    double y = particle_msg.particles[index].y;
+    double theta = particle_msg.particles[index].theta;
+
+    particle[0].pose.x = x - 0.5*offset*sin(theta);
+    particle[0].pose.y = y + 0.5*offset*cos(theta);
+    particle[1].pose.x = x + 0.5*offset*sin(theta);
+    particle[1].pose.y = y - 0.5*offset*cos(theta);
+
+    particle[2].pose.x = x + 2*offset*cos(theta);
+    particle[2].pose.y = y + 2*offset*sin(theta);
+
+    carmen_map_graphics_draw_polygon(the_map_view, &robot_colour, particle, 3, 0);
+
   }
 
 }
@@ -1022,7 +1046,7 @@ void draw_robot_objects(GtkMapViewer *the_map_view)
     draw_lasers(the_map_view, pixel_size);
     draw_robot(the_map_view, pixel_size);
   } 
-  
+    
   /* 
    * Draw path 
    */
@@ -1763,6 +1787,7 @@ navigator_graphics_add_placelist(carmen_map_placelist_p new_placelist)
 void navigator_graphics_update_dynamics(void) 
 {
   display_needs_updating = 1;
+  printf("update dynamics.\n");
   do_redraw();
 }
 
@@ -1831,9 +1856,9 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
        previous_height != map_view->image_widget->allocation.height)) 
     carmen_map_graphics_adjust_scrollbars(map_view, &robot);    
 
-  robot_distance = carmen_distance_world(&new_robot_w, &robot);
+  robot_distance = carmen_distance_world(&new_robot_w, &old_robot);
   delta_angle = 
-    carmen_normalize_theta(new_robot_w.pose.theta-robot.pose.theta);
+    carmen_normalize_theta(new_robot_w.pose.theta-old_robot.pose.theta);
 
   robot = new_robot_w;
   robot_traj = *new_robot;
@@ -1847,9 +1872,11 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   previous_width = map_view->image_widget->allocation.width;
   previous_height = map_view->image_widget->allocation.height;
 
-  if (autonomous_change || robot_distance > 1.0 || goal_distance > 1.0 ||
-      fabs(delta_angle) > carmen_degrees_to_radians(0.01) )
+  if (autonomous_change || robot_distance > 0.01 || goal_distance > 0.01 ||
+      fabs(delta_angle) > carmen_degrees_to_radians(1) ) {
     display_needs_updating = 1;
+    old_robot = robot;
+  }
 
   sprintf(buffer, "Robot: %5.1f m, %5.1f m, %6.2f", robot.pose.x, 
 	  robot.pose.y, carmen_radians_to_degrees(robot.pose.theta));
@@ -1861,7 +1888,6 @@ navigator_graphics_update_display(carmen_traj_point_p new_robot,
   gtk_label_set_text(GTK_LABEL(goal_status_label), buffer);
 
   last_navigator_update = carmen_get_time();
-
   do_redraw();
 }
 
