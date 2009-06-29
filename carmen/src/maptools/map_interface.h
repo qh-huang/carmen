@@ -92,6 +92,7 @@ int carmen_map_get_global_offset_by_name(char *name,
 /* conversions between map_point_t's and other points */
 int carmen_map_to_world(carmen_map_point_p map_point, carmen_world_point_p world_point);
 int carmen_world_to_map(carmen_world_point_p world_point, carmen_map_point_p map_point); 
+  int carmen_world_to_map_real(carmen_world_point_p world_point, carmen_point_p map_point); /* same as world_to_map, but with coordinate results as reals */
 
 int carmen_point_to_map(carmen_point_p point, carmen_map_point_p map_point, carmen_map_p map);
 

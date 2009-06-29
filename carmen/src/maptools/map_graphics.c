@@ -39,9 +39,8 @@ static void redraw (GtkMapViewer *map_view, int map_changed,
 static carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point_t *p,
 				   GtkMapViewer *map_view)
 {
-  carmen_map_point_t mp;
-  
-  carmen_world_to_map(wp, &mp);
+  carmen_point_t mp;
+  carmen_world_to_map_real(wp, &mp);
 
   mp.y = map_view->internal_map->config.y_size - mp.y;
 
@@ -50,6 +49,10 @@ static carmen_inline void world_to_screen(carmen_world_point_t *wp, carmen_point
 
   p->x -= map_view->x_scroll_adj->value;
   p->y -= map_view->y_scroll_adj->value;  
+  
+  p->x = carmen_round(p->x);
+  p->y = carmen_round(p->y);
+
 }
 
 static carmen_inline void screen_to_map(carmen_point_t *p, carmen_map_point_t *mp,

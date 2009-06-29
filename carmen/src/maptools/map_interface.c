@@ -891,6 +891,20 @@ carmen_world_to_map(carmen_world_point_p world_point,
 }
 
 carmen_inline int 
+carmen_world_to_map_real(carmen_world_point_p world_point, 
+		    carmen_point_p point) 
+{
+  double x = world_point->pose.x / world_point->map->config.resolution;
+  double y = world_point->pose.y / world_point->map->config.resolution;
+
+  point->x = x;
+  point->y = y;
+  point->theta = world_point->pose.theta;
+
+  return 0;
+}
+
+carmen_inline int 
 carmen_map_to_trajectory(carmen_map_point_p carmen_map_point, 
 			 carmen_traj_point_p traj_point) 
 {
