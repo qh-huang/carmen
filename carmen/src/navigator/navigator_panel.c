@@ -207,7 +207,6 @@ static void globalpos_handler(carmen_localize_globalpos_message *msg)
 
   if (!is_graphics_up)
     return;
-
   navigator_graphics_update_display(&new_robot, NULL, 0);
 }
 
