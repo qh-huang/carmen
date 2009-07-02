@@ -145,7 +145,7 @@ typedef struct {
   
 typedef enum {CARMEN_NAVIGATOR_MAP_v, CARMEN_NAVIGATOR_ENTROPY_v, 
 	      CARMEN_NAVIGATOR_COST_v, CARMEN_NAVIGATOR_UTILITY_v,
-              CARMEN_LOCALIZE_LMAP_v, CARMEN_LOCALIZE_GMAP_v} 
+              CARMEN_LOCALIZE_LMAP_v, CARMEN_LOCALIZE_GMAP_v, INVALID=-1} 
   carmen_navigator_map_t;
   
   /** This message is sent to the navigator to get one of its current maps,
