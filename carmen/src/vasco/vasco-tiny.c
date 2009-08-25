@@ -133,6 +133,7 @@ main( int argc, char *argv[] )
       odo = l.robot_pose;
       pos = l.laser_pose;
 
+      /* using the new scan match function that takes robot laser messages...
       carmen_laser_laser_message scan;
       carmen_erase_structure(&scan,  sizeof(carmen_laser_laser_message) );
       scan.timestamp      = l.timestamp;
@@ -142,7 +143,10 @@ main( int argc, char *argv[] )
       scan.range          = l.range;
       scan.remission      = l.remission;
       scan.host           = l.host;
-      corrpos = vascocore_scan_match( scan, pos );
+
+      corrpos = vascocore_scan_match( scan, pos );*/
+      corrpos = vascocore_scan_match_robot( l );
+
       scancnt++;
       corr_move = carmen_move_between_points( old_corrpos, corrpos );
       pos_move = carmen_move_between_points( old_pos, pos );
