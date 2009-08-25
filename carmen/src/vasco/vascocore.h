@@ -187,8 +187,18 @@ void vascocore_init_no_ipc(carmen_vascocore_param_t *new_settings);
 
 void           vascocore_reset();
 
+
+
+  /* wrapper of vascocore_perform_scan_match for laser_laser messages */
 carmen_point_t vascocore_scan_match( carmen_laser_laser_message scan,
 				     carmen_point_t pos );
+
+  /* wrapper of vascocore_perform_scan_match for robot_laser messages */
+carmen_point_t vascocore_scan_match_robot( carmen_robot_laser_message scan );
+
+  /* the actual scan matching routine */  
+carmen_point_t vascocore_perform_scan_match( carmen_point_t pos );
+
 
 carmen_point_t
 vascocore_scan_match_general(int num_readings, float *range, float *angle,

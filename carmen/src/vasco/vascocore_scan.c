@@ -76,23 +76,63 @@ vascocore_copy_scan( carmen_laser_laser_message     scan,
   data->numvalues = scan.num_readings;
 }
 
+void
+vascocore_copy_scan_robot( carmen_robot_laser_message     scan,
+		     carmen_vascocore_extd_laser_t *data )
+{
+  int       i;
+  double    delta,start;
+  
+  data->time = scan.timestamp;
+
+  data->fov =  scan.config.fov;
+  delta = scan.config.angular_resolution; 
+  start = scan.config.start_angle; 
+
+  for (i=0;i<scan.num_readings; i++) {
+    data->val[i] = (double) scan.range[i];
+    data->angle[i] = start + i*delta;
+  }
+  data->numvalues = scan.num_readings;
+}
+
 int
 hpos( int pos )
 {
   return(pos % carmen_vascocore_settings.local_map_history_length);
 }
 
+
+carmen_point_t 
+vascocore_scan_match_robot( carmen_robot_laser_message scan )
+{
+  int p;
+  p = hpos( carmen_vascocore_history.ptr );
+  vascocore_copy_scan_robot( scan, &(carmen_vascocore_history.data[p]) );
+  carmen_point_t pose = scan.laser_pose;
+  return vascocore_perform_scan_match( pose );
+}
+
 carmen_point_t
 vascocore_scan_match( carmen_laser_laser_message scan, carmen_point_t pos )
 {
+  int p;
+  p = hpos( carmen_vascocore_history.ptr );
+  vascocore_copy_scan( scan, &(carmen_vascocore_history.data[p]) );
+  return vascocore_perform_scan_match( pos );
+}
+
+carmen_point_t
+vascocore_perform_scan_match( carmen_point_t pos ) {
   static carmen_point_t  lastpos;
   carmen_point_t         estpos, centerpos, *histpos, nopos = {0.0, 0.0, 0.0};
   carmen_move_t          estmove, bestmove, move, nullmove = {0.0, 0.0, 0.0};
   int                    i, h, hp, hps, p, ctr=0;
 
-  p = hpos( carmen_vascocore_history.ptr );
 
-  vascocore_copy_scan( scan, &(carmen_vascocore_history.data[p]) );
+    p = hpos( carmen_vascocore_history.ptr ); 
+  /* this is done in the wrapper functions now: 
+    vascocore_copy_scan( scan, &(carmen_vascocore_history.data[p]) ); */
   
   if (!carmen_vascocore_history.started) {
     
