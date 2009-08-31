@@ -857,10 +857,11 @@ void carmen_localize_laser_scan_gd(int num_readings, float *range,
 void carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
 			       carmen_localize_summary_p summary, 
 			       carmen_localize_map_p map,
-			       int num_readings, float *range, 
-			       double angular_resolution,
-			       double first_beam_angle,
+			       int num_readings, 
+			       float *range, 
 			       double forward_offset,
+			       double angular_resolution,
+			       double first_beam_angle,			       
 			       int backwards)
 {
   float mean_x, mean_y, mean_theta_x, mean_theta_y, angle;

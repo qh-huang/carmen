@@ -238,16 +238,15 @@ carmen_localize_laser_scan_gd(int num_readings,
 			      int laser_skip);
 
 /** Carry a summary for sending it via ipc to other modules liek the gui **/
-void 
-carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
-			  carmen_localize_summary_p summary, 
-			  carmen_localize_map_p map,
-			  int num_readings, 
-			  float *range, 
-			  double forward_offset,
-			  double angular_resolution,
-			  double first_beam_angle,
-			  int backwards);
+void carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
+			       carmen_localize_summary_p summary, 
+			       carmen_localize_map_p map,
+			       int num_readings, 
+			       float *range, 
+			       double forward_offset,
+			       double angular_resolution,
+			       double first_beam_angle,
+			       int backwards);
 
 #ifdef __cplusplus
 }
