@@ -149,11 +149,26 @@ public:
 };
 
 
+class IntPointCell {
+public:
+  IntPointCell(IntPoint v = IntPoint(-1,-1)) { set(v); }
+  IntPointCell(const IntPointCell& x) { *this = x; }
+  void set(IntPoint v) { val = v; }
+  
+  carmen_inline operator IntPoint() const { return val;}
+  carmen_inline IntPointCell& operator= (const IntPoint& v)  { val = v; return *this;}
+  
+  IntPoint val;
+};
+
+
+
 typedef GenericMap<CharCell>     CharMap;
 typedef GenericMap<IntCell>      IntMap;
 typedef GenericMap<FloatCell>    FloatMap;
 typedef GenericMap<DoubleCell>   DoubleMap;
 typedef GenericMap<RefProbCell>  RefProbMap;
 typedef GenericMap<DoubleRefProbCell>  DoubleRefProbMap;
+typedef GenericMap<IntPointCell> IntPointMap;
 
 #endif

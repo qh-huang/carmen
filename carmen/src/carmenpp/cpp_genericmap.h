@@ -20,6 +20,9 @@ class GenericMap : public AbstractMap<CELL> {
   virtual CELL& getCell(int x, int y);
   virtual CELL& getCell(int x, int y) const;
 
+  CELL*  getLinearData() { return m_maplinear; }
+  CELL** getData()       { return m_map; }
+
  protected:
   CELL*  m_maplinear;
   CELL** m_map;
