@@ -3508,7 +3508,7 @@ unsigned long extract4byteuint(unsigned char *buffer, unsigned short *index)
  */
 double extractdouble(unsigned char *buffer, unsigned short *index)
 {
-  double data;
+  double data = 0.0;
   unsigned long long *tempp, temp;
   
   /* Assume that double is 64 bits and long long is 64 bits. */
