@@ -487,9 +487,6 @@ IPC_EXTERN_FUNCTION (IPC_CONTEXT_PTR IPC_getContext,
 IPC_EXTERN_FUNCTION (IPC_RETURN_TYPE IPC_setContext,
 		     (IPC_CONTEXT_PTR context));
 
-IPC_EXTERN_FUNCTION (long IPC_getPID,
-                     (void));
-
 /*****************************************************************
  *                     TIMER FUNCTIONS
  *****************************************************************/

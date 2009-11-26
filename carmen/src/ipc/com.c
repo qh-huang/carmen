@@ -324,7 +324,8 @@ BOOLEAN x_ipc_connectAtSocket(const char *machine, int32 port,
   
   bzero((char *)&unix_server, sizeof(struct sockaddr_un));
   unix_server.sun_family = AF_UNIX;
-  sprintf(unix_server.sun_path,UNIX_SOCKET_NAME,port);
+  snprintf(unix_server.sun_path, sizeof(unix_server.sun_path)-1,
+	   UNIX_SOCKET_NAME, port);
   
   if ((*writeSd = *readSd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
     return FALSE;
@@ -361,12 +362,15 @@ BOOLEAN x_ipc_connectAtSocket(const char *machine, int32 port,
   fd_set readMask; 
   
   LOCK_IO_MUTEX;
-  sprintf(socketName,UNIX_SOCKET_NAME,port);
+  bzero(portNum, sizeof(portNum));
+  bzero(socketName, sizeof(socketName));
+  snprintf(socketName, sizeof(socketName)-1, UNIX_SOCKET_NAME, port);
   acceptSd = open(socketName, O_RDWR, 0644);
   
-  sprintf(portNum,"%d",port);
+  snprintf(portNum, sizeof(portNum)-1, "%d", port);
   LOCK_M_MUTEX;
-  sprintf(socketName,VX_PIPE_NAME,portNum,GET_M_GLOBAL(modNameGlobal));
+  snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME, portNum,
+	   GET_M_GLOBAL(modNameGlobal));
   UNLOCK_M_MUTEX;
   pipeDevCreate(socketName, VX_PIPE_NUM_BUF, VX_PIPE_BUFFER);
   *writeSd = open(socketName, O_WRONLY, 0644);
@@ -377,7 +381,8 @@ BOOLEAN x_ipc_connectAtSocket(const char *machine, int32 port,
   }
   
   LOCK_M_MUTEX;
-  sprintf(socketName,VX_PIPE_NAME,GET_M_GLOBAL(modNameGlobal),portNum);
+  snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME,
+	   GET_M_GLOBAL(modNameGlobal),portNum);
   UNLOCK_M_MUTEX;
   pipeDevCreate(socketName, VX_PIPE_NUM_BUF, VX_PIPE_BUFFER);
   *readSd = open(socketName, O_RDONLY, 0644);
@@ -388,7 +393,7 @@ BOOLEAN x_ipc_connectAtSocket(const char *machine, int32 port,
   }
   
   LOCK_M_MUTEX;
-  sprintf(portNum, "%s",  GET_M_GLOBAL(modNameGlobal));
+  snprintf(portNum, sizeof(portNum)-1, "%s",  GET_M_GLOBAL(modNameGlobal));
   UNLOCK_M_MUTEX;
   x_ipc_writeNBytes(acceptSd, portNum, 80);
   
@@ -564,7 +569,8 @@ BOOLEAN x_ipc_listenAtSocket(int32 port, int *sd)
   
   bzero((char *)&unix_server, sizeof(struct sockaddr_un));
   unix_server.sun_family = AF_UNIX;
-  sprintf(unix_server.sun_path,UNIX_SOCKET_NAME,port);
+  snprintf(unix_server.sun_path, sizeof(unix_server.sun_path)-1,
+	   UNIX_SOCKET_NAME, port);
   
   /* Get rid of old links. */
   result = unlink(unix_server.sun_path);
@@ -657,7 +663,8 @@ void x_ipc_closeSocket(int port)
   
   bzero((char *)&unix_server, sizeof(struct sockaddr_un));
   unix_server.sun_family = AF_UNIX;
-  sprintf(unix_server.sun_path,UNIX_SOCKET_NAME,port);
+  snprintf(unix_server.sun_path, sizeof(unix_server.sun_path)-1,
+	   UNIX_SOCKET_NAME, port);
   
   /* Get rid of old links. */
   unlink(unix_server.sun_path);
@@ -685,7 +692,8 @@ BOOLEAN x_ipc_listenAtSocket(int32 port, int *sd)
   /* X_IPC_MOD_WARNING("pipeDrv\n");*/
   /* pipeDrv();*/
   
-  sprintf(socketName,UNIX_SOCKET_NAME,port);
+  bzero(socketName, sizeof(socketName));
+  snprintf(socketName, sizeof(socketName)-1, UNIX_SOCKET_NAME, port);
 #ifdef DEBUG
   X_IPC_MOD_WARNING1("pipeDevCreate %s, 3, 80\n", socketName);
 #endif

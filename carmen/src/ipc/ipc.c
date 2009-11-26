@@ -339,12 +339,13 @@ IPC_RETURN_TYPE IPC_defineMsg (const char *msgName, unsigned int length,
 	length != (unsigned int)x_ipc_dataStructureSize(ParseFormatString(formatString))) {
     RETURN_ERROR(IPC_Mismatched_Formatter);
   } else {
+    bzero(msgFormat, sizeof(msgFormat));
     if (length == IPC_VARIABLE_LENGTH) {
-      sprintf(msgFormat, "{int, <byte:1>}");
+      snprintf(msgFormat, sizeof(msgFormat)-1, "{int, <byte:1>}");
     } else if (length == 0) {
       msgFormat[0] = '\0';
     } else {
-      sprintf(msgFormat, "[byte:%d]", length);
+      snprintf(msgFormat, sizeof(msgFormat)-1, "[byte:%d]", length);
     }
     x_ipcRegisterMessage(msgName, BroadcastClass, msgFormat, formatString);
 
@@ -452,12 +453,14 @@ IPC_RETURN_TYPE _IPC_subscribe (const char *msgName, const char *hndName,
   }
 }
 
+#define MAX_HND_NAME 200
+
 IPC_RETURN_TYPE IPC_subscribe (const char *msgName, HANDLER_TYPE handler,
 			       void *clientData)
 {
-  char hndName[100];
+  char hndName[MAX_HND_NAME];
 
-  ipcHandlerName(msgName, handler, hndName);
+  ipcHandlerName(msgName, handler, hndName, sizeof(hndName));
   return _IPC_subscribe(msgName, hndName, handler, clientData, FALSE);
 }
 
@@ -465,9 +468,9 @@ IPC_RETURN_TYPE IPC_subscribeData (const char *msgName,
 				   HANDLER_DATA_TYPE handler,
 				   void *clientData)
 {
-  char hndName[100];
+  char hndName[MAX_HND_NAME];
 
-  ipcHandlerName(msgName, handler, hndName);
+  ipcHandlerName(msgName, handler, hndName, sizeof(hndName));
   return _IPC_subscribe(msgName, hndName, handler, clientData, TRUE);
 }
 
@@ -485,9 +488,9 @@ IPC_RETURN_TYPE _IPC_unsubscribe (const char *msgName, const char *hndName)
 
 IPC_RETURN_TYPE IPC_unsubscribe (const char *msgName, HANDLER_TYPE handler)
 {
-  char hndName[100];
+  char hndName[MAX_HND_NAME];
 
-  ipcHandlerName(msgName, handler, hndName);
+  ipcHandlerName(msgName, handler, hndName, sizeof(hndName));
   return _IPC_unsubscribe(msgName, hndName);
 }
 
@@ -617,7 +620,7 @@ IPC_RETURN_TYPE IPC_setMsgPriority (const char *msgName, int priority)
     msg = x_ipc_findOrRegisterMessage(msgName);
     msg->priority = priority;
 
-    setMsgData.msgName = (char*)msgName;
+    setMsgData.msgName = msgName;
     setMsgData.priority = priority;
 
     return ipcReturnValue(x_ipcInform(IPC_SET_MSG_PRIORITY_INFORM,
@@ -887,13 +890,11 @@ IPC_RETURN_TYPE ipcReturnValue(X_IPC_RETURN_VALUE_TYPE retVal)
 
 /* Create a handler name from the message name and the handler function.
    Stick the handler name into the "hndName" string (already allocated!) */
-void ipcHandlerName (const char *msgName, HANDLER_TYPE handler, char *hndName)
+void ipcHandlerName (const char *msgName, HANDLER_TYPE handler, char *hndName,
+		     uint hndNameSize)
 {
-#if (defined(__x86_64__))
-  sprintf(hndName, "HND-%s%ld", msgName, (long)handler);
-#else
-  sprintf(hndName, "HND-%s%d", msgName, (int)handler);
-#endif
+  bzero(hndName, hndNameSize);
+  snprintf(hndName, hndNameSize-1, "HND-%s%ld", msgName, (long)handler);
 }
 
 void ipcSetError  (IPC_ERROR_TYPE error)
@@ -922,9 +923,4 @@ IPC_RETURN_TYPE IPC_setContext (IPC_CONTEXT_PTR context)
 IPC_CONTEXT_PTR IPC_getContext (void)
 {
   return (IPC_CONTEXT_PTR)x_ipcGetContext();
-}
-
-long IPC_getPID (void)
-{
-  return (long)getpid();
 }

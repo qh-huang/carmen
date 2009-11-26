@@ -323,9 +323,9 @@
 
 /* Interal version control */
 #define IPC_VERSION_MAJOR  3
-#define IPC_VERSION_MINOR  7
-#define IPC_VERSION_MICRO  10
-#define IPC_VERSION_DATE "Dec-30-05"
+#define IPC_VERSION_MINOR  8
+#define IPC_VERSION_MICRO  5
+#define IPC_VERSION_DATE "Nov-09-09"
 #define IPC_COMMIT_DATE "$Date$"
 
 #define MAX_RECONNECT_TRIES (5)
@@ -406,7 +406,7 @@ extern IPC_RETURN_TYPE ipcDataToSend (CONST_FORMAT_PTR format,
 				      IPC_VARCONTENT_PTR varcontent);
 
 extern void ipcHandlerName (const char *msgName, HANDLER_TYPE handler, 
-			    char *hndName);
+			    char *hndName, uint hndNameSize);
 
 #ifdef macintosh
 #pragma export on
@@ -434,5 +434,10 @@ void ipcTriggerTimers (void);
 #ifdef _WINSOCK_
 void startWinsock (void);
 #endif /* _WINSOCK_ */
+
+#ifdef WIN32
+typedef unsigned int uint;
+#define snprintf sprintf_s
+#endif
 
 #endif /* _IPC_PRIV_H */

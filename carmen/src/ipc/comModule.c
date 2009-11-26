@@ -1186,13 +1186,8 @@ void x_ipcHandleClosedConnection(int sd, CONNECTION_PTR connection)
     x_ipc_hashTableRemove((char *)&sd,
 			  (GET_C_GLOBAL(moduleConnectionTable)));
     /* Need to reset the direct info for messages */
-#if (defined(__x86_64__))
-    x_ipc_hashTableIterate((HASH_ITER_FN)x_ipc_resetDirect,
-			   GET_C_GLOBAL(messageTable), (void *)(long)sd);
-#else
     x_ipc_hashTableIterate((HASH_ITER_FN)x_ipc_resetDirect,
 			   GET_C_GLOBAL(messageTable), (void *)sd);
-#endif
     x_ipcFree((char *)connection);
   }
   UNLOCK_CM_MUTEX;
@@ -1650,7 +1645,7 @@ void x_ipcConnectModule(const char *modName, const char *serverHost)
     
     GET_C_GLOBAL(pendingReplies) = x_ipc_listCreate();
     GET_C_GLOBAL(queryNotificationList) = x_ipc_listCreate();
-    initMsgQueue(&GET_C_GLOBAL(msgQueue));
+    //initMsgQueue(&GET_C_GLOBAL(msgQueue)); Already done in globalMInit
     
     modData.modName = modName; /* No need to copy; not saved */
     modData.hostName = (char *)x_ipcMalloc(sizeof(char)*HOST_NAME_SIZE+1);
@@ -1985,8 +1980,10 @@ static void x_ipc_acceptConnections(fd_set *readMask)
 #else
     /* Using Vx pipes for local communication. */
     x_ipc_readNBytes(GET_C_GLOBAL(listenSocket),modName, 80);
-    sprintf(portNum,"%d",GET_C_GLOBAL(listenPortNum));
-    sprintf(socketName,VX_PIPE_NAME,portNum,modName);
+    bzero(portNum, sizeof(portNum));
+    bzero(socketName, sizeof(socketName));
+    snprintf(portNum,sizeof(portNum)-1, "%d", GET_C_GLOBAL(listenPortNum));
+    snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME, portNum, modName);
     readSd = open(socketName, O_RDONLY, 0644);
     if (readSd < 0) {
       X_IPC_MOD_ERROR("Open pipe Failed\n");
@@ -1995,7 +1992,7 @@ static void x_ipc_acceptConnections(fd_set *readMask)
       return;
     }
 
-    sprintf(socketName,VX_PIPE_NAME,modName,portNum);
+    snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME, modName, portNum);
     writeSd = open(socketName, O_WRONLY, 0644);
     if (writeSd < 0) {
       X_IPC_MOD_ERROR("Open pipe Failed\n");
@@ -2399,6 +2396,12 @@ X_IPC_RETURN_VALUE_TYPE x_ipc_waitForReplyFromTime(X_IPC_REF_PTR ref,
 	  FD_SET(fd, &readMask);
 	}
 
+	/* Run any overdue triggers now */
+	if (nextTrigger != WAITFOREVER && nextTrigger <= x_ipc_timeInMsecs()) {
+	  ipcTriggerTimers();
+	  nextTrigger = ipcNextTime();
+	}
+
 	/* Determine how long to stay in the select -- 
 	   either due to the timeout, or due to the timers */
 	if (CONNECTED_TO_CENTRAL && QUEUED_MSGS()) {
@@ -2409,14 +2412,9 @@ X_IPC_RETURN_VALUE_TYPE x_ipc_waitForReplyFromTime(X_IPC_REF_PTR ref,
 	  time.tv_sec = WAITFOREVER; time.tv_usec = 0;
 	} else {
 	  now = x_ipc_timeInMsecs();
-	  if (nextTrigger <= waitTimeout) {
-	    if (nextTrigger <= now) {
-	      ipcTriggerTimers();
-	      nextTrigger = ipcNextTime();
-	      now = x_ipc_timeInMsecs();
-	    }
-	    relTimeout = (nextTrigger == WAITFOREVER
-			  ? WAITFOREVER : nextTrigger - now);
+	  if (waitTimeout == WAITFOREVER || nextTrigger <= waitTimeout) {
+	    /* If we get here, nextTrigger cannot be WAITFOREVER */
+	    relTimeout = nextTrigger - now;
 	    if (relTimeout < 0) relTimeout = 0;
 	  } else {
 	    /* If we get here, either nextTrigger or waitTimeout is not 
@@ -2974,7 +2972,7 @@ static int removeOldest (MSG_PTR msg, MSG_QUEUE_PTR msgQueue)
 static void resizeMsgQueue (MSG_QUEUE_PTR msgQueue)
 {
   msgQueue->queueSize += MSG_QUEUE_INCR;
-  msgQueue->messages  = (QUEUED_MSG_PTR)realloc(msgQueue->messages, /* check_alloc checked */
+  msgQueue->messages  = (QUEUED_MSG_PTR)realloc(msgQueue->messages,
 						(sizeof(QUEUED_MSG_TYPE)*
 						 msgQueue->queueSize));
 }

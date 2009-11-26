@@ -1098,15 +1098,11 @@ static INLINE int32 Basic_Trans_Encode(CONST_GENERIC_DATA_PTR datastruct,
 				     int32 dstart, char *buffer,
 				     int32 bstart, int32 size)
 { 
-  if (size == sizeof(int16)) {
+  if (size == 2 /* bytes */) {
     shortToNetBytes(*(int16 *)(datastruct+dstart), (buffer+bstart));
-  } else if (size == sizeof(int32)) {
+  } else if (size == 4 /* bytes */) {
     intToNetBytes(*(int32 *)(datastruct+dstart), (buffer+bstart));
-#if !(defined(__osf__) || defined(__x86_64__))
-  } else if (size == sizeof(long)) {
-    longToNetBytes(*(long *)(datastruct+dstart), (buffer+bstart));
-#endif /* __osf__ */
-  } else if (size == sizeof(double)) {
+  } else if (size == 8 /* bytes */) {
     doubleToNetBytes(*(double *)(datastruct+dstart), (buffer+bstart));
   } else {
     BCOPY((datastruct+dstart), (buffer+bstart), size);
@@ -1124,15 +1120,11 @@ static INLINE int32 Basic_Trans_Decode(GENERIC_DATA_PTR datastruct,
 #ifdef UNUSED_PRAGMA
 #pragma unused(alignment)
 #endif
-  if (size == sizeof(int16)) {
-    netBytesToShort((buffer+bstart), (int16 *)(datastruct+dstart));
-  } else if (size == sizeof(int32)) {
-    netBytesToInt((buffer+bstart), (int32 *)(datastruct+dstart));
-#if !(defined(__osf__) || defined(__x86_64__))
-  } else if (size == sizeof(long)) {
-    netBytesToLong((buffer+bstart), (long *)(datastruct+dstart));
-#endif /* __osf__ */
-  } else if (size == sizeof(double)) {
+  if (size == 2 /* bytes */) {
+    netBytesToShort((buffer+bstart), (short *)(datastruct+dstart));
+  } else if (size == 4 /* bytes */) {
+    netBytesToInt((buffer+bstart), (int *)(datastruct+dstart));
+  } else if (size == 8 /* bytes */) {
     netBytesToDouble((buffer+bstart), (double *)(datastruct+dstart));
   } else {
     BCOPY((buffer+bstart), (datastruct+dstart), size);
@@ -1806,8 +1798,7 @@ static int32 Matrix_Trans_Decode(GENERIC_DATA_PTR datastruct, int32 dstart,
     X_IPC_MOD_ERROR("Matrix_Trans_Decode. Map cannot be allocated");
   } else { 
     mapElement = MATRIX_ELEMENT(*Map, lb1, lb2, x_ipc_elementSize);
-    if ( (EASY_STRUCTURE_COPY) &&
-	 (byteOrder == BYTE_ORDER || x_ipc_elementSize == 1) ) {
+    if (byteOrder == BYTE_ORDER || x_ipc_elementSize == 1) {
       length = matrixLength(x_ipc_elementSize, lb1, ub1, lb2, ub2);
       FROM_BUFFER_AND_ADVANCE(mapElement, buffer, current_byte, length);
     } else {

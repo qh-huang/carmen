@@ -475,10 +475,13 @@ void globalSInit(void)
 #ifndef NMP_IPC
   GET_S_GLOBAL(freed_flag) = (value_ptr)&GET_S_GLOBAL(free_flag_location);
 #endif
+  bzero(GET_S_GLOBAL(Log_File_Name), sizeof(GET_S_GLOBAL(Log_File_Name)));
 #if defined(VXWORKS)
-  sprintf(GET_S_GLOBAL(Log_File_Name), "x_ipc.log.%ld", tickGet());
+  snprintf(GET_S_GLOBAL(Log_File_Name), sizeof(GET_S_GLOBAL(Log_File_Name)),
+	   "x_ipc.log.%ld", tickGet());
 #else
-  sprintf(GET_S_GLOBAL(Log_File_Name), "x_ipc.log.%ld", (long)time(0));
+  snprintf(GET_S_GLOBAL(Log_File_Name), sizeof(GET_S_GLOBAL(Log_File_Name)),
+	   "x_ipc.log.%ld", (long)time(0));
 #endif
   
 #ifndef NMP_IPC

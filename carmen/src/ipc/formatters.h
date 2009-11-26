@@ -539,6 +539,7 @@ typedef const char *CONST_GENERIC_DATA_PTR;
 #define ALIGN_LONGEST 0x02
 #define ALIGN_INT     0x04
 #define ALIGN_MAC_PPC 0x10
+#define ALIGN_ARM     0x20
 
 #ifndef __TURBOC__
 typedef enum 
@@ -571,7 +572,14 @@ typedef enum
    * the structure to 8 byte boundary.  Used by CodeWarrior, at least, for the
    * Macintosh PPC.
    */
-  MAC_PPC_ALIGNMENT = ALIGN_MAC_PPC
+  MAC_PPC_ALIGNMENT = ALIGN_MAC_PPC,
+
+  /* 
+   * Similar to ALIGN_LONGEST (above) except structures must be even 
+   * word lengths (multiple of 4) long.  Used for ARM compiler.
+   */
+  ARM_ALIGNMENT = ALIGN_ARM
+
 #ifdef FORCE_32BIT_ENUM
     , dummyAlignment = 0x7FFFFFFF
 #endif
@@ -583,12 +591,15 @@ typedef enum
 #define LONGEST_ALIGNMENT ALIGN_LONGEST
 #define INT_ALIGNMENT ALIGN_INT
 #define MAC_PPC_ALIGNMENT ALIGN_MAC_PPC
+#define ARM_ALIGNMENT ALIGN_ARM
 #endif /* __TURBOC__ */
 
 #if defined(M68K) || defined(__m68k__) || defined(__mc68000__)
 #define ALIGN ALIGN_WORD
 #elif defined (i386) && !defined(__CYGWIN__)         /* Get this before PPC603 which comes from ? */
 #define ALIGN ALIGN_INT
+#elif defined(__x86_64)
+#define ALIGN ALIGN_LONGEST
 #elif defined (i386) && defined(__CYGWIN__)
 #define ALIGN ALIGN_LONGEST
 #elif defined(ppc) || defined(PPC603)
@@ -609,16 +620,19 @@ typedef enum
 #define ALIGN ALIGN_INT
 #elif defined(__sgi) || defined(MIPSEB)
 #define ALIGN ALIGN_LONGEST
-#elif defined(__arm__)   /* added by Cyrill Stachniss for Stayton Boards (Intel XScale)  */
-#define ALIGN ALIGN_INT
+#elif defined(__GNUC__) && ((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ <= 3)))
 /* Note, the next line is only valid for gcc, but will only be evaluated 
  * if the machine type is unknown.
+ * Note: #machine is deprecated as of gcc 4.4
  */
-#elif #machine (sparc)
-#define ALIGN ALIGN_LONGEST
-#elif defined(__x86_64__)
-#define ALIGN ALIGN_INT
-#else 
+#  if #machine (sparc)
+#  define ALIGN ALIGN_LONGEST
+#  elif #machine (arm)
+#  define ALIGN ALIGN_ARM
+#  else
+#  undef ALIGN
+#  endif
+#else
 #undef ALIGN
 #endif
 
@@ -649,6 +663,9 @@ typedef enum {
     , dummyEndian = 0x7FFFFFFF
 #endif
 } ENDIAN_TYPE;
+
+/* Define mask for communicating alignment.*/
+#define ALIGNMENT_MASK  0x00FF0000
 
 #define GET_DATA_ENDIAN(msgFormat) \
 ((((msgFormat) & ((int32)DATA_ENDIAN_MASK )) == ((int32)LITTLE_ENDIAN_MASK << 24)) ?\
@@ -681,10 +698,10 @@ typedef enum {
    0)))
 
 #define GET_ALIGNMENT(msgFormat) \
-(((msgFormat) & 0x00FF0000) >>16)
+(((msgFormat) & ALIGNMENT_MASK) >>16)
 
 #define SET_ALIGNMENT(msgFormat) \
-((msgFormat) | ((int32)ALIGN_PACKED << 16))
+((msgFormat & ~ALIGNMENT_MASK) | ((int32)ALIGN_PACKED << 16))
 
 #define GET_CLASSID(msgFormat) ((msgFormat) & 0x0000FFFF)
 
@@ -724,24 +741,10 @@ typedef enum {
 {\
    register const unsigned char *src= ((unsigned char *) &(i));\
    register unsigned char *dest= (unsigned char *)(intBytes);\
-/*   if ((unsigned char *)(intBytes) == (unsigned char *)&(i))*/\
-/*   printf("Same ");*/\
-/*   printf("before %08x ",(int32)(i));*/\
-/*   printf("%02x",(int32)dest[0]);*/\
-/*   printf("%02x",(int32)dest[1]);*/\
-/*   printf("%02x",(int32)dest[2]);*/\
-/*   printf("%02x",(int32)dest[3]);*/\
    *dest++ = *src++;\
    *dest++ = *src++;\
    *dest++ = *src++;\
    *dest = *src;\
-/*   printf(" After %08x \n",(int32)(i));*/\
-/*   dest -= 3;*/\
-/*   printf("%02x",(int32)dest[0]);*/\
-/*   printf("%02x",(int32)dest[1]);*/\
-/*   printf("%02x",(int32)dest[2]);*/\
-/*   printf("%02x",(int32)dest[3]);*/\
-/*   printf(" intToBytes\n");*/\
 }
 
 #define longToBytes(l,longBytes) \
@@ -764,25 +767,6 @@ typedef enum {
    *dest = *src;\
 }
 
-
-#if defined(__arm__)
-#define EASY_STRUCTURE_COPY   0
-#define doubleToBytes(d,doubleBytes) \
-{\
-/* patch to come along with stayton boards. */\
-   register const unsigned char *src= ((unsigned char *) &(d));\
-   register unsigned char *dest= (unsigned char *)(doubleBytes);\
-   *(dest+0) = *(src+4);\
-   *(dest+1) = *(src+5);\
-   *(dest+2) = *(src+6);\
-   *(dest+3) = *(src+7);\
-   *(dest+4) = *(src+0);\
-   *(dest+5) = *(src+1);\
-   *(dest+6) = *(src+2);\
-   *(dest+7) = *(src+3);\
-}
-#else
-#define EASY_STRUCTURE_COPY   1
 #define doubleToBytes(d,doubleBytes) \
 {\
    register const unsigned char *src= ((unsigned char *) &(d));\
@@ -796,8 +780,6 @@ typedef enum {
    *dest++ = *src++;\
    *dest = *src;\
 }
-#endif 
-
 
 #define bytesToShort(shortBytes, sPtr) \
 {\
@@ -811,26 +793,10 @@ typedef enum {
 {\
    register const unsigned char *src= ((unsigned char *) (intBytes));\
    register unsigned char *dest= (unsigned char *)(iPtr);\
-/*   if ((unsigned char *)(intBytes) == (unsigned char *)(iPtr))*/\
-/*   printf("Same ");*/\
-/*   printf("before ");*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ", *iPtr);*/\
    *dest++ = *src++;\
    *dest++ = *src++;\
    *dest++ = *src++;\
    *dest = *src;\
-/*   printf(" after ");*/\
-/*   src -= 3;*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ",*iPtr);*/\
-/*   printf(" bytesToInt\n");*/\
 }
 
 #define bytesToLong(longBytes, lPtr) \
@@ -853,22 +819,6 @@ typedef enum {
    *dest = *src;\
 }
 
-#if defined(__arm__)
-/* patch to come along with stayton boards. */\
-#define bytesToDouble(doubleBytes,dPtr) \
-{\
-   register const unsigned char *src= ((unsigned char *) (doubleBytes));\
-   register unsigned char *dest= (unsigned char *)(dPtr);\
-   *(dest+0) = *(src+4);\
-   *(dest+1) = *(src+5);\
-   *(dest+2) = *(src+6);\
-   *(dest+3) = *(src+7);\
-   *(dest+4) = *(src+0);\
-   *(dest+5) = *(src+1);\
-   *(dest+6) = *(src+2);\
-   *(dest+7) = *(src+3);\
-}
-#else
 #define bytesToDouble(doubleBytes,dPtr) \
 {\
    register const unsigned char *src= ((unsigned char *) (doubleBytes));\
@@ -882,7 +832,7 @@ typedef enum {
    *dest++ = *src++;\
    *dest = *src;\
 }
-#endif
+
 #if ((BYTE_ORDER == LITTLE_ENDIAN) || (BYTE_ORDER == BIG_ENDIAN))
 
 /* The little endian is just reversed from the big endian, so we can
@@ -904,25 +854,12 @@ typedef enum {
    register unsigned char *src= ((unsigned char *) &(i));\
    register unsigned char *dest = (intBytes);\
    register unsigned char s0,s1;\
-/*   if ((unsigned char *)(intBytes) == (unsigned char *)&(i))*/\
-/*   printf("Same ");*/\
-/*   printf("before %08x ",(int32)(i));*/\
-/*   printf("%02x",(int32)dest[0]);*/\
-/*   printf("%02x",(int32)dest[1]);*/\
-/*   printf("%02x",(int32)dest[2]);*/\
-/*   printf("%02x",(int32)dest[3]);*/\
    s0 = src[0];\
    s1 = src[1];\
    dest[0] = src[3];\
    dest[1] = src[2];\
    dest[2] = s1;\
    dest[3] = s0;\
-/*   printf(" After %08x \n",(int32)(i));*/\
-/*   printf("%02x",(int32)dest[0]);*/\
-/*   printf("%02x",(int32)dest[1]);*/\
-/*   printf("%02x",(int32)dest[2]);*/\
-/*   printf("%02x",(int32)dest[3]);*/\
-/*   printf(" intToRevBytes\n");*/\
 }
 
 #define longToRevBytes(l,longBytes) intToRevBytes(l,longBytes)
@@ -953,69 +890,24 @@ typedef enum {
    register unsigned char *src= (unsigned char *)(intBytes);\
    register unsigned char *dest= ((unsigned char *) (iPtr));\
    register unsigned char s0,s1;\
-/*   if ((unsigned char *)(intBytes) == (unsigned char *)(iPtr))*/\
-/*   printf("Same ");*/\
-/*   printf("before ");*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ", *iPtr);*/\
    s0 = src[0];\
    s1 = src[1];\
    dest[0] = src[3];\
    dest[1] = src[2];\
    dest[2] = s1;\
    dest[3] = s0;\
-/*   printf(" after ");*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ",*iPtr);*/\
-/*   printf(" revBytesToInt\n");*/\
 }
 
 #define revBytesToLong(longBytes, lPtr) revBytesToInt(longBytes,(int *)(lPtr)) 
 
 #define revBytesToFloat(floatBytes, fPtr) \
 revBytesToInt((floatBytes), (int32 *)(fPtr)) 
-
-#if defined(__arm__)
-/* patch to come along with stayton boards. */\
+     
 #define revBytesToDouble(doubleBytes,dPtr) \
 {\
    register unsigned char *src= (unsigned char *)(doubleBytes);\
    register unsigned char *dest= ((unsigned char *) (dPtr));\
    register unsigned char s0,s1,s2,s3;\
-   s0 = src[0];\
-   s1 = src[1];\
-   s2 = src[2];\
-   s3 = src[3];\
-   dest[0] = s3; /*src[7];*/\
-   dest[1] = s2; /*src[6];*/\
-   dest[2] = s1; /*src[5];*/\
-   dest[3] = s0; /*src[4];*/\
-   dest[4] = src[7]; /*s3;*/\
-   dest[5] = src[6]; /*s2;*/\
-   dest[6] = src[5]; /*s1;*/\
-   dest[7] = src[4]; /*s0;*/\
-}
-#else
-    
-#define revBytesToDouble(doubleBytes,dPtr) \
-{\
-   register unsigned char *src= (unsigned char *)(doubleBytes);\
-   register unsigned char *dest= ((unsigned char *) (dPtr));\
-   register unsigned char s0,s1,s2,s3;\
-/*   if ((unsigned char *)(doubleBytes) == (unsigned char *)(dPtr))*/\
-/*   printf("Same ");*/\
-/*   printf("before ");*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ", *dPtr);*/\
    s0 = src[0];\
    s1 = src[1];\
    s2 = src[2];\
@@ -1028,15 +920,7 @@ revBytesToInt((floatBytes), (int32 *)(fPtr))
    dest[5] = s2;\
    dest[6] = s1;\
    dest[7] = s0;\
-/*   printf(" after ");*/\
-/*   printf("%02x",(int32)src[0]);*/\
-/*   printf("%02x",(int32)src[1]);*/\
-/*   printf("%02x",(int32)src[2]);*/\
-/*   printf("%02x",(int32)src[3]);*/\
-/*   printf(" %08x ",*dPtr);*/\
-/*   printf(" revBytesToInt\n");*/\
 }
-#endif
 
 #else /* not little endian or big endian, must be pdp endian.*/
 
