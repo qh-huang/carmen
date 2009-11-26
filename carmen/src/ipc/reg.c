@@ -867,13 +867,11 @@ void x_ipcRegisterNamedFormatter(const char *formatterName,
 
 void x_ipcRegisterLengthFormatter(const char *formatter, int32 length)
 {
-  int32 i;
   char s[11];
   
-  for(i=0;i<11;i++)
-    s[i] = '\0';
+  bzero(s, sizeof(s));
   
-  (void)sprintf(s, "%d", length);
+  (void)snprintf(s, sizeof(s), "%d", length);
   
   x_ipcRegisterNamedFormatter(formatter, s);
 }

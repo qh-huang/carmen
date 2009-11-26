@@ -1353,7 +1353,7 @@ void centralRegisterLengthFormatter(char *formatterName, int32 length)
   
   bzero(s, sizeof(s));
   
-  sprintf(s, "%d", length);
+  snprintf(s, sizeof(s)-1, "%d", length);
   
   centralRegisterNamedFormatter(formatterName, s);
 }
@@ -2607,15 +2607,17 @@ static BOOLEAN acceptConnection(int sd)
     /* This is the vx pipe, just read the names of the pipes to open.  */
     x_ipc_readNBytes(GET_C_GLOBAL(x_ipcListenSocket),modName, 80);
 
-    sprintf(portNum,"%d",GET_S_GLOBAL(serverPortGlobal));
-    sprintf(socketName,VX_PIPE_NAME,portNum, modName);
+    bzero(portNum, sizeof(portNum));
+    bzero(socketName, sizeof(socketName));
+    snprintf(portNum, sizeof(portNum)-1, "%d", GET_S_GLOBAL(serverPortGlobal));
+    snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME, portNum, modName);
     moduleReadSd = open(socketName, O_RDONLY, 0644);
     if (moduleReadSd < 0) {
       X_IPC_MOD_ERROR("Open pipe Failed\n");
       return FALSE;
     }
     
-    sprintf(socketName,VX_PIPE_NAME,modName, portNum);
+    snprintf(socketName, sizeof(socketName)-1, VX_PIPE_NAME, modName, portNum);
     moduleWriteSd = open(socketName, O_WRONLY, 0644);
     if (moduleWriteSd < 0) {
       X_IPC_MOD_ERROR("Open pipe Failed\n");

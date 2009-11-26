@@ -211,13 +211,8 @@ IPC_RETURN_TYPE IPC_addTimerGetRef(unsigned long tdelay, long count,
          for backwards compatibility */  
       timer = ipcGetTimer(handler);
       if (timer && timer->status != Timer_Deleted) {
-#if (defined(__x86_64__))
 	X_IPC_MOD_WARNING1("Replacing existing timer for handler (%#lx)\n",
 			   (long)handler);
-#else
-	X_IPC_MOD_WARNING1("Replacing existing timer for handler (%#x)\n",
-			   (int)handler);
-#endif
       } else {
 	timer = NEW(TIMER_TYPE);
 	LOCK_M_MUTEX;

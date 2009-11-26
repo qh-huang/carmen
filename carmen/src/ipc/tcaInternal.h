@@ -834,7 +834,7 @@ typedef struct _MSG {
 #define DEFAULT_PRIORITY -1
 
 typedef struct
-{ char *msgName;
+{ const char *msgName;
   int32 priority;
 } SET_MSG_PRIORITY_TYPE, *SET_MSG_PRIORITY_PTR;
 #endif

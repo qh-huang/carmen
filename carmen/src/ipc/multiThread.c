@@ -39,6 +39,7 @@
 #include <errno.h>
 
 #ifdef THREADED
+#include <string.h>
 #include "multiThread.h"
 
 MUTEX_STATUS initMutex(MUTEX_PTR mutex)

@@ -273,8 +273,8 @@ static IPC_RETURN_TYPE _IPC_unmarshall (FORMATTER_PTR formatter,
       byteOrder = GET_M_GLOBAL(byteOrder);
       alignment = GET_M_GLOBAL(alignment);
       UNLOCK_M_MUTEX;
-      if ( (EASY_STRUCTURE_COPY) && (byteOrder == BYTE_ORDER) &&
-	   x_ipc_sameFixedSizeDataBuffer(formatter) ) {
+      if (byteOrder == BYTE_ORDER &&
+	  x_ipc_sameFixedSizeDataBuffer(formatter)) {
 	BCOPY(byteArray, *dataHandle, dataSize);
       } else {
 	x_ipc_decodeData(formatter, (char *)byteArray, 0, (char *)*dataHandle, 

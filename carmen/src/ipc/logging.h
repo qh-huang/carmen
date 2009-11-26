@@ -279,31 +279,35 @@ typedef struct {
 #define MAX_LOG 300
 #define LOG(description) Log(description)
 #define LOG1(description, arg1) \
-  { char str[MAX_LOG]; sprintf(str, description, arg1); Log(str); }
+  { char str[MAX_LOG]; snprintf(str, MAX_LOG, description, arg1); Log(str); }
 #define LOG2(description, arg1, arg2) \
-  { char str[MAX_LOG]; sprintf(str, description, arg1, arg2); Log(str); }
+  { char str[MAX_LOG];\
+    snprintf(str, MAX_LOG, description, arg1, arg2); Log(str); }
 #define LOG3(description, arg1, arg2, arg3) \
-  { char str[MAX_LOG]; sprintf(str, description, arg1, arg2, arg3); Log(str); }
+  { char str[MAX_LOG];\
+    snprintf(str, MAX_LOG, description, arg1, arg2, arg3); Log(str); }
 
 #define LOG_MESSAGE(description) Log_Message(description)
 #define LOG_MESSAGE1(description, arg1) \
-  { char str[MAX_LOG]; sprintf(str, description, arg1); Log_Message(str); }
+  { char str[MAX_LOG];\
+    snprintf(str, MAX_LOG, description, arg1); Log_Message(str); }
 #define LOG_MESSAGE2(description, arg1, arg2) \
   { char str[MAX_LOG]; \
-    sprintf(str, description, arg1, arg2); Log_Message(str); }
+    snprintf(str, MAX_LOG, description, arg1, arg2); Log_Message(str); }
 #define LOG_MESSAGE3(description, arg1, arg2, arg3) \
   { char str[MAX_LOG]; \
-    sprintf(str, description, arg1, arg2, arg3); Log_Message(str); }
+    snprintf(str, MAX_LOG, description, arg1, arg2, arg3); Log_Message(str); }
 
 #define LOG_STATUS(description) Log_Status(description)
 #define LOG_STATUS1(description, arg1) \
-  { char str[MAX_LOG]; sprintf(str, description, arg1); Log_Status(str); }
+  { char str[MAX_LOG];\
+    snprintf(str, MAX_LOG, description, arg1); Log_Status(str); }
 #define LOG_STATUS2(description, arg1, arg2) \
   { char str[MAX_LOG]; \
-    sprintf(str, description, arg1, arg2); Log_Status(str); }
+    snprintf(str, MAX_LOG, description, arg1, arg2); Log_Status(str); }
 #define LOG_STATUS3(description, arg1, arg2, arg3) \
   { char str[MAX_LOG]; \
-    sprintf(str, description, arg1, arg2, arg3); Log_Status(str); }
+    snprintf(str, MAX_LOG, description, arg1, arg2, arg3); Log_Status(str); }
 
 #endif /* !VXWORKS */
 

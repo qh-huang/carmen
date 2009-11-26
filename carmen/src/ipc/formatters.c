@@ -1580,10 +1580,11 @@ struct iovec *x_ipc_copyVectorization(const struct iovec *vec, int32 space)
  *
  *****************************************************************************/
 
-#if ((ALIGN & ALIGN_LONGEST) || (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC))
+#if ((ALIGN & ALIGN_LONGEST) || (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC)\
+     || (ALIGN & ALIGN_ARM))
 static int32 x_ipc_mostRestrictiveElement(CONST_FORMAT_PTR format)
 {
-  int32 maxSize=0, nextSize, i;
+  int32 maxSize=0;
   
   switch (format->type) {
   case LengthFMT: return format->formatter.i;
@@ -1592,9 +1593,9 @@ static int32 x_ipc_mostRestrictiveElement(CONST_FORMAT_PTR format)
     LOCK_M_MUTEX;
     maxSize = (GET_M_GLOBAL(TransTable)[format->formatter.i].RLength)();
     UNLOCK_M_MUTEX;
-#if ((ALIGN & ALIGN_LONGEST) || defined(__x86_64__))
+#if (ALIGN & ALIGN_LONGEST)
     return maxSize;
-#elif (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC)
+#elif (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC) || (ALIGN & ALIGN_ARM)
     return (maxSize < (int32)sizeof(int32) ? maxSize : sizeof(int32));
 #else
     /* should never get here. */
@@ -1608,15 +1609,22 @@ static int32 x_ipc_mostRestrictiveElement(CONST_FORMAT_PTR format)
     return x_ipc_mostRestrictiveElement(format->formatter.a[1].f);
     
   case StructFMT:
-    maxSize = x_ipc_mostRestrictiveElement(format->formatter.a[1].f);
-    for (i=2; i<format->formatter.a[0].i; i++) {
-      nextSize = x_ipc_mostRestrictiveElement(format->formatter.a[i].f);
-      if (nextSize > maxSize) maxSize = nextSize;
-    }
-#if ((ALIGN & ALIGN_LONGEST) || defined(__x86_64__))
-    return maxSize;
+#if (ALIGN & ALIGN_ARM)
+    return (int32)sizeof(int32);
+#else
+    {
+      int32 nextSize, i;
+      maxSize = x_ipc_mostRestrictiveElement(format->formatter.a[1].f);
+      for (i=2; i<format->formatter.a[0].i; i++) {
+	nextSize = x_ipc_mostRestrictiveElement(format->formatter.a[i].f);
+	if (nextSize > maxSize) maxSize = nextSize;
+      }
+#if (ALIGN & ALIGN_LONGEST)
+      return maxSize;
 #elif (ALIGN & ALIGN_INT) || (ALIGN & ALIGN_MAC_PPC)
-    return (maxSize < (int32)sizeof(int32) ? maxSize : sizeof(int32));
+      return (maxSize < (int32)sizeof(int32) ? maxSize : sizeof(int32));
+#endif
+    }
 #endif
   case NamedFMT:
     return x_ipc_mostRestrictiveElement(x_ipc_fmtFind(format->formatter.name));
@@ -1762,7 +1770,8 @@ int32 x_ipc_alignField(CONST_FORMAT_PTR format, int32 currentField,
 	      ? currentDataSize : currentDataSize + 1);
     }
   }
-#elif ((ALIGN & ALIGN_LONGEST) | (ALIGN & ALIGN_INT) | (ALIGN & ALIGN_MAC_PPC))
+#elif ((ALIGN & ALIGN_LONGEST) | (ALIGN & ALIGN_INT) | (ALIGN & ALIGN_MAC_PPC)\
+       | (ALIGN & ALIGN_ARM))
   int32 nextField, appropriateSize, rem;
   FORMAT_ARRAY_PTR formatArray;   
   
@@ -2120,8 +2129,7 @@ static SIZES_TYPE x_ipc_transferToBuffer(CONST_FORMAT_PTR format,
     }
     break;
   case StructFMT:
-    if ((EASY_STRUCTURE_COPY) &&
-	x_ipc_sameFixedSizeDataBuffer(format)) {
+    if (x_ipc_sameFixedSizeDataBuffer(format)) {
       sizes.data = x_ipc_dataStructureSize(format);
       TO_BUFFER_AND_ADVANCE(dataStruct+currentData, buffer, currentByte, 
 			    sizes.data);
@@ -2141,9 +2149,8 @@ static SIZES_TYPE x_ipc_transferToBuffer(CONST_FORMAT_PTR format,
     formatArray = format->formatter.a;
     arraySize = x_ipc_fixedArraySize(formatArray);
     nextFormat = formatArray[1].f;
-    if ((EASY_STRUCTURE_COPY) &&
-	x_ipc_sameFixedSizeDataBuffer(nextFormat)) {
-      elements = arraySize * x_ipc_dataStructureSize(nextFormat); 
+    if (x_ipc_sameFixedSizeDataBuffer(nextFormat)) {
+      elements = arraySize * x_ipc_dataStructureSize(nextFormat);
       BCOPY(dataStruct+currentData, buffer+currentByte, elements);
       currentByte += elements;
       currentData += elements;
@@ -2165,8 +2172,7 @@ static SIZES_TYPE x_ipc_transferToBuffer(CONST_FORMAT_PTR format,
     intToNetBytes(arraySize, buffer+currentByte);
     currentByte += sizeof(int32);
     structPtr = REF(GENERIC_DATA_PTR, dataStruct, currentData);
-    if ((EASY_STRUCTURE_COPY) &&
-	x_ipc_sameFixedSizeDataBuffer(nextFormat)) {
+    if (x_ipc_sameFixedSizeDataBuffer(nextFormat)) {
       elements = arraySize * x_ipc_dataStructureSize(nextFormat);
       BCOPY(structPtr, buffer+currentByte, elements);
       currentByte += elements;
@@ -2271,8 +2277,7 @@ static SIZES_TYPE x_ipc_transferToDataStructure(CONST_FORMAT_PTR format,
 			  sizeof(GENERIC_DATA_PTR));
     break;
   case StructFMT:
-    if ((EASY_STRUCTURE_COPY) &&
-	(byteOrder == BYTE_ORDER) &&
+    if ((byteOrder == BYTE_ORDER) &&
 	(x_ipc_sameFixedSizeDataBuffer(format))) {
       sizes.buffer = x_ipc_dataStructureSize(format);
       FROM_BUFFER_AND_ADVANCE(dataStruct+currentData, buffer, currentByte, 
@@ -2294,8 +2299,7 @@ static SIZES_TYPE x_ipc_transferToDataStructure(CONST_FORMAT_PTR format,
     formatArray = format->formatter.a;
     arraySize = x_ipc_fixedArraySize(formatArray);
     nextFormat = formatArray[1].f;
-    if ((EASY_STRUCTURE_COPY) &&
-	(byteOrder == BYTE_ORDER) &&
+    if ((byteOrder == BYTE_ORDER) &&
 	(x_ipc_sameFixedSizeDataBuffer(nextFormat))) {
       elements = arraySize * x_ipc_dataStructureSize(nextFormat);
       BCOPY(buffer+currentByte, dataStruct+currentData, elements);
@@ -2432,8 +2436,7 @@ static SIZES_TYPE x_ipc_transferToDataStructure(CONST_FORMAT_PTR format,
     TO_BUFFER_AND_ADVANCE(&newStruct, dataStruct, currentData, 
 			  sizeof(GENERIC_DATA_PTR));
     if (newStruct) {
-      if ((EASY_STRUCTURE_COPY) &&
-	  (byteOrder == BYTE_ORDER) &&
+      if ((byteOrder == BYTE_ORDER) &&
 	  (x_ipc_sameFixedSizeDataBuffer(nextFormat))) {
 	elements = arraySize * x_ipc_dataStructureSize(nextFormat);
 	BCOPY(buffer+currentByte, newStruct, elements);

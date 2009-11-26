@@ -381,10 +381,8 @@ void *x_ipcMalloc(size_t amount)
     /* X_IPC_MOD_WARNING1("calling x_ipcMalloc(%d) before initialized\n", amount);*/
 #if defined(DBMALLOC)
     mem = malloc(file, line, amount);
-    /* check_alloc checked */
 #else
     mem = malloc(amount);
-    /* check_alloc checked */
 #endif
     if (!mem) 
       X_IPC_MOD_ERROR1("x_ipcMalloc: NULL returned from malloc for request: %d\n", 

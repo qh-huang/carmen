@@ -136,8 +136,9 @@ void x_ipcError(const char *description, ...)
     va_list args;
     char msg[150];
     
+    bzero(msg, sizeof(msg));
     va_start(args, description);
-    vsprintf(msg, (char *)description, args);
+    vsnprintf(msg, sizeof(msg), (char *)description, args);
     va_end(args);
     if (x_ipc_LogMessagesP()) {
       LOG1("%s\n", msg);
