@@ -138,7 +138,7 @@ change_map_zone_request_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 static void
 compress_map_msg(carmen_grid_map_message *map_msg, carmen_map_t *map)
 {
-  uLong compress_buf_size;
+  uLongf compress_buf_size;
   int compress_return = -1;
 
   compress_buf_size = map->config.x_size*map->config.y_size*1.01+12;
@@ -147,7 +147,7 @@ compress_map_msg(carmen_grid_map_message *map_msg, carmen_map_t *map)
     calloc(compress_buf_size, sizeof(unsigned char));
   carmen_test_alloc(map_msg->map);
   compress_return = compress((void *)map_msg->map, 
-			     (uLong *)&compress_buf_size,
+			     &compress_buf_size,
 			     (void *)map->complete_map, 
 			     (uLong)map->config.x_size * 
 			     map->config.y_size*sizeof(float));

@@ -325,7 +325,7 @@ static void navigator_map_request_handler(MSG_INSTANCE msgRef,
   carmen_navigator_map_message *map_msg;
 
 #ifndef NO_ZLIB
-  uLong compress_buf_size;
+  uLongf compress_buf_size;
   int compress_return;
   unsigned char *compressed_map;
 #endif
@@ -346,7 +346,7 @@ static void navigator_map_request_handler(MSG_INSTANCE msgRef,
     calloc(compress_buf_size, sizeof(unsigned char));
   carmen_test_alloc(compressed_map);
   compress_return = compress((void *)compressed_map, 
-			     (uLong *)&compress_buf_size,
+			     &compress_buf_size,
 			     (void *)map_msg->data, 
 			     (uLong)map_msg->size);
   if (compress_return != Z_OK) {

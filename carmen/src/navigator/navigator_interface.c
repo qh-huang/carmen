@@ -302,7 +302,7 @@ carmen_navigator_get_map(carmen_navigator_map_t map_type,
 #ifndef NO_ZLIB
   int uncompress_return;
   int uncompress_size;
-  int uncompress_size_result;
+  uLongf uncompress_size_result;
   unsigned char *uncompressed_data;
 #endif
 
@@ -336,7 +336,7 @@ carmen_navigator_get_map(carmen_navigator_map_t map_type,
       carmen_test_alloc(uncompressed_data);
       uncompress_size_result = uncompress_size*sizeof(float);
       uncompress_return = uncompress((void *)uncompressed_data,   
-				     (uLong *)&uncompress_size_result,
+				     &uncompress_size_result,
 				     (void *)response->data, 
 				     response->size);
       response->data = uncompressed_data;
