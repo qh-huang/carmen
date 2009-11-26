@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
   double x, y, theta, tv, rv;  
   double left_disp, right_disp, delta_time;
   int fd;
+  int unused_return_value;
 
   if (argc != 2 || carmen_strncasecmp(argv[1], "-h", 2) == 0 ||
       carmen_strncasecmp(argv[1], "--h", 3) == 0) {
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
   carmen_warn("Orc drive test: %sMAKE SURE THE ROBOT IS ON BLOCKS%s.\n",
 	      carmen_red_code, carmen_normal_code);
   carmen_warn("Hit return to start the orc drive test...."); 
-  scanf("%*c");
+  unused_return_value = scanf("%*c");
 
   if (1) {
   // Move left wheel 
