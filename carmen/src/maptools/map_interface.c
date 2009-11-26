@@ -128,7 +128,7 @@ map_update_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 #ifndef NO_ZLIB
   int uncompress_return;
   int uncompress_size;
-  int uncompress_size_result;
+  uLongf uncompress_size_result;
 #endif
 
   context_id = get_context_id();
@@ -167,7 +167,7 @@ map_update_interface_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
 	sizeof(float);
       uncompress_size_result = uncompress_size;
       uncompress_return = uncompress((void *)new_map->complete_map,   
-				     (uLong *)&uncompress_size_result,
+				     &uncompress_size_result,
 				     (void *)map_msg.map, 
 				     map_msg.size);
     } 
@@ -454,7 +454,7 @@ carmen_map_get_gridmap_by_name(char *name, carmen_map_p client_map)
 #ifndef NO_ZLIB
   int uncompress_return;
   int uncompress_size;
-  int uncompress_size_result;
+  uLongf uncompress_size_result;
 #endif
 
   if (name) {
@@ -514,7 +514,7 @@ carmen_map_get_gridmap_by_name(char *name, carmen_map_p client_map)
 	  uncompress_size_result = uncompress_size;
 	  uncompress_return = uncompress
 	    ((void *)client_map->complete_map,   
-	     (uLong *)&uncompress_size_result,
+	     &uncompress_size_result,
 	     (void *)response->map, response->size);
 	} 
       else 

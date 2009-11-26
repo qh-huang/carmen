@@ -245,7 +245,7 @@ static void map_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
   carmen_localize_map_message response;
 
 #ifndef NO_ZLIB
-  uLong compress_buf_size;
+  uLongf compress_buf_size;
   int compress_return;
   unsigned char *compressed_map;
 #endif
@@ -276,7 +276,7 @@ static void map_query_handler(MSG_INSTANCE msgRef, BYTE_ARRAY callData,
     calloc(compress_buf_size, sizeof(unsigned char));
   carmen_test_alloc(compressed_map);
   compress_return = compress((void *)compressed_map, 
-			     (uLong *)&compress_buf_size,
+			     &compress_buf_size,
 			     (void *)response.data, 
 			     (uLong)response.size);
   if (compress_return != Z_OK) {
