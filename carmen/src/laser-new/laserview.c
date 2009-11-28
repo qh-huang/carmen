@@ -99,7 +99,7 @@ Redraw(void)
   static GdkGC *Drawing_GC = NULL;
   static GdkPixmap *pixmap = NULL;
   GdkPoint *poly = NULL;
-  char str[20];
+  char str[100];
   static double framerate = 0.0;
 
 
@@ -184,38 +184,38 @@ Redraw(void)
   if(laser_count % 10 == 0 || laser_count < 10)
     framerate = laser_count / (carmen_get_time() - start_time);
 
-  sprintf(str, "Laser %d : %.1f fps", laser_num, framerate);
+  snprintf(str, sizeof(str)-1, "Laser %d : %.1f fps", laser_num, framerate);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 40, str);
 
-  sprintf(str, "fov %.1f deg / %d pts", 
+  snprintf(str, sizeof(str)-1, "fov %.1f deg / %d pts", 
 	  carmen_radians_to_degrees(laser.config.fov), numreadings);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 25, str);
 
-  sprintf(str, "1st beam %.1f deg", 
+  snprintf(str, sizeof(str)-1, "1st beam %.1f deg", 
 	  carmen_radians_to_degrees(laser.config.start_angle));
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  10, drawing_area->allocation.height - 10, str);
 
   if (laser.num_remissions > 0) {
-    sprintf(str, "remission: on");
+    snprintf(str, sizeof(str)-1, "remission: on");
     gdk_gc_set_foreground(Drawing_GC, &carmen_black);
     gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		    drawing_area->allocation.width - 155.0, 
 		    drawing_area->allocation.height - 40, str);
   }
 
-  sprintf(str, "Sensor maxrange  = %.3fm", laser.config.maximum_range);
+  snprintf(str, sizeof(str)-1, "Sensor maxrange  = %.3fm", laser.config.maximum_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  drawing_area->allocation.width - 155.0, 
 		  drawing_area->allocation.height - 25, str);
 
-  sprintf(str, "Viewer maxrange  = %.1fm", laser_range);
+  snprintf(str, sizeof(str)-1, "Viewer maxrange  = %.1fm", laser_range);
   gdk_gc_set_foreground(Drawing_GC, &carmen_black);
   gdk_draw_string(pixmap, gtk_style_get_font(drawing_area->style), Drawing_GC, 
 		  drawing_area->allocation.width - 155.0, 
@@ -228,6 +228,12 @@ Redraw(void)
                   pixmap, 0, 0, 0, 0, 
 		  drawing_area->allocation.width, 
 		  drawing_area->allocation.height);
+}
+
+static void window_destroy(GtkWidget *w __attribute__ ((unused)),
+			   gpointer p __attribute__ ((unused)))
+{
+  gtk_main_quit();
 }
 
 static void 
@@ -248,6 +254,8 @@ start_graphics(int argc, char *argv[])
   gtk_container_add(GTK_CONTAINER(main_window), drawing_area);
   gtk_signal_connect(GTK_OBJECT(drawing_area), "expose_event",
 		     (GtkSignalFunc)Expose_Event, NULL);
+  gtk_signal_connect(GTK_OBJECT(main_window), "destroy",
+		     GTK_SIGNAL_FUNC(window_destroy), NULL);
   gtk_widget_add_events(drawing_area,  GDK_EXPOSURE_MASK);
   carmen_graphics_update_ipc_callbacks((GdkInputFunction)updateIPC);
 
