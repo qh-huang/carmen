@@ -360,7 +360,7 @@ carmen_navigator_get_map(carmen_navigator_map_t map_type,
 	{
 	  map->config = response->config;
 	  map->complete_map = (float *)response->data;
-	  map->map = (float **)calloc(map->config.x_size, sizeof(float));
+	  map->map = (float **)calloc(map->config.x_size, sizeof(float*));
 	  carmen_test_alloc(map->map);
 	  
 	  for (index = 0; index < map->config.x_size; index++)
