@@ -2,6 +2,7 @@
 /* File : pyCarmen.i */
 
 %module(directors="1") pyCarmen
+%ignore carmen_new_stringv;
 %{
 #include "pyCarmenMessages.h"
 
