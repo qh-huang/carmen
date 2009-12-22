@@ -7,21 +7,21 @@
  * Roy, Sebastian Thrun, Dirk Haehnel, Cyrill Stachniss,
  * and Jared Glover
  *
- * CARMEN is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public 
- * License as published by the Free Software Foundation; 
+ * CARMEN is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation;
  * either version 2 of the License, or (at your option)
  * any later version.
  *
  * CARMEN is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied 
+ * but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE.  See the GNU General Public License for more 
+ * PURPOSE.  See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU General 
+ * You should have received a copy of the GNU General
  * Public License along with CARMEN; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place, 
+ * Free Software Foundation, Inc., 59 Temple Place,
  * Suite 330, Boston, MA  02111-1307 USA
  *
  ********************************************************/
@@ -29,11 +29,11 @@
 /** @addtogroup localize liblocalizecore **/
 // @{
 
-/** 
- * \file localizecore.h 
+/**
+ * \file localizecore.h
  * \brief Library for Monto-Carlo localization.
  *
- * This library contains all functions to perform a MCL. 
+ * This library contains all functions to perform a MCL.
  **/
 
 
@@ -48,7 +48,7 @@ extern "C" {
 #include "localize_motion.h"
 
 #define      SMALL_PROB        0.01
-#define      MAX_BEAMS_PER_SCAN   1024
+#define      MAX_BEAMS_PER_SCAN   2048
 
 /* #define      LOCALIZECORE_TRACKING_MINLIKELIHOOD        (0.5) */
 /* #define      LOCALIZECORE_GLOBAL_MINLIKELIHOOD          (0.9) */
@@ -79,7 +79,7 @@ typedef struct {
 
 #ifndef OLD_MOTION_MODEL
   carmen_localize_motion_model_t *motion_model;
-#endif  
+#endif
 } carmen_localize_param_t, *carmen_localize_param_p;
 
 typedef struct {
@@ -115,42 +115,42 @@ typedef struct {
 
 
 /** Create (allocate memory for) a new particle filter **/
-carmen_localize_particle_filter_p 
+carmen_localize_particle_filter_p
 carmen_localize_particle_filter_new(carmen_localize_param_p param);
 
-/** Creates a distribution of particles over the map based on the given observation 
+/** Creates a distribution of particles over the map based on the given observation
  *
  *  @param filter Particle filter structure the function is applied to.
  *  @param laser Laser message used to generate the distribution.
  *  @param map Map which is used to compute p(z|m,x) for the initialized samples.
 **/
-void 
+void
 carmen_localize_initialize_particles_uniform(carmen_localize_particle_filter_p filter,
 					     carmen_robot_laser_message *laser,
 					     carmen_localize_map_p map);
-  
-/** Creates a multi Gaussian distribution of particles 
+
+/** Creates a multi Gaussian distribution of particles
  *
  *  @param filter Particle filter structure the function is applied to.
  *  @param num_modes Number of modes if Gaussian to create the initial distrubution.
  *  @param mean Array of means (array size = num_modes)
  *  @param std Array of standard variances (array size = num_modes)
 **/
-void 
+void
 carmen_localize_initialize_particles_gaussians(carmen_localize_particle_filter_p filter,
 					       int num_modes,
 					       carmen_point_t *mean,
 					       carmen_point_t *std);
 
-/** Creates a Gaussian distribution of particles 
+/** Creates a Gaussian distribution of particles
  *
  *  @param filter Particle filter structure the function is applied to.
  *  @param mean mean of the Gaussian
  *  @param std std var of the Gaussian
 **/
-void 
+void
 carmen_localize_initialize_particles_gaussian(carmen_localize_particle_filter_p filter,
-					      carmen_point_t mean, 
+					      carmen_point_t mean,
 					      carmen_point_t std);
 
 
@@ -158,15 +158,15 @@ carmen_localize_initialize_particles_gaussian(carmen_localize_particle_filter_p 
  *
  *  @param filter Particle filter structure the function is applied to.
 **/
-void 
+void
 carmen_localize_initialize_particles_manual(carmen_localize_particle_filter_p filter,
-					    double *x, 
-					    double *y, 
+					    double *x,
+					    double *y,
 					    double *theta,
-					    double *weight, 
+					    double *weight,
 					    int num_particles);
 
-int 
+int
 carmen_localize_initialize_particles_placename(carmen_localize_particle_filter_p filter,
 					       carmen_map_placelist_p placelist,
 					       char *placename);
@@ -176,7 +176,7 @@ carmen_localize_initialize_particles_placename(carmen_localize_particle_filter_p
  *  @param filter Particle filter structure the function is applied to.
  *  @param odometry_position Odometry-based pose estimate.
 **/
-void 
+void
 carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filter,
 				     carmen_point_t odometry_position);
 
@@ -192,12 +192,12 @@ carmen_localize_incorporate_odometry(carmen_localize_particle_filter_p filter,
  *  @param first_beam_angle Angle of the first beam of a laser (often -0.5*PI)
  *  @param backwards Is it the rearlaser (=1) or the frontlaser(=0)
 **/
-void 
+void
 carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
-				  carmen_localize_map_p map, 
-				  int num_readings, 
-				  float *range, 
-				  double forward_offset, 
+				  carmen_localize_map_p map,
+				  int num_readings,
+				  float *range,
+				  double forward_offset,
 				  double angular_resolution,
 				  double laser_maxrange,
 				  double first_beam_angle,
@@ -208,7 +208,7 @@ carmen_localize_incorporate_laser(carmen_localize_particle_filter_p filter,
  *
  *  @param filter Particle filter structure the function is applied to.
  **/
-void 
+void
 carmen_localize_resample(carmen_localize_particle_filter_p filter);
 
 /** Carry out the three steps of the paricle filter which are:
@@ -220,29 +220,29 @@ carmen_localize_resample(carmen_localize_particle_filter_p filter);
  *  @param forward_offset Offset of the laser in x direction.
  *  @param backwards Is it the rearlaser (=1) or the frontlaser(=0)
  **/
-void 
-carmen_localize_run(carmen_localize_particle_filter_p filter, 
+void
+carmen_localize_run(carmen_localize_particle_filter_p filter,
 		    carmen_localize_map_p map,
-		    carmen_robot_laser_message *laser, 
+		    carmen_robot_laser_message *laser,
 		    double forward_offset,
 		    int backwards);
 
-void 
-carmen_localize_laser_scan_gd(int num_readings, 
+void
+carmen_localize_laser_scan_gd(int num_readings,
 			      float *range,
 			      double angular_resolution,
 			      double first_beam_angle,
-			      carmen_point_p laser_pos, 
+			      carmen_point_p laser_pos,
 			      double forward_offset,
-			      carmen_localize_map_p map, 
+			      carmen_localize_map_p map,
 			      int laser_skip);
 
 /** Carry a summary for sending it via ipc to other modules liek the gui **/
-void carmen_localize_summarize(carmen_localize_particle_filter_p filter, 
-			       carmen_localize_summary_p summary, 
+void carmen_localize_summarize(carmen_localize_particle_filter_p filter,
+			       carmen_localize_summary_p summary,
 			       carmen_localize_map_p map,
-			       int num_readings, 
-			       float *range, 
+			       int num_readings,
+			       float *range,
 			       double forward_offset,
 			       double angular_resolution,
 			       double first_beam_angle,
