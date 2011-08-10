@@ -446,6 +446,9 @@ carmen_map_p carmen_pixbuf_to_map(GdkPixbuf* pixbuf, double resolution )
       
       if (carmen_map_image_to_map_color_unknown(r,g,b)) 
 	map->map[x_index][map->config.y_size-1-y_index] = -1.0;
+      else if (r==255 && g==0 && b==0) { // offlimits
+        map->map[x_index][map->config.y_size-1-y_index] = -2.0;
+      }
       else 
 	map->map[x_index][map->config.y_size-1-y_index] =  
 	  carmen_map_image_to_map_color_occupancy(r,g,b);
