@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-LFLAGS += -lipc -lparam_interface
+LFLAGS += -lipc -lparam_interface -lm
 
 ifndef NO_GRAPHICS
 IFLAGS += `$(GTK_CONFIG) --cflags`

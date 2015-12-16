@@ -129,9 +129,9 @@ EOF
   if ((/nolfs/) || (/noLFS/)) {
     $nolfs = 1;
   }
-   if ((/nowerror/) || (/noWerror/)) {
-    $nowerror = 1;
-  }
+#   if ((/nowerror/) || (/noWerror/)) {
+#    $nowerror = 1;
+#  }
   if ((/bigipcbuffers/) || (/bigipcbuffers/)) {
     $bigipcbuffers = 1;
   }

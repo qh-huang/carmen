@@ -16,7 +16,7 @@ done
 
 CFLAGS += 
 IFLAGS += -I../robot -I../laser
-LFLAGS += -lparam_interface -lglobal -lcarmenserial -lgeometry -lipc 
+LFLAGS += -lparam_interface -lglobal -lcarmenserial -lgeometry -lipc -lm 
 
 MODULE_NAME = BASE
 MODULE_COMMENT = Generic interface to all robot bases

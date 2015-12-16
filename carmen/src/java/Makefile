@@ -4,7 +4,7 @@ SUBDIRS = LDLoad Carmen IPC
 
 IFLAGS += -I$(JAVA_HOME)/include 
 IFLAGS += -I$(JAVA_HOME)/include/linux 
-IFLAGS += -I/usr/include/bsd
+#IFLAGS += -I/usr/include/bsd
 IFLAGS += -I ../ipc
 LFLAGS += -L ../../lib
 CFLAGS += -DREDHAT_52 -DREDHAT_6 -DREDHAT_71 

@@ -65,19 +65,19 @@ void carmen_initialize_keyboard(void)
   tcsetattr(0, TCSANOW, &term_struct);
 }
 
-int carmen_read_char(char *c)
+int carmen_read_char(char* c)
 {
 #ifndef CYGWIN
   long available;
   int i;
-  int num_read;
+  //int num_read;
 
   ioctl(0, FIONREAD, &available);
 
   if(available > 0) {
     for(i = 0; i < available; i++) {
       // Bad: should handle return value
-      num_read = read(0, c, 1);
+      //num_read = read(0, c, 1);
     }
     return 1;
   }

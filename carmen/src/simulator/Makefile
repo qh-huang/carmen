@@ -5,7 +5,7 @@ CFLAGS += -DOLD_MOTION_MODEL
 IFLAGS += -I../robot
 LFLAGS += -lmap_interface -lparam_interface -llocalize_interface -lrobot \
 	  -lbase_interface -llaser_interface -lgeometry -llocalize_motion \
-	  -lglobal -lipc 
+	  -lglobal -lipc -lm 
 
 MODULE_NAME = SIMULATOR
 MODULE_COMMENT = "simulates the readings of a robot on a map"

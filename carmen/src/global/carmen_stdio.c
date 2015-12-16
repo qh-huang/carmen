@@ -178,7 +178,7 @@ int carmen_fflush(carmen_FILE *fp)
   if(!fp->compressed)
     return fflush(fp->fp);
   else
-    return gzflush(fp->fp, Z_FINISH);
+    return gzflush(fp->comp_fp, Z_FINISH);
 #else
   return fflush(fp->fp);
 #endif

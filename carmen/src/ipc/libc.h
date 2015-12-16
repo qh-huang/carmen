@@ -1,4 +1,4 @@
-/*****************************************************************************
+/******************************************************************************
  * PROJECT: Carnegie Mellon Planetary Rover Project
  *          Task Control Architecture
  *
@@ -603,7 +603,7 @@ extern int unlink _PARAMS((char *));
 #if defined(Next) ||  defined(__NeXT__)
 #include <stdio.h>
 #include <stdlib.h>
-#include <bsd/libc.h>
+//#include <bsd/libc.h>
 #include <signal.h>
 #include <limits.h>
 #include <sys/time.h>
@@ -614,9 +614,9 @@ extern int unlink _PARAMS((char *));
 #include <errno.h>
 extern int errno;
 #include <sys/uio.h>
-#include <bsd/netinet/in.h>
-#include <bsd/netinet/tcp.h>
-#include <bsd/netdb.h>
+//#include <bsd/netinet/in.h>
+//#include <bsd/netinet/tcp.h>
+//#include <bsd/netdb.h>
 #include <ansi/string.h>
 #include <ansi/ctype.h>
 #define	S_IRWXU 	0000700	/* rwx, owner */
@@ -637,7 +637,7 @@ extern int errno;
 #if defined(linux)
 #define __NO_MATH_INLINES
 #if !defined(REDHAT_52) && !defined(REDHAT_6)
-#include <bsd/bsd.h>
+//#include <bsd/bsd.h>
 #endif /* REDHAT_52 */
 #include <stdio.h>
 #include <stdlib.h>

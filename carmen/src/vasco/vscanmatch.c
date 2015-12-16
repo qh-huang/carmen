@@ -138,7 +138,8 @@ void do_scan_matching() {
   }
 
   if (!laserscans_mutex)
-    laserscans_mutex = g_mutex_new();
+    g_mutex_init(laserscans_mutex);
+	  //laserscans_mutex = g_mutex_new();
 
   g_mutex_lock(laserscans_mutex);
   stop = scan_matching;

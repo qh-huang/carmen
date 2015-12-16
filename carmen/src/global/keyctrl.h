@@ -38,7 +38,7 @@ void carmen_initialize_keyboard(void);
 /* Read most recent character from keybord; *
  * returns 0 if no character could be read, *
  * 1 otherwise.                             */
-int carmen_read_char(char *c);
+int carmen_read_char(char* c);
 
 /* Robot control via the keyboard; input is *
  * a character, output are translational and*

@@ -315,7 +315,8 @@ static gint scans_to_egrid(gpointer p __attribute__ ((unused))) {
   status_print("Making evidence grid...", "vegrid");
 
   if (!egrid_mutex)
-    egrid_mutex = g_mutex_new();
+	  g_mutex_init(egrid_mutex);
+    //egrid_mutex = g_mutex_new();
 
   g_mutex_lock(egrid_mutex);
   making_egrid = 1;

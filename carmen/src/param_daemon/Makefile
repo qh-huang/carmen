@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-LFLAGS 	+=  -lglobal -lipc -lmap_io -lmap_interface 
+LFLAGS 	+=  -lglobal -lipc -lmap_io -lmap_interface -lm
 
 MODULE_NAME = PARAMDAEMON
 MODULE_COMMENT = Module providing central repository for module parameters

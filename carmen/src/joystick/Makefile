@@ -2,7 +2,7 @@ include ../Makefile.conf
 
 CFLAGS +=
 IFLAGS += 
-LFLAGS += -lrobot_interface -lipc -lglobal -lparam_interface
+LFLAGS += -lrobot_interface -lipc -lglobal -lparam_interface -lm
 
 MODULE_NAME = JOYSTICK
 MODULE_COMMENT = Joystick library and control modules

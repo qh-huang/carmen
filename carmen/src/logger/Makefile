@@ -9,7 +9,7 @@ INTERFACE_LIBS = -lrobot_interface -llaser_interface -lbase_interface \
 endif
 
 LFLAGS += $(INTERFACE_LIBS) -llocalize_interface -lparam_interface \
-	  -lglobal -lipc
+	  -lglobal -lipc -lm
 
 MODULE_NAME = LOGGER
 MODULE_COMMENT = Modules for logging, displaying, and playing back data.

@@ -60,7 +60,7 @@ void carmen_initialize_keyboard(void)
   tcsetattr(0, TCSANOW, &term_struct);
 }
 
-int carmen_read_char(char *c)
+int carmen_read_char(char* c)
 {
   long available;
   int i;

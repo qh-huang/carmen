@@ -1,6 +1,6 @@
 include ../Makefile.conf
 
-LFLAGS += -lglobal -lpantilt_interface -lparam_interface -lipc 
+LFLAGS += -lglobal -lpantilt_interface -lparam_interface -lipc -lm 
 
 CFLAGS     +=  -g -O0 -ggdb 
 CXXFLAGS   +=  -g -O0 -ggdb

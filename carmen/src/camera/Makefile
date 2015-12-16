@@ -5,7 +5,7 @@ MODULE_COMMENT = "General Camera Module"
 
 SUBDIRS = fakecam
 
-LFLAGS += -lparam_interface -lipc -lglobal 
+LFLAGS += -lparam_interface -lipc -lglobal -lm 
 SOURCES = camera_main.c camera_interface.c
 PUBLIC_INCLUDES = camera_messages.h camera_interface.h
 PUBLIC_LIBRARIES = libcamera_interface.a 

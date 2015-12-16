@@ -391,7 +391,8 @@ static gint load_logfile_end(gpointer p) {
   g_mutex_lock(laserscans_mutex);
   loading_scans = 0;
   g_mutex_unlock(laserscans_mutex);
-  g_mutex_free(laserscans_mutex);
+  //g_mutex_free(laserscans_mutex);
+  g_mutex_clear(laserscans_mutex);
   laserscans_mutex = NULL;
 
   gtk_progress_set_activity_mode(GTK_PROGRESS(progress_bar), FALSE);
@@ -476,7 +477,8 @@ static gint load_logfile_begin(gpointer p __attribute__ ((unused))) {
   gtk_progress_set_activity_mode(GTK_PROGRESS(progress_bar), TRUE);
 
   if (!laserscans_mutex)
-    laserscans_mutex = g_mutex_new();
+	  g_mutex_init(laserscans_mutex);
+    //laserscans_mutex = g_mutex_new();
 
   g_mutex_lock(laserscans_mutex);
   cancel = loading_scans;

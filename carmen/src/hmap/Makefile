@@ -2,7 +2,7 @@ include ../Makefile.conf
 
 CFLAGS += 
 IFLAGS +=
-LFLAGS += -lmap_io -lmap_interface -lparam_interface -lglobal -lipc -llocalize_interface -lsimulator_interface
+LFLAGS += -lmap_io -lmap_interface -lparam_interface -lglobal -lipc -llocalize_interface -lsimulator_interface -lm
 
 ifdef NO_ZLIB
 CFLAGS += -DNO_ZLIB

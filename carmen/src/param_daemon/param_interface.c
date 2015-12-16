@@ -1083,7 +1083,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
   int index;
   int err = 0;
   int last_command_line_arg;
-  char *prog_name;
+  //char *prog_name;
   int expert;
 
   last_command_line_arg = carmen_read_commandline_parameters(argc, argv);
@@ -1102,7 +1102,7 @@ carmen_param_install_params(int argc, char *argv[], carmen_param_p param_list,
   for (index = 0; index < num_items; index++) {
     carmen_param_set_module(param_list[index].module);
     
-    prog_name = carmen_extract_filename(argv[0]);
+    //prog_name = carmen_extract_filename(argv[0]);
     
     switch (param_list[index].type) {
     case CARMEN_PARAM_INT:

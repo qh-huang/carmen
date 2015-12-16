@@ -5,7 +5,7 @@ MODULE_COMMENT = "The new laser module for SICK and Hokuyo lasers"
 
 CFLAGS += -DLASER_USE_PTHREAD -std=gnu99 
 #-DHOKUYO_ALWAYS_IN_SCIP20
-LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread 
+LFLAGS += -lparam_interface -lcarmenserial -lglobal -lipc -lpthread -lm -lX11 -lXext
 
 SOURCES = carmen_hokuyo.c  dummylaser.c hokuyolaser_test.c laser_interface.c sick_laser_init_500k.c \
           carmen_laser_device.c carmen_laser_message_queue.c laser.c sick_laser_test.c \

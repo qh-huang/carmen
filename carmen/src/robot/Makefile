@@ -1,7 +1,7 @@
 include ../Makefile.conf
 
 LFLAGS += -lglobal -lgeometry -lbase_interface \
-	-llaser_interface -lparam_interface -lipc 
+	-llaser_interface -lparam_interface -lipc -lm 
 
 MODULE_NAME = ROBOT_DAEMON
 MODULE_COMMENT = Module integrating all robot sensors and configuration

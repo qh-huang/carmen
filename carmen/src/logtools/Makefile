@@ -8,7 +8,7 @@ MODULE_COMMENT = "Log tools, like the famous log2pic"
 #		echo "WAND_LIBS       = `$(WAND_CONFIG) --libs`" >> $(VARS); \
 
 
-LFLAGS += -lmap_io -lmap_interface -llogtools -lreadlog -lglobal -lipc
+LFLAGS += -lmap_io -lmap_interface -llogtools -lreadlog -lglobal -lipc -lm
 
 ifdef QT3
 CXXFLAGS += -Wno-non-virtual-dtor

@@ -162,12 +162,12 @@ carmen_geometry_compute_centre_and_curvature(carmen_traj_point_t start_point,
   double distance;
   double x_intercept, y_intercept;
   double tan_theta_parallel, cos_theta_parallel, sin_theta_parallel;
-  double dist_sq;
+  //double dist_sq;
 
   *centre = start_point;
 
-  dist_sq = (end_point.x-start_point.x)*(end_point.x-start_point.x) +
-    (end_point.y-start_point.y)*(end_point.y-start_point.y);
+  //dist_sq = (end_point.x-start_point.x)*(end_point.x-start_point.x) +
+  //  (end_point.y-start_point.y)*(end_point.y-start_point.y);
 
   distance = carmen_distance_traj(&end_point, &start_point);
 
@@ -218,7 +218,7 @@ carmen_geometry_compute_velocity(carmen_traj_point_t robot,
 {
   carmen_traj_point_t left_point, right_point, centre;
   double max_velocity;
-  double side_theta;
+  //double side_theta;
   double side_safety_distance;
   double radius;
   double temp_x;
@@ -243,7 +243,7 @@ carmen_geometry_compute_velocity(carmen_traj_point_t robot,
     robot.theta = 0.0;
   }
   
-  side_theta = M_PI/2;
+  //side_theta = M_PI/2;
   side_safety_distance = robot_config->width / 2.0 + robot_config->side_dist;
     
   left_point = robot;
@@ -648,7 +648,7 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
   int index;
 
   double min_distance = MAXDOUBLE;
-  int best = -1;
+  //int best = -1;
   carmen_point_t ray3, ray4;
   carmen_point_t edge1, edge2;
   carmen_point_t intersect_pt;
@@ -657,7 +657,7 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
   int y_offset[8] = {-1, 1, 1, 1, -1, 1, -1, -1};
 
   double distance_to_obstacle, min_distance_to_obstacle = MAXDOUBLE;
-  int best_obstacle;
+  //int best_obstacle;
   carmen_point_t best_intersect_obstacle_pt = {0.0, 0.0, 0.0};
 
   map_defn = map->config;
@@ -704,18 +704,18 @@ carmen_geometry_compute_expected_distance(carmen_traj_point_p traj_point,
     if (distance_to_obstacle < min_distance_to_obstacle) {
       min_distance_to_obstacle = distance_to_obstacle;
       best_intersect_obstacle_pt = intersect_pt;
-      best_obstacle = index;
+      //best_obstacle = index;
     }    
 
     if (index == 0 || index == 2) {
       if (intersect_pt.y >= edge1.y && intersect_pt.y <= edge2.y && distance < min_distance ) {
 	min_distance = distance;
-	best = index;
+	//best = index;
       }
     } else {
       if (intersect_pt.x >= edge1.x && intersect_pt.x <= edge2.x && distance < min_distance ) {
 	min_distance = distance;
-	best = index;
+	//best = index;
       }
     }
   }
